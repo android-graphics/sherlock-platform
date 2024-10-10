@@ -1,7 +1,7 @@
 <component xmlns="http://jetbrains.org/intellij/schema/application-info">
   <version major="2024" minor="2.1"/>
   <company name="Google" url="http://developer.android.com"/>
-  <build number="MP-__BUILD__" date="__BUILD_DATE__" majorReleaseDate="20240806" />
+  <build number="IC-__BUILD__" date="__BUILD_DATE__" majorReleaseDate="20240806" />
   <logo url="/idea_community_logo.png"/><!-- TODO -->
   <icon svg="/idea-ce.svg" svg-small="/idea-ce_16.svg"/><!-- TODO -->
   <icon-eap svg="/idea-ce-eap.svg" svg-small="/idea-ce-eap_16.svg"/><!-- TODO -->
