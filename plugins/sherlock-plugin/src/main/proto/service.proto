@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+import "path.proto";
+import "perfetto.proto";
+
+option java_package = "com.google.gapid.proto.service";
+option java_outer_classname = "Service";
+
+package service;
+
+// Service to load and query a capture file (e.g. a Perfetto trace).
+service Gapid {
+  // Loads a capture file into the service/backend for subsequent querying via the PerfettoQuery rpc.
+  rpc LoadCapture(LoadCaptureRequest) returns (LoadCaptureResponse) {}
+
+  // Executes a Perfetto query against a loaded capture.
+  rpc PerfettoQuery(PerfettoQueryRequest) returns (PerfettoQueryResponse) {}
+}
+
+// Request to load a capture file from the specified path.
+message LoadCaptureRequest {
+  // The path to the capture file.
+  string path = 1;
+}
+
+// Response to a LoadCaptureRequest.
+message LoadCaptureResponse {
+  oneof res {
+    // The loaded capture, if successful.
+    path.Capture capture = 1;
+    // An error message, if the load failed.
+    Error error = 2;
+  }
+}
+
+// A generic error message.
+// TODO(ydbeis): populate with useful error metadata.
+message Error {}
+
+// Request to execute a Perfetto query against a capture.
+message PerfettoQueryRequest {
+  // The capture to query.
+  path.Capture capture = 1;
+  // The Perfetto query to execute on the Capture, with the result being returned in PerfettoQueryResponse.
+  string query = 2;
+}
+
+// Response to a PerfettoQueryRequest.
+message PerfettoQueryResponse {
+  oneof res {
+    // The query result, if successful.
+    perfetto.QueryResult result = 1;
+    // An error message, if the query failed.
+    Error error = 2;
+  }
+}

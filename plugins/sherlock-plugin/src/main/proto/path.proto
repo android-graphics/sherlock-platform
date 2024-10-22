@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+option java_package = "com.google.gapid.proto.service.path";
+option java_outer_classname = "Path";
+
+package path;
+
+// Represents a capture file (e.g a Perfetto trace).
+// TODO(ydbeis): Populate with an ID field to identify the specific capture and other metadata fields.
+message Capture {}
