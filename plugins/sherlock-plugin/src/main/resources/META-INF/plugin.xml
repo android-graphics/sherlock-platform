@@ -1,0 +1,33 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
+    <id>com.google.sherlock-plugin</id>
+
+    <!-- Public plugin name should be written in Title Case.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
+    <name>Sherlock</name>
+
+    <!-- Product and plugin compatibility requirements.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+    <depends>com.intellij.modules.platform</depends>
+
+    <!-- Extension points defined by the plugin.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+    <extensions defaultExtensionNs="com.intellij">
+        <fileType name="Perfetto Trace File"
+                  implementationClass="com.google.sherlockPlugin.editor.PerfettoFileType"
+                  fieldName="INSTANCE"
+                  extensions="perfetto;trace;pftrace;perfetto-trace"/>
+        <fileEditorProvider implementation="com.google.sherlockPlugin.editor.PerfettoFileEditorProvider"/>
+    </extensions>
+
+    <actions>
+        <action id="com.google.sherlock-plugin.ConfigureRecordingAction"
+                class="com.google.sherlockPlugin.workflow.ConfigureRecordingAction"
+                text="\\\\\ Sherlock /////"
+                description="Sherlock GPU Profiler">
+            <add-to-group group-id="FileMenu" anchor="first"/>
+        </action>
+
+    </actions>
+</idea-plugin>

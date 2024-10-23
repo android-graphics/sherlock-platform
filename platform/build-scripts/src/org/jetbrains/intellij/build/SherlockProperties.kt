@@ -22,6 +22,12 @@ import kotlinx.collections.immutable.persistentListOf
  * See also: BaseIdeaProperties, IdeaCommunityProperties.
  */
 class SherlockProperties(home: Path) : BaseIdeaProperties() {
+    companion object {
+      private val EXTRA_PLUGINS = listOf(
+        "com.google.sherlockPlugin",
+      )
+    }
+
     init {
       platformPrefix = "SherlockPlatform"
       applicationInfoModule = "intellij.idea.community.customization" // TODO: better to use own module.
@@ -32,9 +38,11 @@ class SherlockProperties(home: Path) : BaseIdeaProperties() {
         "intellij.platform.starter",
         "intellij.idea.community.customization",
       )
-      // TODO: Bundle plugin here
-      productLayout.bundledPluginModules = mutableListOf()
+
+      val bundledPlugins =  EXTRA_PLUGINS
+      productLayout.bundledPluginModules = bundledPlugins.toMutableList()
       productLayout.pluginLayouts = persistentListOf()
+      productLayout.buildAllCompatiblePlugins = true
     }
 
     override val baseFileName: String = "sherlock-platform"

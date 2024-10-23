@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/plugins/sherlock-plugin/com.google.sherlockPlugin.iml" filepath="$PROJECT_DIR$/plugins/sherlock-plugin/com.google.sherlockPlugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/feature-usage-database/plugin-community/intellij.ae.database.community.iml" filepath="$PROJECT_DIR$/plugins/feature-usage-database/plugin-community/intellij.ae.database.community.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/feature-usage-database/core/intellij.ae.database.core.iml" filepath="$PROJECT_DIR$/plugins/feature-usage-database/core/intellij.ae.database.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/feature-usage-database/counters/intellij.ae.database.counters.community.iml" filepath="$PROJECT_DIR$/plugins/feature-usage-database/counters/intellij.ae.database.counters.community.iml" />
