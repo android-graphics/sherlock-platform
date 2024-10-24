@@ -1,6 +1,8 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <!-- TODO: can the Java plugin be excluded somehow? -->
-  <xi:include href="/META-INF/JavaIdePlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/essential-modules.xml"/>
 
+  <!-- These are taken from JavaIdePlugin.xml. They can be further minimized. -->
+  <xi:include href="/META-INF/PlatformLangPlugin.xml"/>
+  <xi:include href="/META-INF/XmlPlugin.xml"/>
+
+  <xi:include href="/META-INF/essential-modules.xml"/>
 </idea-plugin>
