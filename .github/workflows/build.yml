@@ -2,10 +2,13 @@ name: Build Sherlock Platform
 
 on:
   # Triggers the workflow on push or pull request events but only for the idea/242.21829.142 branch
-  #push:
-  #  branches: [ idea/242.21829.142 ]
-  #pull_request:
-  #  branches: [ idea/242.21829.142 ]
+  # TODO: Update the branch once finalised
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -33,8 +36,26 @@ jobs:
       - name: Build Sherlock Platform
         run: ./build_sherlock_platform.sh
 
-      - name: Upload artifact
+      - name: Upload Sherlock Platform artifact for Linux
         uses: actions/upload-artifact@v3
         with:
-          name: sherlock-platform
-          path: out/sherlock-platform/artifacts/sherlock-platform-242.21829.tar.gz
+          name: sherlock-platform-linux
+          path: out/sherlock-platform/artifacts/sherlock-platform.tar.gz
+
+      - name: Upload Sherlock Platform artifact for Mac
+        uses: actions/upload-artifact@v3
+        with:
+          name: sherlock-platform-mac
+          path: out/sherlock-platform/artifacts/sherlock-platform.mac.aarch64.zip
+
+      - name: Upload Sherlock Platform artifact for Windows
+        uses: actions/upload-artifact@v3
+        with:
+          name: sherlock-platform-win
+          path: out/sherlock-platform/artifacts/sherlock-platform.win.zip
+
+      - name: Upload Sherlock Platform Sources
+        uses: actions/upload-artifact@v3
+        with:
+          name: sherlock-platform-sources
+          path: out/sherlock-platform/artifacts/sherlock-platform-sources.zip
