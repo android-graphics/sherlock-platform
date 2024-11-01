@@ -26,6 +26,7 @@ class SherlockProperties(home: Path) : BaseIdeaProperties() {
       platformPrefix = "SherlockPlatform"
       applicationInfoModule = "com.google.sherlock.branding"
       useSplash = true
+      buildSourcesArchive = true
       productLayout.buildAllCompatiblePlugins = false
       productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
       productLayout.productImplementationModules = listOf(
