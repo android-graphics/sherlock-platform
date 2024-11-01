@@ -16,9 +16,13 @@ readonly TAG="idea/${AS_BUILD_NUMBER}.${SNAPSHOT}"
 
 echo "Cloning Jetbrains/android repository using the following tag: ${TAG}"
 
-if [ "$1" == "--shallow" ]; then
+if [ ! -d "android" ]; then
+  if [ "$1" == "--shallow" ]; then
     git clone git://git.jetbrains.org/idea/android.git android --depth 1 --branch "${TAG}"
-else
+  else
     echo "Warning: Cloning with the entire history. Use the --shallow flag to clone faster."
     git clone git://git.jetbrains.org/idea/android.git android --branch "${TAG}"
+  fi
+else
+  echo "Android directory already exists. Skipping clone."
 fi

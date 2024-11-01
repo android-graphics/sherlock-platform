@@ -17,4 +17,7 @@ BUILD_PROPERTIES=(
   "-Dintellij.build.incremental.compilation.fallback.rebuild=false"
 )
 
+# Calls getPlugins.sh to update/download android repo before building
+./getPlugins.sh --shallow
+
 "${PROG_DIR}/platform/jps-bootstrap/jps-bootstrap.sh" "${BUILD_PROPERTIES[@]}" "${PROG_DIR}" intellij.idea.community.build SherlockPlatformBuild
