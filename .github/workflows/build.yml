@@ -1,0 +1,40 @@
+name: Build Sherlock Platform
+
+on:
+  # Triggers the workflow on push or pull request events but only for the idea/242.21829.142 branch
+  #push:
+  #  branches: [ idea/242.21829.142 ]
+  #pull_request:
+  #  branches: [ idea/242.21829.142 ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set JAVA_HOME
+        run: echo "JAVA_HOME=$JAVA_HOME" >> $GITHUB_ENV
+
+      - name: Grant execute permission to build script
+        run: chmod +x ./build_sherlock_platform.sh
+
+      - name: Build Sherlock Platform
+        run: ./build_sherlock_platform.sh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: sherlock-platform
+          path: out/sherlock-platform/artifacts/sherlock-platform-242.21829.tar.gz
