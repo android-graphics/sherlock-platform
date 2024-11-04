@@ -40,7 +40,7 @@ class SherlockProperties(home: Path) : BaseIdeaProperties() {
 
     override val baseFileName: String = "sherlock-platform"
 
-    override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "sherlock-platform-$buildNumber"
+    override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "sherlock-platform"
 
     override fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String = "SherlockPlatform"
 
