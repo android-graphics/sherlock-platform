@@ -1,0 +1,14 @@
+<!-- Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<idea-plugin>
+
+    <depends>com.intellij.modules.platform</depends>
+    <actions resource-bundle="messages.ActionsBundle">
+        <group id="WelcomeScreen.Platform.NewProject">
+            <action id="NewProjectStep"
+                    class="com.google.sherlock.onboardingFlow.NewProjectStep"
+                    text="New Project"/>
+            <reference ref="WelcomeScreen.OpenDirectoryProject"/>
+            <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
+        </group>
+    </actions>
+</idea-plugin>
