@@ -1,3 +1,21 @@
+# Sherlock Platform
+
+## About
+
+This is the customized IntelliJ platform for Sherlock Project based
+off the IntelliJ Platform Version 2024.2. To read more on the IntelliJ Platform documentation scroll down to the IntelliJ IDEA Community
+Edition section.
+
+## Developer Documentation
+
+### Build Instructions for Sherlock Platform
+The following steps build Sherlock Platform only on Linux and Mac:
+
+* Run `chmod +x ./build_sherlock_platform.sh` from the root of the directory to grant access.
+* Run `./build_sherlock_platform.sh` to build the platform.
+* Extract the artifact from `out/sherlock-platform/artifacts` according to the OS.
+* Run the platform from `out/sherlock-platform/artifacts/sherlock-platform-242.21829/Sherlock\ Platform-2024.2.1/bin/`
+
 # IntelliJ IDEA Community Edition [![official JetBrains project](http://jb.gg/badges/official.svg)](https://github.com/JetBrains/.github/blob/main/profile/README.md)
 These instructions will help you build IntelliJ IDEA Community Edition from source code, which is the basis for IntelliJ Platform development.
 The following conventions will be used to refer to directories on your machine:

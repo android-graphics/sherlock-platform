@@ -26,6 +26,7 @@ class SherlockProperties(home: Path) : BaseIdeaProperties() {
       platformPrefix = "SherlockPlatform"
       applicationInfoModule = "com.google.sherlock.branding"
       useSplash = true
+      buildSourcesArchive = true
       productLayout.buildAllCompatiblePlugins = false
       productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
       productLayout.productImplementationModules = listOf(
@@ -39,7 +40,7 @@ class SherlockProperties(home: Path) : BaseIdeaProperties() {
 
     override val baseFileName: String = "sherlock-platform"
 
-    override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "sherlock-platform-$buildNumber"
+    override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "sherlock-platform"
 
     override fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String = "SherlockPlatform"
 
