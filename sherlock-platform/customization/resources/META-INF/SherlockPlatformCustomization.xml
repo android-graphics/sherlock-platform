@@ -5,7 +5,7 @@
     <actions resource-bundle="messages.ActionsBundle">
         <group id="WelcomeScreen.Platform.NewProject">
             <action id="NewProjectStep"
-                    class="com.google.sherlock.onboardingFlow.NewProjectStep"
+                    class="com.google.sherlock.onboarding.NewProjectStep"
                     text="New Project"/>
             <reference ref="WelcomeScreen.OpenDirectoryProject"/>
             <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
