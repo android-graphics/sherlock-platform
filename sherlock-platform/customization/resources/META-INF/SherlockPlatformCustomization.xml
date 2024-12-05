@@ -1,11 +1,22 @@
-<!-- Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
-<idea-plugin>
+<!--Copyright 2024 Google LLC-->
+<!--Licensed under the Apache License, Version 2.0 (the "License");&ndash;&gt;-->
+<!--you may not use this file except in compliance with the License.&ndash;&gt;-->
+<!--You may obtain a copy of the License at&ndash;&gt;-->
 
+<!--https://www.apache.org/licenses/LICENSE-2.0&ndash;&gt;-->
+
+<!--Unless required by applicable law or agreed to in writing, software&ndash;&gt;-->
+<!--distributed under the License is distributed on an "AS IS" BASIS,&ndash;&gt;-->
+<!--WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.&ndash;&gt;-->
+<!--See the License for the specific language governing permissions and&ndash;&gt;-->
+<!--limitations under the License.-->
+
+<idea-plugin>
     <depends>com.intellij.modules.platform</depends>
     <actions resource-bundle="messages.ActionsBundle">
         <group id="WelcomeScreen.Platform.NewProject">
             <action id="NewProjectStep"
-                    class="com.google.sherlock.onboarding.NewProjectStep"
+                    class="com.google.sherlock.onboarding.NewProjectAction"
                     text="New Project"/>
             <reference ref="WelcomeScreen.OpenDirectoryProject"/>
             <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
