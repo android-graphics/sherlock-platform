@@ -13,13 +13,23 @@
 
 <idea-plugin>
     <depends>com.intellij.modules.platform</depends>
+    <extensions defaultExtensionNs="com.intellij">
+      <directoryProjectConfigurator implementation="com.google.sherlock.newProject.welcome.SherlockWelcomeConfigurator"
+                                    id="welcome" order="last"/>
+      <statistics.counterUsagesCollector implementationClass="com.google.sherlock.newProject.welcome.SherlockWelcomeCollector"/>
+    </extensions>
+
     <actions resource-bundle="messages.ActionsBundle">
-        <group id="WelcomeScreen.Platform.NewProject">
-            <action id="NewProjectStep"
-                    class="com.google.sherlock.onboarding.NewProjectAction"
-                    text="New Project"/>
-            <reference ref="WelcomeScreen.OpenDirectoryProject"/>
-            <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
-        </group>
+      <action id="NewProject" class="com.google.sherlock.newProject.SherlockNewProjectAction">
+      <add-to-group group-id="NewProjectOrModuleGroup"/>
+      </action>
+
+      <group id="WelcomeScreen.Platform.NewProject">
+        <action id="WelcomeScreen.CreateDirectoryProject"
+                class="com.google.sherlock.newProject.steps.SherlockNewProjectStep"/>
+        <reference ref="WelcomeScreen.OpenDirectoryProject"/>
+
+        <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
+      </group>
     </actions>
 </idea-plugin>
