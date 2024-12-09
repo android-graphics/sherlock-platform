@@ -1,14 +1,18 @@
 <!-- Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
 <idea-plugin>
-
-    <depends>com.intellij.modules.platform</depends>
-    <actions resource-bundle="messages.ActionsBundle">
-        <group id="WelcomeScreen.Platform.NewProject">
-            <action id="NewProjectStep"
-                    class="com.google.sherlock.onboarding.NewProjectStep"
-                    text="New Project"/>
-            <reference ref="WelcomeScreen.OpenDirectoryProject"/>
-            <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
-        </group>
-    </actions>
+  <depends>com.intellij.modules.platform</depends>
+  <extensions defaultExtensionNs="com.intellij">
+    <moduleType
+      id="SHERLOCK_MODULE_TYPE"
+      implementationClass="com.google.sherlock.module.SherlockModuleType"/>
+  </extensions>
+  <actions resource-bundle="messages.ActionsBundle">
+    <group id="WelcomeScreen.Platform.NewProject">
+      <action id="NewProjectStep"
+              class="com.google.sherlock.onboarding.NewProjectStep"
+              text="New Project"/>
+      <reference ref="WelcomeScreen.OpenDirectoryProject"/>
+      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
+    </group>
+  </actions>
 </idea-plugin>
