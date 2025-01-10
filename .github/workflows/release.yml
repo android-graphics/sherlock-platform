@@ -3,16 +3,64 @@ name: Release Sherlock Platform prebuilt
 on:
   push:
     tags:
-      - 'v*' # Trigger on tags that start with 'v', e.g. v1.0.0
+      - 'v*'
   workflow_dispatch:
 
 jobs:
-  release:
-    needs: build
+  check-build-and-artifacts:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download all platform artifacts
+      - name: Check Build Workflow Status
+        id: check_status
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Fetch the latest build run on the main branch
+          response=$(gh run list --workflow="Build Sherlock Platform" --branch=main --json status,conclusion,created_at --limit 1)
+          status=$(echo "$response" | jq -r '.[0].status')
+          conclusion=$(echo "$response" | jq -r '.[0].conclusion')
+          created_at=$(echo "$response" | jq -r '.[0].created_at')
+
+          echo "Latest Build Status: $status"
+          echo "Latest Build Conclusion: $conclusion"
+          echo "Latest Build Run Date: $created_at"
+
+          # Check if the build completed successfully
+          if [[ "$status" != "completed" || "$conclusion" != "success" ]]; then
+            echo "The latest build workflow did not complete successfully. Exiting."
+            exit 1
+          fi
+
+      - name: Check Artifact Existence
+        id: check_artifacts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get the list of artifacts
+          artifacts=$(curl -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/actions/artifacts | jq -r '.artifacts[] | .name')
+
+          echo "Available Artifacts: $artifacts"
+
+          # Define required artifacts
+          required_artifacts=("sherlock-platform-linux" "sherlock-platform-mac" "sherlock-platform-win" "sherlock-platform-sources")
+
+          # Check if each required artifact exists
+          for artifact in "${required_artifacts[@]}"; do
+            if ! echo "$artifacts" | grep -q "$artifact"; then
+              echo "Artifact $artifact is missing. Exiting."
+              exit 1
+            fi
+          done
+
+  release:
+    needs: check-build-and-artifacts
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Artifacts from Build Workflow
         uses: actions/download-artifact@v3
         with:
           path: sherlock-platform-artifacts
