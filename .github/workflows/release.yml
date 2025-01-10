@@ -1,0 +1,24 @@
+name: Release Sherlock Platform prebuilt
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger on tags that start with 'v', e.g. v1.0.0
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all platform artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: sherlock-platform-artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            sherlock-platform-artifacts/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
