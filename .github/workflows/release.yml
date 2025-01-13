@@ -1,9 +1,13 @@
 name: Release Sherlock Platform prebuilt
 
 on:
-  push:
-    tags:
-      - 'v*'
+  release:
+    types:
+      - created
+      - edited
+      - prereleased
+      - published
+      - released
   workflow_dispatch:
 
 jobs:
