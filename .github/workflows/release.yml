@@ -2,12 +2,7 @@ name: Release Sherlock Platform prebuilt
 
 on:
   release:
-    types:
-      - created
-      - edited
-      - prereleased
-      - published
-      - released
+    types: [created, edited, published, prereleased, released]
   workflow_dispatch:
 
 jobs:
