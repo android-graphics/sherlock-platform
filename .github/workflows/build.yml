@@ -41,25 +41,25 @@ jobs:
         run: ./build_sherlock_platform.sh
 
       - name: Upload Sherlock Platform artifact for Linux
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: sherlock-platform-linux
           path: out/sherlock-platform/artifacts/sherlock-platform.tar.gz
 
       - name: Upload Sherlock Platform artifact for Mac
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: sherlock-platform-mac
           path: out/sherlock-platform/artifacts/sherlock-platform.mac.aarch64.zip
 
       - name: Upload Sherlock Platform artifact for Windows
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: sherlock-platform-win
           path: out/sherlock-platform/artifacts/sherlock-platform.win.zip
 
       - name: Upload Sherlock Platform Sources
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: sherlock-platform-sources
           path: out/sherlock-platform/artifacts/sherlock-platform-sources.zip
