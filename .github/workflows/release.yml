@@ -1,9 +1,8 @@
 name: Release Sherlock Platform prebuilt
 
 on:
-  push:
-    tags:
-      - 'v*'
+  release:
+    types: [created, edited, published, prereleased, released]
   workflow_dispatch:
 
 jobs:
@@ -24,6 +23,6 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            sherlock-platform-artifacts/*
+            out/sherlock-platform/artifacts/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
