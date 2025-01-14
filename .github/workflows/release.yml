@@ -1,0 +1,29 @@
+name: Release Sherlock Platform prebuilt
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-platform:
+    uses: ./.github/workflows/build.yml
+
+  release:
+    needs: build-platform
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Artifacts from Build Workflow
+        uses: actions/download-artifact@v3
+        with:
+          path: sherlock-platform-artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            sherlock-platform-artifacts/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
