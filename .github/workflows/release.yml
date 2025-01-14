@@ -1,9 +1,8 @@
 name: Release Sherlock Platform prebuilt
 
 on:
-  push:
-    tags:
-      - 'v*'
+  release:
+    types: [created, edited, published, prereleased, released]
   workflow_dispatch:
 
 jobs:
@@ -13,10 +12,11 @@ jobs:
   release:
     needs: build-platform
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: write
     steps:
       - name: Download Artifacts from Build Workflow
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: sherlock-platform-artifacts
 
