@@ -14,14 +14,12 @@
  */
 package com.google.sherlock.newProject.steps;
 
-import com.google.sherlock.newProject.steps.SherlockNewProjectSettings;
 import com.google.sherlock.newProject.SherlockBundle;
 import com.google.sherlock.newProject.SherlockEmptyProjectGenerator;
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.ProjectGeneratorPeer;
 import com.intellij.util.BooleanFunction;
@@ -43,31 +41,24 @@ public class SherlockGenerateProjectCallback<T> extends AbstractNewProjectStep.A
    */
   @Override
   public void consume(@Nullable ProjectSettingsStepBase<T> step, @NotNull ProjectGeneratorPeer<T> projectGeneratorPeer) {
-    if (!(step instanceof ProjectSpecificSettingsStep settingsStep)) return;
-
+    if (!(step instanceof SherlockProjectSpecificSettingsStep settingsStep)) return;
     //TODO: Update if we need to set WelcomeSettings before Project Generation.
-
     final DirectoryProjectGenerator generator = settingsStep.getProjectGenerator();
-    if (generator instanceof SherlockEmptyProjectGenerator) {
-      final BooleanFunction<SherlockEmptyProjectGenerator>
-        beforeProjectGenerated = ((SherlockEmptyProjectGenerator<?>)generator).beforeProjectGenerated();
-      if (beforeProjectGenerated != null) {
-        final boolean result = beforeProjectGenerated.fun((SherlockEmptyProjectGenerator)generator);
-        if (!result) {
-          Messages.showWarningDialog(SherlockBundle.message("project.cannot.be.generated"),
-                                     SherlockBundle.message("error.in.project.generation"));
-          return;
-        }
+    if (!(generator instanceof SherlockEmptyProjectGenerator sherlockGenerator)) return;
+    final @Nullable BooleanFunction
+      beforeProjectGenerated = sherlockGenerator.beforeProjectGenerated();
+    if (beforeProjectGenerated != null) {
+      final boolean result = beforeProjectGenerated.fun(sherlockGenerator);
+      if (!result) {
+        Messages.showWarningDialog(SherlockBundle.message("project.cannot.be.generated"),
+                                   SherlockBundle.message("error.in.project.generation"));
+        return;
       }
     }
 
-
-    final SherlockNewProjectSettings settings = computeProjectSettings(generator, settingsStep);
+    final SherlockNewProjectSettings settings = computeProjectSettings(sherlockGenerator, settingsStep);
     final Project newProject = generateProject(settingsStep, settings);
-
-    if (newProject != null && generator instanceof SherlockEmptyProjectGenerator) {
-      ((SherlockEmptyProjectGenerator)generator).afterProjectGenerated(newProject);
-    }
+    sherlockGenerator.afterProjectGenerated(newProject);
   }
 
   /**
@@ -100,11 +91,11 @@ public class SherlockGenerateProjectCallback<T> extends AbstractNewProjectStep.A
    * @param generationSettings The project generation settings.
    * @return The newly created project.
    */
-  @Nullable
+  @NotNull
   private static Project generateProject(@NotNull final ProjectSettingsStepBase settings, @Nullable Object generationSettings) {
     if (generationSettings == null) return null;
     final DirectoryProjectGenerator generator = settings.getProjectGenerator();
-    final String location = FileUtil.expandUserHome(settings.getProjectLocation());
+    final String location = settings.getProjectLocation();
     return AbstractNewProjectStep.doGenerateProject(null, location, generator, generationSettings);
   }
 }

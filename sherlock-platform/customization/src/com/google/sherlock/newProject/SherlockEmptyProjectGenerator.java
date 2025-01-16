@@ -17,6 +17,7 @@ package com.google.sherlock.newProject;
 
 import com.google.sherlock.newProject.steps.SherlockNewProjectSettings;
 import com.google.sherlock.newProject.ui.MainPartUiCustomizer;
+import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -29,8 +30,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
-import javax.swing.JPanel;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -62,10 +64,6 @@ public abstract class SherlockEmptyProjectGenerator<T extends SherlockNewProject
     return null;
   }
 
-  public @Nullable JPanel extendBasePanel() throws ProcessCanceledException {
-    return null;
-  }
-
   /**
    * Generates the project.
    *
@@ -83,6 +81,15 @@ public abstract class SherlockEmptyProjectGenerator<T extends SherlockNewProject
       return;
     }
     configureProject(project, baseDir, settings, module);
+  }
+
+  @Override
+  public @NotNull ValidationResult validate(@NotNull String baseDirPath) {
+    // Check if the base directory is writable.
+    if (!Files.isWritable(Path.of(baseDirPath))) {
+      return new ValidationResult("Project location should be writable");
+    }
+    return ValidationResult.OK;
   }
 
   /**
@@ -107,11 +114,10 @@ public abstract class SherlockEmptyProjectGenerator<T extends SherlockNewProject
    * @param settings The project settings.
    * @param module   The main module of the project.
    */
-  protected void configureProject(final @NotNull Project project,
-                                  final @NotNull VirtualFile baseDir,
-                                  final @NotNull SherlockNewProjectSettings settings,
-                                  final @NotNull Module module) {
-  }
+  protected abstract void configureProject(final @NotNull Project project,
+                                           final @NotNull VirtualFile baseDir,
+                                           final @NotNull SherlockNewProjectSettings settings,
+                                           final @NotNull Module module);
 
   /**
    * Returns the project settings.

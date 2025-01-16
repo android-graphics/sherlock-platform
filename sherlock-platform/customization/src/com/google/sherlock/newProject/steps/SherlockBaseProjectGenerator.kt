@@ -15,17 +15,12 @@
 package com.google.sherlock.newProject.steps
 
 import com.google.sherlock.newProject.SherlockBundle
-import com.google.sherlock.newProject.welcome.SherlockWelcome.createWelcomeSettingsPanel
-import com.google.sherlock.newProject.welcome.SherlockWelcome.welcomeUser
 import com.google.sherlock.newProject.SherlockEmptyProjectGenerator
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
-import javax.swing.JPanel
 
 /**
  * Provides a base implementation for generating empty Sherlock projects.
@@ -49,17 +44,6 @@ class SherlockBaseProjectGenerator : SherlockEmptyProjectGenerator<SherlockNewPr
   }
 
   /**
-   * Extends the base panel of the project creation wizard.
-   *
-   * @return The extended panel.
-   * @throws ProcessCanceledException If the process is canceled.
-   */
-  @Throws(ProcessCanceledException::class)
-  override fun extendBasePanel(): JPanel = JPanel(VerticalFlowLayout(3, 0)).apply {
-    add(createWelcomeSettingsPanel())
-  }
-
-  /**
    * Configures the newly created project.
    *
    * @param project  The newly created project.
@@ -71,10 +55,5 @@ class SherlockBaseProjectGenerator : SherlockEmptyProjectGenerator<SherlockNewPr
     project: Project,
     baseDir: VirtualFile,
     settings: SherlockNewProjectSettings,
-    module: Module,
-  ) {
-    // Super should be called according to its contract unless we sync project explicitly (we do not, so we call super)
-    super.configureProject(project, baseDir, settings, module)
-    welcomeUser(project, baseDir, module)
-  }
+    module: Module) {}
 }

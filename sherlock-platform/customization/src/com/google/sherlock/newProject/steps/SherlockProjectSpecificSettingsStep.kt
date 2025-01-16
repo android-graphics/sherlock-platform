@@ -45,6 +45,14 @@ class SherlockProjectSpecificSettingsStep<T>(
   callback: AbstractNewProjectStep.AbstractCallback<T>,
 )
   : ProjectSpecificSettingsStep<T>(projectGenerator, callback), DumbAware {
+
+  init {
+    // Throw an IllegalArgumentException if the projectGenerator is not of the expected type
+    require(projectGenerator is SherlockEmptyProjectGenerator<*>) {
+      "Invalid project generator type. Expected SherlockEmptyProjectGenerator, but found ${projectGenerator::class.simpleName}"
+    }
+  }
+
   private val propertyGraph = PropertyGraph()
   private val projectName = propertyGraph.property("")
   private val projectLocation = propertyGraph.property("")
@@ -78,12 +86,10 @@ class SherlockProjectSpecificSettingsStep<T>(
    * @return The base panel.
    */
   override fun createBasePanel(): JPanel {
-    val projectGenerator = myProjectGenerator
-    if (projectGenerator !is SherlockEmptyProjectGenerator<*>) return super.createBasePanel()
-
-    val nextProjectName = myProjectDirectory.get()
-    projectName.set(nextProjectName.nameWithoutExtension)
-    projectLocation.set(nextProjectName.parent)
+    val projectGenerator = myProjectGenerator as SherlockEmptyProjectGenerator<*>
+    val nextProjectDir = myProjectDirectory.get()
+    projectName.set(nextProjectDir.nameWithoutExtension)
+    projectLocation.set(nextProjectDir.parent)
 
     mainPanel = panel {
       row(message("new.project.name")) {
@@ -114,7 +120,6 @@ class SherlockProjectSpecificSettingsStep<T>(
 
     mainPanel.registerValidators(this) { validations ->
       val anyErrors = validations.entries.any { (key, value) -> key.isVisible && !value.okEnabled }
-      val projectLocationValidation = projectGenerator.validate(getProjectLocation())
       myCreateButton.isEnabled = !anyErrors
     }
     myCreateButton.addActionListener { mainPanel.apply() }
@@ -149,9 +154,7 @@ class SherlockProjectSpecificSettingsStep<T>(
    * Registers validators for the project settings.
    */
   override fun registerValidators() {
-    if (myProjectGenerator is SherlockEmptyProjectGenerator<*>) {
-      projectName.afterChange { (myProjectGenerator as SherlockEmptyProjectGenerator<*>).locationChanged(it) }
-    }
+    projectName.afterChange { (myProjectGenerator as SherlockEmptyProjectGenerator<*>).locationChanged(it) }
   }
 
 }

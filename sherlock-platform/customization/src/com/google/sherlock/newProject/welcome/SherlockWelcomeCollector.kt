@@ -37,11 +37,6 @@ internal object SherlockWelcomeCollector : CounterUsagesCollector() {
   internal enum class ProjectType { NEW, OPENED }
 
   /**
-   * Enum representing the result of attempting to run a welcome script.
-   */
-  internal enum class ScriptResult { DISABLED_BUT_COULD, DISABLED_AND_COULD_NOT }
-
-  /**
    * Enum representing the point at which the project view is expanded.
    */
   internal enum class ProjectViewPoint { IMMEDIATELY, FROM_LISTENER }
@@ -60,14 +55,6 @@ internal object SherlockWelcomeCollector : CounterUsagesCollector() {
   internal fun logWelcomeProject(project: Project, type: ProjectType): Unit = welcomeProjectEvent.log(project, type)
 
   /**
-   * Logs an event for attempting to run a welcome script.
-   *
-   * @param project The project.
-   * @param result The result of the attempt.
-   */
-  internal fun logWelcomeScript(project: Project, result: ScriptResult): Unit = welcomeScriptEvent.log(project, result)
-
-  /**
    * Logs an event for attempting to expand the project view.
    *
    * @param project The project.
@@ -82,9 +69,6 @@ internal object SherlockWelcomeCollector : CounterUsagesCollector() {
 
   private val welcomeProjectEvent =
     GROUP.registerEvent("welcome.project", EventFields.Enum("project_type", ProjectType::class.java))
-
-  private val welcomeScriptEvent =
-    GROUP.registerEvent("welcome.script", EventFields.Enum("script_result", ScriptResult::class.java))
 
   private val welcomeProjectViewEvent =
     GROUP.registerEvent("welcome.projectView",

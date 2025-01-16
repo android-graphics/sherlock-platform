@@ -33,7 +33,6 @@ internal class SherlockWelcomeConfigurator : DirectoryProjectConfigurator {
     StartupManager.getInstance(project).runAfterOpened(
       DumbAwareRunnable {
         SherlockWelcomeCollector.logWelcomeProject(project, ProjectType.OPENED)
-        SherlockWelcome.welcomeUser(project, baseDir, moduleRef.get())
       }
     )
   }

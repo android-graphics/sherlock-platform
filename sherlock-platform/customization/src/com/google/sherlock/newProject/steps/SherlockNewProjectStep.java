@@ -15,8 +15,6 @@
 
 package com.google.sherlock.newProject.steps;
 
-import com.google.sherlock.newProject.NewProjectWizardDirectoryGeneratorAdapter;
-import com.google.sherlock.newProject.NewProjectWizardProjectSettingsStep;
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.platform.DirectoryProjectGenerator;
@@ -51,11 +49,7 @@ public class SherlockNewProjectStep extends AbstractNewProjectStep<SherlockNewPr
     protected @NotNull ProjectSettingsStepBase<SherlockNewProjectSettings> createProjectSpecificSettingsStep(
       @NotNull DirectoryProjectGenerator<SherlockNewProjectSettings> projectGenerator,
       @NotNull AbstractCallback<SherlockNewProjectSettings> callback) {
-      if (projectGenerator instanceof NewProjectWizardDirectoryGeneratorAdapter<SherlockNewProjectSettings> npwGenerator) {
-        return new NewProjectWizardProjectSettingsStep<>(npwGenerator);
-      } else {
-        return new SherlockProjectSpecificSettingsStep<>(projectGenerator, callback);
-      }
+      return new SherlockProjectSpecificSettingsStep<>(projectGenerator, callback);
     }
   }
 }
