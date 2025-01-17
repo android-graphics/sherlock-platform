@@ -16,12 +16,12 @@ jobs:
       contents: write
     steps:
       - name: Download Artifacts from Build Workflow
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: sherlock-platform-artifacts
 
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
