@@ -5,5 +5,5 @@
   <logo url="/idea_community_logo.png"/><!-- TODO -->
   <icon svg="/idea-ce.svg" svg-small="/idea-ce_16.svg"/><!-- TODO -->
   <icon-eap svg="/idea-ce-eap.svg" svg-small="/idea-ce-eap_16.svg"/><!-- TODO -->
-  <names product="SherlockPlatform" fullname="Sherlock Platform" script="platform" motto="Customised IntelliJ Platform for Sherlock"/>
+  <names product="Sherlock" fullname="Sherlock" script="platform" motto="IntelliJ Platform for Sherlock"/>
 </component>

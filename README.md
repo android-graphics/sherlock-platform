@@ -6,6 +6,21 @@ This is the customized IntelliJ platform for Sherlock Project based
 off the IntelliJ Platform Version 2024.2. To read more on the IntelliJ Platform documentation scroll down to the IntelliJ IDEA Community
 Edition section.
 
+## Download Instructions
+
+* Download your OS specific released version of Sherlock Platform from the released tags.
+* _**On MacOS:**_ To give permissions to run- 
+1. Check if this flag is set:
+
+```
+xattr -p com.apple.quarantine /path/to/app/Sherlock\ Platform.app
+```
+2. And delete:
+```
+xattr -d com.apple.quarantine /path/to/app/Sherlock\ Platform.app
+```
+* Launch the application.
+
 ## Developer Documentation
 
 ### Build Instructions for Sherlock Platform
