@@ -1,10 +1,7 @@
 package com.google.sherlock.newProject.welcome
 
-import com.google.sherlock.newProject.welcome.SherlockWelcomeCollector.ProjectType
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.DumbAwareRunnable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -29,12 +26,6 @@ internal class SherlockWelcomeConfigurator : DirectoryProjectConfigurator {
     if (isProjectCreatedWithWizard || isInsideTempDirectory(baseDir)) {
       return
     }
-
-    StartupManager.getInstance(project).runAfterOpened(
-      DumbAwareRunnable {
-        SherlockWelcomeCollector.logWelcomeProject(project, ProjectType.OPENED)
-      }
-    )
   }
 
   /**

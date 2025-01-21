@@ -15,19 +15,11 @@
 package com.google.sherlock.newProject.ui
 
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.Row
 
 /**
  * Interface for customizing the main UI part of the new project wizard.
  */
 interface MainPartUiCustomizer {
-  /**
-   * Adds a checkbox section to the UI.
-   *
-   * @param row The row to add the checkboxes to.
-   */
-  fun checkBoxSection(row: Row)
-
   /**
    * Adds a panel under the checkbox section.
    *

@@ -19,22 +19,16 @@ import com.google.sherlock.newProject.steps.SherlockNewProjectSettings;
 import com.google.sherlock.newProject.ui.MainPartUiCustomizer;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGeneratorBase;
 import com.intellij.util.BooleanFunction;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * Abstract base class for generating empty Sherlock projects.
@@ -43,18 +37,6 @@ import java.util.function.Consumer;
  */
 public abstract class SherlockEmptyProjectGenerator<T extends SherlockNewProjectSettings> extends DirectoryProjectGeneratorBase<T> {
   public static final SherlockNewProjectSettings NO_SETTINGS = new SherlockNewProjectSettings();
-  private final List<SettingsListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  protected Consumer<String> myErrorCallback;
-
-  public final void setErrorCallback(final @NotNull Consumer<String> errorCallback) {
-    myErrorCallback = errorCallback;
-  }
-
-  public @Nullable JComponent getSettingsPanel(File baseDir) throws ProcessCanceledException {
-    return null;
-  }
-
-
   /**
    * Upper part of project generation wizard panel could be customized
    */
@@ -136,12 +118,5 @@ public abstract class SherlockEmptyProjectGenerator<T extends SherlockNewProject
   }
 
   public void afterProjectGenerated(Project project) {
-  }
-
-  public @Nullable String getNewProjectPrefix() {
-    return null;
-  }
-
-  public interface SettingsListener {
   }
 }

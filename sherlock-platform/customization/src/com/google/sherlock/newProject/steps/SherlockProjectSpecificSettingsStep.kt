@@ -17,6 +17,7 @@ package com.google.sherlock.newProject.steps
 import com.google.sherlock.newProject.SherlockBundle.message
 import com.google.sherlock.newProject.SherlockEmptyProjectGenerator
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep
+import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.joinCanonicalPath
@@ -44,7 +45,7 @@ class SherlockProjectSpecificSettingsStep<T>(
   projectGenerator: DirectoryProjectGenerator<T>,
   callback: AbstractNewProjectStep.AbstractCallback<T>,
 )
-  : ProjectSpecificSettingsStep<T>(projectGenerator, callback), DumbAware {
+  : ProjectSettingsStepBase<T>(projectGenerator, callback), DumbAware {
 
   init {
     // Throw an IllegalArgumentException if the projectGenerator is not of the expected type
