@@ -111,12 +111,7 @@ class SherlockProjectSpecificSettingsStep<T>(
       row("") {
         comment("", maxLineLength = 60).bindText(locationHint)
       }
-      val uiCustomizer = projectGenerator.mainPartUiCustomizer
-
-      uiCustomizer?.let {
-        uiCustomizer.underCheckBoxSection(this)
-      }
-
+      //TODO: Add UI customizer here
     }
 
     mainPanel.registerValidators(this) { validations ->

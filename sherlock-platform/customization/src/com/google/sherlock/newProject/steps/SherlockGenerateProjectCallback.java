@@ -68,10 +68,10 @@ public class SherlockGenerateProjectCallback<T> extends AbstractNewProjectStep.A
    * @param settingsStep The project settings step.
    * @return The computed project settings.
    */
-  //TODO: To be updated once we settings configuration.
   @Nullable
   public SherlockNewProjectSettings computeProjectSettings(DirectoryProjectGenerator<?> generator,
                                                            final ProjectSettingsStepBase settingsStep) {
+    //TODO: To be updated once we settings configuration.
     SherlockNewProjectSettings projectSettings = null;
     if (generator instanceof SherlockEmptyProjectGenerator<?> projectGenerator) {
       projectSettings = (SherlockNewProjectSettings)projectGenerator.getProjectSettings();

@@ -16,14 +16,12 @@
 package com.google.sherlock.newProject;
 
 import com.google.sherlock.newProject.steps.SherlockNewProjectSettings;
-import com.google.sherlock.newProject.ui.MainPartUiCustomizer;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGeneratorBase;
 import com.intellij.util.BooleanFunction;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,15 +35,6 @@ import java.nio.file.Path;
  */
 public abstract class SherlockEmptyProjectGenerator<T extends SherlockNewProjectSettings> extends DirectoryProjectGeneratorBase<T> {
   public static final SherlockNewProjectSettings NO_SETTINGS = new SherlockNewProjectSettings();
-  /**
-   * Upper part of project generation wizard panel could be customized
-   */
-  @ApiStatus.Internal
-  @Nullable
-  public MainPartUiCustomizer getMainPartUiCustomizer() {
-    return null;
-  }
-
   /**
    * Generates the project.
    *
@@ -106,7 +95,7 @@ public abstract class SherlockEmptyProjectGenerator<T extends SherlockNewProject
    *
    * @return The project settings.
    */
-  public Object getProjectSettings() {
+  public SherlockNewProjectSettings getProjectSettings() {
     return new SherlockNewProjectSettings();
   }
 

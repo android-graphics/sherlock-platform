@@ -16,7 +16,7 @@
     <extensions defaultExtensionNs="com.intellij">
       <directoryProjectConfigurator implementation="com.google.sherlock.newProject.welcome.SherlockWelcomeConfigurator"
                                     id="welcome" order="last"/>
-      // Include statistics.counterUsagesCollector for recording user or IDE actions.
+      <!--Include statistics.counterUsagesCollector for recording user or IDE actions.-->
     </extensions>
 
     <actions resource-bundle="messages.ActionsBundle">

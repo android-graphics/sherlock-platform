@@ -38,8 +38,8 @@ class SherlockBaseProjectGenerator : SherlockEmptyProjectGenerator<SherlockNewPr
    *
    * @return The logo for the project generator.
    */
-  //TODO: Update when we have a Logo
   override fun getLogo(): Icon? {
+    //TODO: Update when we have a Logo
     return null
   }
 
