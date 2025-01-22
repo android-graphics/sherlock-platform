@@ -109,8 +109,6 @@ public abstract class SherlockEmptyProjectGenerator<T extends SherlockNewProject
     catch (SecurityException e) {
       return new ValidationResult(SherlockBundle.message("dialog.message.insufficient.permissions", baseDirPath, e.getMessage()));
     }
-
-    return ValidationResult.OK;
   }
 
   /**
