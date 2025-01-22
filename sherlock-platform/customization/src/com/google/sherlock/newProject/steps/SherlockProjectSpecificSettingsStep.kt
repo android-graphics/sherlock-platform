@@ -147,4 +147,11 @@ class SherlockProjectSpecificSettingsStep<T>(
     projectName.afterChange { (myProjectGenerator as SherlockEmptyProjectGenerator<*>).locationChanged(it) }
   }
 
+  /**
+   * Overrides the validation done when create button is clicked
+   */
+  override fun checkValid(): Boolean {
+    // Validation has been done prior to clicking on "Create" button so this is not needed.
+    return true
+  }
 }

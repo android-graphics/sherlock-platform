@@ -85,7 +85,7 @@ public abstract class SherlockEmptyProjectGenerator<T extends SherlockNewProject
 
     Path directoryPath = Paths.get(baseDirPath);
 
-    if (!Files.isDirectory(directoryPath)) {
+    if (!Files.exists(directoryPath)) {
       return ValidationResult.OK;
     }
 
@@ -94,10 +94,12 @@ public abstract class SherlockEmptyProjectGenerator<T extends SherlockNewProject
       String[] files = directory.list();
 
       if (files == null) {
+        // Handles the case where projectName (file) exists but is not a directory.
         return new ValidationResult(SherlockBundle.message("dialog.message.error.listing.files", baseDirPath));
       }
 
       if (files.length > 0) {
+        // Handles the case where projectName is a directory and not empty.
         return new ValidationResult(
           SherlockBundle.message("dialog.message.directory.already.exists.and.is.not.empty", directory.getAbsolutePath()));
       }
