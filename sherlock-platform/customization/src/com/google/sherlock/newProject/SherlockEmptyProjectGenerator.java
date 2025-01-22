@@ -74,7 +74,7 @@ public abstract class SherlockEmptyProjectGenerator<T extends SherlockNewProject
   /**
    * Validate the project location
    *
-   * @param projectName Name of the project entered
+   * @param baseDirPath Project Path
    * @return Validation result.
    */
   @Override
@@ -85,12 +85,8 @@ public abstract class SherlockEmptyProjectGenerator<T extends SherlockNewProject
 
     Path directoryPath = Paths.get(baseDirPath);
 
-    if (!Files.exists(directoryPath)) {
-      return ValidationResult.OK; // Directory doesn't exist
-    }
-
     if (!Files.isDirectory(directoryPath)) {
-      return new ValidationResult(SherlockBundle.message("dialog.message.path.is.not.a.directory", baseDirPath));
+      return ValidationResult.OK;
     }
 
     try {
@@ -109,7 +105,8 @@ public abstract class SherlockEmptyProjectGenerator<T extends SherlockNewProject
     catch (SecurityException e) {
       return new ValidationResult(SherlockBundle.message("dialog.message.insufficient.permissions", baseDirPath, e.getMessage()));
     }
-    return ValidationResult.OK
+
+    return ValidationResult.OK;
   }
 
   /**
