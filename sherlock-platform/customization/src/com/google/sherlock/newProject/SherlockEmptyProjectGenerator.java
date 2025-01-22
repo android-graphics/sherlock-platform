@@ -56,10 +56,6 @@ public abstract class SherlockEmptyProjectGenerator<T extends SherlockNewProject
 
   @Override
   public @NotNull ValidationResult validate(@NotNull String baseDirPath) {
-    // Check if the base directory is writable.
-    if (!Files.isWritable(Path.of(baseDirPath))) {
-      return new ValidationResult("Project location should be writable");
-    }
     return ValidationResult.OK;
   }
 
