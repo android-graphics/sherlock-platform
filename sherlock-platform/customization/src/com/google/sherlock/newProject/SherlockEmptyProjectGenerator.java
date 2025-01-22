@@ -91,7 +91,7 @@ public abstract class SherlockEmptyProjectGenerator<T extends SherlockNewProject
 
     try {
       File directory = directoryPath.toFile();
-      File[] files = directory.listFiles();
+      String[] files = directory.list();
 
       if (files == null) {
         return new ValidationResult(SherlockBundle.message("dialog.message.error.listing.files", baseDirPath));
