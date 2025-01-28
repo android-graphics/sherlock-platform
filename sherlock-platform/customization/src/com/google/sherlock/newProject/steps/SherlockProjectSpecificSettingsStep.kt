@@ -44,8 +44,7 @@ import javax.swing.JPanel
 class SherlockProjectSpecificSettingsStep<T>(
   projectGenerator: DirectoryProjectGenerator<T>,
   callback: AbstractNewProjectStep.AbstractCallback<T>,
-)
-  : ProjectSettingsStepBase<T>(projectGenerator, callback), DumbAware {
+) : ProjectSettingsStepBase<T>(projectGenerator, callback), DumbAware {
 
   init {
     // Throw an IllegalArgumentException if the projectGenerator is not of the expected type
@@ -64,6 +63,7 @@ class SherlockProjectSpecificSettingsStep<T>(
 
   private lateinit var projectNameFiled: JBTextField
   lateinit var mainPanel: DialogPanel
+
   /**
    * Creates and fills the content panel for the project settings step.
    *
@@ -79,7 +79,7 @@ class SherlockProjectSpecificSettingsStep<T>(
    * @return The project location.
    */
   override fun getProjectLocation() =
-      FileUtil.expandUserHome(projectLocation.joinCanonicalPath(projectName).get())
+    FileUtil.expandUserHome(projectLocation.joinCanonicalPath(projectName).get())
 
   /**
    * Creates the base panel for the project settings step.
@@ -88,17 +88,21 @@ class SherlockProjectSpecificSettingsStep<T>(
    */
   override fun createBasePanel(): JPanel {
     val projectGenerator = myProjectGenerator as SherlockEmptyProjectGenerator<*>
-    val nextProjectDir = myProjectDirectory.get()
-    projectName.set(nextProjectDir.nameWithoutExtension)
-    projectLocation.set(nextProjectDir.parent)
+    //Get the next project name e.g. if untitled exists, set untitled1.
+    val nextProjectName = myProjectDirectory.get()
+    projectName.set(nextProjectName.nameWithoutExtension)
+    projectLocation.set(nextProjectName.parent)
 
     mainPanel = panel {
       row(message("new.project.name")) {
         projectNameFiled = textField()
           .bindText(projectName)
           .validationOnInput {
-            val validationResult = projectGenerator.validate(getProjectLocation())
-            if (validationResult.isOk) null else error(validationResult.errorMessage)
+            val validationResultForProject = projectGenerator.validateProjectName(projectName.get())
+            val validationResultForLoc = projectGenerator.validate(getProjectLocation())
+            if (validationResultForLoc.isOk && validationResultForProject.isOk) null
+            else if (!validationResultForProject.isOk) error(validationResultForProject.errorMessage)
+            else error(validationResultForLoc.errorMessage)
           }
           .component
       }
@@ -137,20 +141,17 @@ class SherlockProjectSpecificSettingsStep<T>(
     }
 
   /**
-   * Checks if the project settings are valid.
-   *
-   * @return {@code true} if the settings are valid, {@code false} otherwise.
-   */
-  override fun checkValid(): Boolean {
-    //TODO: Add proper validation eventually.
-    return true
-  }
-
-  /**
    * Registers validators for the project settings.
    */
   override fun registerValidators() {
     projectName.afterChange { (myProjectGenerator as SherlockEmptyProjectGenerator<*>).locationChanged(it) }
   }
 
+  /**
+   * Overrides the validation done when create button is clicked
+   */
+  override fun checkValid(): Boolean {
+    // Validation has been done prior to clicking on "Create" button so this is not needed.
+    return true
+  }
 }
