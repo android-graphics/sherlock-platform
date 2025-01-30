@@ -20,8 +20,14 @@
     </extensions>
 
     <actions resource-bundle="messages.ActionsBundle">
-      <action id="NewProject" class="com.google.sherlock.newProject.SherlockNewProjectAction">
-      <add-to-group group-id="NewProjectOrModuleGroup"/>
+
+      <group id="PlatformOpenProjectGroup">
+        <reference ref="NewProjectOrModuleGroup"/>
+        <add-to-group group-id="FileOpenGroup" anchor="first"/>
+      </group>
+
+      <action id="NewDirectoryProject" class="com.google.sherlock.newProject.SherlockNewProjectAction">
+        <add-to-group group-id="NewProjectOrModuleGroup"/>
       </action>
 
       <group id="WelcomeScreen.Platform.NewProject">
