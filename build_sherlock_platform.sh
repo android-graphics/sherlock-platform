@@ -17,18 +17,4 @@ BUILD_PROPERTIES=(
   "-Dintellij.build.incremental.compilation.fallback.rebuild=false"
 )
 
-# Use --with-android to update/download android repo before building
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --with-android)
-      ./getPlugins.sh --shallow
-      shift
-      ;;
-    *)
-      echo "Unknown option: $1" >&2
-      exit 1
-      ;;
-  esac
-done
-
 "${PROG_DIR}/platform/jps-bootstrap/jps-bootstrap.sh" "${BUILD_PROPERTIES[@]}" "${PROG_DIR}" intellij.idea.community.build SherlockPlatformBuild
