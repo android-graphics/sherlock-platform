@@ -38,7 +38,7 @@ class SherlockProperties(home: Path) : BaseIdeaProperties() {
       productLayout.pluginLayouts = persistentListOf()
     }
 
-    override val baseFileName: String = "sherlock-platform"
+    override val baseFileName: String = "sherlock"
 
     override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "sherlock-platform"
 
