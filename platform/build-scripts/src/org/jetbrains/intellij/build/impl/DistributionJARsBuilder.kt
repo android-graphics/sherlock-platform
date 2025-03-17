@@ -754,6 +754,7 @@ suspend fun layoutPlatformDistribution(
       launch {
         patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatcher = moduleOutputPatcher, context = context)
       }
+      /* Sherlock: ApplicationNamesInfo shouldn't be patched to enable version modifications later.
       launch {
         spanBuilder("write patched app info").use {
           val moduleOutDir = context.getModuleOutputDir(context.findRequiredModule("intellij.platform.core"))
@@ -762,6 +763,7 @@ suspend fun layoutPlatformDistribution(
           moduleOutputPatcher.patchModuleOutput("intellij.platform.core", relativePath, result)
         }
       }
+      */
     }
   }
 

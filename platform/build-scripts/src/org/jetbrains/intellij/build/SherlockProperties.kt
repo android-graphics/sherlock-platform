@@ -14,6 +14,7 @@
  ***/
 
 package org.jetbrains.intellij.build
+
 import java.nio.file.Path
 import kotlinx.collections.immutable.persistentListOf
 
@@ -22,46 +23,45 @@ import kotlinx.collections.immutable.persistentListOf
  * See also: BaseIdeaProperties, IdeaCommunityProperties.
  */
 class SherlockProperties(home: Path) : BaseIdeaProperties() {
-    init {
-      platformPrefix = "SherlockPlatform"
-      applicationInfoModule = "com.google.sherlock.branding"
-      useSplash = true
-      buildSourcesArchive = true
-      productLayout.buildAllCompatiblePlugins = false
-      productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
-      productLayout.productImplementationModules = listOf(
-        "intellij.platform.starter",
-        "com.google.sherlock.branding",
-      )
-      // TODO: Bundle plugin here
-      productLayout.bundledPluginModules = mutableListOf()
-      productLayout.pluginLayouts = persistentListOf()
-    }
+  init {
+    platformPrefix = "SherlockPlatform"
+    applicationInfoModule = "com.google.sherlock.branding"
+    useSplash = true
+    buildSourcesArchive = true
+    productLayout.buildAllCompatiblePlugins = false
+    productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
+    productLayout.productImplementationModules = listOf(
+      "intellij.platform.starter",
+      "com.google.sherlock.branding",
+    )
+    productLayout.bundledPluginModules = mutableListOf()
+    productLayout.pluginLayouts = persistentListOf()
+  }
 
-    override val baseFileName: String = "sherlock"
+  override val baseFileName: String = "sherlock"
 
-    override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "sherlock-platform"
+  override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "sherlock-platform"
 
-    override fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String = "SherlockPlatform"
+  override fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String = "SherlockPlatform"
 
-    override fun createLinuxCustomizer(projectHome: String): LinuxDistributionCustomizer {
-      return object : LinuxDistributionCustomizer() {}
-    }
+  override fun createLinuxCustomizer(projectHome: String): LinuxDistributionCustomizer {
+    return object : LinuxDistributionCustomizer() {}
+  }
 
-    override fun createMacCustomizer(projectHome: String): MacDistributionCustomizer {
-      return object : MacDistributionCustomizer() {
-        init {
-          bundleIdentifier = "com.google.sherlock.platform"
-          icnsPath = "${projectHome}/build/conf/ideaCE/mac/images/idea.icns" // TODO
-        }
+  override fun createMacCustomizer(projectHome: String): MacDistributionCustomizer {
+    return object : MacDistributionCustomizer() {
+      init {
+        bundleIdentifier = "com.google.sherlock.platform"
+        icnsPath = "${projectHome}/build/conf/ideaCE/mac/images/idea.icns" // TODO
       }
     }
+  }
 
-    override fun createWindowsCustomizer(projectHome: String): WindowsDistributionCustomizer {
-      return object : WindowsDistributionCustomizer() {
-        init {
-          icoPath = "${projectHome}/build/conf/ideaCE/win/images/idea_CE.ico" // TODO
-        }
+  override fun createWindowsCustomizer(projectHome: String): WindowsDistributionCustomizer {
+    return object : WindowsDistributionCustomizer() {
+      init {
+        icoPath = "${projectHome}/build/conf/ideaCE/win/images/idea_CE.ico" // TODO
       }
     }
+  }
 }
