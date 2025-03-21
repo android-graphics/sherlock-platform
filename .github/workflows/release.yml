@@ -1,13 +1,8 @@
 name: Release Sherlock Platform prebuilt
 
 on:
-  release:
-    types: [created]
   workflow_dispatch:
     inputs:
-      release_tag:
-        description: 'Release tag (e.g., v1.0.0, v1.0, v1.2.3-dev)'
-        required: true
       prerelease:
         description: 'Is this a prerelease?'
         required: true
@@ -27,6 +22,20 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Get SherlockPlatformApplicationInfo.xml Version
+        id: get_xml_version
+        run: |
+          XML_VERSION=$(python ../scripts/get_version.py)
+          echo "xml_version=$XML_VERSION" >> $GITHUB_OUTPUT
+
       - name: Download Artifacts from Build Workflow
         uses: actions/download-artifact@v4
         with:
@@ -37,7 +46,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.event.release.tag_name || inputs.release_tag }}
-          prerelease: ${{ github.event.release.prerelease || inputs.prerelease }}
+          tag_name: ${{ steps.get_xml_version.outputs.xml_version }}
+          prerelease: ${{ inputs.prerelease }}
           files: |
-            sherlock-platform-artifacts/*/*
+            build-artifacts/sherlock-platform-linux-*/sherlock-platform.tar.gz#sherlock-platform-${{ steps.get_xml_version.outputs.xml_version }}.tar.gz
+            build-artifacts/sherlock-platform-mac-*/sherlock-platform.mac.aarch64.zip#sherlock-platform.mac.aarch64-${{ steps.get_xml_version.outputs.xml_version }}.zip
+            build-artifacts/sherlock-platform-win-*/sherlock-platform.win.zip#sherlock-platform.win-${{ steps.get_xml_version.outputs.xml_version }}.zip
+            build-artifacts/sherlock-platform-sources-*/sherlock-platform-sources.zip#sherlock-platform-sources-${{ steps.get_xml_version.outputs.xml_version }}.zip
