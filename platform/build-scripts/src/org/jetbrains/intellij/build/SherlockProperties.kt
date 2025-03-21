@@ -52,7 +52,7 @@ class SherlockProperties(home: Path) : BaseIdeaProperties() {
     return object : MacDistributionCustomizer() {
       init {
         bundleIdentifier = "com.google.sherlock.platform"
-        icnsPath = "${projectHome}/build/conf/ideaCE/mac/images/idea.icns" // TODO
+        icnsPath = "$projectHome/sherlock-branding/resources/artwork/Sherlock.icns"
       }
     }
   }
