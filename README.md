@@ -36,10 +36,10 @@ The following steps build Sherlock Platform only on Linux and Mac:
 * Extract the artifact from `out/sherlock-platform/artifacts` according to the OS.
 * Run the platform from `out/sherlock-platform/artifacts/sherlock-platform-242.21829/Sherlock\ Platform-2024.2.1/bin/`
 
-## Creating a New Release/Pre-release for Sherlock Platform
+## Creating a New Release for Sherlock Platform
 
-The `main` branch of Sherlock Platform always points to the current pre-release version and the upcoming release version. Releases and
-Pre-releases for the Sherlock Platform are created using a GitHub Actions workflow. All releases and pre-released artifacts
+The `main` branch of Sherlock Platform always points to the current pre-release version and the upcoming release version. Releases for the
+Sherlock Platform are created using a GitHub Actions workflow. All released artifacts
 will be visible on the "Release" page.
 
 **Prerequisites:**
@@ -53,21 +53,15 @@ will be visible on the "Release" page.
 **Steps using `gh` CLI:**
 
 1. **Navigate to your local repository directory**.
-2. **Trigger the workflow:** Use the `gh workflow run` command. You need to specify the workflow file (`release.yml`) and provide the
-   `prerelease` input.
+2. **Trigger the workflow:** Use the `gh workflow run` command.
 
-* **To create a STABLE release:**
     ```bash
-    gh workflow run release.yml --ref main -f prerelease=false
-    ```
-
-* **To create a PRE-RELEASE:**
-    ```bash
-    gh workflow run release.yml --ref main -f prerelease=true
+    gh workflow run release.yml --ref main
     ```
 
 3. **Monitor the Workflow:** After running the command, `gh` will provide a link to track the workflow run's progress on GitHub under the "
-   Actions" tab. After a successful run, workflow will upload the build artifacts (`.tar.gz`, `.zip`) to the release page.
+   Actions" tab. After a successful run, workflow will create a new release and upload the build artifacts (`.tar.gz`, `.zip`) to the
+   release page.
 
 4. **Point `main` to the next release version:** After the successful creation of a release, update the version
    number in the
