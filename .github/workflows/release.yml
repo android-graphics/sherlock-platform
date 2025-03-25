@@ -40,7 +40,4 @@ jobs:
           tag_name: ${{ steps.get_xml_version.outputs.xml_version }}
           prerelease: true
           files: |
-            sherlock-platform-artifacts/*/*.tar.gz#sherlock-platform-${{ steps.get_xml_version.outputs.xml_version }}.tar.gz
-            sherlock-platform-artifacts/*/*.mac.aarch64.zip#sherlock-platform-${{ steps.get_xml_version.outputs.xml_version }}.mac.aarch64.zip
-            sherlock-platform-artifacts/*/*.win.zip#sherlock-platform-${{ steps.get_xml_version.outputs.xml_version }}.win.zip
-            sherlock-platform-artifacts/*/*sources.zip#sherlock-platform-sources-${{ steps.get_xml_version.outputs.xml_version }}.zip
+            sherlock-platform-artifacts/*/*
