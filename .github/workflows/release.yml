@@ -2,15 +2,6 @@ name: Release Sherlock Platform prebuilt
 
 on:
   workflow_dispatch:
-    inputs:
-      prerelease:
-        description: 'Is this a prerelease?'
-        required: true
-        default: 'false'
-        type: choice
-        options:
-          - 'true'
-          - 'false'
 
 jobs:
   build-platform:
@@ -47,9 +38,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ steps.get_xml_version.outputs.xml_version }}
-          prerelease: ${{ inputs.prerelease }}
+          prerelease: true
           files: |
-            build-artifacts/sherlock-platform-linux-*/sherlock-platform.tar.gz#sherlock-platform-${{ steps.get_xml_version.outputs.xml_version }}.tar.gz
-            build-artifacts/sherlock-platform-mac-*/sherlock-platform.mac.aarch64.zip#sherlock-platform.mac.aarch64-${{ steps.get_xml_version.outputs.xml_version }}.zip
-            build-artifacts/sherlock-platform-win-*/sherlock-platform.win.zip#sherlock-platform.win-${{ steps.get_xml_version.outputs.xml_version }}.zip
-            build-artifacts/sherlock-platform-sources-*/sherlock-platform-sources.zip#sherlock-platform-sources-${{ steps.get_xml_version.outputs.xml_version }}.zip
+            sherlock-platform-artifacts/sherlock-platform-linux-*/sherlock-platform.tar.gz#sherlock-platform-${{ steps.get_xml_version.outputs.xml_version }}.tar.gz
+            sherlock-platform-artifacts/sherlock-platform-mac-*/sherlock-platform.mac.aarch64.zip#sherlock-platform.mac.aarch64-${{ steps.get_xml_version.outputs.xml_version }}.zip
+            sherlock-platform-artifacts/sherlock-platform-win-*/sherlock-platform.win.zip#sherlock-platform.win-${{ steps.get_xml_version.outputs.xml_version }}.zip
+            sherlock-platform-artifacts/sherlock-platform-sources-*/sherlock-platform-sources.zip#sherlock-platform-sources-${{ steps.get_xml_version.outputs.xml_version }}.zip
