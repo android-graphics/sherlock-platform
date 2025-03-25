@@ -24,7 +24,7 @@ jobs:
       - name: Get SherlockPlatformApplicationInfo.xml Version
         id: get_xml_version
         run: |
-          XML_VERSION=$(python ../scripts/get_version.py)
+          XML_VERSION=$(python .github/scripts/get_version.py)
           echo "xml_version=$XML_VERSION" >> $GITHUB_OUTPUT
 
       - name: Download Artifacts from Build Workflow
