@@ -37,7 +37,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.get_xml_version.outputs.xml_version }}
+          tag_name: v${{ steps.get_xml_version.outputs.xml_version }}
           prerelease: true
           files: |
             sherlock-platform-artifacts/*/*

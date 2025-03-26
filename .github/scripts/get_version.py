@@ -19,7 +19,7 @@ def get_version_from_xml() -> str:
       minor = version_element.get("minor")
       patch = version_element.get("patch", default='0')
       if major is not None and minor is not None:
-        return f"v{major}.{minor}.{patch}"
+        return f"{major}.{minor}.{patch}"
 
   except ET.ParseError as e:
     print(f"Error parsing XML file: {e}", file=sys.stderr)
@@ -37,7 +37,7 @@ def get_version_from_xml() -> str:
 if __name__ == "__main__":
   try:
     version = get_version_from_xml()
-    print(f"VERSION={version}")
+    print(version)
 
   except Exception as e:
     print(f"Error: {e}")
