@@ -30,6 +30,10 @@
         <add-to-group group-id="NewProjectOrModuleGroup"/>
       </action>
 
+      <action id="NewCapture" text="New Capture" class="com.google.sherlock.newCapture.NewCaptureAction">
+        <add-to-group group-id="MainToolbarRight"  anchor="first" />
+      </action>
+
       <group id="WelcomeScreen.Platform.NewProject">
         <action id="WelcomeScreen.CreateDirectoryProject"
                 class="com.google.sherlock.newProject.steps.SherlockNewProjectStep"/>
