@@ -19,6 +19,12 @@
       <!--Include statistics.counterUsagesCollector for recording user or IDE actions.-->
     </extensions>
 
+    <extensionPoints>
+      <extensionPoint qualifiedName="com.google.sherlock.customization.newCapturePerformer"
+                      interface="com.google.sherlock.newCapture.NewCapturePerformer"
+                      dynamic="true"/>
+    </extensionPoints>
+
     <actions resource-bundle="messages.ActionsBundle">
 
       <group id="PlatformOpenProjectGroup">

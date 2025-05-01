@@ -17,6 +17,7 @@ package com.google.sherlock.newCapture
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -25,6 +26,11 @@ import javax.swing.JButton
 import javax.swing.JComponent
 
 class NewCaptureAction : AnAction(), CustomComponentAction, DumbAware {
+
+  companion object {
+    val EP_NAME = ExtensionPointName.create<NewCapturePerformer>("com.google.sherlock.customization.newCapturePerformer")
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val project: Project? = e.project
     if (project == null) {
@@ -32,12 +38,30 @@ class NewCaptureAction : AnAction(), CustomComponentAction, DumbAware {
       return
     }
 
-    Messages.showMessageDialog(
-      project,
-      "Placeholder: 'New Capture' action performed. Implement EP delegation.",
-      e.presentation.text ?: "New Capture",
-      Messages.getInformationIcon()
-    )
+    // Find registered implementations of NewCapturePerformer
+    val performers = EP_NAME.extensionList
+    if (performers.isEmpty()) {
+      Messages.showMessageDialog(
+        project,
+        "Capture functionality needs to be provided by an implementing plugin. (No 'NewCapturePerformer' extension found for: ${EP_NAME.name})).",
+        "Capture Implementation Required",
+        Messages.getInformationIcon()
+      )
+      return
+    }
+
+    val performer = performers.first()
+    try {
+      performer.performCapture(project)
+    }
+    catch (ex: Exception) {
+      Messages.showErrorDialog(
+        project,
+        "An error occurred while starting the capture: ${ex.message}",
+        "Capture Error"
+      )
+      ex.printStackTrace()
+    }
   }
 
   override fun update(e: AnActionEvent) {
