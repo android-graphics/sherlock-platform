@@ -724,7 +724,6 @@
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="CodeMenu"/>
     </group>
 
-    <!--Sherlock doesn't support Build, Run and Debug-->
     <!-- Run -->
     <group id="RunMenu" popup="true">
       <group id="RunnerActions"/>
@@ -735,17 +734,23 @@
       <action id="ManageTargets" class="com.intellij.execution.target.ManageTargetEnvironmentsAction"/>
       <separator/>
       <action id="Stop" class="com.intellij.execution.actions.StopAction" icon="AllIcons.Actions.Suspend">
-        <!--<add-to-group group-id="RunTab.TopToolbar" anchor="after" relative-to-action="Rerun"/>-->
-        <!--<add-to-group group-id="RunTab.TopToolbar.Old" anchor="after" relative-to-action="Rerun"/>-->
+        <!-- Sherlock: Remove the Stop button from the toolbar.
+        <add-to-group group-id="RunTab.TopToolbar" anchor="after" relative-to-action="Rerun"/>
+        <add-to-group group-id="RunTab.TopToolbar.Old" anchor="after" relative-to-action="Rerun"/>
+        -->
       </action>
       <action id="StopBackgroundProcesses" class="com.intellij.execution.actions.StopBackgroundProcessesAction"/>
       <action id="ShowLiveRunConfigurations" class="com.intellij.execution.actions.ShowRunningListAction"/>
 
-      <!--<add-to-group group-id="MainMenu" anchor="after" relative-to-action="RefactoringMenu"/>-->
+      <!--Sherlock: Remove the Run menu group from the menu bar.
+      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="RefactoringMenu"/>
+      -->
     </group>
 
     <group id="BuildMenu" popup="true" class="com.intellij.ide.actions.NonEmptyActionGroup">
-      <!--<add-to-group group-id="MainMenu" anchor="before" relative-to-action="RunMenu"/>-->
+      <!--Sherlock: Remove the build menu group from the menu bar.
+      <add-to-group group-id="MainMenu" anchor="before" relative-to-action="RunMenu"/>
+      -->
     </group>
 
     <!-- Tools -->
@@ -803,7 +808,9 @@
       <reference ref="RunConfiguration"/>
       <reference ref="RunnerActions"/>
       <reference ref="Stop"/>
-      <!--<add-to-group group-id="MainToolBar" relative-to-action="Forward" anchor="after"/>-->
+      <!--Sherlock: Remove RunConfiguration, Runner Actions and Stop Button
+      <add-to-group group-id="MainToolBar" relative-to-action="Forward" anchor="after"/>
+      -->
     </group>
 
     <group id="NavBarToolBarOthers"/>
@@ -1205,7 +1212,9 @@
       <action id="ViewBreakpoints" class="com.intellij.xdebugger.impl.actions.ViewBreakpointsAction" icon="AllIcons.Debugger.ViewBreakpoints"/>
       <separator/>
 
-      <!--<add-to-group group-id="RunMenu" anchor="last"/>-->
+      <!--Sherlock: Remove the debug group from the run menu
+      <add-to-group group-id="RunMenu" anchor="last"/>
+      -->
     </group>
 
     <group id="XDebugger.Actions">
@@ -1435,7 +1444,7 @@
     <action id="SendEOF" class="com.intellij.execution.actions.EOFAction"/>
 
     <group id="RunTestGroup">
-    <!--  <add-to-group group-id="RunMenu" anchor="after" relative-to-action="DebugMainMenu"/>-->
+      <add-to-group group-id="RunMenu" anchor="after" relative-to-action="DebugMainMenu"/>
     </group>
 
     <action id="DumpLookupElementWeights" class="com.intellij.internal.DumpLookupElementWeights">
