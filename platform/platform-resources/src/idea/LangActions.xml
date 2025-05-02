@@ -1655,10 +1655,10 @@
       </group>
     </group>
 
-    <!--Sherlock doesn't support Run and Debug-->
-    <!--<action id="NewUiRunWidget" class="com.intellij.execution.ui.RedesignedRunToolbarWrapper">-->
-    <!--  <add-to-group group-id="MainToolbarRight" anchor="first"/>-->
-    <!--</action>-->
+    <!--Sherlock: Remove Run and Debug widget-->
+    <action id="NewUiRunWidget" class="com.intellij.execution.ui.RedesignedRunToolbarWrapper">
+      <!--<add-to-group group-id="MainToolbarRight" anchor="first"/>-->
+    </action>
 
     <group id="RunToolbarMainActionGroup">
       <action class="com.intellij.execution.ui.RedesignedRunConfigurationSelector" id="RedesignedRunConfigurationSelector"/>
