@@ -1665,9 +1665,10 @@
       </group>
     </group>
 
-
     <action id="NewUiRunWidget" class="com.intellij.execution.ui.RedesignedRunToolbarWrapper">
+      <!--Sherlock: Remove Run and Debug widget
       <add-to-group group-id="MainToolbarRight" anchor="first"/>
+      -->
     </action>
 
     <group id="RunToolbarMainActionGroup">
