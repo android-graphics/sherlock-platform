@@ -41,15 +41,12 @@ class NewCaptureAction : AnAction(), CustomComponentAction, DumbAware {
   }
 
   override fun update(e: AnActionEvent) {
-    val presentation = e.presentation
-    presentation.text = "New Capture"
-    presentation.description = "Starts a new capture."
-    presentation.isEnabledAndVisible = e.project != null
+    e.presentation.text = "New Capture"
+    e.presentation.description = "Starts a new capture."
+    e.presentation.isEnabledAndVisible = e.project != null
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     val button = JButton(presentation.text)
