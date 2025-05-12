@@ -237,6 +237,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         }
       }
 
+      /** Sherlock: Remove Accessibility support
       group(message("title.accessibility")) {
         row(message("combobox.ide.scale.percent")) {
           val defaultScale = UISettingsUtils.defaultScale(false)
@@ -379,6 +380,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           }
         }
       }
+      **/
 
       groupRowsRange(message("group.ui.options")) {
         val leftColumnControls = sequence<Row.() -> Unit> {
