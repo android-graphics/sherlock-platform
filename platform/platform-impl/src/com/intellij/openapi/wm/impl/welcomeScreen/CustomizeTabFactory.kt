@@ -260,8 +260,10 @@ private class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScr
         }
       }
 
+      /** Sherlock: Remove Language and Region Support
       header(IdeBundle.message("title.language.and.region"))
       LanguageAndRegionUi.createContent(this, propertyGraph, parentDisposable, lafConnection, EventSource.WELCOME_SCREEN)
+      **/
 
       header(IdeBundle.message("title.accessibility"))
 
