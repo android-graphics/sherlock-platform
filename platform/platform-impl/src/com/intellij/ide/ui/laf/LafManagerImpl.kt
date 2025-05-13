@@ -509,7 +509,10 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
         return it
       }
     }
+    /** Sherlock: Make "Light" theme as default
     return Supplier { defaultDarkLaf }
+    **/
+    return Supplier { defaultLightLaf }
   }
 
   private fun getDefaultThemeId(): String {
@@ -519,7 +522,10 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
         return HIGH_CONTRAST_THEME_ID
       }
     }
+    /** Sherlock: Make "Light" theme as default
     return defaultDarkLaf.id
+    **/
+    return defaultLightLaf.id
   }
 
   /**
