@@ -1633,8 +1633,10 @@
 
     <group id="UpdateEntryPointGroup"/>
     <group id="SettingsEntryPointGroup" class="com.intellij.ide.actions.SettingsEntryPointGroup">
+      <!--Sherlock: Remove Run option
       <reference id="RunAnything"/>
       <separator/>
+      -->
       <reference id="ShowSettings"/>
       <reference id="WelcomeScreen.Plugins"/>
       <separator/>
