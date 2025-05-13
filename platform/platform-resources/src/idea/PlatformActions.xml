@@ -1640,7 +1640,9 @@
       <reference id="ShowSettings"/>
       <reference id="WelcomeScreen.Plugins"/>
       <separator/>
+      <!--Sherlock: Remove theme from settings in main toolbar
       <reference id="ChangeLaf"/>
+      -->
       <reference id="ChangeKeymap"/>
       <reference id="ChangeView"/>
     </group>
