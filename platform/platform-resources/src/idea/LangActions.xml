@@ -319,7 +319,9 @@
       <reference ref="AddAnotherBookmark"/>
       <reference ref="EditBookmark"/>
       <reference ref="ToggleBookmark"/>
+      <!--Sherlock: Remove bookmarks from editor tab menu
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="ReopenClosedTab"/>
+      -->
     </group>
 
     <group id="BookmarkOpenTabsGroup" popup="false" searchable="false">
