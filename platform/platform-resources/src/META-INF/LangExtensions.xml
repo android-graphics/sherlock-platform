@@ -1049,6 +1049,7 @@
 
     <toolWindow id="Structure" anchor="left" icon="AllIcons.Toolwindows.ToolWindowStructure" secondary="true"
                 factoryClass="com.intellij.ide.structureView.impl.StructureViewToolWindowFactory"/>
+    <!--Sherlock: Remove bookmarks tool window
     <toolWindow id="Bookmarks" anchor="left" icon="AllIcons.Toolwindows.ToolWindowBookmarks" secondary="true"
                 factoryClass="com.intellij.ide.bookmark.ui.BookmarksViewFactory" order="after Structure"/>
     <toolWindowExtractorMode id="Bookmarks" mode="per_client"/>
@@ -1057,6 +1058,7 @@
     <postStartupActivity implementation="com.intellij.ide.bookmark.BookmarksStartupActivity"/>
     <editorFactoryListener implementation="com.intellij.ide.bookmark.GutterLineBookmarkUpdater"/>
     <selectInTarget implementation="com.intellij.ide.bookmark.ui.BookmarksSelectInTarget"/>
+    -->
     <actionPromoter implementation="com.intellij.ide.bookmark.actions.NodeMoveActionPromoter"/>
 
     <toolWindow id="TODO" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowTodo"
