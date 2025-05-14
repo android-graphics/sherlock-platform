@@ -198,7 +198,11 @@ private class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScr
       val syncThemeAndEditorSchemePredicate = autodetectSupportedPredicate.and(
         ComponentPredicate.fromObservableProperty(syncThemeProperty, parentDisposable))
 
+      /** Sherlock: All appearance settings have been removed
       header(IdeBundle.message("welcome.screen.color.theme.header"), true)
+      **/
+
+      /** Sherlock: Only supports "Light" theme
       row(IdeBundle.message("combobox.look.and.feel")) {
         val themeBuilder = comboBox(LafComboBoxModelWrapper { laf.lafComboBoxModel })
           .bindItem(lafProperty)
@@ -259,6 +263,7 @@ private class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScr
           colorAndFontsOptions.disposeUIResources()
         }
       }
+      **/
 
       /** Sherlock: Remove Language and Region Support
       header(IdeBundle.message("title.language.and.region"))
