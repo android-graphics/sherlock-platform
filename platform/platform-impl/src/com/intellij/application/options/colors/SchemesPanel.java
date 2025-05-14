@@ -47,6 +47,7 @@ public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> {
     return myListLoaded;
   }
 
+  /** Sherlock: Remove Change Theme Help option from color scheme under settings
   @Override
   protected ActionLink createActionLink() {
     String text;
@@ -65,6 +66,7 @@ public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> {
       }
     });
   }
+  **/
 
   @Override
   protected @Nullable JLabel createActionLinkCommentLabel() {
@@ -78,11 +80,14 @@ public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> {
     }
   }
 
+  /** Sherlock: Remove Change Theme Help option from color scheme under settings
   @Nls
   @Override
   protected String getContextHelpLabelText() {
     return ApplicationBundle.message("editbox.scheme.context.help.label");
   }
+  **/
+
 
   void resetSchemesCombo(final Object source) {
     if (this != source) {
