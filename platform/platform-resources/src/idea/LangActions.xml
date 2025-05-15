@@ -879,7 +879,9 @@
       <separator/>
       <reference ref="ProjectViewPopupMenuRefactoringGroup"/>
       <separator/>
+      <!--Sherlock: Remove bookmarks from project view pop-up menu
       <reference ref="popup@ExpandableBookmarkContextMenu"/>
+      -->
       <separator/>
       <reference ref="ProjectViewPopupMenuModifyGroup"/>
       <separator/>
