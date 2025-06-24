@@ -5,4 +5,5 @@
   <xi:include href="/META-INF/XmlPlugin.xml"/>
   <xi:include href="/META-INF/SherlockPlatformCustomization.xml"/>
   <xi:include href="/META-INF/essential-modules.xml"/>
+  <xi:include href="/META-INF/override-actions.xml"/>
 </idea-plugin>
