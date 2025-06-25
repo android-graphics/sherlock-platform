@@ -45,7 +45,11 @@ class SherlockProperties(home: Path) : BaseIdeaProperties() {
   override fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String = "SherlockPlatform"
 
   override fun createLinuxCustomizer(projectHome: String): LinuxDistributionCustomizer {
-    return object : LinuxDistributionCustomizer() {}
+    return object : LinuxDistributionCustomizer() {
+      init {
+        iconPngPath = "$projectHome/sherlock-branding/resources/artwork/icon.iconset/icon_128x128.png"
+      }
+    }
   }
 
   override fun createMacCustomizer(projectHome: String): MacDistributionCustomizer {
