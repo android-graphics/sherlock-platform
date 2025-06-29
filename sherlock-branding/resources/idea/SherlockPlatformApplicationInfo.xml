@@ -8,5 +8,5 @@
   <logo url="/sherlock_logo.png"/>
   <icon svg="/sherlock.svg" svg-small="/sherlock_16.svg"/>
   <icon-eap svg="/sherlock-eap.svg" svg-small="/sherlock-eap_16.svg"/>
-  <names product="Sherlock" fullname="Sherlock" script="platform" motto="IntelliJ Platform for Sherlock"/>
+  <names product="Sherlock" fullname="Sherlock" script="sherlock" motto="IntelliJ Platform for Sherlock"/>
 </component>
