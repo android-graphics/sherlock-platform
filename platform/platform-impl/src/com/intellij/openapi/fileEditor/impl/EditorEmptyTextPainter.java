@@ -76,6 +76,7 @@ public class EditorEmptyTextPainter {
     String shortcut = getActionShortcutText("com.google.sherlock.ConfigureRecordingAction");
     appendAction(painter, IdeBundle.message("empty.text.new.capture.short"), shortcut);
   }
+  // Sherlock: Advertise new capture functionality on empty project page.
 
   protected void appendSearchEverywhere(@NotNull UIUtil.TextPainter painter) {
     Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE).getShortcuts();
