@@ -59,8 +59,8 @@ public class EditorEmptyTextPainter {
     appendAction(painter, IdeBundle.message("empty.text.go.to.file"), getActionShortcutText("GotoFile"));
     appendAction(painter, IdeBundle.message("empty.text.recent.files"), getActionShortcutText(IdeActions.ACTION_RECENT_FILES));
     appendAction(painter, IdeBundle.message("empty.text.navigation.bar"), getActionShortcutText("ShowNavBar"));
+     */
     appendDnd(painter);
-    */
   }
 
   protected void appendDnd(@NotNull UIUtil.TextPainter painter) {
@@ -69,8 +69,14 @@ public class EditorEmptyTextPainter {
 
   // Sherlock: Advertise new capture functionality on empty project page.
   protected void appendNewCapture(@NotNull UIUtil.TextPainter painter) {
-    appendLine(painter, IdeBundle.message("empty.text.new.capture"));
+    // The following action does not exist in Sherlock Platform. It will be added later
+    // by the Sherlock plugin. Running the platform without the plugin will not find the
+    // action, and therefore, it will not display the action in the background.
+    // If this action is renamed in the plugin, we must rename it here too.
+    String shortcut = getActionShortcutText("com.google.sherlock.ConfigureRecordingAction");
+    appendAction(painter, IdeBundle.message("empty.text.new.capture.short"), shortcut);
   }
+  // Sherlock: Advertise new capture functionality on empty project page.
 
   protected void appendSearchEverywhere(@NotNull UIUtil.TextPainter painter) {
     Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE).getShortcuts();
