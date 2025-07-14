@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 public interface ProjectViewSettings extends ViewSettings {
   default boolean isShowExcludedFiles() {
-    return true;
+    return false;
   }
 
   default boolean isShowVisibilityIcons() {
@@ -39,7 +39,7 @@ public interface ProjectViewSettings extends ViewSettings {
 
     public Immutable(ProjectViewSettings settings) {
       super(settings);
-      myShowExcludedFiles = settings == null || settings.isShowExcludedFiles();
+      myShowExcludedFiles = settings != null && settings.isShowExcludedFiles();
       myShowVisibilityIcons = settings != null && settings.isShowVisibilityIcons();
       myUseFileNestingRules = settings == null || settings.isUseFileNestingRules();
     }
