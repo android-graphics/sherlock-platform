@@ -1179,9 +1179,11 @@ public final class PluginManagerConfigurable
                 query.contains("/invalid") || query.contains("/bundled")) {
               return;
             }
+            /* Sherlock: Disable search in marketplace.
             myPanel.getEmptyText().appendSecondaryText(IdeBundle.message("plugins.configurable.search.in.marketplace"),
                                                        SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                                                        e -> myTabHeaderComponent.setSelectionWithEvents(MARKETPLACE_TAB));
+            Sherlock: Disable search in marketplace. */
           }
 
           @Override
