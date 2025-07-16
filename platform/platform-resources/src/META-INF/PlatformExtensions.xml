@@ -1053,8 +1053,10 @@
                 icon="AllIcons.Toolwindows.Notifications"
                 factoryClass="com.intellij.notification.impl.NotificationsToolWindowFactory"/>
 
+    <!-- Sherlock: Disable the Meet The New UI tool window.
     <toolWindow id="Meet New UI" anchor="right" secondary="false" icon="com.intellij.icons.AllIcons.Toolwindows.MeetNewUi"
                 factoryClass="com.intellij.ide.ui.experimental.meetNewUi.MeetNewUiToolWindowFactory"/>
+    -->
 
     <applicationService serviceInterface="com.intellij.ide.TypePresentationService"
                         serviceImplementation="com.intellij.ide.TypePresentationServiceImpl"/>
