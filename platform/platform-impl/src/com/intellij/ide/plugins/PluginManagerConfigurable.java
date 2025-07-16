@@ -96,8 +96,10 @@ public final class PluginManagerConfigurable
   public static final Color SEARCH_BG_COLOR = JBColor.namedColor("Plugins.SearchField.background", MAIN_BG_COLOR);
   public static final Color SEARCH_FIELD_BORDER_COLOR = JBColor.namedColor("Plugins.borderColor", JBColor.border());
 
-  private static final int MARKETPLACE_TAB = 0;
-  private static final int INSTALLED_TAB = 1;
+  // Sherlock: Swap indices of tabs to avoid "index out of bounds" error for INSTALLED_TAB.
+  private static final int MARKETPLACE_TAB = 1;
+  private static final int INSTALLED_TAB = 0;
+  // Sherlock: Swap indices of tabs to avoid "index out of bounds" error for INSTALLED_TAB.
 
   public static final int ITEMS_PER_GROUP = 9;
 
@@ -193,7 +195,9 @@ public final class PluginManagerConfigurable
     myUpdateCounter.setVisible(false);
     myUpdateCounterBundled.setVisible(false);
 
+    /* Sherlock: Disable the marketplace tab.
     myTabHeaderComponent.addTab(IdeBundle.message("plugin.manager.tab.marketplace"), null);
+    Sherlock: Disable the marketplace tab. */
     myTabHeaderComponent.addTab(IdeBundle.message("plugin.manager.tab.installed"), myCountIcon);
 
     CustomPluginRepositoryService.getInstance().clearCache();
@@ -224,7 +228,9 @@ public final class PluginManagerConfigurable
 
     UpdateChecker.updateDescriptorsForInstalledPlugins(InstalledPluginsState.getInstance());
 
+    /* Sherlock: Disable marketplace tab.
     createMarketplaceTab();
+    Sherlock: Disable marketplace tab. */
     createInstalledTab();
 
     PluginManagerUsageCollector.sessionStarted();
@@ -363,8 +369,11 @@ public final class PluginManagerConfigurable
   }
 
   private static int getStoredSelectionTab() {
+    /* Sherlock: Always return the INSTALLED tab.
     int value = PropertiesComponent.getInstance().getInt(SELECTION_TAB_KEY, MARKETPLACE_TAB);
     return value < MARKETPLACE_TAB || value > INSTALLED_TAB ? MARKETPLACE_TAB : value;
+    Sherlock: Always return the INSTALLED tab. */
+    return INSTALLED_TAB;
   }
 
   private static void storeSelectionTab(int value) {
@@ -1170,9 +1179,11 @@ public final class PluginManagerConfigurable
                 query.contains("/invalid") || query.contains("/bundled")) {
               return;
             }
+            /* Sherlock: Disable search in marketplace.
             myPanel.getEmptyText().appendSecondaryText(IdeBundle.message("plugins.configurable.search.in.marketplace"),
                                                        SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                                                        e -> myTabHeaderComponent.setSelectionWithEvents(MARKETPLACE_TAB));
+            Sherlock: Disable search in marketplace. */
           }
 
           @Override
@@ -1914,7 +1925,9 @@ public final class PluginManagerConfigurable
       pluginsState.clearShutdownCallback();
     }
 
+    /* Sherlock: Disable marketplace tab.
     myMarketplaceTab.dispose();
+    Sherlock: Disable marketplace tab. */
     myInstalledTab.dispose();
 
     if (myMarketplacePanel != null) {
