@@ -22,7 +22,9 @@ class ProjectViewSharedSettings : PersistentStateComponent<ProjectViewSharedSett
   var sortKey: NodeSortKey = ProjectViewSettings.Immutable.DEFAULT.sortKey
   var showModules: Boolean = true
   var flattenModules: Boolean = false
+  // Sherlock: Default behavior is to not show excluded files.
   var showExcludedFiles: Boolean = false
+  // Sherlock: Default behavior is to not show excluded files.
   var showVisibilityIcons: Boolean = false
   var showLibraryContents: Boolean = true
   var showScratchesAndConsoles: Boolean = true
