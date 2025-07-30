@@ -27,6 +27,20 @@ jobs:
           XML_VERSION=$(python .github/scripts/get_version.py)
           echo "xml_version=$XML_VERSION" >> $GITHUB_OUTPUT
 
+      - name: Define TAG_NAME variable for the release
+        run: |
+          echo "TAG_NAME=v${{ steps.get_xml_version.outputs.xml_version }}" >> $GITHUB_ENV
+
+      - name: Check for existing release
+        id: check_release
+        run: |
+          if gh release view ${{ env.TAG_NAME }} > /dev/null 2>&1; then
+            echo "Release ${{ env.TAG_NAME }} already exists. Failing the workflow."
+            exit 1
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Download Artifacts from Build Workflow
         uses: actions/download-artifact@v4
         with:
@@ -37,7 +51,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ steps.get_xml_version.outputs.xml_version }}
+          tag_name: ${{ env.TAG_NAME }}
           prerelease: true
           files: |
             sherlock-platform-artifacts/*/*
