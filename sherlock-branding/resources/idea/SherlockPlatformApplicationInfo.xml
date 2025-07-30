@@ -2,7 +2,7 @@
   <!-- Original version of IntelliJ Platform was: -->
   <!-- <version major="2025" minor="1.2"/> -->
   <!-- The following is the Sherlock platform version: -->
-  <version major="1" minor="0" patch="5"/>
+  <version major="2" minor="0" patch="0"/>
   <company name="Google" url="http://developer.android.com"/>
   <build number="IC-__BUILD__" date="__BUILD_DATE__" majorReleaseDate="20250416" />
   <logo url="/sherlock_logo.png"/>
