@@ -3,67 +3,32 @@
 
 package com.intellij.platform.ijent.community.impl.nio
 
-import com.intellij.platform.ijent.fs.*
-import com.intellij.util.text.nullize
-import java.io.IOException
-import java.nio.channels.NonWritableChannelException
+import com.intellij.platform.eel.path.EelPath
+import kotlinx.coroutines.runBlocking
 import java.nio.file.*
 
-/**
- * Returns an adapter from [IjentFileSystemApi] to [java.nio.file.FileSystem]. The adapter is automatically registered in advance,
- * also it is automatically closed when it is needed.
- *
- * The function is idempotent and thread-safe.
- */
-fun IjentFileSystemApi.asNioFileSystem(): FileSystem {
-  val nioFsProvider = IjentNioFileSystemProvider.getInstance()
-  val uri = id.uri
-  return try {
-    nioFsProvider.getFileSystem(uri)
-  }
-  catch (ignored: FileSystemNotFoundException) {
-    try {
-      nioFsProvider.newFileSystem(uri, mutableMapOf<String, Any>())
-    }
-    catch (ignored: FileSystemAlreadyExistsException) {
-      nioFsProvider.getFileSystem(uri)
-    }
-  }
-}
-
-@Throws(FileSystemException::class)
-internal fun <T, E : IjentFsError> IjentFsResult<T, E>.getOrThrowFileSystemException(): T =
-  when (this) {
-    is IjentFsResult.Ok -> value
-    is IjentFsResult.Error -> error.throwFileSystemException()
-  }
-
-@Throws(FileSystemException::class)
-internal fun IjentFsError.throwFileSystemException(): Nothing {
-  throw when (this) {
-    is IjentFsError.DoesNotExist -> NoSuchFileException(where.toString(), null, message.nullize())
-    is IjentFsError.NotFile -> FileSystemException(where.toString(), null, "Is a directory")
-    is IjentFsError.PermissionDenied -> AccessDeniedException(where.toString(), null, message.nullize())
-    is IjentFsError.NotDirectory -> NotDirectoryException(where.toString())
-    is IjentFsError.AlreadyDeleted -> NoSuchFileException(where.toString())
-    is IjentFsError.AlreadyExists -> FileAlreadyExistsException(where.toString())
-    is IjentFsError.UnknownFile -> IOException("File is not opened")
-    is IjentOpenedFile.SeekError.InvalidValue -> throw IllegalArgumentException(message)
-    is IjentFsError.Other -> FileSystemException(where.toString(), null, message.nullize())
-    is IjentOpenedFile.Reader.ReadError.InvalidValue -> throw IllegalArgumentException(message)
-    is IjentFileSystemApi.DeleteException.DirNotEmpty -> DirectoryNotEmptyException(where.toString())
-    is IjentOpenedFile.Writer.TruncateException.NegativeOffset,
-    is IjentOpenedFile.Writer.TruncateException.OffsetTooBig -> throw IllegalArgumentException(message)
-    is IjentOpenedFile.Writer.TruncateException.ReadOnlyFs -> throw NonWritableChannelException()
-    is IjentOpenedFile.Writer.WriteError.InvalidValue -> throw IllegalArgumentException(message)
-  }
-}
-
-internal fun Path.toIjentPath(isWindows: Boolean): IjentPath =
+internal fun Path.toEelPath(): EelPath =
   when {
-    this is IjentNioPath -> ijentPath
-
-    isAbsolute -> throw InvalidPathException(toString(), "This path can't be converted to IjentPath")
-
-    else -> IjentPath.Relative.parse(toString()).getOrThrow()
+    this is AbsoluteIjentNioPath -> eelPath
+    else -> throw IllegalArgumentException("$this is not absolute IjentNioPath")
   }
+
+/**
+ * We need to use a plain `runBlocking` here.
+ * The IO call is supposed to be fast (several milliseconds in the worst case),
+ * so the cost of spawning and destroying an additional thread in Dispatchers.Default would be too big.
+ * Also, IJent does not require any outer lock in its implementation, so a deadlock is not possible.
+ *
+ * In addition, we suppress work stealing in this `runBlocking`, as it should return as fast as it can on its own.
+ */
+@Suppress("SSBasedInspection")
+internal fun <T> fsBlocking(body: suspend () -> T): T {
+  return runBlocking(NestedBlockingEventLoop(Thread.currentThread())) {
+    body()
+  }
+}
+
+@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "CANNOT_OVERRIDE_INVISIBLE_MEMBER", "ERROR_SUPPRESSION")
+private class NestedBlockingEventLoop(override val thread: Thread) : kotlinx.coroutines.EventLoopImplBase() {
+  override fun shouldBeProcessedFromContext(): Boolean = true
+}

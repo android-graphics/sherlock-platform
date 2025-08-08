@@ -45,7 +45,7 @@ internal class WatchesManagerState : BaseState() {
 
 @Tag("configuration")
 internal class ConfigurationState @JvmOverloads constructor(name: String? = null,
-                                                   expressions: List<XExpression>? = null) : BaseState() {
+                                                   watches: List<XWatch>? = null) : BaseState() {
   @get:Attribute
   var name by string()
 
@@ -59,9 +59,14 @@ internal class ConfigurationState @JvmOverloads constructor(name: String? = null
     if (name != null) {
       this.name = name
     }
-    if (expressions != null) {
+    if (watches != null) {
       expressionStates.clear()
-      expressions.mapTo(expressionStates) { WatchState(it) }
+      watches.mapTo(expressionStates) { watch ->
+        WatchState(watch.expression).apply {
+          canBePaused = watch.canBePaused
+          isPaused = watch.isPaused
+        }
+      }
     }
   }
 }
@@ -83,13 +88,21 @@ internal class InlineWatchState @JvmOverloads  constructor(expression: XExpressi
   }
 }
 
+@ApiStatus.Internal
 @Tag("watch")
 class WatchState : XExpressionState {
   constructor() : super()
 
   constructor(expression: XExpression) : super(expression)
+
+  @get:Attribute
+  var canBePaused: Boolean = true
+
+  @get:Attribute
+  var isPaused: Boolean = false
 }
 
+@ApiStatus.Internal
 @Tag("pin-to-top-manager")
 class PinToTopManagerState : BaseState() {
     @get:XCollection(propertyElementName = "pinned-members")

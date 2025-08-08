@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -28,7 +27,6 @@ import java.util.List;
 public abstract class FileEditorManager {
   public static final Key<Boolean> USE_CURRENT_WINDOW = Key.create("OpenFile.searchForOpen");
 
-  @RequiresBlockingContext
   public static FileEditorManager getInstance(@NotNull Project project) {
     return project.getService(FileEditorManager.class);
   }
@@ -103,6 +101,7 @@ public abstract class FileEditorManager {
    * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
    */
   @ApiStatus.Experimental
+  @RequiresEdt
   public Editor @NotNull [] getSelectedTextEditorWithRemotes() {
     Editor editor = getSelectedTextEditor();
     return editor != null ? new Editor[]{editor} : Editor.EMPTY_ARRAY;

@@ -1,5 +1,6 @@
 package com.jetbrains.python.sdk;
 
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -15,12 +16,16 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonRuntimeService;
@@ -29,6 +34,7 @@ import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.module.PyModuleService;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader;
+import com.jetbrains.python.venvReader.VirtualEnvReader;
 import org.jetbrains.annotations.*;
 
 import java.io.File;
@@ -37,8 +43,9 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static com.intellij.ide.plugins.PluginManagerCore.ULTIMATE_PLUGIN_ID;
 
 /**
  * Utility methods for Python {@link Sdk} based on the project model and the file system.
@@ -48,13 +55,6 @@ import java.util.stream.Collectors;
  * @see PySdkUtil for run-time Python SDK utils
  */
 public final class PythonSdkUtil {
-  /**
-   * Note that <i>\w+.*</i> pattern is not sufficient because we need also the
-   * hyphen sign (<i>-</i>) for <i>docker-compose:</i> scheme.
-   * For WSL we use <code>\\wsl.local\</code> or <code>\\wsl$\</code>.
-   * As with a new workspace model paths changed on save, hence we need to support <code>//wsl</code> as well
-   */
-  private static final Pattern CUSTOM_PYTHON_SDK_HOME_PATH_PATTERN = Pattern.compile("^([-a-zA-Z_0-9]{2,}:|\\\\\\\\|//wsl).+");
 
   public static final String REMOTE_SOURCES_DIR_NAME = "remote_sources";
   /**
@@ -66,37 +66,28 @@ public final class PythonSdkUtil {
    */
   public static final OrderRootType BUILTIN_ROOT_TYPE = OrderRootType.CLASSES;
   static final String[] WINDOWS_EXECUTABLE_SUFFIXES = {"cmd", "exe", "bat", "com"};
-  private static final String[] DIRS_WITH_BINARY = {"", "bin", "Scripts", "net45"};
-  private static final String[] UNIX_BINARY_NAMES = {"jython", "pypy", "python", "python3"};
-  private static final String[] WIN_BINARY_NAMES = {"jython.bat", "ipy.exe", "pypy.exe", "python.exe", "python3.exe"};
   private static final Predicate<Sdk> REMOTE_SDK_PREDICATE = PythonSdkUtil::isRemote;
 
   private static final Key<PySkeletonHeader> CACHED_SKELETON_HEADER = Key.create("CACHED_SKELETON_HEADER");
 
   public static boolean isPythonSdk(@NotNull Sdk sdk) {
-    return PyNames.PYTHON_SDK_ID_NAME.equals(sdk.getSdkType().getName());
+    if (!PyNames.PYTHON_SDK_ID_NAME.equals(sdk.getSdkType().getName())) {
+      return false;
+    }
+
+    // PY-79923: Should explicitly filter sdks created while pro was active
+    if (PlatformUtils.isPyCharm() && !PlatformUtils.isDataSpell()) {
+      return !isRemote(sdk) || !PluginManagerCore.isDisabled(ULTIMATE_PLUGIN_ID);
+    }
+
+    return true;
   }
 
-  @Unmodifiable
-  public static List<Sdk> getAllSdks() {
+  public static @Unmodifiable List<Sdk> getAllSdks() {
     return ContainerUtil.filter(ProjectJdkTable.getInstance().getAllJdks(), PythonSdkUtil::isPythonSdk);
   }
 
-  /**
-   * Returns whether provided Python interpreter path corresponds to custom
-   * Python SDK.
-   *
-   * @param homePath SDK home path
-   * @return whether provided Python interpreter path corresponds to custom Python SDK
-   */
-  @Contract(pure = true)
-  @ApiStatus.Internal
-  public static boolean isCustomPythonSdkHomePath(@NotNull String homePath) {
-    return CUSTOM_PYTHON_SDK_HOME_PATH_PATTERN.matcher(homePath).matches();
-  }
-
-  @Nullable
-  private static PySkeletonHeader readSkeletonHeader(@NotNull VirtualFile file, @NotNull Sdk pythonSdk) {
+  private static @Nullable PySkeletonHeader readSkeletonHeader(@NotNull VirtualFile file, @NotNull Sdk pythonSdk) {
     final VirtualFile skeletonsDir = findSkeletonsDir(pythonSdk);
     if (skeletonsDir != null && VfsUtilCore.isAncestor(skeletonsDir, file, false)) {
       PySkeletonHeader skeletonHeader = file.getUserData(CACHED_SKELETON_HEADER);
@@ -163,8 +154,7 @@ public final class PythonSdkUtil {
     return false;
   }
 
-  @Nullable
-  public static Sdk findPythonSdk(@Nullable Module module) {
+  public static @Nullable Sdk findPythonSdk(@Nullable Module module) {
     if (module == null || module.isDisposed()) return null;
     final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
     if (sdk != null && isPythonSdk(sdk)) return sdk;
@@ -192,12 +182,12 @@ public final class PythonSdkUtil {
     }
   }
 
-  public static boolean isFileInSkeletons(@NotNull final VirtualFile virtualFile, @NotNull Sdk sdk) {
+  public static boolean isFileInSkeletons(final @NotNull VirtualFile virtualFile, @NotNull Sdk sdk) {
     final VirtualFile skeletonsDir = findSkeletonsDir(sdk);
     return skeletonsDir != null && VfsUtilCore.isAncestor(skeletonsDir, virtualFile, false);
   }
 
-  public static boolean isElementInSkeletons(@NotNull final PsiElement element) {
+  public static boolean isElementInSkeletons(final @NotNull PsiElement element) {
     final PsiFile file = element.getContainingFile();
     if (file != null) {
       final VirtualFile virtualFile = file.getVirtualFile();
@@ -214,30 +204,25 @@ public final class PythonSdkUtil {
   /**
    * Returns skeletons location on the local machine. Independent of SDK credentials type (e.g. ssh, Vagrant, Docker or else).
    */
-  @NotNull
-  public static String getSkeletonsPath(String basePath, String sdkHome) {
+  public static @NotNull String getSkeletonsPath(String basePath, String sdkHome) {
     String sep = File.separator;
     return getSkeletonsRootPath(basePath) + sep + FileUtil.toSystemIndependentName(sdkHome).hashCode() + sep;
   }
 
-  @Nullable
-  public static String getSkeletonsPath(@NotNull Sdk sdk) {
+  public static @Nullable String getSkeletonsPath(@NotNull Sdk sdk) {
     String path = sdk.getHomePath();
     return path != null ? getSkeletonsPath(PathManager.getSystemPath(), path) : null;
   }
 
-  @NotNull
-  public static String getSkeletonsRootPath(String basePath) {
+  public static @NotNull String getSkeletonsRootPath(String basePath) {
     return basePath + File.separator + SKELETON_DIR_NAME;
   }
 
-  @Nullable
-  public static VirtualFile findSkeletonsDir(@NotNull final Sdk sdk) {
+  public static @Nullable VirtualFile findSkeletonsDir(final @NotNull Sdk sdk) {
     return findLibraryDir(sdk, SKELETON_DIR_NAME, BUILTIN_ROOT_TYPE);
   }
 
-  @Nullable
-  public static VirtualFile findAnyRemoteLibrary(@NotNull final Sdk sdk) {
+  public static @Nullable VirtualFile findAnyRemoteLibrary(final @NotNull Sdk sdk) {
     return findLibraryDir(sdk, REMOTE_SOURCES_DIR_NAME, OrderRootType.CLASSES);
   }
 
@@ -251,8 +236,7 @@ public final class PythonSdkUtil {
     return null;
   }
 
-  @NotNull
-  private static String mapToRemote(@NotNull String localRoot, @NotNull Sdk sdk) {
+  private static @NotNull String mapToRemote(@NotNull String localRoot, @NotNull Sdk sdk) {
     return PythonRuntimeService.getInstance().mapToRemote(localRoot, sdk);
   }
 
@@ -316,67 +300,25 @@ public final class PythonSdkUtil {
     return getAllSdks().stream().filter(REMOTE_SDK_PREDICATE.negate()).collect(Collectors.toList());
   }
 
-  @Nullable
-  public static String getPythonExecutable(@NotNull String rootPath) {
-    final File rootFile = new File(rootPath);
-    if (rootFile.isFile()) {
-      return rootFile.getAbsolutePath();
-    }
-    for (String dir : DIRS_WITH_BINARY) {
-      final File subDir;
-      if (StringUtil.isEmpty(dir)) {
-        subDir = rootFile;
-      }
-      else {
-        subDir = new File(rootFile, dir);
-      }
-      if (!subDir.isDirectory()) {
-        continue;
-      }
-      for (String binaryName : getBinaryNames()) {
-        final File executable = new File(subDir, binaryName);
-        if (executable.isFile()) {
-          return executable.getAbsolutePath();
-        }
-      }
-    }
-    return null;
+  // It is only here for external plugins
+  @RequiresBackgroundThread(generateAssertion = false)
+  public static @Nullable String getPythonExecutable(@NotNull String rootPath) {
+    var python = VirtualEnvReader.getInstance().findPythonInPythonRoot(Path.of(rootPath));
+    return (python != null) ? python.toString() : null;
   }
 
-  @Nullable
-  public static String getExecutablePath(@NotNull final String homeDirectory, @NotNull String name) {
-    File binPath = new File(homeDirectory);
-    File binDir = binPath.getParentFile();
-    if (binDir == null) return null;
-    VirtualFileSystem localVfs = StandardFileSystems.local();
-    File runner = new File(binDir, name);
-    if (runner.exists()) return localVfs.extractPresentableUrl(runner.getPath());
-    runner = new File(new File(binDir, "Scripts"), name);
-    if (runner.exists()) return localVfs.extractPresentableUrl(runner.getPath());
-    runner = new File(new File(binDir.getParentFile(), "Scripts"), name);
-    if (runner.exists()) return localVfs.extractPresentableUrl(runner.getPath());
-    runner = new File(new File(binDir.getParentFile(), "local"), name);
-    if (runner.exists()) return localVfs.extractPresentableUrl(runner.getPath());
-    runner = new File(new File(new File(binDir.getParentFile(), "local"), "bin"), name);
-    if (runner.exists()) return localVfs.extractPresentableUrl(runner.getPath());
-
-    // if interpreter is a symlink
-    if (FileSystemUtil.isSymLink(homeDirectory)) {
-      String resolvedPath = FileSystemUtil.resolveSymLink(homeDirectory);
-      if (resolvedPath != null) {
-        return getExecutablePath(resolvedPath, name);
-      }
-    }
-    // Search in standard unix path
-    runner = new File(new File("/usr", "bin"), name);
-    if (runner.exists()) return localVfs.extractPresentableUrl(runner.getPath());
-    runner = new File(new File(new File("/usr", "local"), "bin"), name);
-    if (runner.exists()) return localVfs.extractPresentableUrl(runner.getPath());
-    return null;
+  /**
+   * @deprecated use {@link #getExecutablePath(Path, String)}
+   */
+  @Deprecated
+  @RequiresBackgroundThread(generateAssertion = false)
+  public static @Nullable String getExecutablePath(final @NotNull String homeDirectory, @NotNull String name) {
+    Path path = getExecutablePath(Path.of(homeDirectory), name);
+    return (path != null) ? path.toString() : null;
   }
 
-  @Nullable
-  public static Path getExecutablePath(@NotNull Path homeDirectory, @NotNull String name) {
+  @RequiresBackgroundThread(generateAssertion = false)
+  public static @Nullable Path getExecutablePath(@NotNull Path homeDirectory, @NotNull String name) {
     Path binDir = homeDirectory.getParent();
     if (binDir == null) return null;
     Path runner = binDir.resolve(name);
@@ -413,8 +355,7 @@ public final class PythonSdkUtil {
    * @param binaryPath must point to a Python interpreter
    * @return if the surroundings look like a virtualenv installation, its root is returned (normally the grandparent of binaryPath).
    */
-  @Nullable
-  public static File getVirtualEnvRoot(@NotNull final String binaryPath) {
+  public static @Nullable File getVirtualEnvRoot(final @NotNull String binaryPath) {
     final File bin = new File(binaryPath).getParentFile();
     if (bin != null) {
       final String rootPath = bin.getParent();
@@ -444,8 +385,7 @@ public final class PythonSdkUtil {
    * @param name   name of the executable without suffix
    * @return File representing the executable, or null.
    */
-  @Nullable
-  public static File findExecutableFile(File parent, String name) {
+  public static @Nullable File findExecutableFile(File parent, String name) {
     if (SystemInfo.isWindows) {
       for (String suffix : WINDOWS_EXECUTABLE_SUFFIXES) {
         File file = new File(parent, name + "." + suffix);
@@ -459,22 +399,12 @@ public final class PythonSdkUtil {
     return null;
   }
 
-  private static String[] getBinaryNames() {
-    if (SystemInfo.isUnix) {
-      return UNIX_BINARY_NAMES;
-    }
-    else {
-      return WIN_BINARY_NAMES;
-    }
-  }
 
-  @Nullable
-  public static Sdk findSdkByKey(@NotNull String key) {
+  public static @Nullable Sdk findSdkByKey(@NotNull String key) {
     return ProjectJdkTable.getInstance().findJdk(key);
   }
 
-  @Nullable
-  public static Sdk findPythonSdk(@NotNull final PsiElement element) {
+  public static @Nullable Sdk findPythonSdk(final @NotNull PsiElement element) {
     return findPythonSdk(ModuleUtilCore.findModuleForPsiElement(element));
   }
 
@@ -482,8 +412,7 @@ public final class PythonSdkUtil {
    * @deprecated path is not unique, use {@link #findSdkByKey(String)} instead
    */
   @Deprecated
-  @Nullable
-  public static Sdk findSdkByPath(@Nullable String path) {
+  public static @Nullable Sdk findSdkByPath(@Nullable String path) {
     if (path != null) {
       return findSdkByPath(getAllSdks(), path);
     }
@@ -495,8 +424,7 @@ public final class PythonSdkUtil {
    * @deprecated path is not unique, use {@link #findSdkByKey(String)} instead
    */
   @Deprecated
-  @Nullable
-  public static Sdk findSdkByPath(List<? extends Sdk> sdkList, @Nullable String path) {
+  public static @Nullable Sdk findSdkByPath(List<? extends Sdk> sdkList, @Nullable String path) {
     if (path != null) {
       for (Sdk sdk : sdkList) {
         if (sdk != null && FileUtil.pathsEqual(path, sdk.getHomePath())) {
@@ -516,8 +444,7 @@ public final class PythonSdkUtil {
    * Also, on some systems, first of all in system distributions of Python on Linux, there might be no
    * "site-packages" at all, and this method returns {@code null} accordingly in this case.
    */
-  @Nullable
-  public static VirtualFile getSitePackagesDirectory(@NotNull Sdk pythonSdk) {
+  public static @Nullable VirtualFile getSitePackagesDirectory(@NotNull Sdk pythonSdk) {
     final VirtualFile libDir;
     if (isVirtualEnv(pythonSdk)) {
       libDir = PySearchUtilBase.findVirtualEnvLibDir(pythonSdk);
@@ -538,8 +465,7 @@ public final class PythonSdkUtil {
     return path != null && getVirtualEnvRoot(path) != null;
   }
 
-  @Nullable
-  public static VirtualFile getCondaDirectory(@NotNull Sdk sdk) {
+  public static @Nullable VirtualFile getCondaDirectory(@NotNull Sdk sdk) {
     final VirtualFile homeDirectory = sdk.getHomeDirectory();
     if (homeDirectory == null) return null;
     if (SystemInfo.isWindows) return homeDirectory.getParent();
@@ -596,9 +522,8 @@ public final class PythonSdkUtil {
     return parent.findChild("envs") != null;
   }
 
-  @Nullable
-  public static VirtualFile findCondaMeta(@Nullable String sdkPath) {
-    if (sdkPath == null || isCustomPythonSdkHomePath(sdkPath)) {
+  public static @Nullable VirtualFile findCondaMeta(@Nullable String sdkPath) {
+    if (sdkPath == null || CustomSdkHomePattern.isCustomPythonSdkHomePath(sdkPath)) {
       return null;
     }
     final VirtualFile homeDirectory = StandardFileSystems.local().findFileByPath(sdkPath);

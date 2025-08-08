@@ -18,6 +18,11 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
   public void testBadarglist() {
     doTest();
   }
+
+  // PY-73886
+  public void testBadarglistMultiFile() {
+    doMultiFileTest();
+  }
   
   public void testKwargsMapToNothing() {
     doTest();
@@ -416,6 +421,7 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
       () -> doTestByText("""
                            class MetaFoo(type):
                              def __call__(cls, p3, p4):
+                               # type: (...) -> object
                                print(f'MetaFoo.__call__: {cls}, {p3}, {p4}')
 
                            class Foo(metaclass=MetaFoo):
@@ -466,6 +472,16 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
   // PY-49946
   public void testInitializingDataclassKwOnlyOnField() {
     runWithLanguageLevel(LanguageLevel.PYTHON310, this::doTest);
+  }
+
+  // PY-78250
+  public void testInitializingGenericDataclassWithDefaultType() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, this::doTest);
+  }
+
+  // PY-78250
+  public void testInitializingGenericDataclassWithDefaultTypeNoArgument() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, this::doTest);
   }
 
   // PY-73102

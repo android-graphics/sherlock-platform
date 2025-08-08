@@ -1,6 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.core;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
+import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.mock.*;
 import com.intellij.openapi.Disposable;
@@ -22,6 +24,7 @@ import com.intellij.psi.search.ProjectScopeBuilder;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.CachedValuesManagerImpl;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.PicoContainer;
 
@@ -47,6 +50,8 @@ public class CoreProjectEnvironment {
     project.registerService(FileIndexFacade.class, myFileIndexFacade);
     project.registerService(ResolveCache.class, new ResolveCache(project));
 
+    project.registerService(CodeInsightContextManager.class, new CodeInsightContextManagerImpl(project, project.getCoroutineScope()));
+
     myPsiManager = new PsiManagerImpl(project);
     project.registerService(PsiManager.class, myPsiManager);
     project.registerService(SmartPointerManager.class, SmartPointerManagerImpl.class);
@@ -65,6 +70,7 @@ public class CoreProjectEnvironment {
     project.registerService(InjectedLanguageManager.class, new CoreInjectedLanguageManager());
   }
 
+  @Internal
   protected @NotNull MockProject createProject(@NotNull PicoContainer parent, @NotNull Disposable parentDisposable) {
     return new MockProject(parent, parentDisposable);
   }

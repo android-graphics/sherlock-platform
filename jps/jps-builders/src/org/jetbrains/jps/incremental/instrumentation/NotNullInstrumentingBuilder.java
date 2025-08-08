@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.instrumentation;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
@@ -6,6 +6,7 @@ import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -14,10 +15,12 @@ import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.CompiledClass;
+import org.jetbrains.jps.incremental.JvmClassFileInstrumenter;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
+import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 import org.jetbrains.org.objectweb.asm.Opcodes;
@@ -25,12 +28,29 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 import java.io.File;
 import java.util.Collection;
 
-public final class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder{
+@ApiStatus.Internal
+public final class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder implements JvmClassFileInstrumenter {
   private static final Logger LOG = Logger.getInstance(NotNullInstrumentingBuilder.class);
   private boolean myIsEnabled;
   private String[] myNotNulls;
 
   public NotNullInstrumentingBuilder() {
+  }
+
+  @Override
+  public @NotNull String getId() {
+    return "not-null-assertions";
+  }
+
+  @Override
+  public boolean isEnabled(@NotNull ProjectDescriptor projectDescriptor, @NotNull JpsModule module) {
+    JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(projectDescriptor.getProject());
+    return config.isAddNotNullAssertions();
+  }
+
+  @Override
+  public int getVersion() {
+    return 0;
   }
 
   @Override

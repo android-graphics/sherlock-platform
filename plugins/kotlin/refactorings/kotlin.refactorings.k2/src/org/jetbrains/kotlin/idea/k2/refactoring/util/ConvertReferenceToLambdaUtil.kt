@@ -9,8 +9,8 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -18,12 +18,7 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.k2.refactoring.moveFunctionLiteralOutsideParenthesesIfPossible
 import org.jetbrains.kotlin.idea.refactoring.getLastLambdaExpression
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtValueArgument
-import org.jetbrains.kotlin.psi.createExpressionByPattern
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.types.Variance
 
@@ -41,7 +36,7 @@ object ConvertReferenceToLambdaUtil {
         val matchingParameterIsExtension = matchingParameterType is KaFunctionType && matchingParameterType.receiverType != null
 
         val receiverExpression = element.receiverExpression
-        val receiverType = element.getReceiverKtType()
+        val receiverType = element.receiverType
 
         val symbol = element.callableReference.mainReference.resolveToSymbol() ?: return null
 
@@ -53,14 +48,13 @@ object ConvertReferenceToLambdaUtil {
         val acceptsReceiverAsParameter = receiverSymbol is KaClassSymbol &&
                 !matchingParameterIsExtension &&
                 (callableSymbol as? KaNamedFunctionSymbol)?.isStatic != true && !receiverSymbol.classKind.isObject &&
-                (callableSymbol?.containingDeclaration != null || callableSymbol?.isExtension == true || symbol is KaNamedClassOrObjectSymbol && symbol.isInner)
+                (callableSymbol?.containingDeclaration != null || callableSymbol?.isExtension == true || symbol is KaNamedClassSymbol && symbol.isInner)
 
         val parameterNamesAndTypes =
             if (callableSymbol is KaFunctionSymbol) {
                 val paramNameAndTypes = callableSymbol.valueParameters.map { it.name.asString() to it.returnType }
                 if (matchingParameterType != null) {
-                    val parameterSize =
-                        (matchingParameterType as KaClassType).typeArguments.size - (if (acceptsReceiverAsParameter) 2 else 1)
+                    val parameterSize = (matchingParameterType.lowerBoundIfFlexible() as KaClassType).typeArguments.size - (if (acceptsReceiverAsParameter) 2 else 1)
                     if (parameterSize >= 0) paramNameAndTypes.take(parameterSize) else paramNameAndTypes
                 } else {
                     paramNameAndTypes
@@ -105,7 +99,7 @@ object ConvertReferenceToLambdaUtil {
 
             psiFactory.createLambdaExpression(parameters = "", body = body)
         } else {
-            val isExtension = matchingParameterIsExtension && resolvedCall?.symbol?.isExtension == true
+            val isExtension = matchingParameterIsExtension && resolvedCall.symbol.isExtension == true
             val (params, args) = if (isExtension) {
                 val thisArgument = if (parameterNamesAndTypes.isNotEmpty()) listOf("this") else emptyList()
                 lambdaParameterNamesAndTypes.drop(1) to (thisArgument + parameterNamesAndTypes.drop(1).map { it.first })

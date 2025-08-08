@@ -19,16 +19,16 @@ import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.EnumComboBoxModel
-import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.application
 import org.intellij.plugins.markdown.MarkdownBundle
@@ -73,6 +73,8 @@ internal class MarkdownSettingsConfigurable(private val project: Project): Bound
 
   override fun createPanel(): DialogPanel {
     return panel {
+      useNewComboBoxRenderer()
+
       showPreviewUnavailableWarningIfNeeded()
       previewDependentOptionsBlock {
         if (MarkdownHtmlPanelProvider.getAvailableProviders().size > 1) {
@@ -81,13 +83,13 @@ internal class MarkdownSettingsConfigurable(private val project: Project): Bound
         row(MarkdownBundle.message("markdown.settings.default.layout")) {
           comboBox(
             model = EnumComboBoxModel(TextEditorWithPreview.Layout::class.java),
-            renderer = SimpleListCellRenderer.create("") { it?.getName() ?: "" }
+            renderer = textListCellRenderer("") { it.getName() }
           ).bindItem(settings::splitLayout.toNullableProperty()).widthGroup(comboBoxWidthGroup)
         }
         row(MarkdownBundle.message("markdown.settings.preview.layout.label")) {
           comboBox(
             model = DefaultComboBoxModel(arrayOf(false, true)),
-            renderer = SimpleListCellRenderer.create("", ::presentSplitLayout)
+            renderer = textListCellRenderer("", ::presentSplitLayout)
           ).bindItem(settings::isVerticalSplit.toNullableProperty()).widthGroup(comboBoxWidthGroup)
         }.bottomGap(BottomGap.SMALL)
         row(label = MarkdownBundle.message("markdown.settings.preview.font.size")) {
@@ -159,15 +161,19 @@ internal class MarkdownSettingsConfigurable(private val project: Project): Bound
     }
   }
 
-  private fun Row.previewFontSizeField(): Cell<JBTextField> {
-    return intTextField(range = 0..300).bindIntText(
+  private fun Row.previewFontSizeField(): Cell<ComboBox<Int>> {
+    return comboBox(fontSizeOptions).bindItem(
       getter = { service<MarkdownPreviewSettings>().state.fontSize },
       setter = { value ->
         service<MarkdownPreviewSettings>().update { settings ->
-          settings.state.fontSize = value
+          if (value != null) {
+            settings.state.fontSize = value
+          }
         }
       }
-    )
+    ).applyToComponent {
+      isEditable = true
+    }
   }
 
   private fun validateCustomStylesheetPath(builder: ValidationInfoBuilder, textField: TextFieldWithBrowseButton): ValidationInfo? {
@@ -367,12 +373,13 @@ internal class MarkdownSettingsConfigurable(private val project: Project): Bound
     const val ID = "Settings.Markdown"
     private const val comboBoxWidthGroup = "Markdown.ComboBoxWidthGroup"
 
-    private fun presentSplitLayout(splitLayout: Boolean?): @Nls String {
+    private fun presentSplitLayout(splitLayout: Boolean): @Nls String {
       return when (splitLayout) {
         false -> MarkdownBundle.message("markdown.settings.preview.layout.horizontal")
         true -> MarkdownBundle.message("markdown.settings.preview.layout.vertical")
-        else -> ""
       }
     }
+
+    val fontSizeOptions = listOf(8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72)
   }
 }

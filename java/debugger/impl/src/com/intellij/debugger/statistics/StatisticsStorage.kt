@@ -2,7 +2,9 @@
 package com.intellij.debugger.statistics
 
 import com.intellij.debugger.engine.DebugProcess
+import com.intellij.debugger.engine.SteppingAction
 import com.intellij.debugger.ui.breakpoints.Breakpoint
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.Key
 import java.util.concurrent.ConcurrentHashMap
 
@@ -10,6 +12,7 @@ private val KEY: Key<StatisticsStorage> = Key.create("DEBUGGER_STATISTICS_STORAG
 
 class StatisticsStorage {
   private val data = ConcurrentHashMap<StatisticElement, Long>()
+  private val timeBucketCounts = IntArray(DebuggerStatistics.bucketUpperLimits.size)
 
   private fun append(key: StatisticElement, timeMs: Long) = data.merge(key, timeMs, Long::plus)
   private fun remove(key: StatisticElement) = data.remove(key)
@@ -62,6 +65,25 @@ class StatisticsStorage {
 
     @JvmStatic
     fun getSteppingStatisticOrNull(token: Any?): SteppingStatistic? = token as? SteppingStatistic
+
+    @JvmStatic
+    fun addCommandTime(debugProcess: DebugProcess, timeMs: Long) {
+      val storage = getStorage(debugProcess)
+      val bucketIndex = DebuggerStatistics.bucketUpperLimits.indexOfFirst { timeMs <= it }
+      if (bucketIndex < 0) {
+        fileLogger().error("Unexpected command time $timeMs, found no bucket for it: ${DebuggerStatistics.bucketUpperLimits}")
+        return
+      }
+      storage.timeBucketCounts[bucketIndex]++
+    }
+
+    @Synchronized
+    internal fun collectCommandsPerformance(debugProcess: DebugProcess): IntArray {
+      val storage = getStorage(debugProcess)
+      return storage.timeBucketCounts.copyOf().also {
+        storage.timeBucketCounts.fill(0)
+      }
+    }
   }
 }
 
@@ -72,10 +94,6 @@ data class BreakpointInstallStatistic(val breakpoint: Breakpoint<*>) : Statistic
  * Do not override equals/hashCode here to make sure that different stepping requests are collected separately.
  */
 class SteppingStatistic(val action: SteppingAction, val engine: Engine) : StatisticElement
-
-enum class SteppingAction {
-  STEP_INTO, STEP_OUT, STEP_OVER
-}
 
 enum class Engine {
   JAVA, KOTLIN

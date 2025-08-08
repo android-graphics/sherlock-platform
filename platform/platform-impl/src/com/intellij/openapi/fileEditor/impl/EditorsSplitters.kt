@@ -69,6 +69,7 @@ import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.IconUtil
+import com.intellij.util.PlatformUtils
 import com.intellij.util.computeFileIconImpl
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EmptyIcon
@@ -78,11 +79,13 @@ import com.intellij.util.xmlb.jsonDomToXml
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
+import java.awt.event.AWTEventListener
 import java.awt.event.FocusEvent
 import java.awt.event.KeyEvent
 import java.beans.PropertyChangeListener
@@ -135,6 +138,8 @@ open class EditorsSplitters internal constructor(
 
   internal var lastFocusGainedTime: Long = 0L
     private set
+
+  private var previousFocusGainedTime: Long = 0L
 
   private val windows = CopyOnWriteArraySet<EditorWindow>()
 
@@ -283,6 +288,11 @@ open class EditorsSplitters internal constructor(
       removeAll()
     }
 
+    if (PlatformUtils.isJetBrainsClient()) {
+      // Don't restore editors from local files on JetBrains Client, editors are opened from the backend
+      return
+    }
+
     UiBuilder(this, isLazyComposite = false).process(state = state, requestFocus = requestFocus) { add(it, BorderLayout.CENTER) }
     withContext(Dispatchers.EDT) {
       validate()
@@ -302,6 +312,11 @@ open class EditorsSplitters internal constructor(
 
   internal suspend fun createEditors(state: EditorSplitterState) {
     manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
+    if (PlatformUtils.isJetBrainsClient()) {
+      // Don't reopen editors from local files on JetBrains Client, it is done from the backend
+      return
+    }
+
     UiBuilder(splitters = this, isLazyComposite = System.getProperty("idea.delayed.editor.composite", "true").toBoolean())
       .process(
         state = state,
@@ -359,6 +374,7 @@ open class EditorsSplitters internal constructor(
     _currentWindowFlow.value = window
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use openFilesAsync(Boolean) instead", ReplaceWith("openFilesAsync(true)"))
   fun openFilesAsync(): Job = openFilesAsync(requestFocus = true)
 
@@ -707,28 +723,70 @@ open class EditorsSplitters internal constructor(
     get() = false
 
   private inner class MyFocusWatcher : FocusWatcher() {
+    init {
+      val focusRequestListener = object : AWTEventListener {
+        override fun eventDispatched(event: AWTEvent) {
+          if (event.getID() == FocusEvent.FOCUS_GAINED) {
+            rollbackFocusGainedIfNecessary(event.source as Component)
+          }
+        }
+      }
+      Toolkit.getDefaultToolkit().addAWTEventListener(focusRequestListener, AWTEvent.FOCUS_EVENT_MASK)
+      coroutineScope.coroutineContext.job.invokeOnCompletion {
+        Toolkit.getDefaultToolkit().removeAWTEventListener(focusRequestListener)
+      }
+    }
+
     override fun focusedComponentChanged(component: Component?, cause: AWTEvent?) {
       if (component == null || cause !is FocusEvent || cause.getID() != FocusEvent.FOCUS_GAINED) {
         return
       }
 
       if (cause.cause == FocusEvent.Cause.ACTIVATION) {
-        // Window activation mistakenly puts focus to editor as 'last focused component in this window'
-        // even if you activate the window by clicking some other place (e.g., Project View)
-        SwingUtilities.invokeLater {
-          if (component.isFocusOwner) {
-            lastFocusGainedTime = System.currentTimeMillis()
-          }
-        }
+        // The window has just become active. Focus may immediately move away if activation was caused by a click outside the editor.
+        previousFocusGainedTime = lastFocusGainedTime
+        lastFocusGainedTime = System.currentTimeMillis()
       }
       else {
         lastFocusGainedTime = System.currentTimeMillis()
+        previousFocusGainedTime = 0L
       }
 
       // we must update the current selected editor composite because if an editor is split, no events like "tab changed"
       ComponentUtil.getParentOfType(EditorWindowHolder::class.java, component)?.editorWindow?.let {
         setCurrentWindow(it)
       }
+    }
+
+    /**
+      Rolls back the last focus gained time if focus change was temporary
+
+      Fixes the following situation:
+
+      1. The user clicks an inactive IDE window.
+      2. The window gets focus, the last focused editor becomes focused.
+      3. The component that the user clicked becomes focused immediately after that.
+
+      In this case, the IDE should behave as if the editor never received this last focus to begin with.
+      However, it's impossible to detect when the editor gains focus.
+      At that point, the mouse click may not even be in the event queue yet,
+      and it's anyone's guess whether the window was activated by a mouse click or, say, with Alt+Tab.
+      Therefore, we update the editor's last focused time anyway, but then roll back if this situation is detected.
+    */
+    private fun rollbackFocusGainedIfNecessary(newFocusedComponent: Component) {
+      if (previousFocusGainedTime == 0L) return // Nothing to roll back.
+      if (ComponentUtil.getParentOfType(EditorsSplitters::class.java, newFocusedComponent) == this@EditorsSplitters) {
+        // The clicked component is a part of these editor splitters, the user actually requested to focus this specific component.
+        previousFocusGainedTime = 0L
+        return
+      }
+      val ourWindow = ComponentUtil.getWindow(this@EditorsSplitters)
+      if (ourWindow !is IdeFrameImpl) return // This workaround is only for the main IDE window.
+      if (!ourWindow.wasJustActivatedByClick) return
+      val newFocusedComponentWindow = ComponentUtil.getWindow(newFocusedComponent)
+      if (ourWindow != newFocusedComponentWindow) return // We don't care about focus changes in other windows.
+      lastFocusGainedTime = previousFocusGainedTime
+      previousFocusGainedTime = 0L
     }
   }
 
@@ -1033,6 +1091,9 @@ private fun computeFileEntry(
           }
           catch (ignore: FileTooBigException) {
           }
+          catch (e: Throwable) {
+            LOG.error(e)
+          }
         }
       }
     }
@@ -1281,7 +1342,8 @@ private fun getSplittersToActivate(activeWindow: Window, project: Project?): Edi
   return getSplittersForProject(activeWindow, project)
 }
 
-internal fun createSplitter(isVertical: Boolean, proportion: Float, minProp: Float, maxProp: Float): Splitter {
+@Internal
+fun createSplitter(isVertical: Boolean, proportion: Float, minProp: Float, maxProp: Float): Splitter {
   return object : Splitter(isVertical, proportion, minProp, maxProp) {
     init {
       setDividerWidth(1)

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -9,6 +10,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -16,7 +19,7 @@ import java.util.function.Function;
 public class CreateSealedClassMissingSwitchBranchesFix extends CreateMissingSwitchBranchesFix {
   private final @NotNull List<String> myAllNames;
 
-  public CreateSealedClassMissingSwitchBranchesFix(@NotNull PsiSwitchBlock block, Set<String> names, @NotNull List<String> allNames) {
+  public CreateSealedClassMissingSwitchBranchesFix(@NotNull PsiSwitchBlock block, @Unmodifiable Set<String> names, @NotNull List<String> allNames) {
     super(block, names);
     myAllNames = allNames;
   }
@@ -27,7 +30,7 @@ public class CreateSealedClassMissingSwitchBranchesFix extends CreateMissingSwit
   }
 
   @Override
-  protected @NotNull List<String> getAllNames(@NotNull PsiClass ignored, @NotNull PsiSwitchBlock switchBlock) {
+  protected @Unmodifiable @NotNull List<String> getAllNames(@NotNull PsiClass ignored, @NotNull PsiSwitchBlock switchBlock) {
     Map<String, String> mapToConvert = getConversionNewTypeWithGeneric(switchBlock);
     return ContainerUtil.map(myAllNames, name -> mapToConvert.getOrDefault(name, name));
   }
@@ -77,17 +80,23 @@ public class CreateSealedClassMissingSwitchBranchesFix extends CreateMissingSwit
   }
 
   @Override
-  protected @NotNull Set<String> getNames(@NotNull PsiSwitchBlock switchBlock) {
+  protected @Unmodifiable @NotNull Set<String> getNames(@NotNull PsiSwitchBlock switchBlock) {
     Map<String, String> mapToConvert = getConversionNewTypeWithGeneric(switchBlock);
     return ContainerUtil.map2Set(myNames, name -> mapToConvert.getOrDefault(name, name));
   }
 
   @Override
-  protected @NotNull Function<PsiSwitchLabelStatementBase, List<String>> getCaseExtractor() {
+  protected @NotNull Function<PsiSwitchLabelStatementBase, @Unmodifiable List<String>> getCaseExtractor() {
     return label -> {
       PsiCaseLabelElementList list = label.getCaseLabelElementList();
       if (list == null) return Collections.emptyList();
       return ContainerUtil.map(list.getElements(), PsiCaseLabelElement::getText);
     };
+  }
+
+  public static @Nullable PsiBasedModCommandAction<PsiSwitchBlock> createWithNull(@NotNull PsiSwitchBlock block,
+                                                                                  @NotNull Set<String> cases,
+                                                                                  @NotNull List<String> names) {
+    return createWithNull(block, () -> new CreateSealedClassMissingSwitchBranchesFix(block, cases, names));
   }
 }

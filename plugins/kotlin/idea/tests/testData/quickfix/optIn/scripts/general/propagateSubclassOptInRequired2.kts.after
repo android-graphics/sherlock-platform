@@ -7,9 +7,9 @@
 // ACTION: Opt in for 'A' in module 'light_idea_test_case'
 // ACTION: Opt in for 'A' on 'SomeImplementation'
 // ACTION: Propagate 'SubclassOptInRequired(A::class)' opt-in requirement to 'SomeImplementation'
-// ERROR: This declaration needs opt-in. Its usage must be marked with '@PropagateSubclassOptInRequired2.B' or '@OptIn(PropagateSubclassOptInRequired2.B::class)'
+// ERROR: This class or interface requires opt-in to be implemented. Its usage must be marked with '@PropagateSubclassOptInRequired2.B', '@OptIn(PropagateSubclassOptInRequired2.B::class)' or '@SubclassOptInRequired(PropagateSubclassOptInRequired2.B::class)'
 // RUNTIME_WITH_SCRIPT_RUNTIME
-@file:OptIn(ExperimentalSubclassOptIn::class)
+// LANGUAGE_VERSION: 2.1
 
 @RequiresOptIn
 annotation class A

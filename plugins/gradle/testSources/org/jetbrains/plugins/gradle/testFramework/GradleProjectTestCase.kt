@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.testFramework
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.externalSystem.util.runWriteActionAndGet
 import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findDocument
@@ -23,6 +24,7 @@ abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
 
   @get:JvmName("myProject")
   val project: Project get() = gradleFixture.project
+  val module: Module get() = gradleFixture.module
   val projectRoot: VirtualFile get() = gradleFixture.fileFixture.root
   val projectPath: String get() = projectRoot.path
 
@@ -98,14 +100,14 @@ abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
 
   companion object {
 
-    private val EMPTY_PROJECT = GradleTestFixtureBuilder.create("empty-project") {
-      withSettingsFile {
+    private val EMPTY_PROJECT = GradleTestFixtureBuilder.create("empty-project") { gradleVersion ->
+      withSettingsFile(gradleVersion) {
         setProjectName("empty-project")
       }
     }
 
     private val JAVA_PROJECT = GradleTestFixtureBuilder.create("java-plugin-project") { gradleVersion ->
-      withSettingsFile {
+      withSettingsFile(gradleVersion) {
         setProjectName("java-plugin-project")
       }
       withBuildFile(gradleVersion) {
@@ -117,7 +119,7 @@ abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
     }
 
     private val GROOVY_PROJECT = GradleTestFixtureBuilder.create("groovy-plugin-project") { gradleVersion ->
-      withSettingsFile {
+      withSettingsFile(gradleVersion) {
         setProjectName("groovy-plugin-project")
       }
       withBuildFile(gradleVersion) {

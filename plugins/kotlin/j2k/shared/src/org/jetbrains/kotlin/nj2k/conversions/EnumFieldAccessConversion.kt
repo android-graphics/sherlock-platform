@@ -4,13 +4,17 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.PsiEnumConstant
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.symbols.*
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 
-class EnumFieldAccessConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+/**
+ * Adds an enum class qualifier to enum entry references.
+ * TODO is this conversion still needed?
+ */
+class EnumFieldAccessConversion(context: ConverterContext) : RecursiveConversion(context) {
     context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKFieldAccessExpression) return recurse(element)
@@ -26,15 +30,21 @@ class EnumFieldAccessConversion(context: NewJ2kConverterContext) : RecursiveConv
     }
 
     private fun JKFieldSymbol.enumClassSymbol(): JKClassSymbol? {
-        return when {
-            this is JKMultiverseFieldSymbol && target is PsiEnumConstant ->
-                symbolProvider.provideDirectSymbol(target.containingClass ?: return null) as? JKClassSymbol
+        return when (this) {
+            is JKMultiverseFieldSymbol -> {
+                val enumClass = (target as? PsiEnumConstant)?.containingClass ?: return null
+                symbolProvider.provideDirectSymbol(enumClass) as? JKClassSymbol
+            }
 
-            this is JKMultiverseKtEnumEntrySymbol ->
-                symbolProvider.provideDirectSymbol(target.containingClass() ?: return null) as? JKClassSymbol
+            is JKMultiverseKtEnumEntrySymbol -> {
+                val enumClass = target.containingClass() ?: return null
+                symbolProvider.provideDirectSymbol(enumClass) as? JKClassSymbol
+            }
 
-            this is JKUniverseFieldSymbol && target is JKEnumConstant ->
-                symbolProvider.provideUniverseSymbol(target.parentOfType<JKClass>() ?: return null)
+            is JKUniverseFieldSymbol -> {
+                val enumClass = (target as? JKEnumConstant)?.parentOfType<JKClass>() ?: return null
+                symbolProvider.provideUniverseSymbol(enumClass)
+            }
 
             else -> null
         }

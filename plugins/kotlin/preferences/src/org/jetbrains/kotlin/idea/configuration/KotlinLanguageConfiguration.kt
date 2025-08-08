@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.configuration
 
@@ -17,8 +17,15 @@ import org.jetbrains.kotlin.idea.preferences.KotlinPreferencesBundle
 import java.awt.Component
 import javax.swing.JComponent
 
-class KotlinLanguageConfiguration : SearchableConfigurable, Configurable.NoScroll {
+internal class KotlinLanguageConfiguration : SearchableConfigurable, Configurable.NoScroll {
     companion object {
+        /**
+         * Kotlin search configurable ID.
+         *
+         * Has a few hardcoded usages because of circular dependencies.
+         * @see [org.jetbrains.kotlin.idea.configuration.KotlinK2FeaturesInK1ModeNotifier]
+         * @see [org.jetbrains.kotlin.idea.base.fe10.highlighting.suspender.KotlinHighlightingSuspendNotificationProvider]
+         */
         const val ID = "preferences.language.Kotlin"
     }
 

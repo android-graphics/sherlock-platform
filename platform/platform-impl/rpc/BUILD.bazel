@@ -1,0 +1,19 @@
+### auto-generated section `build intellij.platform.ide.rpc` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "ide-rpc",
+  module_name = "intellij.platform.ide.rpc",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/util:util-ui",
+    "@lib//:kotlinx-serialization-core",
+    "//platform/extensions",
+    "//fleet/util/core:fleet-util-core",
+    "@lib//:kotlin-stdlib",
+  ]
+)
+### auto-generated section `build intellij.platform.ide.rpc` end

@@ -7,8 +7,10 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.SpeedSearchBase
 import com.intellij.ui.SpeedSearchComparator
 import com.intellij.ui.speedSearch.NameFilteringListModel
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.ListModel
 
+@ApiStatus.Internal
 class SwitcherSpeedSearch private constructor(switcher: SwitcherPanel) : SpeedSearchBase<SwitcherPanel>(switcher, null) {
   fun updateEnteredPrefix(): Unit? = searchField?.let {
     val text = it.text ?: ""
@@ -26,7 +28,7 @@ class SwitcherSpeedSearch private constructor(switcher: SwitcherPanel) : SpeedSe
 
   fun <T : SwitcherListItem> wrap(model: ListModel<T>): ListModel<T> =
     NameFilteringListModel(model,
-                           { it.mainText },
+                           { it.mainText + " " + it.pathText },
                            { !isPopupActive || compare(it, enteredPrefix) },
                            { (enteredPrefix ?: "") })
 
@@ -41,7 +43,7 @@ class SwitcherSpeedSearch private constructor(switcher: SwitcherPanel) : SpeedSe
     else -> files.selectedIndex
   }
 
-  override fun getElementText(element: Any?): String = (element as? SwitcherListItem)?.mainText ?: ""
+  override fun getElementText(element: Any?): String = (element as? SwitcherListItem)?.let { it.mainText + " " + it.pathText } ?: ""
 
   override fun getElementCount(): Int = files.itemsCount + windows.itemsCount
 
@@ -117,7 +119,7 @@ class SwitcherSpeedSearch private constructor(switcher: SwitcherPanel) : SpeedSe
   }
 
   companion object {
-    fun installOn(switcher: SwitcherPanel): SwitcherSpeedSearch {
+    internal fun installOn(switcher: SwitcherPanel): SwitcherSpeedSearch {
       val search = SwitcherSpeedSearch(switcher)
       search.setupListeners()
       return search

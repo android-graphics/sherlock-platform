@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.actionSystem.*;
@@ -90,11 +90,11 @@ public class KeymapTextContext {
     else {
       throw new IllegalStateException("unknown clickCount: " + clickCount);
     }
-    return KeyMapBundle.message(resource, getModifiersText(mapNewModifiers(modifiers)), button);
+    return KeyMapBundle.message(resource, getModifiersText(mapNewModifiers(modifiers), true), button);
   }
 
   @JdkConstants.InputEventMask
-  private static int mapNewModifiers(@JdkConstants.InputEventMask int modifiers) {
+  static int mapNewModifiers(@JdkConstants.InputEventMask int modifiers) {
     if ((modifiers & InputEvent.SHIFT_DOWN_MASK) != 0) {
       modifiers |= InputEvent.SHIFT_MASK;
     }
@@ -122,7 +122,7 @@ public class KeymapTextContext {
     String acceleratorText = "";
     int modifiers = accelerator.getModifiers();
     if (modifiers > 0) {
-      acceleratorText = getModifiersText(modifiers);
+      acceleratorText = getModifiersText(modifiers, true);
     }
 
     int code = accelerator.getKeyCode();
@@ -158,7 +158,7 @@ public class KeymapTextContext {
     return ClientSystemInfo.isMac() && AdvancedSettings.getInstanceIfCreated() != null && AdvancedSettings.getBoolean("ide.macos.disable.native.shortcut.symbols");
   }
 
-  private @NotNull String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
+  @NotNull String getModifiersText(@JdkConstants.InputEventMask int modifiers, boolean addPlus) {
     if (isNativeMacShortcuts()) {
       //try {
       //  Class appleLaf = Class.forName(APPLE_LAF_AQUA_LOOK_AND_FEEL_CLASS_NAME);
@@ -178,7 +178,7 @@ public class KeymapTextContext {
     final String keyModifiersText = isSimplifiedMacShortcuts() ? getSimplifiedMacKeyModifiersText(modifiers)
                                                                : KeyEvent.getKeyModifiersText(modifiers);
 
-    return keyModifiersText.isEmpty() ? keyModifiersText : keyModifiersText + "+";
+    return !keyModifiersText.isEmpty()  && addPlus ? keyModifiersText + "+" : keyModifiersText;
   }
 
   private static String getSimplifiedMacKeyModifiersText(int modifiers) {
@@ -191,7 +191,7 @@ public class KeymapTextContext {
     if ((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) buf.append("Alt Graph+");
     if ((modifiers & InputEvent.BUTTON1_MASK) != 0)   buf.append("Button1+");
 
-    if (buf.length() > 0) buf.setLength(buf.length() - 1);
+    if (!buf.isEmpty()) buf.setLength(buf.length() - 1);
 
     return buf.toString();
   }

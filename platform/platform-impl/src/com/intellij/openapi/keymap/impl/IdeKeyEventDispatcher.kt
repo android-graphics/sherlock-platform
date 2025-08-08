@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.openapi.keymap.impl
@@ -14,7 +14,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionMenu
-import com.intellij.openapi.actionSystem.impl.EdtDataContext
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ApplicationManager
@@ -24,6 +23,7 @@ import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
@@ -92,7 +92,9 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
   private val keyGestureProcessor = KeyboardGestureProcessor(this)
 
   var state: KeyState
+    @ApiStatus.Internal 
     get() = keyState
+    @ApiStatus.Internal
     set(state) {
       keyState = state
       queue?.maybeReady()
@@ -515,6 +517,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
                          shortcut = context.shortcut)
   }
 
+  @JvmName("processAction")
   internal fun processAction(e: InputEvent,
                              place: String,
                              context: DataContext,
@@ -525,7 +528,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
     if (actions.isEmpty()) {
       return false
     }
-
+    LOG.trace { "processAction(shortcut=$shortcut, actions=$actions)" }
     val contextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context)
     val wrappedContext = Utils.createAsyncDataContext(context)
     val project = CommonDataKeys.PROJECT.getData(wrappedContext)
@@ -563,6 +566,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
       }
       Pair(chosen, false)
     } ?: Pair(null, false)
+    LOG.trace { "updateResult: chosen=$chosen, doPerform=$doPerform" }
     val hasSecondStroke = chosen != null && this.context.secondStrokeActions.contains(chosen.action)
     if (e.id == KeyEvent.KEY_PRESSED && !hasSecondStroke && (chosen != null || !wouldBeEnabledIfNotDumb.isEmpty())) {
       ignoreNextKeyTypedEvent = true
@@ -800,7 +804,8 @@ private fun hasMnemonicInBalloons(container: Container?, code: Int): Boolean {
   return false
 }
 
-data class UpdateResult(val action: AnAction, val event: AnActionEvent, val startedAt: Long)
+@ApiStatus.Internal
+data class UpdateResult(@JvmField val action: AnAction, @JvmField val event: AnActionEvent, @JvmField val startedAt: Long)
 
 private suspend fun doUpdateActionsInner(actions: List<AnAction>,
                                          updater: suspend (AnAction) -> Presentation,
@@ -835,10 +840,6 @@ private fun doPerformActionInner(e: InputEvent,
                                  actionEvent: AnActionEvent) {
   processor.onUpdatePassed(e, action, actionEvent)
   val eventCount = IdeEventQueue.getInstance().eventCount
-  // this is not true for test data contexts
-  if (context is EdtDataContext) {
-    context.setEventCount(eventCount)
-  }
 
   ActionUtil.performDumbAwareWithCallbacks(action, actionEvent) {
     LOG.assertTrue(eventCount == IdeEventQueue.getInstance().eventCount, "Event counts do not match: $eventCount != ${IdeEventQueue.getInstance().eventCount}")

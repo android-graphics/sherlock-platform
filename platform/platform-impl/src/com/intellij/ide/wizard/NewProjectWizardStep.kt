@@ -1,15 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.wizard
 
+import com.intellij.ide.util.projectWizard.ProjectConfigurator
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.module.ModifiableModuleModel
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.ui.dsl.builder.Panel
-import java.util.function.Consumer
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Defines vertical step in new project wizard. It is step which
@@ -86,7 +86,8 @@ interface NewProjectWizardStep {
    */
   fun setupProject(project: Project) {}
 
-  fun createModuleConfigurator(): Consumer<Module>? = null
+  @ApiStatus.Internal
+  fun createProjectConfigurator(): ProjectConfigurator? = null
 
   /**
    * See related doc for [NewProjectWizardStep.keywords].

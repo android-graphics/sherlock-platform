@@ -7,7 +7,7 @@ import org.junit.Test
 
 class MavenSurefirePluginTest : MavenDomWithIndicesTestCase() {
   override fun createIndicesFixture(): MavenIndicesTestFixture {
-    return MavenIndicesTestFixture(dir.toPath(), project, testRootDisposable,"plugins", "local1")
+    return MavenIndicesTestFixture(dir, project, testRootDisposable,"plugins", "local1")
   }
 
   @Test
@@ -113,6 +113,7 @@ class MavenSurefirePluginTest : MavenDomWithIndicesTestCase() {
               <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.4.0</version>
                 <configuration>
                   <additionalClasspathElements>
                     <additionalClasspathElement>${'$'}{surefire.forkNumber}</additionalClasspathElement>

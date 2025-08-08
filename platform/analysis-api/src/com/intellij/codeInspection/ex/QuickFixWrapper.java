@@ -28,6 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -176,7 +177,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
    * @deprecated use {@link QuickFixWrapper#unwrap(CommonIntentionAction)} instead. Avoid {@code instanceof QuickFixWrapper} checks,
    * as the implementation may be different in the future
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull LocalQuickFix getFix() {
     return myFix;
   }
@@ -202,6 +203,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     return element != null ? element.getContainingFile() : null;
   }
 
+  @Override
   public String toString() {
     return getText();
   }
@@ -235,7 +237,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
   }
 
   @Override
-  public @NotNull List<@NotNull RangeToHighlight> getRangesToHighlight(@NotNull Editor editor, @NotNull PsiFile file) {
+  public @Unmodifiable @NotNull List<@NotNull RangeToHighlight> getRangesToHighlight(@NotNull Editor editor, @NotNull PsiFile file) {
     return myFix.getRangesToHighlight(file.getProject(), myDescriptor);
   }
 

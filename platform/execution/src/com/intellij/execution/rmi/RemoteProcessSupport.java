@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.rmi;
 
-import com.intellij.concurrency.ThreadContext;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
@@ -25,6 +24,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import kotlinx.coroutines.Job;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -160,6 +160,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   /**
    * @deprecated use acquire(Target, Parameters, ProgressIndicator)
    */
+  @ApiStatus.Internal
   @Deprecated
   public EntryPoint acquire(@NotNull Target target, @NotNull Parameters configuration) throws Exception {
     return acquire(target, configuration, null);
@@ -224,8 +225,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     return port;
   }
 
-  @NotNull
-  public Future<?> release(@NotNull Target target, @Nullable Parameters configuration) {
+  public @NotNull Future<?> release(@NotNull Target target, @Nullable Parameters configuration) {
     List<Info> infos = new ArrayList<>();
     synchronized (myProcMap) {
       for (Pair<Target, Parameters> key : myProcMap.keySet()) {
@@ -264,8 +264,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   private void startProcess(@NotNull Target target, @NotNull Parameters configuration, @NotNull Pair<Target, Parameters> key) {
     ProgramRunner<?> runner = new ProgramRunner<>() {
       @Override
-      @NotNull
-      public String getRunnerId() {
+      public @NotNull String getRunnerId() {
         return "MyRunner";
       }
 
@@ -319,6 +318,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
         ProgressManager.checkCanceled();
       }
       if (info == null) {
+        LOG.info("Starring remote process. Existing info not found, creating PendingInfo:" + key);
         myProcMap.put(key, new PendingInfo(ref, null));
       }
     }
@@ -352,15 +352,16 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
 
   /**
    * Override this method to use custom client socket factory.
-   *
+   * <p>
    * Default implementation returns null and uses {@link RMISocketFactory#getSocketFactory()}
+   *
    * @return client socket factory to be used by this remote process support.
    */
   protected RMIClientSocketFactory getClientSocketFactory() {
     return null;
   }
 
-  private ProcessListener getProcessListener(@NotNull final Pair<Target, Parameters> key) {
+  private ProcessListener getProcessListener(final @NotNull Pair<Target, Parameters> key) {
     return new ProcessListener() {
       @Override
       public void startNotified(@NotNull ProcessEvent event) {
@@ -370,6 +371,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
         synchronized (myProcMap) {
           o = myProcMap.get(key);
           if (o instanceof PendingInfo) {
+            LOG.info("Staring remote process, startNotified received, creating PendingInfo: " + key);
             myProcMap.put(key, new PendingInfo(((PendingInfo)o).ref, processHandler));
           }
         }
@@ -378,6 +380,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
 
       @Override
       public void processTerminated(@NotNull ProcessEvent event) {
+        LOG.info("Remote process terminated with code: " + event.getExitCode() + " message = " + event.getText());
         if (dropProcessInfo(key, null, event.getProcessHandler())) {
           fireModificationCountChanged();
         }
@@ -386,6 +389,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
 
       @Override
       public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
+        LOG.info("Remote process will terminate: " + event.getText() + " message = " + event.getText());
         if (dropProcessInfo(key, null, event.getProcessHandler())) {
           fireModificationCountChanged();
         }
@@ -397,6 +401,16 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
 
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+        if (outputType == ProcessOutputTypes.STDOUT) {
+          LOG.debug("Remote process stdout:" + event.getText());
+        } else
+        if (outputType == ProcessOutputTypes.STDERR) {
+          LOG.warn("Remote process stderr:" + event.getText());
+        } else
+        if (outputType == ProcessOutputTypes.SYSTEM) {
+          LOG.info("Remote process system:" + event.getText());
+        }
+
         String text = StringUtil.notNullize(event.getText());
         logText(key.second, event, outputType);
         RunningInfo result = null;
@@ -412,8 +426,9 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
                 int port = Integer.parseInt(data.get(0));
                 int servicesPort = Integer.parseInt(data.get(1));
                 String id = data.get(2);
-
-                result = new RunningInfo(info.handler, getRemoteHost(), publishPort(port), id, publishPort(servicesPort));
+                String host = getRemoteHost();
+                LOG.info("Started remote process on: " + host + ":" + port + "with service port " + servicesPort + " and id = " + id);
+                result = new RunningInfo(info.handler, host, publishPort(port), id, publishPort(servicesPort));
                 myProcMap.put(key, result);
                 myProcMap.notifyAll();
               }
@@ -467,7 +482,9 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       }
     }
     if (info instanceof PendingInfo pendingInfo) {
-      if (error != null || pendingInfo.stderr.length() > 0 || pendingInfo.ref.isNull()) {
+      LOG.warn("Dropping process info for pending process: stder = " + pendingInfo.stderr, error);
+
+      if (error != null || !pendingInfo.stderr.isEmpty() || pendingInfo.ref.isNull()) {
         pendingInfo.ref.set(new FailedInfo(error, pendingInfo.stderr.toString()));
       }
       synchronized (pendingInfo.ref) {
@@ -477,8 +494,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     return info != null;
   }
 
-  @Nullable
-  private EntryPoint acquireInProcess(@NotNull Target target, @NotNull Parameters configuration) throws Exception {
+  private @Nullable EntryPoint acquireInProcess(@NotNull Target target, @NotNull Parameters configuration) throws Exception {
     if (!RemoteObject.IN_PROCESS) return null;
     Pair<Target, Parameters> key = Pair.create(target, configuration);
     InProcessInfo<EntryPoint> info;
@@ -486,6 +502,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     synchronized (myInProcMap) {
       info = myInProcMap.get(key);
       if (info == null) {
+        LOG.info("Running remote service in process: " + key);
         info = new InProcessInfo<>(acquireInProcessFactory(target, configuration));
         myInProcMap.put(key, info);
         created = true;
@@ -498,8 +515,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     return result;
   }
 
-  @NotNull
-  protected ThrowableComputable<@Nullable EntryPoint, Exception> acquireInProcessFactory(Target target, Parameters configuration)
+  protected @NotNull ThrowableComputable<@Nullable EntryPoint, Exception> acquireInProcessFactory(Target target, Parameters configuration)
     throws Exception {
     return () -> null;
   }

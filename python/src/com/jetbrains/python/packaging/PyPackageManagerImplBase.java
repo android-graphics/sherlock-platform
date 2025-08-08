@@ -15,6 +15,7 @@ import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.execution.FailureReason;
 import com.jetbrains.python.packaging.repository.PyPackageRepositoryUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PyDetectedSdk;
@@ -36,7 +37,7 @@ import static com.intellij.webcore.packaging.PackageVersionComparator.VERSION_CO
 
 public abstract class PyPackageManagerImplBase extends PyPackageManager {
   protected static final String SETUPTOOLS_VERSION = "44.1.1";
-  protected static final String PIP_VERSION = "20.3.4";
+  protected static final String PIP_VERSION = "24.3.1";
 
   protected static final String SETUPTOOLS_WHEEL_NAME = "setuptools-" + SETUPTOOLS_VERSION + "-py2.py3-none-any.whl";
   protected static final String PIP_WHEEL_NAME = "pip-" + PIP_VERSION + "-py2.py3-none-any.whl";
@@ -124,8 +125,12 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
       return setuptoolsPackage != null ? setuptoolsPackage : PyPsiPackageUtil.findPackage(packages, PyPackageUtil.DISTRIBUTE);
     }
     catch (PyExecutionException e) {
-      if (e.getExitCode() == ERROR_NO_SETUPTOOLS) {
-        return null;
+      var error = e.getFailureReason();
+      if (error instanceof FailureReason.ExecutionFailed executionFailed) {
+        int exitCode = executionFailed.getOutput().getExitCode();
+        if (exitCode == ERROR_NO_SETUPTOOLS) {
+          return null;
+        }
       }
       throw e;
     }

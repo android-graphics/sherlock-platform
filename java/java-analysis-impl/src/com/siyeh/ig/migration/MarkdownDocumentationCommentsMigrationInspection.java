@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.PsiElement;
@@ -17,16 +18,15 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Bas Leijdekkers
- */
-final class MarkdownDocumentationCommentsMigrationInspection extends BaseInspection {
+@ApiStatus.Internal
+public final class MarkdownDocumentationCommentsMigrationInspection extends BaseInspection implements DumbAware {
   @Override
   protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("markdown.documentation.comments.migration.display.name");
@@ -53,7 +53,7 @@ final class MarkdownDocumentationCommentsMigrationInspection extends BaseInspect
     }
   }
 
-  private static class MarkdownDocumentationCommentsMigrationFix extends PsiUpdateModCommandQuickFix {
+  private static class MarkdownDocumentationCommentsMigrationFix extends PsiUpdateModCommandQuickFix implements DumbAware {
 
     private static final TokenSet SKIP_TOKENS = TokenSet.create(JavaDocTokenType.DOC_COMMENT_START, JavaDocTokenType.DOC_COMMENT_END);
     private static final Pattern HEADING = Pattern.compile("[hH]([1-6])");

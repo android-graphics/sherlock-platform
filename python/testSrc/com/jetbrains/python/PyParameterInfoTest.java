@@ -7,19 +7,18 @@ import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
+import com.jetbrains.python.codeInsight.parameterInfo.PyParameterInfoUtils;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyArgumentList;
-import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.types.PyCallableType;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -274,16 +273,16 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testRedefinedNewConstructorCall() {
     Map<String, PsiElement> marks = loadTest(2);
 
-    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("cls: Type[A], a, b", new String[]{"a, "}, new String[]{"cls: Type[A], "});
-    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("cls: Type[A], a, b", new String[]{"b"}, new String[]{"cls: Type[A], "});
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("cls: type[A], a, b", new String[]{"a, "}, new String[]{"cls: type[A], "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("cls: type[A], a, b", new String[]{"b"}, new String[]{"cls: type[A], "});
   }
 
   public void testRedefinedNewDirectCall() {
     Map<String, PsiElement> marks = loadTest(3);
 
-    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("cls: Type[A], a, b", new String[]{"cls: Type[A], "});
-    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("cls: Type[A], a, b", new String[]{"a, "});
-    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("cls: Type[A], a, b", new String[]{"b"});
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("cls: type[A], a, b", new String[]{"cls: type[A], "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("cls: type[A], a, b", new String[]{"a, "});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("cls: type[A], a, b", new String[]{"b"});
   }
 
   public void testIgnoreNewInOldStyleClass() {
@@ -854,6 +853,19 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     );
   }
 
+  // PY-59198
+  public void testInitializingAttrsFieldAlias() {
+    runWithAdditionalClassEntryInSdkRoots(
+      "packages",
+      () -> {
+        final Map<String, PsiElement> marks = loadTest(2);
+
+        feignCtrlP(marks.get("<arg1>").getTextOffset()).check("foo, bar, baz", new String[]{"foo, "});
+        feignCtrlP(marks.get("<arg2>").getTextOffset()).check("foo, bar, baz", new String[]{"foo, "});
+      }
+    );
+  }
+
   // PY-28957
   public void testDataclassesReplace() {
     final Map<String, PsiElement> marks = loadMultiFileTest(4);
@@ -861,7 +873,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("obj: A, *, a: int = ..., b: str = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("obj: B, *, a: int = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
     feignCtrlP(marks.get("<arg3>").getTextOffset()).check("obj: C, *, a: int = ..., b: str = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
-    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("__obj: _T, **changes", new String[]{"**changes"});
+    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("obj: _DataclassT, /, **changes", new String[]{"**changes"});
   }
 
   // PY-28506
@@ -871,7 +883,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("obj: B1, *, a: int = ..., b: str = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("obj: B2, *, a: int = ..., b: str = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
     feignCtrlP(marks.get("<arg3>").getTextOffset()).check("obj: B3, *, a: int = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
-    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("__obj: _T, **changes", new String[]{"**changes"});
+    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("obj: _DataclassT, /, **changes", new String[]{"**changes"});
     feignCtrlP(marks.get("<arg5>").getTextOffset()).check("obj: B5, *, x: int = ..., y: int = ..., z: int = ...",
                                                           ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
@@ -882,8 +894,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("obj: B1, *, a: int = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("obj: B2, *, b: str = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
-    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("__obj: _T, **changes", new String[]{"**changes"});
-    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("__obj: _T, **changes", new String[]{"**changes"});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("obj: _DataclassT, /, **changes", new String[]{"**changes"});
+    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("obj: _DataclassT, /, **changes", new String[]{"**changes"});
     feignCtrlP(marks.get("<arg5>").getTextOffset()).check("obj: C5, *, x: int = ..., z: str = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
@@ -978,10 +990,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testInitializingTypeVar() {
     final int offset = loadTest(1).get("<arg1>").getTextOffset();
 
-    feignCtrlP(offset).check(Arrays.asList("self: TypeVar, name: str, *constraints, bound: Any | None = None, covariant: bool = False, " +
-                                           "contravariant: bool = False, infer_variance: bool = False",
-                                           "self: TypeVar, name: str, *constraints, bound: Any | None = None, covariant: bool = False, " +
-                                           "contravariant: bool = False"),
+    feignCtrlP(offset).check(Arrays.asList("self: TypeVar, name: str, *constraints, bound: Any | None = None, contravariant: bool = False, covariant: bool = False, infer_variance: bool = False, default=..."),
                              Arrays.asList(new String[]{"name: str, "}, new String[]{"name: str, "}),
                              Arrays.asList(new String[]{"self: TypeVar, "}, new String[]{"self: TypeVar, "}));
   }
@@ -1026,8 +1035,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testDefiningTypedDictTypeAlternativeSyntax() {
     final Map<String, PsiElement> test = loadTest(1);
 
-    feignCtrlP(test.get("<arg1>").getTextOffset()).check("name: str, fields: dict[str, Any], total: bool = True",
-                                                         new String[]{"name: str, "},
+    feignCtrlP(test.get("<arg1>").getTextOffset()).check("typename: str, fields: dict[str, type], *, /, total: bool = True",
+                                                         new String[]{"typename: str, "},
                                                          ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
@@ -1198,12 +1207,13 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
   // PY-49946
   public void testInitializingDataclassKwOnlyOnField() {
-    final Map<String, PsiElement> marks = loadTest(4);
+    final Map<String, PsiElement> marks = loadTest(5);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("b: int, *, a: int", new String[]{"b: int, "});
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a: int, *, b: int", new String[]{"a: int, "});
     feignCtrlP(marks.get("<arg3>").getTextOffset()).check("*, a: int, b: int", new String[]{"*, a: int"});
     feignCtrlP(marks.get("<arg4>").getTextOffset()).check("*, a: int", new String[]{"*, a: int"});
+    feignCtrlP(marks.get("<arg5>").getTextOffset()).check("a: int, *, b: int", new String[]{"a: int, "});
   }
 
   // PY-53693
@@ -1216,6 +1226,56 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg4>").getTextOffset()).check("a: int, c: int, *, b: int, d: int", new String[]{"a: int, "});
     feignCtrlP(marks.get("<arg5>").getTextOffset()).check("a: int, *, b: int, qq: int", new String[]{"a: int, "});
     feignCtrlP(marks.get("<arg6>").getTextOffset()).check("a: str", new String[]{"a: str"});
+  }
+
+  // PY-54560
+  public void testInitializingDataclassTransformFieldSpecifierKwOnlyArgumentDecoratorApiFunctionSpecifiers() {
+    final Map<String, PsiElement> marks = loadTest(5);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("not_kw_only_spec_default: int, not_kw_only_spec_arg: int, *, kw_only_inferred: int, kw_only_spec_default: int, kw_only_spec_arg: int", new String[]{"not_kw_only_spec_default: int, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("not_kw_only_spec_default: int, not_kw_only_spec_arg: int, *, kw_only_inferred: int, kw_only_spec_default: int, kw_only_spec_arg: int", new String[]{"not_kw_only_spec_default: int, "});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("not_kw_only_spec_default: int, not_kw_only_spec_arg: int, not_kw_only_inferred: int, *, kw_only_spec_default: int, kw_only_spec_arg: int", new String[]{"not_kw_only_spec_default: int, "});
+    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("not_kw_only_spec_default: int, not_kw_only_spec_arg: int, not_kw_only_inferred: int, *, kw_only_spec_default: int, kw_only_spec_arg: int", new String[]{"not_kw_only_spec_default: int, "});
+    feignCtrlP(marks.get("<arg5>").getTextOffset()).check("not_kw_only_spec_default: int, not_kw_only_spec_arg: int, not_kw_only_inferred: int, *, kw_only_spec_default: int, kw_only_spec_arg: int", new String[]{"not_kw_only_spec_default: int, "});
+  }
+
+  // PY-54560
+  public void testInitializingDataclassTransformFieldSpecifierKwOnlyArgumentBaseClassApiClassSpecifiers() {
+    final Map<String, PsiElement> marks = loadTest(5);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("not_kw_only_spec_default: int, not_kw_only_spec_arg: int, *, kw_only_inferred: int, kw_only_spec_default: int, kw_only_spec_arg: int", new String[]{"not_kw_only_spec_default: int, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("not_kw_only_spec_default: int, not_kw_only_spec_arg: int, *, kw_only_inferred: int, kw_only_spec_default: int, kw_only_spec_arg: int", new String[]{"not_kw_only_spec_default: int, "});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("not_kw_only_spec_default: int, not_kw_only_spec_arg: int, not_kw_only_inferred: int, *, kw_only_spec_default: int, kw_only_spec_arg: int", new String[]{"not_kw_only_spec_default: int, "});
+    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("not_kw_only_spec_default: int, not_kw_only_spec_arg: int, not_kw_only_inferred: int, *, kw_only_spec_default: int, kw_only_spec_arg: int", new String[]{"not_kw_only_spec_default: int, "});
+    feignCtrlP(marks.get("<arg5>").getTextOffset()).check("not_kw_only_spec_default: int, not_kw_only_spec_arg: int, not_kw_only_inferred: int, *, kw_only_spec_default: int, kw_only_spec_arg: int", new String[]{"not_kw_only_spec_default: int, "});
+  }
+
+  // PY-54560
+  public void testInitializingDataclassTransformFieldSpecifierInitArgument() {
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("init_spec_param: int, init_inferred: int", new String[]{"init_spec_param: int, "});
+  }
+
+  // PY-54560
+  public void testInitializingDataclassTransformDistinguishingFieldSpecifierFromDefaults() {
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("field1: int, field2: int = ..., field3: int = not_field(), field4: int = not_field(default=42)", new String[]{"field1: int, "});
+  }
+
+  // PY-54560
+  public void testInitializingDataclassTransformOverridingAncestorFieldType() {
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("super_attr: str, sub_attr: int", new String[]{"super_attr: str, "});
+  }
+
+  // PY-54560
+  public void testInitializingDataclassTransformFieldAlias() {
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("foo: int, bar: int", new String[]{"foo: int, "});
   }
 
   // PY-49946
@@ -1261,9 +1321,60 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg3>").getTextOffset()).check("a: int, *, name: str = ..., year: int", new String[]{"year: int"});
   }
 
+  // PY-23067
+  public void testFunctoolsWraps() {
+    final Map<String, PsiElement> marks = loadTest(2);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self: MyClass, s: str, b: bool", new String[]{"s: str, "}, new String[]{"self: MyClass, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("self: MyClass, s: str, b: bool", new String[]{"b: bool"}, new String[]{"self: MyClass, "});
+  }
+
+  // PY-58497
+  public void testSimplePopupWithHintsOff() {
+    Map<String, PsiElement> marks = loadTest(5);
+    feignCtrlPWithHintsForHighlightedOnly(marks.get("<arg1>").getTextOffset()).check("a: int, b, c, d, e", new String[]{"a: int, "});
+    feignCtrlPWithHintsForHighlightedOnly(marks.get("<arg2>").getTextOffset()).check("a, b: str, c, d, e", new String[]{"b: str, "});
+    feignCtrlPWithHintsForHighlightedOnly(marks.get("<arg3>").getTextOffset()).check("a, b, c: bool, d, e", new String[]{"c: bool, "});
+    feignCtrlPWithHintsForHighlightedOnly(marks.get("<arg4>").getTextOffset()).check("a, b, c, d: list, e", new String[]{"d: list, "});
+    feignCtrlPWithHintsForHighlightedOnly(marks.get("<arg5>").getTextOffset()).check("a, b, c, d, e: set", new String[]{"e: set"});
+  }
+
+  // PY-58497
+  public void testSimplePopupWithHintsOffAndDefaultArgument() {
+    Map<String, PsiElement> marks = loadTest(1);
+    feignCtrlPWithHintsForHighlightedOnly(marks.get("<arg1>").getTextOffset()).check("a, b, c: str = \"default\"", new String[]{"c: str = \"default\""});
+  }
+
+  // PY-76149
+  public void testDataclassTransformConstructorSignatureWithFieldsAnnotatedWithGenericDescriptor() {
+    final Map<String, PsiElement> marks = loadTest(1);
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("id: int, name: str, year: int, new: bool", new String[]{"id: int, "});
+  }
+
+  // PY-78250
+  public void testInitializingGenericDataclassWithDefaultType() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, () -> {
+      final Map<String, PsiElement> marks = loadTest(1);
+      feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x: T", new String[]{"x: T"});
+    });
+  }
+
+  // PY-78250
+  public void testInitializingGenericDataclass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, () -> {
+      final Map<String, PsiElement> marks = loadTest(1);
+      feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x: T", new String[]{"x: T"});
+    });
+  }
+
   @NotNull
   private Collector feignCtrlP(int offset) {
-    return feignCtrlP(offset, myFixture.getFile());
+    return feignCtrlP(offset, myFixture.getFile(), true, myFixture.getEditor());
+  }
+
+  @NotNull
+  private Collector feignCtrlPWithHintsForHighlightedOnly(int offset) {
+    return feignCtrlP(offset, myFixture.getFile(), false, myFixture.getEditor());
   }
 
   /**
@@ -1273,26 +1384,32 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
    * @return a {@link Collector} with collected hint info.
    */
   @NotNull
-  private static Collector feignCtrlP(int offset, @NotNull PsiFile file) {
-    final PyParameterInfoHandler handler = new PyParameterInfoHandler();
+  private static Collector feignCtrlP(int offset, @NotNull PsiFile file, boolean showAllHints, Editor editor) {
+    boolean oldKeyValue = Registry.is("python.parameter.info.show.all.hints");
+    try {
+      Registry.get("python.parameter.info.show.all.hints").setValue(showAllHints);
+      final PyParameterInfoHandler handler = new PyParameterInfoHandler();
+      final Collector collector = new Collector(file, offset, editor);
+      collector.setParameterOwner(handler.findElementForParameterInfo(collector));
 
-    final Collector collector = new Collector(file, offset);
-    collector.setParameterOwner(handler.findElementForParameterInfo(collector));
+      if (collector.getParameterOwner() != null) {
+        handler.updateParameterInfo((PyArgumentList)collector.getParameterOwner(), collector);
 
-    if (collector.getParameterOwner() != null) {
-      handler.updateParameterInfo((PyArgumentList)collector.getParameterOwner(), collector);
-
-      for (Object itemToShow : collector.getItemsToShow()) {
-        //noinspection unchecked
-        handler.updateUI((Pair<PyCallExpression, PyCallableType>)itemToShow, collector);
+        for (Object itemToShow : collector.getItemsToShow()) {
+          PyParameterInfoUtils.CallInfo callInfo = (PyParameterInfoUtils.CallInfo)itemToShow;
+          //noinspection unchecked
+          handler.updateUI(callInfo, collector);
+        }
       }
+      return collector;
     }
-
-    return collector;
+    finally {
+      Registry.get("python.parameter.info.show.all.hints").setValue(oldKeyValue);
+    }
   }
 
-  public static void checkParameters(int offset, @NotNull PsiFile file, @NotNull String text, String @NotNull [] highlighted) {
-    Collector collector = feignCtrlP(offset, file);
+  public static void checkParameters(int offset, @NotNull PsiFile file, @NotNull String text, String @NotNull [] highlighted, Editor editor) {
+    Collector collector = feignCtrlP(offset, file, true, editor);
     collector.check(text, highlighted);
   }
 
@@ -1318,9 +1435,12 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
     private int myIndex;
 
-    private Collector(@NotNull PsiFile file, int offset) {
+    private final Editor myEditor;
+
+    private Collector(@NotNull PsiFile file, int offset, Editor editor) {
       myFile = file;
       myOffset = offset;
+      myEditor = editor;
       myListOfTexts = new ArrayList<>();
       myListOfFlags = new ArrayList<>();
       myItemsToShow = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
@@ -1490,7 +1610,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     @Override
     @NotNull
     public Editor getEditor() {
-      throw new UnsupportedOperationException();
+      return myEditor;
     }
 
     private void check(@NotNull String text, String @NotNull [] highlighted) {

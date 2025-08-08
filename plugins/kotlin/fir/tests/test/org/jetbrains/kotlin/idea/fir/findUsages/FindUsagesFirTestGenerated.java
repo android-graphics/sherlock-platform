@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.findUsages;
 
@@ -455,6 +455,11 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
                 runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/javaLambdaUsages.0.kt");
             }
 
+            @TestMetadata("jvmClassNameInLiteral.0.kt")
+            public void testJvmClassNameInLiteral() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/jvmClassNameInLiteral.0.kt");
+            }
+
             @TestMetadata("kotlinAliasedClassAllUsages.0.kt")
             public void testKotlinAliasedClassAllUsages() throws Exception {
                 runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinAliasedClassAllUsages.0.kt");
@@ -663,6 +668,25 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
             @TestMetadata("usageInTypeAlias.0.kt")
             public void testUsageInTypeAlias() throws Exception {
                 runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/usageInTypeAlias.0.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findEnumEntryUsages")
+        public static class FindEnumEntryUsages extends AbstractFindUsagesFirTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("enumEntry.0.kt")
+            public void testEnumEntry() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/findEnumEntryUsages/enumEntry.0.kt");
             }
         }
 
@@ -1187,6 +1211,11 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
             @TestMetadata("constructorCall.0.kt")
             public void testConstructorCall() throws Exception {
                 runTest("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages/constructorCall.0.kt");
+            }
+
+            @TestMetadata("enumConstants.0.kt")
+            public void testEnumConstants() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages/enumConstants.0.kt");
             }
 
             @TestMetadata("jvmOverloaded.0.kt")
@@ -1974,6 +2003,11 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
             @TestMetadata("JKFieldUsages.0.java")
             public void testJKFieldUsages() throws Exception {
                 runTest("../../idea/tests/testData/findUsages/java/findJavaFieldUsages/JKFieldUsages.0.java");
+            }
+
+            @TestMetadata("JKFieldUsagesReadWriteAccess.0.java")
+            public void testJKFieldUsagesReadWriteAccess() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/java/findJavaFieldUsages/JKFieldUsagesReadWriteAccess.0.java");
             }
         }
 

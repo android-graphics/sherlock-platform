@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -23,6 +24,8 @@ import com.intellij.util.ui.JBInsets
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.RequestOrigin
 import com.jediterm.terminal.TtyConnector
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.TerminalPanelMarker
 import org.jetbrains.plugins.terminal.action.TerminalInterruptCommandAction
 import org.jetbrains.plugins.terminal.action.TerminalMoveCaretToLineEndAction
 import org.jetbrains.plugins.terminal.action.TerminalMoveCaretToLineStartAction
@@ -52,7 +55,8 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.math.max
 
-internal class BlockTerminalView(
+@ApiStatus.Internal
+class BlockTerminalView(
   private val project: Project,
   private val session: BlockTerminalSession,
   private val settings: JBTerminalSystemSettingsProviderBase,
@@ -155,7 +159,9 @@ internal class BlockTerminalView(
       override fun activeStateChanged(isActive: Boolean) {
         if (isActive) {
           if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
-            FileDocumentManager.getInstance().saveAllDocuments()
+            WriteIntentReadAction.run {
+              FileDocumentManager.getInstance().saveAllDocuments()
+            }
           }
         }
         else {
@@ -292,7 +298,7 @@ internal class BlockTerminalView(
 
   private fun getDisposed(): () -> Boolean = outputView.controller.outputModel.editor.getDisposed()
 
-  private inner class BlockTerminalPanel : JPanel(), UiDataProvider {
+  private inner class BlockTerminalPanel : JPanel(), UiDataProvider, TerminalPanelMarker {
     init {
       background = TerminalUi.defaultBackground(outputView.controller.outputModel.editor)
     }

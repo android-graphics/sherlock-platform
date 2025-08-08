@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.convertToInstanceMethod;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -27,6 +27,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +39,7 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
   private static final Logger LOG = Logger.getInstance(ConvertToInstanceMethodProcessor.class);
   private PsiMethod myMethod;
   private @Nullable PsiParameter myTargetParameter;
+  private final boolean myParameterIsReassigned;
   private PsiClass myTargetClass;
   private Map<PsiTypeParameter, PsiTypeParameter> myTypeParameterReplacements;
   private static final Key<PsiTypeParameter> BIND_TO_TYPE_PARAMETER = Key.create("REPLACEMENT");
@@ -47,11 +49,13 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
 
   public ConvertToInstanceMethodProcessor(final Project project,
                                           final PsiMethod method,
-                                          @Nullable final PsiParameter targetParameter,
+                                          final @Nullable PsiParameter targetParameter,
                                           final String newVisibility) {
     super(project);
     myMethod = method;
     myTargetParameter = targetParameter;
+    myParameterIsReassigned = targetParameter != null && 
+                              VariableAccessUtils.variableIsAssigned(myTargetParameter, myTargetParameter.getDeclarationScope());
     LOG.assertTrue(method.hasModifierProperty(PsiModifier.STATIC));
     if (myTargetParameter != null) {
       LOG.assertTrue(myTargetParameter.getDeclarationScope() == myMethod);
@@ -72,8 +76,7 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
   }
 
   @Override
-  @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new MoveInstanceMethodViewDescriptor(myMethod, myTargetParameter, myTargetClass);
   }
 
@@ -110,7 +113,7 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
     }
 
     if (myTargetParameter != null) {
-      for (final PsiReference ref : ReferencesSearch.search(myTargetParameter, new LocalSearchScope(myMethod), false)) {
+      for (final PsiReference ref : ReferencesSearch.search(myTargetParameter, new LocalSearchScope(myMethod), false).asIterable()) {
         final PsiElement element = ref.getElement();
         if (element instanceof PsiReferenceExpression || element instanceof PsiDocParamRef) {
           result.add(new ParameterUsageInfo(ref));
@@ -203,8 +206,7 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
     EditorHelper.openInEditor(doRefactoring(usages));
   }
 
-  @NotNull
-  private PsiMethod doRefactoring(UsageInfo[] usages) {
+  private @NotNull PsiMethod doRefactoring(UsageInfo[] usages) {
     myTypeParameterReplacements = buildTypeParameterReplacements();
     List<PsiClass> inheritors = new ArrayList<>();
 
@@ -215,7 +217,7 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
       if (usage instanceof MethodCallUsageInfo) {
         processMethodCall(((MethodCallUsageInfo)usage).getMethodCall());
       }
-      else if (usage instanceof ParameterUsageInfo) {
+      else if (usage instanceof ParameterUsageInfo && !myParameterIsReassigned) {
         processParameterUsage((ParameterUsageInfo)usage);
       }
       else if (usage instanceof ImplementingClassUsageInfo) {
@@ -227,7 +229,20 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
     }
 
     prepareTypeParameterReplacement();
-    if (myTargetParameter != null) myTargetParameter.delete();
+    if (myTargetParameter != null) {
+      if (myParameterIsReassigned) {
+        PsiDeclarationStatement statement =
+          JavaPsiFacade.getElementFactory(myProject).createVariableDeclarationStatement(myTargetParameter.getName(),
+                                                                                        myTargetParameter.getType(),
+                                                                                        createThisExpression());
+        PsiCodeBlock body = myMethod.getBody();
+        assert body != null;
+        PsiElement first = body.getFirstBodyElement();
+        assert first != null;
+        first.getParent().addBefore(statement, first);
+      }
+      myTargetParameter.delete();
+    }
     ChangeContextUtil.encodeContextInfo(myMethod, true);
     PsiMethod result;
     if (!myTargetClass.isInterface()) {
@@ -246,12 +261,13 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
       if (!markAsDefault) {
         for (final PsiClass psiClass : inheritors) {
           final PsiMethod newMethod = addMethodToClass(psiClass);
-          PsiUtil.setModifierProperty(newMethod, myNewVisibility != null && !myNewVisibility.equals(VisibilityUtil.ESCALATE_VISIBILITY) ? myNewVisibility
-                                                                                                                                        : PsiModifier.PUBLIC, true);
+          String modifier = myNewVisibility != null && !myNewVisibility.equals(VisibilityUtil.ESCALATE_VISIBILITY)
+                            ? myNewVisibility
+                            : PsiModifier.PUBLIC;
+          PsiUtil.setModifierProperty(newMethod, modifier, true);
         }
       }
     }
-    myMethod.delete();
     return result;
   }
 
@@ -313,7 +329,7 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
     if (myTypeParameterReplacements == null) return;
     final Collection<PsiTypeParameter> typeParameters = myTypeParameterReplacements.keySet();
     for (final PsiTypeParameter parameter : typeParameters) {
-      for (final PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(myMethod), false)) {
+      for (final PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(myMethod), false).asIterable()) {
         if (reference.getElement() instanceof PsiJavaCodeReferenceElement) {
           reference.getElement().putCopyableUserData(BIND_TO_TYPE_PARAMETER, myTypeParameterReplacements.get(parameter));
         }
@@ -326,7 +342,16 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
   }
 
   private PsiMethod addMethodToClass(final PsiClass targetClass) {
-    final PsiMethod newMethod = (PsiMethod)targetClass.add(myMethod);
+    final PsiMethod newMethod;
+    if (targetClass == myMethod.getContainingClass()) {
+      newMethod = myMethod;
+    }
+    else {
+      newMethod = (PsiMethod)targetClass.add(myMethod);
+      PsiMethod copy = (PsiMethod)myMethod.copy();
+      myMethod.delete();
+      myMethod = copy;
+    }
     final PsiModifierList modifierList = newMethod.getModifierList();
     modifierList.setModifierProperty(PsiModifier.STATIC, false);
     ChangeContextUtil.decodeContextInfo(newMethod, null, null);
@@ -470,13 +495,11 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
   }
 
   @Override
-  @NotNull
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return ConvertToInstanceMethodHandler.getRefactoringName();
   }
 
-  @Nullable
-  public Map<PsiTypeParameter, PsiTypeParameter> buildTypeParameterReplacements() {
+  public @Nullable Map<PsiTypeParameter, PsiTypeParameter> buildTypeParameterReplacements() {
     if (myTargetParameter == null) {
       return Collections.emptyMap();
     }
@@ -485,10 +508,9 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
     return calculateReplacementMap(substitutor, myTargetClass, myMethod);
   }
 
-  @Nullable
-  private static Map<PsiTypeParameter, PsiTypeParameter> calculateReplacementMap(final PsiSubstitutor substitutor,
-                                                                                 final PsiClass targetClass,
-                                                                                 final PsiElement containingElement) {
+  private static @Nullable Map<PsiTypeParameter, PsiTypeParameter> calculateReplacementMap(final PsiSubstitutor substitutor,
+                                                                                           final PsiClass targetClass,
+                                                                                           final PsiElement containingElement) {
     final HashMap<PsiTypeParameter, PsiTypeParameter> result = new HashMap<>();
     for (PsiTypeParameter classTypeParameter : PsiUtil.typeParametersIterable(targetClass)) {
       if (!(substitutor.substitute(classTypeParameter) instanceof PsiClassType classType)) return null;
@@ -504,8 +526,7 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
     return myMethod;
   }
 
-  @Nullable
-  public PsiParameter getTargetParameter() {
+  public @Nullable PsiParameter getTargetParameter() {
     return myTargetParameter;
   }
 }

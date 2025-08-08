@@ -22,7 +22,9 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNewExpression {
   private static final Logger LOG = Logger.getInstance(PsiNewExpressionImpl.class);
@@ -44,7 +46,8 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
 
   private @Nullable PsiType doGetType(@Nullable PsiAnnotation stopAt) {
     PsiType type = null;
-    SmartList<PsiAnnotation> annotations = new SmartList<>();
+    List<PsiAnnotation> annotations = new SmartList<>();
+    List<TypeAnnotationProvider> arrayComponentAnnotations = new ArrayList<>();
     boolean stop = false;
 
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
@@ -52,7 +55,13 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
       if (elementType == JavaElementType.ANNOTATION) {
         PsiAnnotation annotation = (PsiAnnotation)child.getPsi();
         annotations.add(annotation);
-        if (annotation == stopAt) stop = true;
+        if (annotation == stopAt) {
+          // Drop previous array annotations. Only the subsequent annotations matter
+          // E.g., if we have "new int @A [] @B [] @C []" and we search an owner for "@B"
+          // then we should return "new int @B [] @C []"
+          arrayComponentAnnotations.clear();
+          stop = true;
+        }
       }
       else if (elementType == JavaElementType.JAVA_CODE_REFERENCE) {
         assert type == null : this;
@@ -69,8 +78,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
       else if (elementType == JavaTokenType.LBRACKET) {
         assert type != null : this;
         PsiAnnotation[] copy = ContainerUtil.copyAndClear(annotations, PsiAnnotation.ARRAY_FACTORY, true);
-        type = type.createArrayType().annotate(TypeAnnotationProvider.Static.create(copy));
-        if (stop) return type;
+        arrayComponentAnnotations.add(TypeAnnotationProvider.Static.create(copy));
       }
       else if (elementType == JavaElementType.ANONYMOUS_CLASS) {
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
@@ -82,8 +90,11 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
       }
     }
 
-    // stop == true means annotation is misplaced
-    return stop ? null : type;
+    for (int i = arrayComponentAnnotations.size() - 1; i >= 0; i--) {
+      TypeAnnotationProvider provider = arrayComponentAnnotations.get(i);
+      type = new PsiArrayType(type, provider);
+    }
+    return type;
   }
 
   @Override

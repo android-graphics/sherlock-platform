@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.psi.PsiElement;
@@ -7,6 +7,7 @@ import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -34,8 +35,8 @@ public final class XmlIncludeHandler {
     final XmlAttributeValue xmlAttributeValue = hrefAttribute.getValueElement();
     if (xmlAttributeValue == null) return null;
 
-    List<PsiReference> references = Arrays.asList(xmlAttributeValue.getReferences());
-    if (references.size() > 0) {
+    List<PsiReference> references = new ArrayList<>(Arrays.asList(xmlAttributeValue.getReferences()));
+    if (!references.isEmpty()) {
       references.sort(
         (reference1, reference2) -> reference2.getRangeInElement().getStartOffset() - reference1.getRangeInElement().getStartOffset());
       PsiElement target = references.get(0).resolve();

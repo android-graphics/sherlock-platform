@@ -17,23 +17,21 @@ package com.siyeh.ig.initialization;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 public final class ThisEscapedInConstructorInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "ThisEscapedInObjectConstruction";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("this.reference.escaped.in.construction.problem.descriptor");
   }
 
@@ -51,7 +49,7 @@ public final class ThisEscapedInConstructorInspection extends BaseInspection {
         return;
       }
       final PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
-      final PsiClass containingClass = ClassUtils.getContainingClass(expression);
+      final PsiClass containingClass = PsiUtil.getContainingClass(expression);
       if (qualifier != null) {
         final PsiElement element = qualifier.resolve();
         if (!(element instanceof PsiClass aClass)) {
@@ -90,7 +88,7 @@ public final class ThisEscapedInConstructorInspection extends BaseInspection {
       if (method == null) {
         return false;
       }
-      final PsiClass containingClass = ClassUtils.getContainingClass(expression);
+      final PsiClass containingClass = PsiUtil.getContainingClass(expression);
       if (containingClass == null) {
         return false;
       }
@@ -102,7 +100,7 @@ public final class ThisEscapedInConstructorInspection extends BaseInspection {
     }
 
     private static boolean thisEscapesToConstructor(PsiThisExpression expression, PsiNewExpression newExpression) {
-      final PsiClass containingClass = ClassUtils.getContainingClass(expression);
+      final PsiClass containingClass = PsiUtil.getContainingClass(expression);
       final PsiJavaCodeReferenceElement referenceElement = newExpression.getClassReference();
       if (referenceElement == null) {
         return false;
@@ -131,7 +129,7 @@ public final class ThisEscapedInConstructorInspection extends BaseInspection {
       if (field.hasModifierProperty(PsiModifier.STATIC)) {
         return true;
       }
-      final PsiClass assignmentClass = ClassUtils.getContainingClass(assignmentExpression);
+      final PsiClass assignmentClass = PsiUtil.getContainingClass(assignmentExpression);
       final PsiClass fieldClass = field.getContainingClass();
       return !(assignmentClass == null || fieldClass == null || assignmentClass.isInheritor(fieldClass, true) ||
                PsiTreeUtil.isAncestor(assignmentClass, fieldClass, false));

@@ -2,14 +2,11 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.jarRepository.RemoteRepositoriesConfiguration
-import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class RepositoriesImportingTest : MavenMultiVersionImportingTestCase() {
-
   @Test
   fun testMirrorCentralImport() = runBlocking {
     val oldSettingsFile = mavenGeneralSettings.userSettingsFile
@@ -26,6 +23,7 @@ class RepositoriesImportingTest : MavenMultiVersionImportingTestCase() {
           </mirrors>
         </settings>
         """.trimIndent())
+      refreshFiles(listOf(settingsXml))
       mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
 
       importProjectAsync("""
@@ -58,6 +56,7 @@ class RepositoriesImportingTest : MavenMultiVersionImportingTestCase() {
           </mirrors>
         </settings>
         """.trimIndent())
+      refreshFiles(listOf(settingsXml))
       mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
 
       importProjectAsync("""
@@ -90,6 +89,7 @@ class RepositoriesImportingTest : MavenMultiVersionImportingTestCase() {
           </mirrors>
         </settings>
         """.trimIndent())
+      refreshFiles(listOf(settingsXml))
       mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
 
       importProjectAsync("""
@@ -108,16 +108,14 @@ class RepositoriesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   private fun assertDoNotHaveRepositories(vararg repos: String) {
-    val actual = ContainerUtil.map(
-      RemoteRepositoriesConfiguration.getInstance(project).repositories) { it: RemoteRepositoryDescription -> it.url }
+    val actual = RemoteRepositoriesConfiguration.getInstance(project).repositories.map { it.url }
 
     assertDoNotContain(actual, *repos)
   }
 
 
   private fun assertHaveRepositories(vararg repos: String) {
-    val actual = ContainerUtil.map(
-      RemoteRepositoriesConfiguration.getInstance(project).repositories) { it: RemoteRepositoryDescription -> it.url }
+    val actual = RemoteRepositoriesConfiguration.getInstance(project).repositories.map { it.url }
 
     assertContain(actual, *repos)
   }

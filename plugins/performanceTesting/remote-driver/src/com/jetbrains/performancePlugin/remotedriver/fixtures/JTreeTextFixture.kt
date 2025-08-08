@@ -3,18 +3,36 @@ package com.jetbrains.performancePlugin.remotedriver.fixtures
 import com.intellij.driver.model.TreePath
 import com.intellij.driver.model.TreePathToRow
 import com.intellij.driver.model.TreePathToRowList
+import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.ui.tree.TreeUtil
-import com.jetbrains.performancePlugin.remotedriver.dataextractor.JTreeTextCellReader
+import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextCellRendererReader
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.computeOnEdt
 import org.assertj.swing.core.Robot
+import org.assertj.swing.driver.BasicJTreeCellReader
+import org.assertj.swing.driver.CellRendererReader
 import org.assertj.swing.fixture.JTreeFixture
+import java.awt.Component
+import java.awt.Point
 import javax.swing.JTree
 
 open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeFixture(robot, component) {
-  private val cellReader = JTreeTextCellReader()
+  private var cellReader = BasicJTreeCellReader(TextCellRendererReader())
 
   init {
     replaceCellReader(cellReader)
+  }
+
+  fun replaceCellRendererReader(reader: CellRendererReader) {
+    cellReader = BasicJTreeCellReader(reader)
+    replaceCellReader(cellReader)
+  }
+
+  fun getRowPoint(row: Int): Point = computeOnEdt {
+    require(row in 0 until component.rowCount) {
+      "The given row $row should be between 0 and ${component.rowCount - 1}"
+    }
+    component.scrollRowToVisible(row)
+    component.getRowBounds(row).location
   }
 
   fun collectExpandedPaths(): TreePathToRowList {
@@ -37,11 +55,22 @@ open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeF
     return result
   }
 
+  fun areTreeNodesLoaded(): Boolean {
+    var isLoaded = true
+    computeOnEdt {
+      TreeUtil.visitVisibleRows(component) { path ->
+        isLoaded = !TreeUtil.isLoadingPath(path)
+        if (!isLoaded) TreeVisitor.Action.INTERRUPT else TreeVisitor.Action.CONTINUE
+      }
+    }
+    return isLoaded
+  }
+
   fun collectSelectedPaths(): List<TreePath> {
     return computeOnEdt {
       component.selectionPaths
     }?.map { path ->
-      path.path.map { cellReader.valueAt(component, it) ?: "" }.run {
+      path.path.map { computeOnEdt { cellReader.valueAt(component, it) } ?: "" }.run {
         if (component.isRootVisible) subList(1, size)
         else this
       }
@@ -51,6 +80,19 @@ open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeF
   fun expandAll(timeoutMs: Int) {
     computeOnEdt {
       TreeUtil.promiseExpandAll(component).blockingGet(timeoutMs)
+    }
+  }
+
+  fun getComponentAtRow(row: Int): Component {
+    return computeOnEdt {
+      val tree = target()
+      tree.cellRenderer.getTreeCellRendererComponent(tree,
+                                                     tree.getPathForRow(row).lastPathComponent,
+                                                     tree.isRowSelected(row),
+                                                     tree.isExpanded(row),
+                                                     false,
+                                                     row,
+                                                     tree.hasFocus() && tree.isRowSelected(row))
     }
   }
 }

@@ -5,8 +5,10 @@ import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.extension.*
-import java.lang.reflect.Field
+import org.junit.platform.commons.support.HierarchyTraversalMode
+import org.junit.platform.commons.support.ReflectionSupport
 import java.lang.reflect.Modifier
+import java.util.function.Predicate
 import kotlin.jvm.optionals.getOrNull
 
 @TestOnly
@@ -29,22 +31,16 @@ internal class TestFixtureExtension : BeforeAllCallback,
 
     @OptIn(DelicateCoroutinesApi::class)
     val testScope = GlobalScope.childScope(context.displayName)
-    val pendingFixtures = ArrayList<Job>()
-    for (field: Field in testClass.declaredFields) {
-      if (!TestFixture::class.java.isAssignableFrom(field.type)) {
-        continue
-      }
-      if (Modifier.isStatic(field.modifiers) != static) {
-        continue
-      }
+    val pendingFixtures = ArrayList<Deferred<*>>()
+    val fields = ReflectionSupport.findFields(testClass, Predicate { field ->
+      TestFixture::class.java.isAssignableFrom(field.type) && Modifier.isStatic(field.modifiers) == static
+    }, HierarchyTraversalMode.TOP_DOWN)
+    for (field in fields) {
       field.isAccessible = true
       val fixture = field.get(testInstance) as TestFixtureImpl<*>
-      pendingFixtures.add(fixture.init(testScope, context.uniqueId))
+      pendingFixtures.add(fixture.init(testScope, TestContextImpl(context)))
     }
-    @Suppress("SSBasedInspection")
-    runBlocking {
-      pendingFixtures.joinAll()
-    }
+    awaitFixtureInitialization(testScope, pendingFixtures)
     context.getStore(ExtensionContext.Namespace.GLOBAL).put("TestFixtureExtension", testScope)
   }
 
@@ -61,6 +57,24 @@ internal class TestFixtureExtension : BeforeAllCallback,
     @Suppress("SSBasedInspection")
     runBlocking {
       (testScope as CoroutineScope).coroutineContext.job.cancelAndJoin()
+    }
+  }
+}
+
+private fun awaitFixtureInitialization(cleanupScope: CoroutineScope, pendingFixtures: List<Deferred<*>>) {
+  @Suppress("SSBasedInspection")
+  runBlocking {
+    try {
+      pendingFixtures.awaitAll()
+    }
+    catch (e: Throwable) {
+      try {
+        cleanupScope.coroutineContext.job.cancelAndJoin()
+      }
+      catch (exceptionDuringCleanup: Throwable) {
+        e.addSuppressed(Throwable("Exception during cleanup of test fixture", exceptionDuringCleanup))
+      }
+      throw e
     }
   }
 }

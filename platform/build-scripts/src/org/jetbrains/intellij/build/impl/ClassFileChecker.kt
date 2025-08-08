@@ -2,16 +2,17 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.lang.JavaVersion
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel
-import org.jetbrains.intellij.build.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import java.io.DataInputStream
 import java.io.InputStream
 import java.nio.channels.FileChannel
@@ -22,6 +23,8 @@ import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.zip.ZipException
+import kotlin.io.path.name
+import kotlin.io.path.relativeTo
 
 /**
  * <p>
@@ -45,7 +48,7 @@ internal suspend fun checkClassFiles(versionCheckConfig: Map<String, String>,
     .setAttribute("forbiddenSubPathCount", forbiddenSubPaths.size.toLong())
     .setAttribute("forbiddenSubPathExceptionsCount", forbiddenSubPathExceptions.size.toLong())
     .setAttribute("root", root.toString())
-    .useWithScope { span ->
+    .use { span ->
       val rules = ArrayList<Rule>(versionCheckConfig.size)
       for (entry in versionCheckConfig.entries) {
         rules.add(Rule(path = entry.key, version = classVersion(entry.value)))
@@ -116,13 +119,13 @@ private class ClassFileChecker(private val versionRules: List<Rule>,
       // closure must be used, otherwise variables are not captured by FJT
       for (child in dirStream) {
         if (Files.isDirectory(child)) {
-          launch {
-            visitDirectory(directory = child, relativePath = join(relativePath, "/", child.fileName.toString()), errors = errors)
+          launch(CoroutineName("verifying class files in ${child.relativeTo(directory)}")) {
+            visitDirectory(directory = child, relativePath = join(relativePath, "/", child.name), errors = errors)
           }
         }
         else {
-          launch {
-            visitFile(file = child, relativePath = join(relativePath, "/", child.fileName.toString()), errors = errors)
+          launch(CoroutineName("verifying class files in ${child.relativeTo(directory)}")) {
+            visitFile(file = child, relativePath = join(relativePath, "/", child.name), errors = errors)
           }
         }
       }

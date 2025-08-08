@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.idea.maven.utils.MavenUtil.getJdkForImporter
 import java.io.File
 import java.util.function.Predicate
 
@@ -15,10 +16,13 @@ interface MavenServerManager : Disposable {
 
   fun restartMavenConnectors(project: Project, wait: Boolean, condition: Predicate<MavenServerConnector>)
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("use suspend", ReplaceWith("getConnector"))
   fun getConnectorBlocking(project: Project, workingDirectory: String): MavenServerConnector
 
-  suspend fun getConnector(project: Project, workingDirectory: String): MavenServerConnector
+  suspend fun getConnector(project: Project, workingDirectory: String): MavenServerConnector = getConnector(project, workingDirectory, getJdkForImporter(project))
+
+  suspend fun getConnector(project: Project, workingDirectory: String, jdk: Sdk): MavenServerConnector
 
   fun shutdownConnector(connector: MavenServerConnector, wait: Boolean): Boolean
 
@@ -27,21 +31,7 @@ interface MavenServerManager : Disposable {
 
   fun getMavenEventListener(): File
 
-
-  @Deprecated("use {@link MavenServerManager#createEmbedder(Project, boolean, String)}",
-              ReplaceWith("createEmbedder(project, alwaysOnline, multiModuleProjectDirectory)"))
-  fun createEmbedder(project: Project,
-                     alwaysOnline: Boolean,
-                     ignoredWorkingDirectory: String?,
-                     multiModuleProjectDirectory: String): MavenEmbedderWrapper {
-    return createEmbedder(project, alwaysOnline, multiModuleProjectDirectory)
-  }
-
-  fun createEmbedder(project: Project,
-                     alwaysOnline: Boolean,
-                     multiModuleProjectDirectory: String): MavenEmbedderWrapper
-
-
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("use createIndexer()")
   fun createIndexer(project: Project): MavenIndexerWrapper
 

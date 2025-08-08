@@ -2,6 +2,7 @@
 package com.jetbrains.jsonSchema.impl.light.nodes
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ArrayNode
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.keyFMap.KeyFMap
@@ -31,7 +32,7 @@ private const val INVALID_PATTERN_FALLBACK = "__invalid_ij_pattern"
 @ApiStatus.Internal
 abstract class JsonSchemaObjectBackedByJacksonBase(
   override val rawSchemaNode: JsonNode,
-  private val jsonPointer: String
+  private val jsonPointer: String,
 ) : JsonSchemaObjectLegacyAdapter(), JsonSchemaNodePointer<JsonNode> {
 
   abstract override fun getRootSchemaObject(): RootJsonSchemaObjectBackedByJackson
@@ -42,23 +43,11 @@ abstract class JsonSchemaObjectBackedByJacksonBase(
 
   private var myCompositeObjectsCache = AtomicReference(KeyFMap.EMPTY_MAP)
 
-  protected fun <V : Any> getOrComputeValue(key: Key<V>, idempotentComputation: () -> V): V {
-    var existingMap: KeyFMap
-    var newValue: V?
-
-    do {
-      existingMap = myCompositeObjectsCache.get()
-      newValue = existingMap[key]
-      if (newValue == null) {
-        val mapWithNewValue = existingMap.plus(key, idempotentComputation())
-        if (myCompositeObjectsCache.compareAndSet(existingMap, mapWithNewValue)) {
-          newValue = mapWithNewValue.get(key)
-        }
-      }
-    }
-    while (newValue == null)
-
-    return newValue
+  protected fun <V : Any> getOrComputeValue(key: Key<V>, computation: () -> V): V {
+    return myCompositeObjectsCache.updateAndGet { existingMap ->
+      if (existingMap.get(key) != null) return@updateAndGet existingMap
+      existingMap.plus(key, computation())
+    }.get(key)!!
   }
 
   private fun createResolvableChild(vararg childNodeRelativePointer: String): JsonSchemaObjectBackedByJacksonBase? {
@@ -86,18 +75,18 @@ abstract class JsonSchemaObjectBackedByJacksonBase(
     return getRootSchemaObject().rawFile
   }
 
-  override fun hasChildFieldsExcept(namesToSkip: Array<String>): Boolean {
+  override fun hasChildFieldsExcept(namesToSkip: List<String>): Boolean {
     return JacksonSchemaNodeAccessor.readNodeKeys(rawSchemaNode)
       .orEmpty()
       .any { it !in namesToSkip }
   }
 
-  override fun hasChildNode(vararg childNodeName: String): Boolean {
-    return JacksonSchemaNodeAccessor.hasChildNode(rawSchemaNode, *childNodeName)
+  override fun hasChildNode(childNodeName: String): Boolean {
+    return JacksonSchemaNodeAccessor.hasChildNode(rawSchemaNode, childNodeName)
   }
 
-  override fun readChildNodeValue(vararg childNodeName: String): String? {
-    return JacksonSchemaNodeAccessor.readUntypedNodeValueAsText(rawSchemaNode, *childNodeName)
+  override fun readChildNodeValue(childNodeName: String): String? {
+    return JacksonSchemaNodeAccessor.readUntypedNodeValueAsText(rawSchemaNode, childNodeName)
   }
 
   override fun getConstantSchema(): Boolean? {
@@ -473,11 +462,11 @@ abstract class JsonSchemaObjectBackedByJacksonBase(
       .toList()
   }
 
-  private fun createChildMap(vararg childMapName: String): Map<String, JsonSchemaObject>? {
-    return JacksonSchemaNodeAccessor.readNodeAsMapEntries(rawSchemaNode, *childMapName)
+  private fun createChildMap(childMapName: String): Map<String, JsonSchemaObject>? {
+    return JacksonSchemaNodeAccessor.readNodeAsMapEntries(rawSchemaNode, childMapName)
       ?.mapNotNull { (key, value) ->
         if (!value.isObject) return@mapNotNull null
-        val childObject = createResolvableChild(*childMapName, key) ?: return@mapNotNull null
+        val childObject = createResolvableChild(childMapName, key) ?: return@mapNotNull null
         key to childObject
       }?.toMap()
   }
@@ -495,17 +484,35 @@ abstract class JsonSchemaObjectBackedByJacksonBase(
     return JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, X_INTELLIJ_HTML_DESCRIPTION)
   }
 
+  override fun getMetadata(): List<JsonSchemaMetadataEntry>? {
+    return JacksonSchemaNodeAccessor.readNodeAsMapEntries(rawSchemaNode, X_INTELLIJ_METADATA)
+      ?.mapNotNull {
+        val values = (it.second as? ArrayNode)?.let {
+          it.elements().asSequence().mapNotNull {
+            it.takeIf { it.isTextual }?.asText()
+          }.toList()
+        } ?: it.second.takeIf { it.isTextual }?.asText()?.let { listOf(it) }
+        if (values.isNullOrEmpty()) null
+        else JsonSchemaMetadataEntry(it.first, values)
+      }?.toList()
+  }
+
   override fun getLanguageInjection(): String? {
-    return JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, X_INTELLIJ_LANGUAGE_INJECTION)
-           ?: JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, X_INTELLIJ_LANGUAGE_INJECTION, LANGUAGE)
+    val directChild = JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, X_INTELLIJ_LANGUAGE_INJECTION)
+    if (directChild != null) return directChild
+
+    val intermediateNode = JacksonSchemaNodeAccessor.resolveRelativeNode(rawSchemaNode, X_INTELLIJ_LANGUAGE_INJECTION) ?: return null
+    return JacksonSchemaNodeAccessor.readTextNodeValue(intermediateNode, LANGUAGE)
   }
 
   override fun getLanguageInjectionPrefix(): String? {
-    return JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, X_INTELLIJ_LANGUAGE_INJECTION, PREFIX)
+    val intermediateNode = JacksonSchemaNodeAccessor.resolveRelativeNode(rawSchemaNode, X_INTELLIJ_LANGUAGE_INJECTION) ?: return null
+    return JacksonSchemaNodeAccessor.readTextNodeValue(intermediateNode, PREFIX)
   }
 
   override fun getLanguageInjectionPostfix(): String? {
-    return JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, X_INTELLIJ_LANGUAGE_INJECTION, SUFFIX)
+    val intermediateNode = JacksonSchemaNodeAccessor.resolveRelativeNode(rawSchemaNode, X_INTELLIJ_LANGUAGE_INJECTION) ?: return null
+    return JacksonSchemaNodeAccessor.readTextNodeValue(intermediateNode, SUFFIX)
   }
 
   override fun isShouldValidateAgainstJSType(): Boolean {

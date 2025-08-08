@@ -67,6 +67,7 @@ suspend fun <T> withBackgroundProgress(
   return withBackgroundProgress(project, title, cancellation, action)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   "Moved to com.intellij.platform.ide.progress",
   ReplaceWith(
@@ -83,6 +84,7 @@ suspend fun <T> withModalProgress(
   return withModalProgress(project, title, action)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   "Moved to com.intellij.platform.ide.progress",
   ReplaceWith(
@@ -226,6 +228,7 @@ fun <T> runBlockingModalWithRawProgressReporter(
   }
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   message = "Function was renamed to `runWithModalProgressBlocking`",
   replaceWith = ReplaceWith(
@@ -243,6 +246,7 @@ fun <T> runBlockingModal(
   return runWithModalProgressBlocking(ModalTaskOwner.project(project), title, TaskCancellation.cancellable(), action)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   message = "Function was renamed to `runWithModalProgressBlocking`",
   replaceWith = ReplaceWith(

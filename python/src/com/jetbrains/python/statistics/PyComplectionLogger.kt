@@ -20,9 +20,9 @@ class PyCompletionStatisticLogger : LookupUsageDescriptor {
     return lookupResultDescriptor.selectedItem?.let {
       val psiElement = it.psiElement
       psiElement?.containingFile?.let { file ->
-        if (file is PyFile) {
+        if (file is PyFile && file.virtualFile != null) {
           val qName = SlowOperations.knownIssue("PY-70370, EA-928705").use {
-            QualifiedNameFinder.findCachedShortestImportableName(file, file.virtualFile)
+            QualifiedNameFinder.findCachedShortestImportableName(file, file.viewProvider.virtualFile)
           }
           qName?.firstComponent?.let { name ->
             listOf(packageName.with(PyPsiPackageUtil.moduleToPackageName(name)),

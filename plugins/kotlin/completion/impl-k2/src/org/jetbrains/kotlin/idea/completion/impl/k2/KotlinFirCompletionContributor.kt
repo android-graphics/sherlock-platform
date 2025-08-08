@@ -3,33 +3,19 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.*
-import com.intellij.codeInsight.completion.addingPolicy.PolicyController
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.patterns.StandardPatterns
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
-import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
-import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
-import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.contributors.FirCompletionContributorFactory
-import org.jetbrains.kotlin.idea.completion.weighers.Weighers
-import org.jetbrains.kotlin.idea.util.positionContext.*
+import org.jetbrains.kotlin.idea.completion.impl.k2.Completions
+import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
+import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighers
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinPositionContextDetector
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.platform.isMultiPlatform
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class KotlinFirCompletionContributor : CompletionContributor() {
     init {
@@ -74,141 +60,55 @@ class KotlinFirCompletionContributor : CompletionContributor() {
 }
 
 private object KotlinFirCompletionProvider : CompletionProvider<CompletionParameters>() {
-    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
-        @Suppress("NAME_SHADOWING") val parameters = KotlinFirCompletionParametersProvider.provide(parameters)
 
-        if (!Registry.`is`("kotlin.k2.scripting.enabled")) {
-            val ktFile = parameters.ijParameters.originalFile as? KtFile
-            if (ktFile?.isScript() == true) return
-        }
-
-        if (shouldSuppressCompletion(parameters.ijParameters, result.prefixMatcher)) return
-        val positionContext = KotlinPositionContextDetector.detect(parameters.ijParameters.position)
-        val (resultController, resultSet) = createResultSet(parameters, positionContext, result)
-
-        val basicContext = FirBasicCompletionContext.createFromParameters(parameters, resultSet) ?: return
-
-        analyzeInContext(basicContext, positionContext) {
-            recordOriginalFile(basicContext)
-            complete(basicContext, positionContext, resultController)
-        }
-    }
-
-
-    context(KaSession)
-    private fun complete(
-        basicContext: FirBasicCompletionContext,
-        positionContext: KotlinRawPositionContext,
-        resultController: PolicyController,
+    override fun addCompletions(
+        parameters: CompletionParameters,
+        context: ProcessingContext,
+        result: CompletionResultSet,
     ) {
-        val factory = FirCompletionContributorFactory(basicContext, resultController)
-        with(Completions) {
-            val weighingContext = createWeighingContext(basicContext, positionContext)
-            val sessionParameters = FirCompletionSessionParameters(basicContext, positionContext)
-            complete(factory, positionContext, weighingContext, sessionParameters)
-        }
+        @Suppress("NAME_SHADOWING") val parameters = KotlinFirCompletionParameters.create(parameters)
+            ?: return
+        val position = parameters.position
+
+        // no completion inside number literals
+        if (AFTER_NUMBER_LITERAL.accepts(position)) return
+        val positionContext = KotlinPositionContextDetector.detect(position)
+
+        val resultSet = result.withRelevanceSorter(parameters, positionContext)
+            .withPrefixMatcher(parameters)
+
+        Completions.complete(
+            parameters = parameters,
+            positionContext = positionContext,
+            sink = LookupElementSink(resultSet, parameters),
+        )
     }
 
-    private inline fun analyzeInContext(
-        basicContext: FirBasicCompletionContext,
-        positionContext: KotlinRawPositionContext,
-        action: KaSession.() -> Unit
-    ) {
-        analyze(basicContext.fakeKtFile) {
-            when (positionContext) {
-                is KotlinSimpleParameterPositionContext -> recordOriginalDeclaration(basicContext, positionContext.ktParameter)
-                is KotlinClassifierNamePositionContext -> recordOriginalDeclaration(basicContext, positionContext.classLikeDeclaration)
-                else -> {}
-            }
+    private fun CompletionResultSet.withPrefixMatcher(
+        parameters: KotlinFirCompletionParameters,
+    ): CompletionResultSet {
+        val prefix = CompletionUtil.findIdentifierPrefix(
+            parameters.completionFile,
+            parameters.offset,
+            kotlinIdentifierPartPattern(),
+            kotlinIdentifierStartPattern(),
+        )
 
-            action()
-        }
+        return withPrefixMatcher(prefix)
     }
 
-    context(KaSession)
-    @OptIn(KaAnalysisApiInternals::class)
-    private fun recordOriginalFile(basicCompletionContext: FirBasicCompletionContext) {
-        val originalFile = basicCompletionContext.originalKtFile
-        val fakeFile = basicCompletionContext.fakeKtFile
-        fakeFile.recordOriginalKtFile(originalFile)
-    }
-
-    context(KaSession)
-    @OptIn(KaAnalysisApiInternals::class)
-    private fun recordOriginalDeclaration(basicContext: FirBasicCompletionContext, declaration: KtDeclaration) {
-        try {
-            declaration.recordOriginalDeclaration(PsiTreeUtil.findSameElementInCopy(declaration, basicContext.originalKtFile))
-        } catch (ignore: IllegalStateException) {
-            //declaration is written at empty space
-        }
-    }
-
-    private fun createResultSet(
+    private fun CompletionResultSet.withRelevanceSorter(
         parameters: KotlinFirCompletionParameters,
         positionContext: KotlinRawPositionContext,
-        result: CompletionResultSet
-    ): Pair<PolicyController, CompletionResultSet> {
-        val prefix = CompletionUtil.findIdentifierPrefix(
-            parameters.ijParameters.position.containingFile,
-            parameters.ijParameters.offset,
-            kotlinIdentifierPartPattern(),
-            kotlinIdentifierStartPattern()
-        )
-        val resultWithSorter = result.withRelevanceSorter(createSorter(parameters.ijParameters, positionContext, result)).withPrefixMatcher(prefix)
-        val controller = PolicyController(resultWithSorter)
-        val obeyingResultSet = PolicyObeyingResultSet(resultWithSorter, controller)
-        return controller to obeyingResultSet
-    }
+    ): CompletionResultSet {
+        val sorter = CompletionSorter.defaultSorter(parameters.delegate, prefixMatcher)
+            .applyWeighers(positionContext)
 
-    private fun createSorter(
-        parameters: CompletionParameters,
-        positionContext: KotlinRawPositionContext,
-        result: CompletionResultSet
-    ): CompletionSorter = CompletionSorter.defaultSorter(parameters, result.prefixMatcher)
-        .let { Weighers.addWeighersToCompletionSorter(it, positionContext) }
+        return withRelevanceSorter(sorter)
+    }
 
     private val AFTER_NUMBER_LITERAL = PsiJavaPatterns.psiElement().afterLeafSkipping(
         PsiJavaPatterns.psiElement().withText(""),
         PsiJavaPatterns.psiElement().withElementType(PsiJavaPatterns.elementType().oneOf(KtTokens.FLOAT_LITERAL, KtTokens.INTEGER_LITERAL))
     )
-    private val AFTER_INTEGER_LITERAL_AND_DOT = PsiJavaPatterns.psiElement().afterLeafSkipping(
-        PsiJavaPatterns.psiElement().withText("."),
-        PsiJavaPatterns.psiElement().withElementType(PsiJavaPatterns.elementType().oneOf(KtTokens.INTEGER_LITERAL))
-    )
-
-    private fun shouldSuppressCompletion(parameters: CompletionParameters, prefixMatcher: PrefixMatcher): Boolean {
-        val position = parameters.position
-        val invocationCount = parameters.invocationCount
-
-        // no completion inside number literals
-        if (AFTER_NUMBER_LITERAL.accepts(position)) return true
-
-        // no completion auto-popup after integer and dot
-        if (invocationCount == 0 && prefixMatcher.prefix.isEmpty() && AFTER_INTEGER_LITERAL_AND_DOT.accepts(position)) return true
-
-        return false
-    }
-}
-
-internal data class FirCompletionSessionParameters(
-    private val basicContext: FirBasicCompletionContext,
-    private val positionContext: KotlinRawPositionContext,
-) {
-    private val languageVersionSettings = basicContext.project.languageVersionSettings
-    val excludeEnumEntries: Boolean = !languageVersionSettings.supportsFeature(LanguageFeature.EnumEntries)
-
-    val allowSyntheticJavaProperties: Boolean = positionContext !is KDocNameReferencePositionContext &&
-            (positionContext !is KotlinCallableReferencePositionContext || languageVersionSettings.supportsFeature(LanguageFeature.ReferencesToSyntheticJavaProperties))
-
-    val allowJavaGettersAndSetters: Boolean = !allowSyntheticJavaProperties || basicContext.parameters.invocationCount > 1
-    val allowExpectedDeclarations: Boolean = basicContext.originalKtFile.moduleInfo.platform.isMultiPlatform()
-
-    val allowClassifiersAndPackagesForPossibleExtensionCallables: Boolean
-        get() {
-            val declaration = (positionContext as? KotlinTypeNameReferencePositionContext)?.typeReference?.parent ?: return true
-            return !(basicContext.parameters.invocationCount == 0
-                    && (declaration is KtNamedFunction || declaration is KtProperty)
-                    && positionContext.explicitReceiver == null
-                    && basicContext.prefixMatcher.prefix.firstOrNull()?.isLowerCase() == true)
-        }
 }

@@ -25,7 +25,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -48,7 +47,7 @@ import java.util.stream.Collectors;
 
 @ApiStatus.Experimental
 public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCollectionBreakpointProperties> {
-  @NonNls public static final Key<CollectionBreakpoint> CATEGORY = BreakpointCategory.lookup("collection_breakpoints");
+  public static final @NonNls Key<CollectionBreakpoint> CATEGORY = BreakpointCategory.lookup("collection_breakpoints");
 
   private static final String GET_INTERNAL_CLS_NAME_METHOD_NAME = "getInternalClsName";
   private static final String GET_INTERNAL_CLS_NAME_METHOD_DESC = "(Ljava/lang/String;)Ljava/lang/String;";
@@ -97,9 +96,9 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
       if (psiClass != null) {
         getProperties().myClassName = psiClass.getQualifiedName();
       }
-      myIsPrivate = SlowOperations.allowSlowOperations(() -> field.hasModifierProperty(PsiModifier.PRIVATE));
-      myIsFinal = SlowOperations.allowSlowOperations(() -> field.hasModifierProperty(PsiModifier.FINAL));
-      myIsStatic = SlowOperations.allowSlowOperations(() -> field.hasModifierProperty(PsiModifier.STATIC));
+      myIsPrivate = field.hasModifierProperty(PsiModifier.PRIVATE);
+      myIsFinal = field.hasModifierProperty(PsiModifier.FINAL);
+      myIsStatic = field.hasModifierProperty(PsiModifier.STATIC);
     }
     myClsPrepared = false;
     myAllMethodsEntryRequestIsEnabled = false;
@@ -235,8 +234,7 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
   }
 
   private List<ReferenceType> getTrackedClassesInJVM(SuspendContextImpl context) {
-    DebugProcessImpl debugProcess = context.getDebugProcess();
-    VirtualMachineProxyImpl virtualMachineProxy = debugProcess.getVirtualMachineProxy();
+    VirtualMachineProxyImpl virtualMachineProxy = context.getVirtualMachineProxy();
 
     return myClassesNames
       .stream()
@@ -287,13 +285,13 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
   private void processAllClasses(SuspendContextImpl context, List<ReferenceType> classes) {
     String fieldName = getFieldName();
     for (ReferenceType cls : classes) {
-      Field field = cls.fieldByName(fieldName);
+      Field field = DebuggerUtils.findField(cls, fieldName);
       if (cls.isInitialized()) {
         captureClsField(cls, field, context.getDebugProcess(), context);
       }
     }
 
-    VirtualMachineProxyImpl vm = context.getDebugProcess().getVirtualMachineProxy();
+    VirtualMachineProxyImpl vm = context.getVirtualMachineProxy();
 
     for (ThreadReferenceProxyImpl thread : vm.allThreads()) {
       try {
@@ -327,11 +325,11 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
   private void processAllInstances(SuspendContextImpl context, List<ObjectReference> instances) {
     String fieldName = getFieldName();
     for (ObjectReference instance : instances) {
-      Field field = instance.referenceType().fieldByName(fieldName);
+      Field field = DebuggerUtils.findField(instance.referenceType(), fieldName);
       captureInstanceField(instance, field, context.getDebugProcess(), context);
     }
 
-    VirtualMachineProxyImpl vm = context.getDebugProcess().getVirtualMachineProxy();
+    VirtualMachineProxyImpl vm = context.getVirtualMachineProxy();
 
     for (ThreadReferenceProxyImpl thread : vm.allThreads()) {
       try {
@@ -386,7 +384,7 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
                                   ReferenceType declaringType,
                                   @Nullable ObjectReference thisObj) {
     DebugProcessImpl debugProcess = context.getDebugProcess();
-    Field field = declaringType.fieldByName(getFieldName());
+    Field field = DebuggerUtils.findField(declaringType, getFieldName());
 
     ModificationWatchpointRequest request =
       debugProcess.getRequestsManager().createModificationWatchpointRequest(requestor, field);
@@ -400,11 +398,9 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
     request.enable();
   }
 
-  private void createRequestForSubclasses(DebugProcessImpl debugProcess, ReferenceType baseType) {
-    final VirtualMachineProxyImpl virtualMachineProxy = debugProcess.getVirtualMachineProxy();
-
+  private void createRequestForSubclasses(DebugProcessImpl debugProcess, @NotNull ReferenceType baseType) {
     // create a request for classes that are already loaded
-    virtualMachineProxy.allClasses()
+    baseType.virtualMachine().allClasses()
       .stream()
       .filter(type -> DebuggerUtilsImpl.instanceOf(type, baseType) && !type.name().equals(baseType.name()))
       .forEach(derivedType -> createRequestForClass(debugProcess, derivedType));
@@ -691,8 +687,7 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
                                 2);
   }
 
-  @NotNull
-  private static List<Location> findLocationsInInstrumentorMethods(ClassType instrumentorCls) {
+  private static @NotNull List<Location> findLocationsInInstrumentorMethods(ClassType instrumentorCls) {
     List<Location> locations = new ArrayList<>();
     Location location = findLocationInCaptureFieldModificationMethod(instrumentorCls);
     if (location != null) {
@@ -804,7 +799,7 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
       try {
         DebugProcessImpl debugProcess = context.getDebugProcess();
         DebugProcessImpl.ResumeCommand stepOutCommand = debugProcess.createStepOutCommand(context);
-        debugProcess.getManagerThread().schedule(stepOutCommand);
+        context.getManagerThread().schedule(stepOutCommand);
       }
       catch (Exception e) {
         DebuggerUtilsImpl.logError(e);

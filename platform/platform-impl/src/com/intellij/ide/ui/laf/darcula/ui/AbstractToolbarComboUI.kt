@@ -7,6 +7,7 @@ import com.intellij.openapi.wm.impl.AbstractToolbarCombo
 import com.intellij.ui.JBColor
 import com.intellij.ui.util.maximumWidth
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import sun.swing.SwingUtilities2
 import java.awt.Dimension
@@ -22,6 +23,7 @@ import javax.swing.text.View
 import kotlin.math.max
 import kotlin.math.min
 
+@ApiStatus.Internal
 open class AbstractToolbarComboUI : ComponentUI(), PropertyChangeListener {
   protected val ICON_TEXT_GAP: Int = 6
   protected val BETWEEN_ICONS_GAP: Int = 0
@@ -55,7 +57,7 @@ open class AbstractToolbarComboUI : ComponentUI(), PropertyChangeListener {
     val metrics = c.getFontMetrics(c.font)
     g.color = if (c.isEnabled) c.getForeground() else UIUtil.getLabelDisabledForeground()
 
-    val baseline = c.getBaseline(c.width, c.height)
+    val baseline = c.getBaseline(c.width, c.height) - c.insets.top
     val text = c.textCutStrategy.calcShownText(fullText, metrics, textRect.width, g)
     val strBounds = metrics.getStringBounds(text, g).getBounds()
     strBounds.setLocation(max(0, (textRect.centerX - strBounds.centerX).toInt()), baseline)

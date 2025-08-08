@@ -1,28 +1,33 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.hints
 
-import com.intellij.codeInsight.hints.declarative.InlayActionData
-import com.intellij.codeInsight.hints.declarative.InlayTreeSink
-import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
-import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionNavigationHandler
-import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
+import com.intellij.codeInsight.hints.declarative.*
+import com.intellij.codeInsight.hints.filtering.Matcher
+import com.intellij.codeInsight.hints.filtering.MatcherConstructor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_IMPLICIT_RECEIVERS_AND_PARAMS
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_RETURN_EXPRESSIONS
 import org.jetbrains.kotlin.idea.codeInsight.hints.isFollowedByNewLine
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFunctionLiteral
-import org.jetbrains.kotlin.psi.KtLabeledExpression
-import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
 class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
+
+    private val excludeListMatchers: List<Matcher> =
+        listOf(
+            /* Gradle DSL especially annoying hints */
+            "org.gradle.kotlin.dsl.KotlinBuildScript.*(*)",
+            "org.gradle.kotlin.dsl.*(*)",
+        ).mapNotNull { MatcherConstructor.createMatcher(it) }
+
     override fun collectFromElement(
         element: PsiElement,
         sink: InlayTreeSink
@@ -31,8 +36,13 @@ class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
         collectFromLambdaImplicitParameterReceiver(element, sink)
     }
 
-    private fun isLambdaReturnExpression(e: PsiElement): Boolean =
-        e is KtExpression && e !is KtFunctionLiteral && !e.isNameReferenceInCall() && e.isLambdaReturnValueHintsApplicable()
+    @OptIn(ExperimentalContracts::class)
+    private fun isLambdaReturnExpression(e: PsiElement): Boolean {
+        contract {
+            returns(true) implies (e is KtExpression)
+        }
+        return e is KtExpression && e !is KtFunctionLiteral && !e.isNameReferenceInCall() && e.isLambdaReturnValueHintsApplicable()
+    }
 
     fun collectFromLambdaReturnExpression(
         element: PsiElement,
@@ -40,26 +50,25 @@ class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
     ) {
         if (!isLambdaReturnExpression(element)) return
 
-        val expression = element as? KtExpression ?: return
-        val functionLiteral = expression.getStrictParentOfType<KtFunctionLiteral>() ?: return
+        val functionLiteral = element.getStrictParentOfType<KtFunctionLiteral>() ?: return
         val lambdaExpression = functionLiteral.getStrictParentOfType<KtLambdaExpression>() ?: return
         val lambdaName = lambdaExpression.getNameOfFunctionThatTakesLambda() ?: "lambda"
 
         sink.whenOptionEnabled(SHOW_RETURN_EXPRESSIONS.name) {
             val isUsedAsExpression = analyze(lambdaExpression) {
-                expression.isUsedAsExpression
+                // TODO: KTIJ-16537 depends on KT-73473 : isUsedAsResultOfLambda should be used
+                element.isUsedAsExpression
             }
             if (!isUsedAsExpression) return@whenOptionEnabled
 
-            sink.addPresentation(InlineInlayPosition(expression.endOffset, true), hasBackground = true) {
+            sink.addPresentation(InlineInlayPosition(element.endOffset, true), hintFormat = HintFormat.default) {
                 text("^")
                 text(lambdaName,
-                     lambdaExpression.createSmartPointer().let {
-                         InlayActionData(
-                             PsiPointerInlayActionPayload(it),
-                             PsiPointerInlayActionNavigationHandler.HANDLER_ID
-                         )
-                     })
+                     InlayActionData(
+                         PsiPointerInlayActionPayload(pointer = lambdaExpression.createSmartPointer()),
+                         PsiPointerInlayActionNavigationHandler.HANDLER_ID
+                     )
+                )
             }
         }
     }
@@ -94,18 +103,26 @@ class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
 
         sink.whenOptionEnabled(SHOW_IMPLICIT_RECEIVERS_AND_PARAMS.name) {
             analyze(functionLiteral) {
-                val anonymousFunctionSymbol = functionLiteral.symbol as? KaAnonymousFunctionSymbol ?: return@whenOptionEnabled
+                val anonymousFunctionSymbol = functionLiteral.symbol
                 anonymousFunctionSymbol.receiverParameter?.let { receiverSymbol ->
-                    sink.addPresentation(InlineInlayPosition(lbrace.textRange.endOffset, true), hasBackground = true) {
-                        text("this: ")
-                        printKtType(receiverSymbol.type)
+                    val skipped = functionLiteral.getParentOfType<KtCallExpression>(false, KtBlockExpression::class.java)?.let { callExpression ->
+                        val functionCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return@let true
+                        val functionSymbol = functionCall.symbol
+                        functionSymbol.isExcludeListed(excludeListMatchers)
+                    }
+
+                    if (skipped != true) {
+                        sink.addPresentation(InlineInlayPosition(lbrace.textRange.endOffset, true), hintFormat = HintFormat.default) {
+                            text("this: ")
+                            printKtType(receiverSymbol.returnType)
+                        }
                     }
                 }
 
                 anonymousFunctionSymbol.valueParameters.singleOrNull()?.let { singleParameterSymbol ->
                     val type = singleParameterSymbol.takeIf { it.isImplicitLambdaParameter }
-                        ?.returnType?.takeUnless { it.isUnit } ?: return@let
-                    sink.addPresentation(InlineInlayPosition(lbrace.textRange.endOffset, true), hasBackground = true) {
+                        ?.returnType?.takeUnless { it.isUnitType } ?: return@let
+                    sink.addPresentation(InlineInlayPosition(lbrace.textRange.endOffset, true), hintFormat = HintFormat.default) {
                         text("it: ")
                         printKtType(type)
                     }

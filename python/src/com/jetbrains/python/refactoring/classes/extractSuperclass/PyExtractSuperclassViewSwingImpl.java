@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.ui.components.JBBox;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedViewSwingImpl;
 import org.jetbrains.annotations.Nls;
@@ -35,7 +36,7 @@ class PyExtractSuperclassViewSwingImpl
     setTitle(PyExtractSuperclassHandler.getRefactoringName());
 
 
-    final Box box = Box.createVerticalBox();
+    final JBBox box = JBBox.createVerticalBox();
 
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(new JLabel(RefactoringBundle.message("extract.superclass.from")), BorderLayout.NORTH);
@@ -56,14 +57,12 @@ class PyExtractSuperclassViewSwingImpl
     box.add(panel);
     box.add(Box.createVerticalStrut(5));
 
-    myFileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor();
-
-
-    myFileChooserDescriptor.setRoots(ProjectRootManager.getInstance(project).getContentRoots());
-    myFileChooserDescriptor.withTreeRootVisible(true);
+    myFileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
+      .withTitle(getFileOrDirectory())
+      .withRoots(ProjectRootManager.getInstance(project).getContentRoots())
+      .withTreeRootVisible(true);
     myTargetDirField = new TextFieldWithBrowseButton();
-    myTargetDirField
-      .addBrowseFolderListener(getFileOrDirectory(), null, project, myFileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    myTargetDirField.addBrowseFolderListener(project, myFileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
 
     panel = new JPanel(new BorderLayout());
     final JLabel dirLabel = new JLabel();

@@ -14,7 +14,7 @@ public class UnnamedVariables {
     Consumer<String> consumer3 = _ -> System.out.println(<error descr="Using '_' as a reference is not allowed">_</error>.trim());
     Consumer<String> consumer4 = _ -> {
       var v = <error descr="Using '_' as a reference is not allowed">_</error>;
-      System.out.println(v.<error descr="Cannot resolve method 'trim()'" textAttributesKey="WRONG_REFERENCES_ATTRIBUTES">trim</error>());
+      System.out.println(v.<error descr="Cannot resolve method 'trim()'">trim</error>());
     };
     BiConsumer<String, String> consumer5 = (_,_) -> {};
   }
@@ -28,7 +28,7 @@ public class UnnamedVariables {
   void testLocal() {
     int _ = 10;
     int _ = 20;
-    int _<error descr="Brackets are not allowed after unnamed variable declaration">[]</error> = {30};
+    int _<error descr="Brackets are not allowed after an unnamed variable declaration">[]</error> = {30};
     int[] _ = {40};
     var _ = "string";
     for (int _ = 1;;) {}

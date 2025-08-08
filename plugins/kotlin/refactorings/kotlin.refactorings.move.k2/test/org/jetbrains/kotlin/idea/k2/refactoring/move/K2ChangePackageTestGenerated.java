@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.refactoring.move;
 
@@ -48,11 +48,6 @@ public class K2ChangePackageTestGenerated extends AbstractK2ChangePackageTest {
     @TestMetadata("kotlin/changeToNonDefaultPackage/changeToNonDefaultPackage.test")
     public void testKotlin_changeToNonDefaultPackage_ChangeToNonDefaultPackage() throws Exception {
         runTest("../../idea/tests/testData/refactoring/changePackage/kotlin/changeToNonDefaultPackage/changeToNonDefaultPackage.test");
-    }
-
-    @TestMetadata("kotlin/headerClasses/headerClasses.test")
-    public void testKotlin_headerClasses_HeaderClasses() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/changePackage/kotlin/headerClasses/headerClasses.test");
     }
 
     @TestMetadata("kotlin/longName/longName.test")

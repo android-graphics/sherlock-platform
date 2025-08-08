@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.tensorFlow
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.QualifiedName
@@ -15,7 +14,19 @@ import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
 
 private val LAYOUT_PER_VERSION: List<Pair<VersionRange, Map<String, String>>> = listOf(
-  VersionRange("2.6.0rc0", null) to mapOf(
+  VersionRange("2.16.1", null) to mapOf(
+    // See https://github.com/tensorflow/tensorflow/commit/4be8c8d2d20c7297fd3fc6a036a21098b830c9bc
+    "keras" to "keras._tf_keras.keras",
+    // losses, metrics, optimizers, initializers should be covered by the content of 
+    // typeshed/stubs/tensorflow/tensorflow/keras
+    "initializers" to "keras._tf_keras.keras.initializers", 
+    "losses" to "keras._tf_keras.keras.losses", 
+    "metrics" to "keras._tf_keras.keras.metrics", 
+    "optimizers" to "keras._tf_keras.keras.optimizers", 
+    "security" to "tensorflow.security",
+    "*" to "tensorflow._api.v2",
+  ),
+  VersionRange("2.6.0rc0", "2.16.1") to mapOf(
     "keras" to "keras.api._v2.keras",
     // losses, metrics, optimizers, initializers are not available as tensorflow submodules, only as its attributes
     // i.e. "from tensorflow import losses" is possible, but not "import tensorflow.losses".
@@ -68,10 +79,9 @@ internal fun takeFirstResolvedInTensorFlow(qualifiedName: String, context: PyQua
 private fun getTensorFlowPackage(sdk: Sdk?): PyPackage? {
   if (sdk == null) return null
 
-  val unitTestMode = ApplicationManager.getApplication().isUnitTestMode
   val pkgManager = PyPackageManager.getInstance(sdk)
 
-  val packages = if (unitTestMode) pkgManager.refreshAndGetPackages(false) else pkgManager.packages ?: return null
+  val packages = pkgManager.packages ?: return null
   return PyPsiPackageUtil.findPackage(packages, "tensorflow")
 }
 

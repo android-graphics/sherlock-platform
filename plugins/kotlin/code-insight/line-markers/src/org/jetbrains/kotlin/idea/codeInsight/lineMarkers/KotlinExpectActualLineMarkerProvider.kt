@@ -13,16 +13,18 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.*
 import org.jetbrains.kotlin.idea.highlighter.markers.KotlinLineMarkerOptions
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import java.awt.event.MouseEvent
 
 class KotlinExpectActualLineMarkerProvider : LineMarkerProviderDescriptor() {
@@ -70,7 +72,7 @@ class KotlinExpectActualLineMarkerProvider : LineMarkerProviderDescriptor() {
         if (!gutter.isEnabled) return false
 
         if (declaration.areMarkersForbidden()) return false
-        if (!declaration.hasExpectModifier() && declaration.containingClassOrObjectOrSelf()?.hasExpectModifier() != true) return false
+        if (!declaration.hasExpectModifier() && declaration.containingClassOrObject?.hasExpectModifier() != true) return false
         val anchor = declaration.expectOrActualAnchor
 
         val navigatableActualDeclarations: Collection<SmartPsiElementPointer<KtDeclaration>>? = anchor.markerDeclaration?.allNavigatableActualDeclarations()
@@ -175,9 +177,8 @@ internal fun getModulesStringForMarkerTooltip(navigatableDeclarations: Collectio
     }
 
     val project = navigatableDeclarations.first().project
-    val moduleProvider = KaModuleProvider.getInstance(project)
     val moduleNames = navigatableDeclarations
-        .mapNotNull { navigatable -> navigatable.element?.let { moduleProvider.getModule(it, useSiteModule = null).moduleName } }
+        .mapNotNull { navigatable -> navigatable.element?.getKaModule(project, useSiteModule = null)?.moduleName }
 
     return when (moduleNames.size) {
         0 -> null

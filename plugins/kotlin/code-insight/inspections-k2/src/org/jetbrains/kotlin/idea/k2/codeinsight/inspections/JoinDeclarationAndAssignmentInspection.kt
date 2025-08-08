@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaPossiblyNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
@@ -70,9 +69,8 @@ internal class JoinDeclarationAndAssignmentInspection :
         }
     }
 
-    context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    override fun prepareContext(element: KtProperty): Context? {
+    override fun KaSession.prepareContext(element: KtProperty): Context? {
         val assignment = findFirstAssignment(element) ?: return null
         val initializer = assignment.right ?: return null
 
@@ -139,7 +137,7 @@ internal class JoinDeclarationAndAssignmentInspection :
     override fun createQuickFix(
         element: KtProperty,
         context: Context,
-    ) = object : KotlinModCommandQuickFix<KtProperty>() {
+    ): KotlinModCommandQuickFix<KtProperty> = object : KotlinModCommandQuickFix<KtProperty>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("join.declaration.and.assignment")
@@ -280,7 +278,7 @@ internal class JoinDeclarationAndAssignmentInspection :
         }
 
         val assignmentCall = firstAssignment.left?.resolveToCall()?.singleVariableAccessCall()?.symbol ?: return null
-        if (assignmentCall != property.getVariableSymbol()) return null
+        if (assignmentCall != property.symbol) return null
 
         if (propertyContainer !is KtClassBody) return firstAssignment
 
@@ -352,7 +350,7 @@ internal class JoinDeclarationAndAssignmentInspection :
 
     context(KaSession)
     private fun PsiElement.hasReference(element: KtProperty): Boolean {
-        val declarationName = (element.symbol as? KaPossiblyNamedSymbol)?.name.toString()
+        val declarationName = element.symbol.name.toString()
         return anyDescendantOfType<KtNameReferenceExpression> {
             it.text == declarationName && it.reference?.isReferenceTo(element) ?: false
         }
@@ -372,7 +370,7 @@ internal class JoinDeclarationAndAssignmentInspection :
     private fun equalNullableTypes(type1: KaType?, type2: KaType?): Boolean {
         if (type1 == null) return type2 == null
         if (type2 == null) return false
-        return type1.isEqualTo(type2)
+        return type1.semanticallyEquals(type2)
     }
 
     private fun ModPsiUpdater.update(newProperty: KtProperty, canOmitDeclaredType: Boolean) {

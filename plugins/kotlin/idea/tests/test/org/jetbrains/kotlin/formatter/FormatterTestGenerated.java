@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.formatter;
 
@@ -297,6 +297,21 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 runTest("testData/formatter/parameterList/ArgumentListDoNotWrap.after.kt");
             }
 
+            @TestMetadata("ArgumentListNamedArguments.after.kt")
+            public void testArgumentListNamedArguments() throws Exception {
+                runTest("testData/formatter/parameterList/ArgumentListNamedArguments.after.kt");
+            }
+
+            @TestMetadata("ArgumentListNamedArgumentsFunctionCall.after.kt")
+            public void testArgumentListNamedArgumentsFunctionCall() throws Exception {
+                runTest("testData/formatter/parameterList/ArgumentListNamedArgumentsFunctionCall.after.kt");
+            }
+
+            @TestMetadata("ArgumentListNamedArgumentsInFunction.after.kt")
+            public void testArgumentListNamedArgumentsInFunction() throws Exception {
+                runTest("testData/formatter/parameterList/ArgumentListNamedArgumentsInFunction.after.kt");
+            }
+
             @TestMetadata("ArgumentListWrapAlways.after.kt")
             public void testArgumentListWrapAlways() throws Exception {
                 runTest("testData/formatter/parameterList/ArgumentListWrapAlways.after.kt");
@@ -589,6 +604,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 public void testWhenEntryNoIndentBeforeArrow() throws Exception {
                     runTest("testData/formatter/trailingComma/whenEntry/WhenEntryNoIndentBeforeArrow.after.kt");
                 }
+
+                @TestMetadata("WhenEntryWithGuards.after.kt")
+                public void testWhenEntryWithGuards() throws Exception {
+                    runTest("testData/formatter/trailingComma/whenEntry/WhenEntryWithGuards.after.kt");
+                }
             }
         }
 
@@ -770,6 +790,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 runTest("testData/formatter/CommentInFunctionLiteral.after.kt");
             }
 
+            @TestMetadata("ContextParameterMultiline.after.kt")
+            public void testContextParameterMultiline() throws Exception {
+                runTest("testData/formatter/ContextParameterMultiline.after.kt");
+            }
+
             @TestMetadata("ContinuationIndentInAssigments.after.kt")
             public void testContinuationIndentInAssigments() throws Exception {
                 runTest("testData/formatter/ContinuationIndentInAssigments.after.kt");
@@ -948,6 +973,16 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             @TestMetadata("ExtendsListWrap.after.kt")
             public void testExtendsListWrap() throws Exception {
                 runTest("testData/formatter/ExtendsListWrap.after.kt");
+            }
+
+            @TestMetadata("FloatingPointRangeWithDots.after.kt")
+            public void testFloatingPointRangeWithDots() throws Exception {
+                runTest("testData/formatter/FloatingPointRangeWithDots.after.kt");
+            }
+
+            @TestMetadata("FloatingPointRangeWithoutDots.after.kt")
+            public void testFloatingPointRangeWithoutDots() throws Exception {
+                runTest("testData/formatter/FloatingPointRangeWithoutDots.after.kt");
             }
 
             @TestMetadata("ForLineBreak.after.kt")
@@ -1470,6 +1505,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 runTest("testData/formatter/WhenEntryExprNoIndentBeforeArrow.after.kt");
             }
 
+            @TestMetadata("WhenIfGuardUnnecessarySpace.after.kt")
+            public void testWhenIfGuardUnnecessarySpace() throws Exception {
+                runTest("testData/formatter/WhenIfGuardUnnecessarySpace.after.kt");
+            }
+
             @TestMetadata("WhenLineBreak.after.kt")
             public void testWhenLineBreak() throws Exception {
                 runTest("testData/formatter/WhenLineBreak.after.kt");
@@ -1712,6 +1752,21 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestInverted, this, testDataFilePath);
+            }
+
+            @TestMetadata("ArgumentListNamedArguments.after.inv.kt")
+            public void testArgumentListNamedArguments() throws Exception {
+                runTest("testData/formatter/parameterList/ArgumentListNamedArguments.after.inv.kt");
+            }
+
+            @TestMetadata("ArgumentListNamedArgumentsFunctionCall.after.inv.kt")
+            public void testArgumentListNamedArgumentsFunctionCall() throws Exception {
+                runTest("testData/formatter/parameterList/ArgumentListNamedArgumentsFunctionCall.after.inv.kt");
+            }
+
+            @TestMetadata("ArgumentListNamedArgumentsInFunction.after.inv.kt")
+            public void testArgumentListNamedArgumentsInFunction() throws Exception {
+                runTest("testData/formatter/parameterList/ArgumentListNamedArgumentsInFunction.after.inv.kt");
             }
 
             @TestMetadata("DefaultParameterValues.after.inv.kt")
@@ -1966,6 +2021,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 public void testWhenEntryNoIndentBeforeArrow() throws Exception {
                     runTest("testData/formatter/trailingComma/whenEntry/WhenEntryNoIndentBeforeArrow.after.inv.kt");
                 }
+
+                @TestMetadata("WhenEntryWithGuards.after.inv.kt")
+                public void testWhenEntryWithGuards() throws Exception {
+                    runTest("testData/formatter/trailingComma/whenEntry/WhenEntryWithGuards.after.inv.kt");
+                }
             }
         }
 
@@ -2095,6 +2155,16 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             @TestMetadata("ExtendsListAlignEnum.after.inv.kt")
             public void testExtendsListAlignEnum() throws Exception {
                 runTest("testData/formatter/ExtendsListAlignEnum.after.inv.kt");
+            }
+
+            @TestMetadata("FloatingPointRangeWithDots.after.inv.kt")
+            public void testFloatingPointRangeWithDots() throws Exception {
+                runTest("testData/formatter/FloatingPointRangeWithDots.after.inv.kt");
+            }
+
+            @TestMetadata("FloatingPointRangeWithoutDots.after.inv.kt")
+            public void testFloatingPointRangeWithoutDots() throws Exception {
+                runTest("testData/formatter/FloatingPointRangeWithoutDots.after.inv.kt");
             }
 
             @TestMetadata("ForLineBreak.after.inv.kt")

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net
 
 import com.intellij.openapi.diagnostic.debug
@@ -7,12 +7,8 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.net.NetUtils.isLocalhost
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
-import java.net.Proxy
-import java.net.ProxySelector
-import java.net.SocketAddress
-import java.net.URI
-import java.net.URL
-import java.util.Collections
+import java.net.*
+import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Predicate
@@ -23,15 +19,20 @@ class IdeProxySelector(
   private val autoProxyResult = AtomicReference<AutoProxyHolder?>()
   private val exceptionsMatcher = AtomicReference<ExceptionsMatcherHolder?>()
 
-  override fun select(uri: URI): List<Proxy> {
-    logger.debug { "$uri: select" }
+  override fun select(uri: URI?): List<Proxy> {
+    LOG.debug { "$uri: select" }
+    if (uri == null) {
+      LOG.debug { "$uri: no proxy, uri is null" }
+      return NO_PROXY_LIST
+    }
+
     if (!("http" == uri.scheme || "https" == uri.scheme)) {
-      logger.debug { "$uri: no proxy, not http/https scheme: ${uri.scheme}" }
+      LOG.debug { "$uri: no proxy, not http/https scheme: ${uri.scheme}" }
       return NO_PROXY_LIST
     }
 
     if (isLocalhost(uri.host ?: "")) {
-      logger.debug { "$uri: no proxy, localhost" }
+      LOG.debug { "$uri: no proxy, localhost" }
       return NO_PROXY_LIST
     }
 
@@ -39,17 +40,17 @@ class IdeProxySelector(
       configurationProvider.getProxyConfiguration()
     }
     catch (_: CancellationException) {
-      logger.debug { "$uri: no proxy, cancelled" }
+      LOG.debug { "$uri: no proxy, cancelled" }
       return NO_PROXY_LIST
     }
     catch (e: Exception) {
-      logger.error("$uri: no proxy, failed to get proxy configuration", e)
+      LOG.error("$uri: no proxy, failed to get proxy configuration", e)
       return NO_PROXY_LIST
     }
 
     when (conf) {
       is ProxyConfiguration.DirectProxy -> {
-        logger.debug { "$uri: no proxy, DIRECT configuration" }
+        LOG.debug { "$uri: no proxy, DIRECT configuration" }
         return NO_PROXY_LIST
       }
       is ProxyConfiguration.AutoDetectProxy, is ProxyConfiguration.ProxyAutoConfiguration -> {
@@ -57,16 +58,12 @@ class IdeProxySelector(
       }
       is ProxyConfiguration.StaticProxyConfiguration -> {
         if (getExceptionsMatcher(conf.exceptions).test(uri.host ?: "")) {
-          logger.debug { "$uri: no proxy, uri is in exception list" }
+          LOG.debug { "$uri: no proxy, uri is in exception list" }
           return NO_PROXY_LIST
         }
         val proxy = conf.asJavaProxy()
-        logger.debug { "$uri: proxy $proxy" }
+        LOG.debug { "$uri: proxy $proxy" }
         return Collections.singletonList(proxy)
-      }
-      else -> {
-        logger.warn("$uri: no proxy, unknown proxy configuration: $conf")
-        return NO_PROXY_LIST
       }
     }
   }
@@ -88,10 +85,10 @@ class IdeProxySelector(
       val selector = getAutoProxySelector(pacUrl)
       try {
         val result = selector.select(uri)
-        logger.debug { "$uri: pac/autodetect proxy select result: $result" }
+        LOG.debug { "$uri: pac/autodetect proxy select result: $result" }
         return result
       } catch (_: StackOverflowError) {
-        logger.warn("$uri: no proxy, too large PAC script (JRE-247)")
+        LOG.warn("$uri: no proxy, too large PAC script (JRE-247)")
         return NO_PROXY_LIST
       }
     }
@@ -99,7 +96,7 @@ class IdeProxySelector(
       throw e
     }
     catch (e: Exception) {
-      logger.error("$uri: no proxy, failed to select using PAC/autodetect", e)
+      LOG.error("$uri: no proxy, failed to select using PAC/autodetect", e)
       return NO_PROXY_LIST
     }
     finally {
@@ -115,15 +112,26 @@ class IdeProxySelector(
       if (autoProxy != null && autoProxy.pacUrl?.toString() == pacUrl?.toString()) return autoProxy.selector
 
       val searchStartMs = System.currentTimeMillis()
-      val detectedSelector = NetUtils.getProxySelector(pacUrl?.toString())
-                             ?: DirectSelector.also { // just in case
-                               logger.warn("failed to configure proxy by pacUrl=$pacUrl (null if autodetect)")
-                             }
+      val detectedSelector = try {
+        NetUtils.getProxySelector(pacUrl?.toString())
+      }
+      catch (e: Exception) {
+        LOG.warn("proxy auto-configuration has failed ${pacUrl?.let { "(url=$it)" }}", e)
+        null
+      }
+      val resultSelector = detectedSelector ?: DirectSelector.also {
+        if (pacUrl != null) {
+          LOG.warn("failed to configure proxy by pacUrl=$pacUrl, using NO_PROXY")
+        }
+        else {
+          LOG.info("unable to autodetect proxy settings, using NO_PROXY")
+        }
+      }
       if (pacUrl == null) {
         proxyAutodetectDurationMs = System.currentTimeMillis() - searchStartMs
       }
-      autoProxyResult.set(AutoProxyHolder(pacUrl, detectedSelector))
-      return detectedSelector
+      autoProxyResult.set(AutoProxyHolder(pacUrl, resultSelector))
+      return resultSelector
     }
   }
 
@@ -132,7 +140,7 @@ class IdeProxySelector(
   }
 
   companion object {
-    private val logger = logger<IdeProxySelector>()
+    private val LOG = logger<IdeProxySelector>()
 
     private const val DOCUMENT_BUILDER_FACTORY_KEY = "javax.xml.parsers.DocumentBuilderFactory"
 
@@ -149,10 +157,10 @@ class IdeProxySelector(
      */
     @ApiStatus.Internal
     fun getProxyAutoDetectDurationMs(): Long = proxyAutodetectDurationMs
-
-    private object DirectSelector : ProxySelector() {
-      override fun select(uri: URI?): List<Proxy?>? = NO_PROXY_LIST
-      override fun connectFailed(uri: URI?, sa: SocketAddress?, ioe: IOException?) = Unit
-    }
   }
+}
+
+private object DirectSelector : ProxySelector() {
+  override fun select(uri: URI?): List<Proxy?>? = NO_PROXY_LIST
+  override fun connectFailed(uri: URI?, sa: SocketAddress?, ioe: IOException?) = Unit
 }

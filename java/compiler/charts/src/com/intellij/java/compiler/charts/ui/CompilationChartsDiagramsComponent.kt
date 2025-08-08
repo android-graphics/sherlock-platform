@@ -1,41 +1,46 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.compiler.charts.ui
 
-import com.intellij.java.compiler.charts.CompilationChartsViewModel
-import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType
-import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.CPU
-import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY
+import com.intellij.ide.ui.UISettings
+import com.intellij.java.compiler.charts.impl.CompilationChartsImpl.FilterImpl
+import com.intellij.java.compiler.charts.impl.CompilationChartsViewModel
+import com.intellij.java.compiler.charts.impl.CompilationChartsViewModel.Filter
+import com.intellij.java.compiler.charts.impl.EventDeclaration
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.colors.EditorColorsListener
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBPanelWithEmptyText
-import com.intellij.ui.table.JBTable
+import com.intellij.ui.components.Magnificator
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
-import java.awt.BorderLayout
-import java.awt.Dimension
-import java.awt.Graphics
-import java.awt.Graphics2D
+import java.awt.*
+import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
-import java.util.concurrent.ConcurrentSkipListSet
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JButton
 import javax.swing.JViewport
 import javax.swing.SwingUtilities
 import kotlin.math.exp
+import kotlin.math.roundToInt
 
-class CompilationChartsDiagramsComponent(private val vm: CompilationChartsViewModel,
-                                         private val zoom: Zoom,
-                                         private val viewport: JViewport) : JBPanelWithEmptyText(BorderLayout()) {
-  companion object {
-    val ROW_HEIGHT = JBTable().rowHeight * 1.5
-  }
-
-  val modules: CompilationChartsViewModel.ViewModules = CompilationChartsViewModel.ViewModules()
-  val stats: Map<CpuMemoryStatisticsType, MutableSet<CompilationChartsViewModel.StatisticData>> = mapOf(MEMORY to ConcurrentSkipListSet(), CPU to ConcurrentSkipListSet())
-  var cpu: MutableSet<CompilationChartsViewModel.StatisticData> = ConcurrentSkipListSet()
-  var memory: MutableSet<CompilationChartsViewModel.StatisticData> = ConcurrentSkipListSet()
-  val statistic: Statistic = Statistic()
-  var cpuMemory = MEMORY
-  private var shouldRepaint: Boolean = true
-  private val mouseAdapter: CompilationChartsMouseAdapter
-  private var image: BufferedImage? = null
+class CompilationChartsDiagramsComponent(
+  private val vm: CompilationChartsViewModel,
+  private val zoom: Zoom,
+  private val viewport: JViewport,
+) : JBPanelWithEmptyText(BorderLayout()) {
+  val uiModel: UIModel = UIModel({isDirty.set(true)}, { cleanCache() })
+  val isDirty: AtomicBoolean = AtomicBoolean(false)
+  var filter: Filter = FilterImpl()
+  var offset: Int = 0
+  private val usageInfo: CompilationChartsUsageInfo
   private val charts: Charts
+  private val images: MutableMap<Int, BufferedImage> = HashMap()
+  private val imageRequestCount: MutableMap<Int, Int> = HashMap()
+  private val ideSettings: IDESettings = IDESettings()
+  private var flush: Boolean = true
+
   private val focusableEmptyButton = JButton().apply {
     preferredSize = Dimension(0, 0)
     isFocusable = true
@@ -44,114 +49,117 @@ class CompilationChartsDiagramsComponent(private val vm: CompilationChartsViewMo
     isBorderPainted = false
   }
 
-  private val usages: Map<CpuMemoryStatisticsType, ChartUsage> = mapOf(
-    MEMORY to ChartUsage(zoom, "memory", UsageModel()).apply {
-      unit = "MB"
-      color {
-        background = COLOR_MEMORY
-        border = COLOR_MEMORY_BORDER
-      }
-    },
-    CPU to ChartUsage(zoom, "cpu", UsageModel()).apply {
-      unit = "%"
-      color {
-        background = COLOR_CPU
-        border = COLOR_CPU_BORDER
-      }
-    })
-
   init {
     add(focusableEmptyButton, BorderLayout.NORTH)
     addMouseWheelListener { e ->
       if (e.isControlDown) {
-        zoom.adjustUser(viewport, e.x, exp(e.preciseWheelRotation * -0.05))
-        updateView()
+        zoom.adjust(viewport, e.x, exp(e.preciseWheelRotation * -0.05))
+        smartDraw(true, false)
       }
       else {
         e.component.parent.dispatchEvent(e)
       }
     }
 
-    mouseAdapter = CompilationChartsMouseAdapter(vm, this)
-    addMouseListener(mouseAdapter)
-
-    charts = charts(vm, zoom, viewport) {
+    charts = charts(zoom) {
       progress {
-        height = ROW_HEIGHT
+        height = Settings.Block.HEIGHT
 
         block {
-          border = MODULE_BLOCK_BORDER
-          padding = MODULE_BLOCK_PADDING
-          color = { m -> if (m.target.isTest) COLOR_TEST_BLOCK else COLOR_PRODUCTION_BLOCK }
-          outline = { m -> if (m.target.isTest) COLOR_TEST_BORDER else COLOR_PRODUCTION_BORDER }
-          selected = { m -> if (m.target.isTest) COLOR_TEST_BORDER_SELECTED else COLOR_PRODUCTION_BORDER_SELECTED }
+          border = Settings.Block.BORDER
+          padding = Settings.Block.PADDING
+          color = { m -> Colors.getBlock(m.key.test).ENABLED }
+          outline = { m -> Colors.getBlock(m.key.test).BORDER }
+          selected = { m -> Colors.getBlock(m.key.test).SELECTED }
         }
         background {
-          color = { row -> if (row % 2 == 0) COLOR_BACKGROUND_EVEN else COLOR_BACKGROUND_ODD }
+          color = { row -> Colors.Background.getRowColor(row) }
         }
       }
-      usage = usages[MEMORY]!!
+      usage = vm.statisticType().type()
       axis {
         stroke = floatArrayOf(5f, 5f)
-        distance = AXIS_DISTANCE_PX
-        count = AXIS_MARKERS_COUNT
-        height = ROW_HEIGHT
-        padding = AXIS_TEXT_PADDING
+        distance = Settings.Axis.DISTANCE
+        count = Settings.Axis.MARKERS_COUNT
+        height = Settings.Block.HEIGHT
+        padding = Settings.Axis.TEXT_PADDING
       }
       settings {
         font {
-          size = FONT_SIZE
-          color = COLOR_TEXT
+          size = Settings.Font.SIZE
+          color = Colors.TEXT
         }
-        background = COLOR_BACKGROUND
+        background = Colors.Background.DEFAULT
         line {
-          color = COLOR_LINE
+          color = Colors.LINE
         }
-        mouse = mouseAdapter
+        mouse = CompilationChartsModuleInfo(vm, this@CompilationChartsDiagramsComponent)
       }
     }
+
+    addMouseListener(charts.settings.mouse)
+    addMouseMotionListener(charts.settings.mouse)
+    usageInfo = CompilationChartsUsageInfo(this, charts, zoom)
+    addMouseMotionListener(usageInfo)
+
+    ApplicationManager.getApplication().getMessageBus().connect(vm.disposable())
+      .subscribe(EditorColorsManager.TOPIC, EditorColorsListener { scheme -> smartDraw(true, false) })
+
+    putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, object : Magnificator {
+      override fun magnify(magnification: Double, at: Point): Point = zoom.adjust(viewport, at.x, magnification)
+    })
+
+    AppExecutorUtil.createBoundedScheduledExecutorService("Compilation charts component", 1)
+      .scheduleWithFixedDelay({ if (hasNewData()) smartDraw() }, 0, Settings.Refresh.timeout, Settings.Refresh.unit)
+      .also { feature -> Disposer.register(vm.disposable()) { -> feature.cancel(true) } }
+  }
+
+  internal fun cleanCache() {
+    images.forEach { _, img -> img.flush() }
+    images.clear()
+    imageRequestCount.clear()
+    charts.settings.mouse.clear()
+  }
+
+  internal fun smartDraw(clean: Boolean = false, flush: Boolean = true) {
+    if (this.flush) this.flush = flush
+    if (clean || ideSettings.isChanged()) {
+      ideSettings.update()
+      cleanCache()
+    }
+    viewport.revalidate()
+    viewport.repaint()
   }
 
   override fun paintComponent(g2d: Graphics) {
     if (g2d !is Graphics2D) return
-    cached(g2d) {
-      return@cached charts.model {
-        progress {
-          data(modules.data.getAndClean())
-          filter = modules.filter
-        }
-        usage(usages[cpuMemory]!!) {
-          data(stats[cpuMemory]!!.getAndClean(), when (cpuMemory) {
-            MEMORY -> vm.statistics.maxMemory
-            CPU -> 100
-          })
-        }
-      }.draw(g2d, this) {
-        val size = Dimension(width().toInt(), height().toInt())
-        if (size != this@CompilationChartsDiagramsComponent.preferredSize) {
-          this@CompilationChartsDiagramsComponent.preferredSize = size
-          this@CompilationChartsDiagramsComponent.revalidate()
-        }
-        return@draw UIUtil.createImage(this@CompilationChartsDiagramsComponent, width().toInt(), height().toInt(), BufferedImage.TYPE_INT_ARGB)
+    charts.model {
+      progress {
+        model = uiModel.modules()
+        threads = uiModel.threads()
+        filter = this@CompilationChartsDiagramsComponent.filter
+        currentTime = if (flush) System.nanoTime() else currentTime
+      }
+      usage(vm.statisticType().type()) {
+        model = uiModel.statistics(vm.statisticType().clazz())
+        maximum = vm.statisticType().maximum()
       }
     }
-  }
 
-  private fun cached(g2d: Graphics2D, init: () -> BufferedImage) {
-    if (!shouldRepaint) {
-      image?.let { img -> g2d.drawImage(img, this) }
-      return
+    buffered(ChartGraphics(g2d, offset, 0)) { img ->
+      charts.draw(img.withRenderingHints()) { width, height -> resizeViewport(width, height) }
     }
 
-    shouldRepaint = false
-    image?.flush()
-    image = init()
+    usageInfo.draw(ChartGraphics(g2d, 0, 0))
+    flush = true
   }
 
-  internal fun updateView() {
-    shouldRepaint = true
-    revalidate()
-    repaint()
+  private fun resizeViewport(width: Double, height: Double) {
+    val size = Dimension(width.roundToInt(), height.roundToInt())
+    if (size != preferredSize) {
+      preferredSize = size
+      revalidate()
+    }
   }
 
   internal fun setFocus() {
@@ -165,4 +173,70 @@ class CompilationChartsDiagramsComponent(private val vm: CompilationChartsViewMo
     setFocus()
   }
 
+  private fun buffered(
+    g2d: ChartGraphics,
+    draw: (ChartGraphics) -> Unit,
+  ) {
+    val start: Int = viewport.viewPosition.x / Settings.Image.WIDTH
+    val end: Int = (viewport.viewPosition.x + viewport.width) / Settings.Image.WIDTH + 1
+
+    for (index in start..end) {
+      charts.clips(Rectangle2D.Double((index * Settings.Image.WIDTH).toDouble(), viewport.y.toDouble(),
+                                      Settings.Image.WIDTH.toDouble(), viewport.height.toDouble()))
+
+      val area = Rectangle2D.Double((index * Settings.Image.WIDTH).toDouble(), viewport.y.toDouble(),
+                                    Settings.Image.WIDTH.toDouble(), charts.height())
+
+      val image = images[index]
+      if (image != null && image.height() == area.height) {
+        g2d.moveTo(area.x, area.y).drawImage(image, this)
+      }
+      else {
+        if (charts.width() < area.width) {
+          draw(g2d)
+        }
+        else {
+          val counter = imageRequestCount.compute(index) { _, v -> (v ?: 0) + 1 } ?: 1
+          if (counter < Settings.Image.CACHE_ACTIVATION_COUNT) {
+            draw(g2d)
+          }
+          else {
+            val img = UIUtil.createImage(this, area.width.roundToInt(), area.height.roundToInt(), BufferedImage.TYPE_INT_ARGB)
+            images[index]?.flush()
+            images[index] = img
+            val chartGraphics = ChartGraphics(img.createGraphics(), -area.x, -area.y)
+            draw(chartGraphics)
+            g2d.moveTo(area.x, area.y).drawImage(img, this)
+          }
+        }
+      }
+    }
+  }
+
+  private fun hasNewData(): Boolean {
+    if (!flush) return false
+    return isDirty.getAndSet(false)
+  }
+
+  private class IDESettings {
+    private var scale: Float = scale()
+    private var color: EditorColorsScheme = color()
+
+    fun isChanged(): Boolean = scale != scale() || color != color()
+    fun update() {
+      scale = scale()
+      color = color()
+    }
+
+    private fun scale() = UISettings.getInstance().ideScale
+    private fun color() = EditorColorsManager.getInstance().globalScheme
+  }
+
+  private fun EventDeclaration.type(): ChartUsage = ChartUsage(zoom, UsageModel()).apply {
+    format = layout()
+    color {
+      background = color().background()
+      border = color().border()
+    }
+  }
 }

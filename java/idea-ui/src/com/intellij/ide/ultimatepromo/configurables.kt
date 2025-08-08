@@ -22,9 +22,11 @@ internal abstract class UltimatePromoConfigurable : ConfigurableWithId, Configur
 
 internal abstract class UltimateConfigurableProvider(private val clazz: KClass<out Configurable>) : ConfigurableProvider() {
   final override fun createConfigurable(): Configurable? {
-    if (!Registry.`is`("idea.ultimate.features.hints.enabled")) return null
-
     return clazz.java.getConstructor().newInstance()
+  }
+
+  final override fun canCreateConfigurable(): Boolean {
+    return Registry.`is`("idea.ultimate.features.hints.enabled")
   }
 }
 
@@ -57,7 +59,7 @@ internal class PromoDatabaseConfigurable : UltimatePromoConfigurable() {
       FeaturePromoBundle.message("feature.database.description.html", "https://www.jetbrains.com/help/idea/relational-databases.html"),
       listOf(
         PromoFeatureListItem(AllIcons.Nodes.DataTables, FeaturePromoBundle.message("feature.database.create.and.manage")),
-        PromoFeatureListItem(AllIcons.Actions.Run_anything, FeaturePromoBundle.message("feature.database.run")),
+        PromoFeatureListItem(AllIcons.Actions.RunAnything, FeaturePromoBundle.message("feature.database.run")),
         PromoFeatureListItem(AllIcons.ToolbarDecorator.Import, FeaturePromoBundle.message("feature.database.export"))
       ),
       "com.intellij.database"

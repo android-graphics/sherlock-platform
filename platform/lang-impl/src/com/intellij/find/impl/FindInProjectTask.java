@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -10,7 +10,6 @@ import com.intellij.find.FindModelExtension;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.ngrams.TrigramTextSearchService;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +31,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.FilesScanExecutor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -54,6 +52,7 @@ import com.intellij.usages.FindUsagesProcessPresentation;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Processor;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -125,7 +124,7 @@ final class FindInProjectTask {
 
   void findUsages(@NotNull FindUsagesProcessPresentation processPresentation, @NotNull Processor<? super UsageInfo> usageProcessor) {
     if (!EDT.isCurrentThreadEdt()) {
-      ApplicationManager.getApplication().assertReadAccessNotAllowed();
+      ThreadingAssertions.assertNoOwnReadAccess();
     }
     CoreProgressManager.assertUnderProgress(myProgress);
     if (LOG.isDebugEnabled()) {
@@ -225,7 +224,7 @@ final class FindInProjectTask {
     boolean skipProjectFile = ProjectUtil.isProjectOrWorkspaceFile(virtualFile) && !myFindModel.isSearchInProjectFiles();
     if (skipProjectFile && !Registry.is("find.search.in.project.files")) return true;
 
-    if (fileLength > FileUtilRt.LARGE_FOR_CONTENT_LOADING) {
+    if (VirtualFileUtil.isTooLarge(virtualFile)) {
       myLargeFiles.add(virtualFile);
       return true;
     }
@@ -413,8 +412,7 @@ final class FindInProjectTask {
     return ContainerUtil.find(mySearchers, s -> s.isReliable()) != null;
   }
 
-  @NotNull
-  private Set<VirtualFile> getFilesForFastWordSearch() {
+  private @NotNull Set<VirtualFile> getFilesForFastWordSearch() {
     Set<VirtualFile> resultFiles = VfsUtilCore.createCompactVirtualFileSet();
     for (VirtualFile file : myFilesToScanInitially) {
       if (myFileMask.value(file)) {

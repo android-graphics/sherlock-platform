@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.generate;
 
@@ -35,9 +35,29 @@ public class CodeInsightActionTestGenerated extends AbstractCodeInsightActionTes
         runTest("testData/codeInsight/generate/secondaryConstructors/empty.kt");
     }
 
+    @TestMetadata("emptyClass.kt")
+    public void testEmptyClass() throws Exception {
+        runTest("testData/codeInsight/generate/secondaryConstructors/emptyClass.kt");
+    }
+
+    @TestMetadata("emptyClassWithComment.kt")
+    public void testEmptyClassWithComment() throws Exception {
+        runTest("testData/codeInsight/generate/secondaryConstructors/emptyClassWithComment.kt");
+    }
+
+    @TestMetadata("emptyClassWithCommentAfter.kt")
+    public void testEmptyClassWithCommentAfter() throws Exception {
+        runTest("testData/codeInsight/generate/secondaryConstructors/emptyClassWithCommentAfter.kt");
+    }
+
     @TestMetadata("emptyExists.kt")
     public void testEmptyExists() throws Exception {
         runTest("testData/codeInsight/generate/secondaryConstructors/emptyExists.kt");
+    }
+
+    @TestMetadata("enumClass.kt")
+    public void testEnumClass() throws Exception {
+        runTest("testData/codeInsight/generate/secondaryConstructors/enumClass.kt");
     }
 
     @TestMetadata("javaSupers.kt")
@@ -73,6 +93,11 @@ public class CodeInsightActionTestGenerated extends AbstractCodeInsightActionTes
     @TestMetadata("propertiesWithSupers.kt")
     public void testPropertiesWithSupers() throws Exception {
         runTest("testData/codeInsight/generate/secondaryConstructors/propertiesWithSupers.kt");
+    }
+
+    @TestMetadata("superInvisible.kt")
+    public void testSuperInvisible() throws Exception {
+        runTest("testData/codeInsight/generate/secondaryConstructors/superInvisible.kt");
     }
 
     @TestMetadata("supers.kt")

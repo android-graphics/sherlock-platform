@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.Block;
@@ -6,7 +6,7 @@ import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
-import com.intellij.lang.java.parser.ExpressionParser;
+import com.intellij.lang.java.parser.BasicExpressionParser;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -643,7 +643,10 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   private int getLinesAroundField() {
-    if (isClass(myParent)) {
+    boolean isParentAClass = isClass(myParent);
+    if (isParentAClass && JavaFormatterAnnotationUtil.isFieldWithAnnotations(myChild2)) {
+      return myJavaSettings.BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS;
+    } else if (isParentAClass) {
       return mySettings.BLANK_LINES_AROUND_FIELD;
     }
     else {
@@ -1107,13 +1110,13 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
       else if (i == JavaTokenType.GT || i == JavaTokenType.LT || i == JavaTokenType.GE || i == JavaTokenType.LE) {
         createSpaceInCode(mySettings.SPACE_AROUND_RELATIONAL_OPERATORS);
       }
-      else if (ExpressionParser.ADDITIVE_OPS.contains(i)) {
+      else if (BasicExpressionParser.ADDITIVE_OPS.contains(i)) {
         createSpaceInCode(mySettings.SPACE_AROUND_ADDITIVE_OPERATORS);
       }
-      else if (ExpressionParser.MULTIPLICATIVE_OPS.contains(i)) {
+      else if (BasicExpressionParser.MULTIPLICATIVE_OPS.contains(i)) {
         createSpaceInCode(mySettings.SPACE_AROUND_MULTIPLICATIVE_OPERATORS);
       }
-      else if (ExpressionParser.SHIFT_OPS.contains(i)) {
+      else if (BasicExpressionParser.SHIFT_OPS.contains(i)) {
         createSpaceInCode(mySettings.SPACE_AROUND_SHIFT_OPERATORS);
       }
       else {
@@ -1272,16 +1275,24 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
       createParenthSpace(mySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_EMPTY_METHOD_PARENTHESES);
     }
     else if (myRole2 == ChildRole.RPARENTH) {
-      createParenthSpace(mySettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_METHOD_PARENTHESES);
+      createParenthSpaceInMethodParameters(list, mySettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE);
     }
     else if (myRole2 == ChildRole.COMMA) {
       createSpaceInCode(mySettings.SPACE_BEFORE_COMMA);
     }
     else if (myRole1 == ChildRole.LPARENTH) {
-      createParenthSpace(mySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_METHOD_PARENTHESES);
+      createParenthSpaceInMethodParameters(list, mySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE);
     }
     else if (myRole1 == ChildRole.COMMA) {
       createSpaceInCode(mySettings.SPACE_AFTER_COMMA);
+    }
+  }
+
+  private void createParenthSpaceInMethodParameters(@NotNull PsiParameterList list, boolean shouldUseDependentSpacing) {
+    if (shouldUseDependentSpacing && list.getParametersCount() > 1) {
+      createSpaceWithLinefeedIfListWrapped(list.getParameters(), mySettings.SPACE_WITHIN_METHOD_PARENTHESES);
+    } else {
+      createParenthSpace(shouldUseDependentSpacing, mySettings.SPACE_WITHIN_METHOD_PARENTHESES);
     }
   }
 
@@ -1294,7 +1305,8 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
       createParenthSpace(myJavaSettings.NEW_LINE_AFTER_LPAREN_IN_RECORD_HEADER, myJavaSettings.SPACE_WITHIN_RECORD_HEADER);
     }
     else if (myType1 == JavaTokenType.COMMA) {
-      createSpaceInCode(mySettings.SPACE_AFTER_COMMA);
+      int minLineFeed = myJavaSettings.BLANK_LINES_BETWEEN_RECORD_COMPONENTS == 0 ? 0 : myJavaSettings.BLANK_LINES_BETWEEN_RECORD_COMPONENTS + 1;
+      createSpaceProperty(mySettings.SPACE_AFTER_COMMA, mySettings.KEEP_LINE_BREAKS, minLineFeed, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
     }
     else if (myType2 == JavaTokenType.COMMA) {
       createSpaceInCode(mySettings.SPACE_BEFORE_COMMA);
@@ -1372,7 +1384,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole2 == ChildRole.RPARENTH) {
       boolean space = myRole1 == ChildRole.COMMA || mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES;
       if (mySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE && list.getExpressionCount() > 1) {
-        createSpaceWithLinefeedIfListWrapped(list, space);
+        createSpaceWithLinefeedIfListWrapped(list.getExpressions(), space);
         return;
       }
       createSpaceInCode(space);
@@ -1380,7 +1392,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole1 == ChildRole.LPARENTH) {
       boolean space = mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES;
       if (mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE && list.getExpressionCount() > 1) {
-        createSpaceWithLinefeedIfListWrapped(list, space);
+        createSpaceWithLinefeedIfListWrapped(list.getExpressions(), space);
         return;
       }
       createSpaceInCode(space);
@@ -1403,20 +1415,15 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
-  private void createSpaceWithLinefeedIfListWrapped(@NotNull PsiExpressionList list, boolean space) {
-    PsiExpression[] expressions = list.getExpressions();
-    int length = expressions.length;
+  private void createSpaceWithLinefeedIfListWrapped(PsiElement @NotNull[] psiElementList, boolean space) {
+    int length = psiElementList.length;
     assert length > 1;
-
-    List<TextRange> ranges = new ArrayList<>();
-    for (int i = 0; i < length - 1; i++) {
-      int startOffset = expressions[i].getTextRange().getEndOffset();
-      int endOffset = expressions[i + 1].getTextRange().getStartOffset();
-      ranges.add(new TextRange(startOffset, endOffset));
-    }
-
     int spaces = space ? 1 : 0;
-    myResult = Spacing.createDependentLFSpacing(spaces, spaces, ranges, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+
+    int startOffset = psiElementList[0].getTextRange().getStartOffset();
+    int endOffset = psiElementList[length - 1].getTextRange().getEndOffset();
+    myResult = Spacing.createDependentLFSpacing(spaces, spaces, new TextRange(startOffset, endOffset), mySettings.KEEP_LINE_BREAKS,
+                                                mySettings.KEEP_BLANK_LINES_IN_CODE);
   }
 
   @Override
@@ -1657,6 +1664,10 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   private void createSpaceProperty(boolean space, boolean keepLineBreaks, int keepBlankLines) {
+    createSpaceProperty(space, keepLineBreaks, 0, keepBlankLines);
+  }
+
+  private void createSpaceProperty(boolean space, boolean keepLineBreaks, int minLineFeeds, int keepBlankLines) {
     ASTNode prev = getPrevElementType(myChild2);
     if (prev != null && prev.getElementType() == JavaTokenType.END_OF_LINE_COMMENT) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
@@ -1665,7 +1676,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
       if (!space && !canStickChildrenTogether(myChild1, myChild2)) {
         space = true;
       }
-      myResult = Spacing.createSpacing(space ? 1 : 0, space ? 1 : 0, 0, keepLineBreaks, keepBlankLines);
+      myResult = Spacing.createSpacing(space ? 1 : 0, space ? 1 : 0, minLineFeeds, keepLineBreaks, keepBlankLines);
     }
   }
 
@@ -2014,7 +2025,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     Boolean result = ourTokenStickingMatrix.get(key);
 
     if (result == null) {
-      Lexer lexer = JavaParserDefinition.createLexer(LanguageLevel.HIGHEST);
+      Lexer lexer = JavaParserDefinition.createLexerWithMarkdownEscape(LanguageLevel.HIGHEST);
       String text1 = unescapeTokenText(token1, type1), text2 = unescapeTokenText(token2, type2);
       lexer.start(text1 + text2);
       IElementType reparsedType1 = lexer.getTokenType();

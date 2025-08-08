@@ -2,6 +2,9 @@
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.compiler.CompilerMessageImpl;
+import com.intellij.compiler.impl.ExitStatus;
+import com.intellij.compiler.progress.BuildOutputService;
 import com.intellij.designer.DesignerEditorPanelFacade;
 import com.intellij.designer.LightFillLayout;
 import com.intellij.ide.DeleteProvider;
@@ -15,6 +18,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -41,6 +45,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.compiler.FormErrorInfo;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.componentTree.ComponentPtr;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
@@ -51,6 +56,8 @@ import com.intellij.uiDesigner.editor.UIFormEditor;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.uiDesigner.make.FormElementNavigatable;
+import com.intellij.uiDesigner.make.FormSourceCodeGenerator;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.propertyInspector.DesignerToolWindow;
 import com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager;
@@ -63,6 +70,7 @@ import com.intellij.uiDesigner.radComponents.RadTabbedPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,7 +93,7 @@ import java.util.*;
  * tree of component with property editor at the west and editor area at the center.
  * This editor area contains internal component where user edit the UI.
  */
-public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade, DataProvider, ModuleProvider, Disposable {
+public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade, UiDataProvider, ModuleProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(GuiEditor.class);
 
   private final Project myProject;
@@ -482,6 +490,16 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     return myNextSaveGroupId;
   }
 
+  @ApiStatus.Internal
+  public @NotNull CutCopyPasteSupport getCutCopyPasteDelegator() {
+    return myCutCopyPasteSupport;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull DeleteProvider getDeleteProvider() {
+    return myDeleteProvider;
+  }
+
   private static void refreshImpl(final RadComponent component) {
     if (component.getParent() != null) {
       final Dimension size = component.getSize();
@@ -507,32 +525,21 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
   }
 
   @Override
-  public Object getData(final @NotNull String dataId) {
-    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return ourHelpID;
-    }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformCoreDataKeys.HELP_ID, ourHelpID);
 
     // Standard Swing cut/copy/paste actions should work if user is editing something inside property inspector
     Project project = getProject();
-    if (project.isDisposed()) return null;
+    if (project.isDisposed()) return;
     DesignerToolWindow toolWindow = DesignerToolWindowManager.getInstance(this);
-    if (toolWindow == null) return null;
-    final PropertyInspector inspector = toolWindow.getPropertyInspector();
-    if (inspector != null && inspector.isEditing()) {
-      return null;
-    }
+    if (toolWindow == null) return;
+    PropertyInspector inspector = toolWindow.getPropertyInspector();
+    if (inspector != null && inspector.isEditing()) return;
 
-    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      return myDeleteProvider;
-    }
-
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId) ||
-        PlatformDataKeys.CUT_PROVIDER.is(dataId) ||
-        PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
-      return myCutCopyPasteSupport;
-    }
-
-    return null;
+    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteProvider);
+    sink.set(PlatformDataKeys.COPY_PROVIDER, myCutCopyPasteSupport);
+    sink.set(PlatformDataKeys.CUT_PROVIDER, myCutCopyPasteSupport);
+    sink.set(PlatformDataKeys.PASTE_PROVIDER, myCutCopyPasteSupport);
   }
 
   private JPanel createInvalidCard() {
@@ -627,6 +634,9 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
 
   private void saveToFile() {
     LOG.debug("GuiEditor.saveToFile(): group ID=" + myNextSaveGroupId);
+
+    GuiDesignerConfiguration designerConfiguration = GuiDesignerConfiguration.getInstance(myProject);
+
     CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
       myInsideChange = true;
       try {
@@ -648,6 +658,14 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
           LOG.error(e);
           myDocument.replaceString(0, oldText.length(), newText);
         }
+
+        if (!designerConfiguration.INSTRUMENT_CLASSES && designerConfiguration.GENERATE_SOURCES_ON_SAVE) {
+          try {
+            updateSources();
+          } catch (Throwable e) {
+            LOG.error(e);
+          }
+        }
       }
       finally {
         myInsideChange = false;
@@ -656,6 +674,49 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     myNextSaveGroupId = new Object();
 
     fireHierarchyChanged();
+  }
+
+  private void updateSources() {
+    LOG.debug("Updating sources for form '" + myFile.getPath());
+
+    FileDocumentManager.getInstance().saveDocument(myDocument);
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
+    final FormSourceCodeGenerator generator = new FormSourceCodeGenerator(myProject);
+    generator.generate(myFile);
+
+    final ArrayList<FormErrorInfo> errors = generator.getErrors();
+    if (!errors.isEmpty()) {
+      StringBuilder builder = new StringBuilder();
+      builder.append("Unable to update sources for form '").append(myFile.getPath()).append("' due to errors:\n");
+      errors.forEach(error -> {
+        builder.append(error.getComponentId()).append(" ").append(error.getErrorMessage()).append("\n");
+      });
+      LOG.info(builder.toString());
+
+      BuildOutputService buildOutput = new BuildOutputService(
+        myProject,
+        UIDesignerBundle.message("tab.build.ui.designer")
+      );
+      Object sessionId = new Object();
+      long stamp = System.currentTimeMillis();
+      buildOutput.onStart(sessionId, stamp, null, null);
+
+      for (FormErrorInfo error : errors) {
+        FormElementNavigatable navigatable = new FormElementNavigatable(myProject, myFile, error.getComponentId());
+        buildOutput.addMessage(
+          sessionId,
+          new CompilerMessageImpl(
+            myProject,
+            CompilerMessageCategory.ERROR,
+            myFile.getPresentableUrl() + ": " + error.getErrorMessage(), //NON-NLS
+            myFile,
+            -1, -1,
+            navigatable
+          ));
+      }
+      buildOutput.onEnd(sessionId, ExitStatus.ERRORS, stamp + 1);
+    }
   }
 
   public ActiveDecorationLayer getActiveDecorationLayer() {

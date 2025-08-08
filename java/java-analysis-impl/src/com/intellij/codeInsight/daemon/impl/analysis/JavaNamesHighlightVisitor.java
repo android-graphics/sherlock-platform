@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
@@ -30,11 +30,11 @@ final class JavaNamesHighlightVisitor extends JavaElementVisitor implements High
   private PsiFile myFile;
   private LanguageLevel myLanguageLevel;
   private boolean shouldHighlightSoftKeywords;
+  private boolean isClassFile;
 
-  @NotNull
   @Override
   @SuppressWarnings("MethodDoesntCallSuperMethod")
-  public JavaNamesHighlightVisitor clone() {
+  public @NotNull JavaNamesHighlightVisitor clone() {
     return new JavaNamesHighlightVisitor();
   }
 
@@ -67,7 +67,9 @@ final class JavaNamesHighlightVisitor extends JavaElementVisitor implements High
     myHolder = holder;
     myFile = file;
     myLanguageLevel = PsiUtil.getLanguageLevel(file);
-    shouldHighlightSoftKeywords = PsiJavaModule.MODULE_INFO_FILE.equals(file.getName()) || myLanguageLevel.isAtLeast(LanguageLevel.JDK_10);
+    shouldHighlightSoftKeywords = PsiJavaModule.MODULE_INFO_FILE.equals(file.getName()) ||
+                                  myLanguageLevel.isAtLeast(LanguageLevel.JDK_10);
+    isClassFile = file.getOriginalFile() instanceof PsiCompiledFile;
   }
 
   @Override
@@ -155,13 +157,20 @@ final class JavaNamesHighlightVisitor extends JavaElementVisitor implements High
   public void visitKeyword(@NotNull PsiKeyword keyword) {
     if (shouldHighlightSoftKeywords &&
         (PsiUtil.isSoftKeyword(keyword.getNode().getChars(), myLanguageLevel) || JavaTokenType.NON_SEALED_KEYWORD == keyword.getTokenType())) {
-      myHolder.add(HighlightNamesUtil.highlightKeyword(keyword));
+      if (isClassFile) {
+        myHolder.add(HighlightNamesUtil.highlightClassKeyword(keyword));
+      }
+      else {
+        myHolder.add(HighlightNamesUtil.highlightKeyword(keyword));
+      }
     }
   }
 
   @Override
   public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
-    doVisitReferenceElement(ref);
+    if (!(ref instanceof PsiReferenceExpression)) {
+      doVisitReferenceElement(ref);
+    }
   }
   @Override
   public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
@@ -180,7 +189,7 @@ final class JavaNamesHighlightVisitor extends JavaElementVisitor implements High
           if (containingClass instanceof PsiLambdaExpression ||
               !PsiTreeUtil.isAncestor(((PsiAnonymousClass)containingClass).getArgumentList(), ref, false)) {
             myHolder.add(HighlightNamesUtil.highlightImplicitAnonymousClassParameter(ref));
-            break;
+            return;
           }
           containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class, PsiLambdaExpression.class);
         }

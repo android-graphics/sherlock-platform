@@ -1,11 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
-import com.intellij.concurrency.ContextAwareRunnable;
-import com.intellij.concurrency.ThreadContext;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.InstantShutdown;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -30,7 +27,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
@@ -44,7 +41,6 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 /**
  * <h3>Obsolescence notice</h3>
@@ -68,7 +64,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   private boolean myStoppedAlready;
   protected boolean myBackgrounded;
-  int myDelayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
+  int delayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
   private boolean myModalityEntered;
 
   @FunctionalInterface
@@ -173,7 +169,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
    */
   @Override
   public void setDelayInMillis(int delayInMillis) {
-    myDelayInMillis = delayInMillis;
+    this.delayInMillis = delayInMillis;
   }
 
   protected void prepareShowDialog() {
@@ -181,15 +177,14 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     // executed in a small amount of time. Problem: UI blinks and looks ugly if we show progress dialog that disappears shortly
     // for each of them. The solution is to postpone the tasks of showing progress dialog. Hence, it will not be shown at all
     // if the task is already finished when the time comes.
-    EdtScheduledExecutorService.getInstance().schedule((ContextAwareRunnable) () -> {
-      // The `ContextAwareRunnable` here is actually wrong, but it is necessary now to prevent cancellation from leaked job from the context.
+    EdtScheduler.getInstance().schedule(delayInMillis, getModalityState(), () -> {
       if (isRunning()) {
         showDialog();
       }
       else if (isPopupWasShown()) {
         Disposer.dispose(this);
       }
-    }, getModalityState(), myDelayInMillis, TimeUnit.MILLISECONDS);
+    });
   }
 
   final void executeInModalContext(@NotNull Runnable modalAction) {
@@ -227,13 +222,11 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
           initializeOnEdtIfNeeded();
           // guarantee AWT event after the future is done will be pumped and loop exited
           stopCondition.thenRun(() -> SwingUtilities.invokeLater(EmptyRunnable.INSTANCE));
-          try (AccessToken ignored = ThreadContext.resetThreadContext()) {
-            IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.getPanel(), stopCondition, event -> {
-              if (isCancellationEvent(event)) {
-                cancel();
-              }
-            });
-          }
+          IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.getPanel(), stopCondition, event -> {
+            if (isCancellationEvent(event)) {
+              cancel();
+            }
+          });
           return null;
         });
       });
@@ -346,7 +339,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   private void update() {
     ProgressDialog dialog = myDialog;
     if (dialog != null) {
-      dialog.update();
+      dialog.scheduleUpdate();
     }
   }
 
@@ -365,6 +358,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
   }
 
+  @Override
   public @ProgressTitle String getTitle() {
     return myTitle;
   }

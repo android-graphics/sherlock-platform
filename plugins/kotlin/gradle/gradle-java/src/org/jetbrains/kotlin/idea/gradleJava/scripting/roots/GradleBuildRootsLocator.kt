@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.idea.core.script.K2ScriptDependenciesProvider
+import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationsProviderImpl
 import kotlin.script.experimental.api.valueOrNull
 
 /**
@@ -94,6 +94,7 @@ abstract class GradleBuildRootsLocator(private val project: Project) {
                     is Legacy -> NotificationKind.standaloneLegacy
                     else -> NotificationKind.standalone
                 }
+
                 nearest == null -> NotificationKind.outsideAnything
                 importing -> NotificationKind.dontCare
                 else -> when (nearest) {
@@ -101,6 +102,7 @@ abstract class GradleBuildRootsLocator(private val project: Project) {
                         null -> NotificationKind.legacyOutside
                         else -> NotificationKind.legacy
                     }
+
                     is New -> NotificationKind.wasNotImportedAfterCreation
                     is Imported -> when {
                         wasImportedAndNotEvaluated -> NotificationKind.notEvaluatedInLastImport
@@ -116,14 +118,21 @@ abstract class GradleBuildRootsLocator(private val project: Project) {
             get() {
                 if (KotlinPluginModeProvider.isK2Mode()) {
                     val virtualFile = StandardFileSystems.local()?.refreshAndFindFileByPath(filePath) ?: return false
-                    return K2ScriptDependenciesProvider.getInstanceIfCreated(project)?.getConfiguration(virtualFile)?.valueOrNull() != null
+                    return ScriptConfigurationsProviderImpl.getInstanceIfCreated(project)
+                        ?.getConfigurationWithSdk(virtualFile)?.scriptConfiguration?.valueOrNull() != null
                 }
                 return script != null
             }
 
         private val wasImportedAndNotEvaluated: Boolean
-            get() = nearest is Imported &&
-                    getScriptFirstSeenTs(filePath) < nearest.data.importTs
+            get() {
+                if (KotlinPluginModeProvider.isK2Mode()) {
+                    return false
+                }
+
+                return nearest is Imported &&
+                        getScriptFirstSeenTs(filePath) < nearest.data.importTs
+            }
 
         override fun toString(): String {
             return "ScriptUnderRoot(root=$root, script=$script, standalone=$standalone, nearest=$nearest)"
@@ -147,8 +156,8 @@ abstract class GradleBuildRootsLocator(private val project: Project) {
         }
 
         // stand-alone scripts
-        roots.getStandaloneScriptRoot(filePath)?.let { 
-            return ScriptUnderRoot(filePath, it, standalone = true) 
+        roots.getStandaloneScriptRoot(filePath)?.let {
+            return ScriptUnderRoot(filePath, it, standalone = true)
         }
 
         if (filePath.endsWith("/build.gradle.kts") ||

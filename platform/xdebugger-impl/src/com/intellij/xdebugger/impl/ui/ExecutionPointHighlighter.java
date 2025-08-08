@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.openapi.Disposable;
@@ -24,6 +24,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.AppUIUtil;
@@ -32,6 +33,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import com.intellij.xdebugger.impl.settings.DataViewsConfigurableUi;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
@@ -128,8 +130,7 @@ public class ExecutionPointHighlighter {
     }
   }
 
-  @Nullable
-  public VirtualFile getCurrentFile() {
+  public @Nullable VirtualFile getCurrentFile() {
     return myOpenFileDescriptor != null ? myOpenFileDescriptor.getFile() : null;
   }
 
@@ -143,7 +144,7 @@ public class ExecutionPointHighlighter {
     }
   }
 
-  public void updateGutterIcon(@Nullable final GutterIconRenderer renderer) {
+  public void updateGutterIcon(final @Nullable GutterIconRenderer renderer) {
     AppUIUtil.invokeOnEdt(() -> {
       if (myRangeHighlighter != null && myGutterIconRenderer != null) {
         myRangeHighlighter.setGutterIconRenderer(renderer);
@@ -225,23 +226,24 @@ public class ExecutionPointHighlighter {
     return myRangeHighlighter != null && myRangeHighlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE;
   }
 
-  private static void disableMouseHoverPopups(@NotNull final Editor editor, final boolean disable) {
+  private static void disableMouseHoverPopups(final @NotNull Editor editor, final boolean disable) {
     Project project = editor.getProject();
     if (ApplicationManager.getApplication().isUnitTestMode() || project == null) return;
 
     // need to always invoke later to maintain order of enabling/disabling
-    SwingUtilities.invokeLater(() -> {
-      if (disable) {
-        EditorMouseHoverPopupControl.disablePopups(project);
-      }
-      else {
-        EditorMouseHoverPopupControl.enablePopups(project);
-      }
-    });
+    if (Registry.is(DataViewsConfigurableUi.DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_KEY)) {
+      SwingUtilities.invokeLater(() -> {
+        if (disable) {
+          EditorMouseHoverPopupControl.disablePopups(project);
+        }
+        else {
+          EditorMouseHoverPopupControl.enablePopups(project);
+        }
+      });
+    }
   }
 
-  @NotNull
-  private static OpenFileDescriptor createOpenFileDescriptor(@NotNull Project project, @NotNull XSourcePosition position) {
+  private static @NotNull OpenFileDescriptor createOpenFileDescriptor(@NotNull Project project, @NotNull XSourcePosition position) {
     Navigatable navigatable = position.createNavigatable(project);
     if (navigatable instanceof OpenFileDescriptor) {
       return (OpenFileDescriptor)navigatable;

@@ -1,13 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
+import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.lang.documentation.ide.impl.DocumentationPopupListener;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -23,10 +25,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.testFramework.TestModeFlags;
+import com.intellij.ui.HintHint;
+import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -38,6 +43,7 @@ import java.util.concurrent.locks.LockSupport;
 
 import static com.intellij.codeInsight.completion.CompletionPhase.*;
 
+@ApiStatus.Internal
 public class AutoPopupControllerImpl extends AutoPopupController {
   private final Project myProject;
   private final Alarm myAlarm;
@@ -50,7 +56,10 @@ public class AutoPopupControllerImpl extends AutoPopupController {
   }
 
   private void setupListeners() {
-    ApplicationManager.getApplication().getMessageBus().connect(myProject).subscribe(AnActionListener.TOPIC, new AnActionListener() {
+    var applicationBus = ApplicationManager.getApplication().getMessageBus().connect(myProject);
+    var projectBus = myProject.getMessageBus().connect(myProject);
+
+    applicationBus.subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
       public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
         cancelAllRequests();
@@ -62,21 +71,52 @@ public class AutoPopupControllerImpl extends AutoPopupController {
       }
     });
 
-    IdeEventQueue.getInstance().addActivityListener(this::cancelAllRequests, myProject);
+    AtomicInteger skipCancelEvents = new AtomicInteger(0);
+
+    // Detect and ignore activity notification for any hints, including LookupImpl hint
+    applicationBus.subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
+      @Override
+      public void hintShown(@NotNull Editor editor, @NotNull LightweightHint hint, int flags, @NotNull HintHint hintInfo) {
+        skipCancelEvents.incrementAndGet();
+      }
+    });
+
+    // Detect and ignore activity notification for a lookup documentation popup
+    projectBus.subscribe(DocumentationPopupListener.TOPIC, new DocumentationPopupListener() {
+      @Override
+      public void contentsScrolled() { }
+
+      @Override
+      public void popupShown() {
+        skipCancelEvents.incrementAndGet();
+      }
+    });
+
+    IdeEventQueue.getInstance().addActivityListener(() -> {
+      if (skipCancelEvents.get() == 0) {
+        cancelAllRequests();
+      } else {
+        skipCancelEvents.decrementAndGet();
+      }
+    }, myProject);
   }
 
   @Override
-  public void autoPopupMemberLookup(final Editor editor, @Nullable final Condition<? super PsiFile> condition){
+  public void autoPopupMemberLookup(final Editor editor, final @Nullable Condition<? super PsiFile> condition) {
     autoPopupMemberLookup(editor, CompletionType.BASIC, condition);
   }
 
   @Override
-  public void autoPopupMemberLookup(final Editor editor, CompletionType completionType, @Nullable final Condition<? super PsiFile> condition){
+  public void autoPopupMemberLookup(final Editor editor,
+                                    CompletionType completionType,
+                                    final @Nullable Condition<? super PsiFile> condition) {
     scheduleAutoPopup(editor, completionType, condition);
   }
 
   @Override
-  public void scheduleAutoPopup(@NotNull Editor editor, @NotNull CompletionType completionType, @Nullable final Condition<? super PsiFile> condition) {
+  public void scheduleAutoPopup(@NotNull Editor editor,
+                                @NotNull CompletionType completionType,
+                                final @Nullable Condition<? super PsiFile> condition) {
     if (ApplicationManager.getApplication().isUnitTestMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
       return;
     }
@@ -112,7 +152,7 @@ public class AutoPopupControllerImpl extends AutoPopupController {
   }
 
   @Override
-  public void autoPopupParameterInfo(@NotNull final Editor editor, @Nullable final PsiElement highlightedMethod) {
+  public void autoPopupParameterInfo(final @NotNull Editor editor, final @Nullable PsiElement highlightedMethod) {
     if (PowerSaveMode.isEnabled()) return;
 
     ThreadingAssertions.assertEventDispatchThread();

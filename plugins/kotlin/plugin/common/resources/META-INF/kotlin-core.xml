@@ -91,6 +91,19 @@
     <extensionPoint qualifiedName="org.jetbrains.kotlin.libraryVersionProvider"
                     interface="org.jetbrains.kotlin.idea.configuration.KotlinLibraryVersionProvider"
                     dynamic="true"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.bundledFirCompilerPluginProvider"
+                    interface="org.jetbrains.kotlin.idea.fir.extensions.KotlinBundledFirCompilerPluginProvider"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.firCompilerPluginConfigurationProvider"
+                    interface="org.jetbrains.kotlin.idea.fir.extensions.KotlinFirCompilerPluginConfigurationForIdeProvider"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.kotlinInjectedFilesAnalysisProvider"
+                    interface="org.jetbrains.kotlin.idea.base.analysis.KotlinIdeInjectedFilesAnalysisPromoter"
+                    dynamic="true">
+    </extensionPoint>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -103,17 +116,16 @@
     <aboutPopupDescriptionProvider implementation="org.jetbrains.kotlin.idea.base.plugin.KotlinAnalyzerVersionAboutPopupDescriptionProvider"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.editor.KotlinEditorOptions"/>
-    <applicationInitializedListener implementation="org.jetbrains.kotlin.idea.macros.ApplicationWideKotlinBundledPathMacroCleaner"/>
+    <applicationActivity implementation="org.jetbrains.kotlin.idea.macros.ApplicationWideKotlinBundledPathMacroCleaner"/>
 
-    <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderIdeImpl"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.facet.KotlinFacetEditorProviderService"
             serviceImplementation="org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinFacetEditorProviderServiceImpl"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysis.RootKindMatcherImpl"/>
+
+    <psi.batchReferenceProcessingSuppressor implementation="org.jetbrains.kotlin.idea.base.analysis.KotlinBatchReferenceProcessingSuppressor"/>
 
     <applicationConfigurable
             groupId="language"
@@ -144,7 +156,7 @@
     <gotoDeclarationHandler implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinGotoValVarTypeHandler"/>
     <focusModeProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.core.KotlinFocusModeProvider" />
 
-    <lang.floatingToolbarCustomizer language="kotlin" implementationClass="com.intellij.ui.codeFloatingToolbar.FloatingToolbarCustomizer$DefaultGroup"/>
+    <lang.floatingToolbar language="kotlin"/>
 
     <lang.foldingBuilder
             language="kotlin"
@@ -257,7 +269,7 @@
             id="kotlinSkipAutopopupInStrings"
             order="after propertyKeys"/>
 
-    <pluginSuggestionProvider order="first" implementation="org.jetbrains.kotlin.idea.suggestions.KotlinNotebookSuggestionProvider"/>
+    <pluginSuggestionProvider order="first" implementation="org.jetbrains.kotlin.idea.suggestions.JupyterNotebookSuggestionProvider"/>
   </extensions>
 
   <!-- Templates -->
@@ -536,11 +548,17 @@
             implementationClass="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinJavaSafeDeleteDelegate"/>
     <safeDelete.importSearcher implementation="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinImportSearcher"/>
 
+    <refactoring.inlineHandler
+            language="JAVA"
+            implementationClass="org.jetbrains.kotlin.idea.refactoring.inline.KotlinToJavaInlineHandler"/>
+
     <usageToPsiElementProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinUsageToPsiElementProvider"/>
 
     <usageFeaturesProvider implementation="org.jetbrains.kotlin.idea.findUsages.similarity.KotlinUsageSimilarityFeaturesProvider"/>
 
-    <readWriteAccessDetector implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReadWriteAccessDetector" id="kotlin"/>
+    <readWriteAccessDetector implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReadWriteAccessDetector"
+                             id="kotlin"
+                             order="first"/> <!--before lombok -->
 
     <projectFileScanner implementation="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider$LibraryKindScanner"/>
 
@@ -561,6 +579,14 @@
     </intentionAction>
   </extensions>
 
+  <!-- Copy-paste -->
+  <extensions defaultExtensionNs="com.intellij">
+    <filePasteProvider implementation="org.jetbrains.kotlin.idea.codeInsight.copyPaste.KotlinFilePasteProvider" order="first"/>
+    <copyPastePostProcessor implementation="org.jetbrains.kotlin.j2k.copyPaste.ConvertJavaCopyPasteProcessor"/>
+    <copyPastePostProcessor implementation="org.jetbrains.kotlin.j2k.copyPaste.ConvertTextJavaCopyPasteProcessor"/>
+    <diff.lang.DiffIgnoredRangeProvider implementation="org.jetbrains.kotlin.idea.diff.KotlinDiffIgnoredRangeProvider"/>
+  </extensions>
+
   <actions>
     <action id="Kotlin.NewFile" class="org.jetbrains.kotlin.idea.actions.NewKotlinFileAction"
             icon="org.jetbrains.kotlin.idea.KotlinIcons.FILE">
@@ -569,7 +595,7 @@
 
     <action id="Kotlin.NewScript" class="org.jetbrains.kotlin.idea.actions.NewKotlinScriptAction"
             icon="org.jetbrains.kotlin.idea.KotlinIcons.SCRIPT">
-      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFromTemplate"/>
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewWebDevelopment"/>
     </action>
 
     <group id="KotlinToolsGroup" popup="true" icon="org.jetbrains.kotlin.idea.KotlinIcons.SMALL_LOGO"
@@ -610,23 +636,15 @@
                 id="CheckComponentsUsageSearchAction"
                 class="org.jetbrains.kotlin.idea.actions.internal.CheckComponentsUsageSearchAction"/>
         <action
-                id="FindImplicitNothingAction"
-                class="org.jetbrains.kotlin.idea.actions.internal.FindImplicitNothingAction"/>
-        <action
                 id="PrintOutNotPropertyMatches"
                 class="org.jetbrains.kotlin.idea.actions.internal.SearchNotPropertyCandidatesAction"/>
         <action
                 id="StoredExceptionsThrowToggleAction"
                 class="org.jetbrains.kotlin.idea.actions.internal.StoredExceptionsThrowToggleAction"/>
-        <action
-                id="DebugTypeResolutionAction"
-                class="org.jetbrains.kotlin.idea.actions.internal.resolutionDebugging.DebugTypeResolutionAction"/>
+
         <action
                 id="LibraryToSourceDependencySupportToggleAction"
                 class="org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.LibraryToSourceDependencySupportToggleAction"/>
-        <action
-                id="CopyAsDiagnosticTest"
-                class="org.jetbrains.kotlin.idea.actions.internal.CopyAsDiagnosticTestAction"/>
         <action
                 id="KotlinFormattingSettingsStatusAction"
                 class="org.jetbrains.kotlin.idea.actions.internal.KotlinFormattingSettingsStatusAction"/>

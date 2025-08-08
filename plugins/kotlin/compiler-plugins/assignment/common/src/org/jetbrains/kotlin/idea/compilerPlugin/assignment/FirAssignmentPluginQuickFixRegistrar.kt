@@ -6,15 +6,15 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider.CompilerPluginType
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixRegistrar
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixesList
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KtQuickFixesListBuilder
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFix
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFixProvider
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModuleOfTypeSafe
 
 internal class FirAssignmentPluginQuickFixRegistrar : KotlinQuickFixRegistrar() {
 
@@ -30,14 +30,14 @@ private val FACTORY = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDi
     val project = element.project
 
     if (element is KtBinaryExpression && element.operationToken == KtTokens.EQ && isAssignmentPluginEnabled(project, element)) {
-        ImportQuickFix.getFixes(element.operationReference)
+        ImportQuickFixProvider.run { createQuickFixes(diagnostic) }
     } else {
         emptyList()
     }
 }
 
 private fun isAssignmentPluginEnabled(project: Project, element: PsiElement): Boolean {
-    val module = KaModuleProvider.getModule(project, element, useSiteModule = null) as? KaSourceModule ?: return false
+    val module = element.getKaModuleOfTypeSafe<KaSourceModule>(project, useSiteModule = null) ?: return false
     val compilerPluginsProvider = KotlinCompilerPluginsProvider.getInstance(project) ?: return false
     return compilerPluginsProvider.isPluginOfTypeRegistered(module, CompilerPluginType.ASSIGNMENT)
 }

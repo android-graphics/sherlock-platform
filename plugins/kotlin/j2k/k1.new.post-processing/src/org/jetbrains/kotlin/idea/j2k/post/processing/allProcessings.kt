@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.j2k.post.processing
 
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ObjectLiteralToLambdaIntention
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.IndentRawStringIntention
 import org.jetbrains.kotlin.idea.inspections.FoldInitializerAndIfToElvisInspection
 import org.jetbrains.kotlin.idea.inspections.NullChecksToSafeCallInspection
@@ -10,7 +11,10 @@ import org.jetbrains.kotlin.idea.inspections.ReplacePutWithAssignmentInspection
 import org.jetbrains.kotlin.idea.inspections.branchedTransformations.IfThenToElvisInspection
 import org.jetbrains.kotlin.idea.inspections.branchedTransformations.IfThenToSafeAccessInspection
 import org.jetbrains.kotlin.idea.inspections.conventionNameCalls.ReplaceGetOrSetInspection
-import org.jetbrains.kotlin.idea.intentions.*
+import org.jetbrains.kotlin.idea.intentions.ConvertToRawStringTemplateIntention
+import org.jetbrains.kotlin.idea.intentions.ConvertToStringTemplateIntention
+import org.jetbrains.kotlin.idea.intentions.JoinDeclarationAndAssignmentIntention
+import org.jetbrains.kotlin.idea.intentions.UsePropertyAccessSyntaxIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.shouldBeTransformed
 import org.jetbrains.kotlin.idea.j2k.post.processing.processings.*
 import org.jetbrains.kotlin.idea.quickfix.*
@@ -51,7 +55,7 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup = DiagnosticBasedPost
         Errors.EXPOSED_TYPE_PARAMETER_BOUND
     ),
     diagnosticBasedProcessing(
-        ConvertToIsArrayOfCallFix,
+        ConvertToIsArrayOfCallFixFactory,
         Errors.CANNOT_CHECK_FOR_ERASED,
     ),
     fixTypeMismatchDiagnosticBasedProcessing
@@ -86,7 +90,6 @@ private val inspectionLikePostProcessingGroup = InspectionLikeProcessingGroup(
     RemoveRedundantSamAdaptersProcessing(),
     RemoveRedundantCastToNullableProcessing(),
     inspectionBasedProcessing(ReplacePutWithAssignmentInspection()),
-    ReplaceGetterBodyWithSingleReturnStatementWithExpressionBody(),
     RemoveExplicitPropertyTypeProcessing(),
     RemoveRedundantNullabilityProcessing(),
     inspectionBasedProcessing(FoldInitializerAndIfToElvisInspection(), writeActionNeeded = false),
@@ -106,7 +109,7 @@ private val inspectionLikePostProcessingGroup = InspectionLikeProcessingGroup(
     MayBeConstantInspectionBasedProcessing(),
     RemoveForExpressionLoopParameterTypeProcessing(),
     intentionBasedProcessing(ConvertToRawStringTemplateIntention(), additionalChecker = ::shouldConvertToRawString),
-    intentionBasedProcessing(IndentRawStringIntention()),
+    modCommandBasedProcessing(IndentRawStringIntention()),
     intentionBasedProcessing(JoinDeclarationAndAssignmentIntention()),
     inspectionBasedProcessing(NullChecksToSafeCallInspection())
 )
@@ -120,13 +123,6 @@ private val cleaningUpDiagnosticBasedPostProcessingGroup = DiagnosticBasedPostPr
 private val inferringTypesPostProcessingGroup = NamedPostProcessingGroup(
     KotlinNJ2KServicesBundle.message("processing.step.inferring.types"),
     listOf(
-        InspectionLikeProcessingGroup(
-            processings = listOf(
-                VarToValProcessing(),
-                LocalVarToValInspectionBasedProcessing()
-            ),
-            runSingleTime = true
-        ),
         NullabilityInferenceProcessing(),
         MutabilityInferenceProcessing(),
         ClearUnknownInferenceLabelsProcessing()
@@ -141,8 +137,7 @@ private val cleaningUpCodePostProcessingGroup = NamedPostProcessingGroup(
             // so that the property and accessor types wouldn't differ in projections.
             diagnosticBasedProcessing(RemoveModifierFixBase.createRemoveProjectionFactory(isRedundant = true), Errors.REDUNDANT_PROJECTION),
         ),
-        ConvertGettersAndSettersToPropertyProcessing(),
-        InspectionLikeProcessingGroup(RemoveExplicitAccessorInspectionBasedProcessing()),
+        K1ConvertGettersAndSettersToPropertyProcessing(),
         MergePropertyWithConstructorParameterProcessing(),
         errorsFixingDiagnosticBasedPostProcessingGroup,
         addOrRemoveModifiersProcessingGroup,

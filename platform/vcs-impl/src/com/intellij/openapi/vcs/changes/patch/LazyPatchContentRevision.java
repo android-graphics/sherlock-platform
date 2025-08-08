@@ -11,22 +11,24 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class LazyPatchContentRevision implements ContentRevision {
   private final VirtualFile myVf;
   private final FilePath myNewFilePath;
-  private final @NotNull String myRevision;
+  private final @NotNull PatchedRevisionNumber myRevision;
   private final TextFilePatch myPatch;
 
   private final Supplier<Data> myData = new SynchronizedClearableLazy<>(this::loadContent);
 
   public LazyPatchContentRevision(final VirtualFile vf,
                                   final FilePath newFilePath,
-                                  final @NotNull String revision,
+                                  final @NotNull PatchedRevisionNumber revision,
                                   final TextFilePatch patch) {
     myVf = vf;
     myNewFilePath = newFilePath;
@@ -68,17 +70,7 @@ public final class LazyPatchContentRevision implements ContentRevision {
 
   @Override
   public @NotNull VcsRevisionNumber getRevisionNumber() {
-    return new VcsRevisionNumber() {
-      @Override
-      public @NotNull String asString() {
-        return myRevision;
-      }
-
-      @Override
-      public int compareTo(final VcsRevisionNumber o) {
-        return 0;
-      }
-    };
+    return myRevision;
   }
 
   private static class Data {

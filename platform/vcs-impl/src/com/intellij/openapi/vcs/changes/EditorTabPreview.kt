@@ -25,18 +25,23 @@ import com.intellij.openapi.util.Disposer.isDisposed
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.platform.vcs.impl.shared.changes.DiffPreviewUpdateProcessor
 import com.intellij.util.EditSourceOnDoubleClickHandler.isToggleEvent
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.Processor
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
 import kotlinx.coroutines.Runnable
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.Nls
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 @Deprecated("Use EditorTabDiffPreview")
+@ScheduledForRemoval
 abstract class EditorTabPreview(private val diffProcessor: DiffRequestProcessor) :
   EditorTabPreviewBase(diffProcessor.project!!, diffProcessor) {
 
@@ -44,7 +49,9 @@ abstract class EditorTabPreview(private val diffProcessor: DiffRequestProcessor)
   override val previewFile: VirtualFile = EditorTabDiffPreviewVirtualFile(diffProcessor, updatePreviewProcessor, ::getCurrentName)
 }
 
+@ApiStatus.Internal
 @Deprecated("Use EditorTabDiffPreview")
+@ScheduledForRemoval
 abstract class EditorTabPreviewBase(protected val project: Project,
                                     protected val parentDisposable: Disposable) : DiffPreview {
   private val updatePreviewQueue =

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.hints
 
+import com.intellij.codeInsight.hints.declarative.HintFormat
 import com.intellij.codeInsight.hints.declarative.InlayTreeSink
 import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.openapi.util.registry.Registry
@@ -28,32 +29,12 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdate
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.SpecialNames
-import org.jetbrains.kotlin.psi.KtAnnotatedExpression
-import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtConstantExpression
-import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFunctionLiteral
-import org.jetbrains.kotlin.psi.KtIfExpression
-import org.jetbrains.kotlin.psi.KtLabeledExpression
-import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtPsiUtil
-import org.jetbrains.kotlin.psi.KtScript
-import org.jetbrains.kotlin.psi.KtStringTemplateExpression
-import org.jetbrains.kotlin.psi.KtTypeReference
-import org.jetbrains.kotlin.psi.KtUnaryExpression
-import org.jetbrains.kotlin.psi.KtWhenExpression
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
 class KtReferencesTypeHintsProvider: AbstractKtInlayHintsProvider() {
     override fun collectFromElement(
@@ -134,8 +115,13 @@ class KtReferencesTypeHintsProvider: AbstractKtInlayHintsProvider() {
         }
     }
 
-    private fun isFunctionParameter(e: PsiElement): Boolean =
-        e is KtParameter && e.typeReference == null && !e.isLoopParameter
+    @OptIn(ExperimentalContracts::class)
+    private fun isFunctionParameter(e: PsiElement): Boolean {
+        contract {
+            returns(true) implies (e is KtParameter)
+        }
+        return e is KtParameter && e.typeReference == null && !e.isLoopParameter
+    }
 
     fun collectFromFunctionParameter(
         element: PsiElement,
@@ -143,11 +129,9 @@ class KtReferencesTypeHintsProvider: AbstractKtInlayHintsProvider() {
     ) {
         if (!isFunctionParameter(element)) return
 
-        val parameter = element as? KtParameter ?: return
-
         sink.whenOptionEnabled(SHOW_FUNCTION_PARAMETER_TYPES.name) {
-            parameter.nameIdentifier?.let {
-                collectProvideTypeHint(parameter, it.endOffset, sink)
+            element.nameIdentifier?.let {
+                collectProvideTypeHint(element, it.endOffset, sink)
             }
         }
     }
@@ -257,7 +241,7 @@ internal fun collectProvideTypeHint(element: KtCallableDeclaration, offset: Int,
                 }
             }
 
-            sink.addPresentation(InlineInlayPosition(offset, true), hasBackground = true) {
+            sink.addPresentation(InlineInlayPosition(offset, true), hintFormat = HintFormat.default) {
                 text(prefix)
                 printKtType(ktType)
             }
@@ -286,7 +270,7 @@ private fun renderKtTypeHint(element: KtCallableDeclaration, multilineLocalPrope
     calculateAllTypes<KaType>(element) { declarationType, allTypes, cannotBeNull ->
         if (declarationType is KaErrorType) return@calculateAllTypes null
 
-        if (declarationType.isUnit && multilineLocalProperty) {
+        if (declarationType.isUnitType && multilineLocalProperty) {
             return@calculateAllTypes null
         }
 
@@ -308,7 +292,7 @@ private fun renderKtTypeHint(element: KtCallableDeclaration, multilineLocalPrope
             else -> declarationType
         }
 
-        if (ktType?.isAny == false && isUnclearType(ktType, element)) {
+        if (ktType?.isAnyType == false && isUnclearType(ktType, element)) {
             ktType
         } else {
             null
@@ -350,7 +334,7 @@ internal fun collectLambdaTypeHint(lambdaExpression: KtExpression, sink: InlayTr
 
     analyze(lambdaExpression) {
         val functionCall = functionLiteral.resolveToCall()?.singleFunctionCallOrNull() ?: return
-        sink.addPresentation(InlineInlayPosition(lambdaExpression.endOffset, true), hasBackground = true) {
+        sink.addPresentation(InlineInlayPosition(lambdaExpression.endOffset, true), hintFormat = HintFormat.default) {
             text(": ")
             printKtType(functionCall.symbol.returnType)
         }

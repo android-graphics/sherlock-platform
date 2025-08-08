@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -27,6 +27,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.ViewUpdateInfoNotification;
 import com.intellij.xml.util.XmlStringUtil;
 import git4idea.GitNotificationIdsHolder;
+import git4idea.GitTag;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.i18n.GitBundle;
@@ -34,9 +35,7 @@ import git4idea.repo.GitRepository;
 import git4idea.update.GitUpdateInfoAsLog;
 import git4idea.update.GitUpdateResult;
 import one.util.streamex.EntryStream;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.List;
 import java.util.Map;
@@ -48,7 +47,8 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.Collections.singletonList;
 
-final class GitPushResultNotification extends Notification {
+@ApiStatus.Internal
+public final class GitPushResultNotification extends Notification {
   private static final Logger LOG = Logger.getInstance(GitPushResultNotification.class);
 
   private GitPushResultNotification(@NotNull String groupDisplayId,
@@ -186,7 +186,8 @@ final class GitPushResultNotification extends Notification {
     return notification;
   }
 
-  static @NlsContexts.NotificationContent @NotNull String emulateTitle(@NotNull @Nls String title, @NotNull @Nls String content) {
+  @VisibleForTesting
+  public static @NlsContexts.NotificationContent @NotNull String emulateTitle(@NotNull @Nls String title, @NotNull @Nls String content) {
     return new HtmlBuilder()
       .append(raw(title).bold()).br()
       .appendRaw(content)
@@ -245,6 +246,7 @@ final class GitPushResultNotification extends Notification {
     @NotNull HtmlChunk remoteName = HtmlChunk.text(result.getTargetRemote());
     @NotNull List<String> pushedTags = result.getPushedTags();
 
+    boolean sourceIsTag = result.getSourceBranch().startsWith(GitTag.REFS_TAGS_PREFIX);
     final HtmlChunk tagName = !pushedTags.isEmpty() ? HtmlChunk.text(tagName(pushedTags)) : HtmlChunk.empty();
     return switch (result.getType()) {
       case SUCCESS -> {
@@ -258,14 +260,20 @@ final class GitPushResultNotification extends Notification {
                                   remoteName)
         );
       }
-      case NEW_BRANCH -> selectBundleMessageWithTags(
-        pushedTags,
-        () -> GitBundle.message("push.notification.description.new.branch", sourceBranch, targetBranch),
-        () -> GitBundle.message("push.notification.description.new.branch.with.single.tag", sourceBranch, targetBranch, tagName,
-                                remoteName),
-        () -> GitBundle.message("push.notification.description.new.branch.with.many.tags", sourceBranch, targetBranch, pushedTags.size(),
-                                remoteName)
-      );
+      case NEW_BRANCH -> {
+        if (sourceIsTag && result.getPushedTags().size() == 1) {
+          yield GitBundle.message("push.notification.description.pushed.single.tag", tagName, remoteName);
+        }
+
+        yield selectBundleMessageWithTags(
+          pushedTags,
+          () -> GitBundle.message("push.notification.description.new.branch", sourceBranch, targetBranch),
+          () -> GitBundle.message("push.notification.description.new.branch.with.single.tag", sourceBranch, targetBranch, tagName,
+                                  remoteName),
+          () -> GitBundle.message("push.notification.description.new.branch.with.many.tags", sourceBranch, targetBranch, pushedTags.size(),
+                                  remoteName)
+        );
+      }
       case UP_TO_DATE -> selectBundleMessageWithTags(
         pushedTags,
         () -> GitBundle.message("push.notification.description.up.to.date"),
@@ -284,7 +292,11 @@ final class GitPushResultNotification extends Notification {
         };
       }
       case REJECTED_STALE_INFO -> GitBundle.message("push.notification.description.push.with.lease.rejected", sourceBranch, targetBranch);
-      case REJECTED_OTHER -> GitBundle.message("push.notification.description.rejected.by.remote", sourceBranch, targetBranch);
+      case REJECTED_OTHER -> {
+        yield sourceIsTag ?
+              GitBundle.message("push.notification.description.rejected.by.remote.without.target", sourceBranch) :
+              GitBundle.message("push.notification.description.rejected.by.remote", sourceBranch, targetBranch);
+      }
       case ERROR -> XmlStringUtil.escapeString(result.getError());
       default -> {
         LOG.error("Unexpected push result: " + result);

@@ -43,7 +43,7 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
   fun testChangeConfigInOurProjectShouldCallUpdatePomFile() = runBlocking {
     assertNoPendingProjectForReload()
     val mavenConfig = createProjectSubFile(".mvn/maven.config")
-    importProjectAsync()
+    updateAllProjects()
     assertNoPendingProjectForReload()
     replaceContent(mavenConfig, "-Xmx2048m -Xms1024m -XX:MaxPermSize=512m -Djava.awt.headless=true")
     assertHasPendingProjectForReload()
@@ -61,6 +61,9 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
     replaceContent(mavenConfig, "-Xmx2048m -Xms1024m -XX:MaxPermSize=512m -Djava.awt.headless=true")
     assertHasPendingProjectForReload()
     scheduleProjectImportAndWait()
+  }
+  private fun printDebugMessage(message: String) {
+    println("Debug: $message")
   }
 
   @Test
@@ -116,7 +119,7 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testProfilesAutoReload() = runBlocking {
-    createProjectPom("""
+    val xml = """
                          <groupId>test</groupId>
                          <artifactId>project</artifactId>
                          <version>1</version>
@@ -124,6 +127,7 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
                          <profiles>
                              <profile>
                                  <id>junit4</id>
+                                 
                                  <dependencies>
                                      <dependency>
                                          <groupId>junit</groupId>
@@ -145,7 +149,8 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
                                  </dependencies>
                              </profile>
                          </profiles>
-                       """.trimIndent())
+                       """.trimIndent()
+    replaceContent(projectPom, createPomXml(xml))
     scheduleProjectImportAndWait()
     assertRootProjects("project")
     assertModules("project")
@@ -177,6 +182,7 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
       VfsUtil.saveText(file, content)
       null
     } as ThrowableComputable<*, IOException?>)
+    printDebugMessage("Replaced content in file: ${file.path}")
   }
 
   private fun replaceDocumentString(file: VirtualFile?, oldString: String, newString: String?) {
@@ -188,6 +194,7 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
       val endOffset = startOffset + oldString.length
       document.replaceString(startOffset, endOffset, newString!!)
     }
+    printDebugMessage("Replaced string in document at path: ${file!!.path}")
   }
 
   internal class MavenProjectTreeTracker : MavenProjectsTree.Listener {

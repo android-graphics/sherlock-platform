@@ -9,6 +9,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.platform.lvcs.impl.diff.getEntryPath
+import com.intellij.util.SlowOperations
 
 internal val AFFECTED_PATHS: Key<Collection<String>> = Key.create("Lvcs.Affected.Paths")
 
@@ -18,7 +19,9 @@ internal fun ActivityData.getRootEntry(gateway: IdeaGateway): RootEntry {
     runReadAction {
       val affectedPaths = getUserData(AFFECTED_PATHS)
       if (!affectedPaths.isNullOrEmpty()) {
-        return@runReadAction gateway.createTransientRootEntryForPaths(affectedPaths, true)
+        return@runReadAction SlowOperations.knownIssue("IJPL-162340").use {
+          gateway.createTransientRootEntryForPaths(affectedPaths, true)
+        }
       }
       gateway.createTransientRootEntry()
     }
@@ -32,7 +35,7 @@ internal fun ActivityData.getSelectionCalculator(facade: LocalHistoryFacade, gat
     val rootEntry = getRootEntry(gateway)
     val changeSets = items.filterIsInstance<ChangeSetActivityItem>().map { RevisionId.ChangeSet(it.id) }
     val entryPath = getEntryPath(gateway, scope)
-    return SelectionCalculator.create(facade, gateway, rootEntry, entryPath, listOf(RevisionId.Current) + changeSets,
+    SelectionCalculator.create(facade, gateway, rootEntry, entryPath, listOf(RevisionId.Current) + changeSets,
                                       scope.from, scope.to, isOldContentUsed)
   }
 }

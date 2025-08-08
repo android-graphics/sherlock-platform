@@ -18,6 +18,7 @@ public class LombokLightModifierList extends LightModifierList implements Synthe
 
   private final Map<String, PsiAnnotation> myAnnotations;
   private final Set<String> myImplicitModifiers;
+  private PsiElement myParent;
 
   public LombokLightModifierList(@NotNull PsiManager manager) {
     this(manager, JavaLanguage.INSTANCE);
@@ -74,6 +75,11 @@ public class LombokLightModifierList extends LightModifierList implements Synthe
     return result;
   }
 
+  public LombokLightModifierList withParent(@NotNull PsiElement parent) {
+    myParent = parent;
+    return this;
+  }
+
   public LombokLightModifierList withAnnotation(@NotNull String qualifiedName, @NotNull PsiAnnotation psiAnnotation) {
     myAnnotations.put(qualifiedName, psiAnnotation);
     return this;
@@ -88,8 +94,7 @@ public class LombokLightModifierList extends LightModifierList implements Synthe
   }
 
   @Override
-  @NotNull
-  public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
+  public @NotNull PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getProject());
     final PsiAnnotation psiAnnotation = elementFactory.createAnnotationFromText('@' + qualifiedName, null);
     myAnnotations.put(qualifiedName, psiAnnotation);
@@ -117,6 +122,12 @@ public class LombokLightModifierList extends LightModifierList implements Synthe
     return r == null ? TextRange.EMPTY_RANGE : r;
   }
 
+  @Override
+  public PsiElement getParent() {
+    return myParent;
+  }
+
+  @Override
   public String toString() {
     return "LombokLightModifierList";
   }

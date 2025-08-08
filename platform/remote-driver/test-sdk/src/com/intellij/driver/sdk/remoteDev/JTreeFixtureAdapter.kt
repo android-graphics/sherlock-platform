@@ -2,16 +2,18 @@ package com.intellij.driver.sdk.remoteDev
 
 import com.intellij.driver.model.TreePath
 import com.intellij.driver.model.TreePathToRowList
-import com.intellij.driver.sdk.ui.components.JTreeFixtureRef
-import com.intellij.driver.sdk.ui.components.JTreeUiComponent
+import com.intellij.driver.sdk.ui.CellRendererReader
+import com.intellij.driver.sdk.ui.components.elements.JTreeFixtureRef
+import com.intellij.driver.sdk.ui.components.elements.JTreeUiComponent
+import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.Robot
-import com.intellij.driver.sdk.ui.xQuery
+import java.awt.Point
 import javax.swing.JTree
 
 class JTreeFixtureAdapter(robot: Robot, component: BeControlComponentBase) :
   BeControlComponentBase(component.driver, component.frontendComponent, component.backendComponent),
   JTreeFixtureRef {
-  val fixture = onFrontend(xQuery { byType(JTree::class.java.name) }, JTreeUiComponent::class).fixture
+  val fixture = onFrontend(JTreeUiComponent::class) { byType(JTree::class.java.name) }.fixture
 
   override fun clickRow(row: Int): JTreeFixtureRef {
     fixture.clickRow(row)
@@ -89,5 +91,21 @@ class JTreeFixtureAdapter(robot: Robot, component: BeControlComponentBase) :
 
   override fun expandAll(timeoutMs: Int) {
     fixture.expandAll(timeoutMs)
+  }
+
+  override fun getRowPoint(row: Int): Point {
+    return fixture.getRowPoint(row)
+  }
+
+  override fun replaceCellRendererReader(reader: CellRendererReader) {
+    fixture.replaceCellRendererReader(reader)
+  }
+
+  override fun getComponentAtRow(row: Int): Component {
+    return fixture.getComponentAtRow(row)
+  }
+
+  override fun areTreeNodesLoaded(): Boolean {
+    return fixture.areTreeNodesLoaded()
   }
 }

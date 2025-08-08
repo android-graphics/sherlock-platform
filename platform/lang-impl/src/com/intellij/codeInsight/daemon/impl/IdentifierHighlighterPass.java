@@ -9,6 +9,7 @@ import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.inlinePrompt.InlinePrompt;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.model.Symbol;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,6 +23,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -37,6 +39,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.AstLoadingFilter;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -72,11 +75,15 @@ public final class IdentifierHighlighterPass {
   }
 
   public void doCollectInformation(@NotNull HighlightingSession hostSession) {
+    if (InlinePrompt.isInlinePromptShown(myEditor)) {
+      return;
+    }
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    HighlightUsagesHandlerBase<PsiElement> highlightUsagesHandler = HighlightUsagesHandler.createCustomHandler(myEditor, myFile, myVisibleRange);
+    HighlightUsagesHandlerBase<PsiElement> highlightUsagesHandler = 
+      HighlightUsagesHandler.createCustomHandler(myEditor, myFile, myVisibleRange);
     boolean runFindUsages = true;
-    if (highlightUsagesHandler != null) {
+    if (highlightUsagesHandler != null && myCaretOffset >= 0) {
       List<PsiElement> targets = highlightUsagesHandler.getTargets();
       highlightUsagesHandler.computeUsages(targets);
       List<TextRange> readUsages = highlightUsagesHandler.getReadUsages();
@@ -94,9 +101,19 @@ public final class IdentifierHighlighterPass {
       }
     }
 
-    if (runFindUsages) {
+    if (runFindUsages && myCaretOffset >= 0) {
       collectCodeBlockMarkerRanges();
-      highlightReferencesAndDeclarations();
+
+      try {
+        DumbService.getInstance(hostSession.getProject()).withAlternativeResolveEnabled(() -> {
+          highlightReferencesAndDeclarations();
+        });
+      }
+      catch (IndexNotReadyException e) {
+        logIndexNotReadyException(e);
+        // Ignoring IndexNotReadyException.
+        // We can't show a warning because this usage search is triggered automatically and user does not control it.
+      }
     }
 
     if (!myEditor.isDisposed()) {
@@ -221,7 +238,8 @@ public final class IdentifierHighlighterPass {
         return fromHostFile;
       }
     }
-    catch (IndexNotReadyException ignored) {
+    catch (IndexNotReadyException e) {
+      logIndexNotReadyException(e);
     }
     //noinspection deprecation
     Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile, myCaretOffset);
@@ -234,18 +252,23 @@ public final class IdentifierHighlighterPass {
   }
 
   private void highlightTargetUsages(@NotNull Symbol target) {
-    AstLoadingFilter.disallowTreeLoading(() -> {
-      UsageRanges ranges = getUsageRanges(myFile, target);
-      if (ranges == null) {
-        return;
-      }
-      myReadAccessRanges.addAll(ranges.getReadRanges());
-      myReadAccessRanges.addAll(ranges.getReadDeclarationRanges());
-      myWriteAccessRanges.addAll(ranges.getWriteRanges());
-      myWriteAccessRanges.addAll(ranges.getWriteDeclarationRanges());
-    }, () -> "Currently highlighted file: \n" +
-             "psi file: " + myFile + ";\n" +
-             "virtual file: " + myFile.getVirtualFile());
+    try {
+      AstLoadingFilter.disallowTreeLoading(() -> {
+        UsageRanges ranges = getUsageRanges(myFile, target);
+        if (ranges == null) {
+          return;
+        }
+        myReadAccessRanges.addAll(ranges.getReadRanges());
+        myReadAccessRanges.addAll(ranges.getReadDeclarationRanges());
+        myWriteAccessRanges.addAll(ranges.getWriteRanges());
+        myWriteAccessRanges.addAll(ranges.getWriteDeclarationRanges());
+      }, () -> "Currently highlighted file: \n" +
+               "psi file: " + myFile + ";\n" +
+               "virtual file: " + myFile.getVirtualFile());
+    }
+    catch (IndexNotReadyException e) {
+      logIndexNotReadyException(e);
+    }
   }
 
   private static volatile int id;
@@ -276,6 +299,7 @@ public final class IdentifierHighlighterPass {
    *
    * In brace matching case this is done from {@link BraceHighlightingHandler#highlightBraces(TextRange, TextRange, boolean, boolean, com.intellij.openapi.fileTypes.FileType)}
    */
+  @RequiresEdt
   public void doAdditionalCodeBlockHighlighting() {
     if (myCodeBlockMarkerRanges.size() < 2 || !(myEditor instanceof EditorEx editorEx)) {
       return;
@@ -335,6 +359,12 @@ public final class IdentifierHighlighterPass {
       if (info.type == HighlightInfoType.ELEMENT_UNDER_CARET_READ || info.type == HighlightInfoType.ELEMENT_UNDER_CARET_WRITE) {
         highlighter.dispose();
       }
+    }
+  }
+
+  private static void logIndexNotReadyException(@NotNull IndexNotReadyException e) {
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(e);
     }
   }
 }

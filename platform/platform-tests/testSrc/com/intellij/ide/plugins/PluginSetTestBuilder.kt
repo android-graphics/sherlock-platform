@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.lang.UrlClassLoader
 import kotlinx.coroutines.runBlocking
@@ -11,6 +13,7 @@ class PluginSetTestBuilder(private val path: Path) {
   private var disabledPluginIds = mutableSetOf<String>()
   private var expiredPluginIds = mutableSetOf<String>()
   private var productBuildNumber = PluginManagerCore.buildNumber
+  private var brokenPlugins = mutableMapOf<PluginId, MutableSet<String?>>()
 
   private var context: DescriptorListLoadingContext? = null
   private var result: PluginLoadingResult? = null
@@ -27,12 +30,23 @@ class PluginSetTestBuilder(private val path: Path) {
     this.productBuildNumber = productBuildNumber
   }
 
+  var buildNumber: String
+    get() = productBuildNumber.toString()
+    set(value) {
+      productBuildNumber = BuildNumber.fromString(value)!!
+    }
+
+  fun withBrokenPlugin(pluginId: PluginId, vararg versions: String?) = apply {
+    brokenPlugins.putIfAbsent(pluginId, mutableSetOf())
+    brokenPlugins[pluginId]!!.addAll(versions)
+  }
+
   fun withLoadingContext(): PluginSetTestBuilder {
     return apply {
       context = DescriptorListLoadingContext(
         customDisabledPlugins = PluginManagerCore.toPluginIds(disabledPluginIds),
         customExpiredPlugins = PluginManagerCore.toPluginIds(expiredPluginIds),
-        customBrokenPluginVersions = emptyMap(),
+        customBrokenPluginVersions = brokenPlugins,
         productBuildNumber = { productBuildNumber },
       )
     }
@@ -50,7 +64,7 @@ class PluginSetTestBuilder(private val path: Path) {
       loadingContext.use {
         runBlocking {
           result!!.addAll(
-            descriptors = paths.asSequence().mapNotNull { loadDescriptor(it, loadingContext) },
+            descriptors = paths.asSequence().mapNotNull { loadDescriptor(it, loadingContext, ZipFilePoolImpl()) },
             overrideUseIfCompatible = false,
             productBuildNumber = loadingContext.productBuildNumber(),
           )

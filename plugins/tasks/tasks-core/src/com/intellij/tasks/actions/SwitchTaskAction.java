@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.tasks.actions;
 
@@ -29,6 +29,7 @@ import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,13 +45,21 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
-  @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull final Presentation presentation, @NotNull String place) {
+  public @NotNull JComponent createCustomComponent(final @NotNull Presentation presentation, @NotNull String place) {
     return new ComboBoxButton(presentation) {
       @Override
       protected @NotNull JBPopup createPopup(Runnable onDispose) {
         return SwitchTaskAction.createPopup(DataManager.getInstance().getDataContext(this), onDispose, false);
+      }
+
+      @Override
+      public Dimension getMinimumSize() {
+        var result = super.getMinimumSize();
+        var font = getFont();
+        if (font == null) return result;
+        result.width = UIUtil.computeTextComponentMinimumSize(result.width, getText(), getFontMetrics(font));
+        return result;
       }
     };
   }
@@ -140,15 +149,13 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
         return aValue.getIcon();
       }
 
-      @NotNull
       @Override
-      public String getTextFor(TaskListItem value) {
+      public @NotNull String getTextFor(TaskListItem value) {
         return value.getText();
       }
 
-      @Nullable
       @Override
-      public ListSeparator getSeparatorAbove(TaskListItem value) {
+      public @Nullable ListSeparator getSeparatorAbove(TaskListItem value) {
         return value.getSeparator() == null ? null : new ListSeparator(value.getSeparator());
       }
 
@@ -239,10 +246,9 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     return group;
   }
 
-  @NotNull
-  private static List<TaskListItem> createPopupActionGroup(@NotNull final Project project,
-                                                           final Ref<Boolean> shiftPressed,
-                                                           final Component contextComponent) {
+  private static @NotNull List<TaskListItem> createPopupActionGroup(final @NotNull Project project,
+                                                                    final Ref<Boolean> shiftPressed,
+                                                                    final Component contextComponent) {
     List<TaskListItem> group = new ArrayList<>();
 
     final AnAction action = ActionManager.getInstance().getAction(GotoTaskAction.ID);
@@ -265,7 +271,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     final TaskManager manager = TaskManager.getManager(project);
     LocalTask activeTask = manager.getActiveTask();
     List<LocalTask> localTasks = manager.getLocalTasks();
-    localTasks.sort(TaskManagerImpl.TASK_UPDATE_COMPARATOR);
+    localTasks = ContainerUtil.sorted(localTasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
     ArrayList<LocalTask> temp = new ArrayList<>();
     for (final LocalTask task : localTasks) {
       if (task == activeTask) {

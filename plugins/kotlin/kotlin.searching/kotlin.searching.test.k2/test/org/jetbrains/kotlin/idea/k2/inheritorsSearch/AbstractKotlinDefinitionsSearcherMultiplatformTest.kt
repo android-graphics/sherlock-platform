@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.inheritorsSearch
 
 import com.intellij.openapi.progress.ProgressIndicator
@@ -11,6 +11,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.usageView.UsageViewLongNameLocation
 import org.jetbrains.kotlin.idea.test.KotlinLightMultiplatformCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.configureMultiPlatformModuleStructure
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import java.nio.file.Paths
@@ -18,7 +19,7 @@ import java.nio.file.Paths
 abstract class AbstractKotlinDefinitionsSearcherMultiplatformTest : KotlinLightMultiplatformCodeInsightFixtureTestCase() {
 
     fun doTestKotlinClass(path: String) {
-        val virtualFile = configureModuleStructure(path).mainFile
+        val virtualFile = myFixture.configureMultiPlatformModuleStructure(path).mainFile
         require(virtualFile != null)
 
         myFixture.configureFromExistingVirtualFile(virtualFile)
@@ -30,7 +31,7 @@ abstract class AbstractKotlinDefinitionsSearcherMultiplatformTest : KotlinLightM
 
         val result = ProgressManager.getInstance().run(object : Task.WithResult<List<PsiElement>, RuntimeException>(myFixture.project, "", false) {
             override fun compute(indicator: ProgressIndicator): List<PsiElement> {
-                return DefinitionsScopedSearch.search(ktClass).toList()
+                return DefinitionsScopedSearch.search(ktClass).asIterable().toList()
             }
         })
         val actual = render(result)
@@ -39,7 +40,7 @@ abstract class AbstractKotlinDefinitionsSearcherMultiplatformTest : KotlinLightM
 
 
     fun doTestCallable(path: String) {
-        val virtualFile = configureModuleStructure(path).mainFile
+        val virtualFile = myFixture.configureMultiPlatformModuleStructure(path).mainFile
         require(virtualFile != null)
 
         myFixture.configureFromExistingVirtualFile(virtualFile)
@@ -55,7 +56,7 @@ abstract class AbstractKotlinDefinitionsSearcherMultiplatformTest : KotlinLightM
 
         val result = ProgressManager.getInstance().run(object : Task.WithResult<List<PsiElement>, RuntimeException>(myFixture.project, "", false) {
             override fun compute(indicator: ProgressIndicator): List<PsiElement> {
-                return DefinitionsScopedSearch.search(ktFunction).toList()
+                return DefinitionsScopedSearch.search(ktFunction).asIterable().toList()
             }
         })
         val actual = render(result)

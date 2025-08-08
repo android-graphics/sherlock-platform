@@ -31,7 +31,7 @@ abstract class AbstractAutoImportTestBase : KotlinLightCodeInsightFixtureTestCas
 
     private fun doTest() {
         val mainFile = mainFile().also { check(it.exists()) { "$it should exist" } }
-        val disableTestDirective = if (isFirPlugin) IgnoreTests.DIRECTIVES.IGNORE_K2 else IgnoreTests.DIRECTIVES.IGNORE_K1
+        val disableTestDirective = IgnoreTests.DIRECTIVES.of(pluginMode)
 
         IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), disableTestDirective) {
             val base = mainFile.parentFile
@@ -76,7 +76,7 @@ abstract class AbstractAutoImportTestBase : KotlinLightCodeInsightFixtureTestCas
                         )
                     }
                     AppExecutorUtil.getAppExecutorService().submit {
-                        DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(myFixture.file, myFixture.editor)
+                        DaemonCodeAnalyzerImpl.waitForLazyQuickFixesUnderCaret(myFixture.file, myFixture.editor)
                     }.get()
 
                 } finally {

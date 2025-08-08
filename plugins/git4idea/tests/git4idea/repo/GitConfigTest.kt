@@ -16,6 +16,7 @@ import git4idea.test.createRepository
 import git4idea.test.git
 import git4idea.test.tac
 import java.io.File
+import java.util.Locale
 
 class GitConfigTest : GitPlatformTest() {
   private val HOOK_FAILURE_MESSAGE = "IJ_TEST_GIT_HOOK_FAILED"
@@ -46,7 +47,7 @@ class GitConfigTest : GitPlatformTest() {
     val config = GitConfig.read(File(gitFile, "config"))
     val rootDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(rootFile)
     val gitDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(gitFile)
-    val reader = GitRepositoryReader(GitRepositoryFiles.createInstance(rootDir!!, gitDir!!))
+    val reader = GitRepositoryReader(myProject, GitRepositoryFiles.createInstance(rootDir!!, gitDir!!))
     val state = reader.readState(config.parseRemotes())
     val trackInfos = config.parseTrackInfos(state.localBranches.keys, state.remoteBranches.keys)
     assertTrue("Couldn't find correct a#branch tracking information among: [$trackInfos]",
@@ -322,7 +323,7 @@ class GitConfigTest : GitPlatformTest() {
       assertNotNull("result $message", resultFile)
 
       val testName = FileUtil.loadFile(descriptionFile!!).lines()[0] // description is in the first line of the desc-file
-      if (!testName.toLowerCase().startsWith("ignore")) {
+      if (!testName.lowercase(Locale.getDefault()).startsWith("ignore")) {
         data.add(TestSpec(testName, configFile!!, resultFile!!))
       }
     }

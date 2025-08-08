@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.compiler.charts.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.java.compiler.charts.CompilationChartsBundle
-import com.intellij.java.compiler.charts.CompilationChartsViewModel
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.java.compiler.charts.impl.CompilationChartsViewModel
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.IconButton
@@ -34,13 +34,14 @@ import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 
 
-class ActionPanel(private val project: Project, private val vm: CompilationChartsViewModel, private val component: JComponent) : BorderLayoutPanel() {
+class ActionPanel(private val project: Project, private val vm: CompilationChartsViewModel,
+                  diagrams: CompilationChartsDiagramsComponent, private val component: JComponent) : BorderLayoutPanel() {
   private val searchField: JBTextField = object : ExtendableTextField() {
     val reset = Runnable {
-      vm.filter.set(vm.filter.value.setText(listOf()))
       text = ""
-      updateLabel(null, null)
+      updateLabel(vm.filter(""))
     }
+
     init {
       setExtensions(object : ExtendableTextComponent.Extension {
         override fun getIcon(hovered: Boolean) = AllIcons.Actions.Search
@@ -64,14 +65,7 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
         override fun changedUpdate(e: DocumentEvent) = updateFilter()
 
         private fun updateFilter() {
-          val words = text.split(" ").filter { it.isNotBlank() }.map { it.trim() }
-          if (words.isEmpty()) {
-            vm.filter.set(vm.filter.value.setText(listOf()))
-            updateLabel(null, null)
-          } else {
-            vm.filter.set(vm.filter.value.setText(words))
-            updateLabel(vm.modules.get().keys, vm.filter.value)
-          }
+          updateLabel(vm.filter(text))
         }
       })
 
@@ -82,6 +76,7 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
       })
       border = JBUI.Borders.empty(1)
       BoxLayout(this, BoxLayout.LINE_AXIS)
+      background = Colors.Background.DEFAULT
     }
   }
 
@@ -91,129 +86,164 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
   }
 
   init {
-    border = JBUI.Borders.emptyBottom(2)
+    border = JBUI.Borders.customLine(Colors.LINE)
     layout = BorderLayout()
 
     // module name
     addToLeft(JPanel().apply {
       layout = BoxLayout(this, BoxLayout.LINE_AXIS)
-      border = JBUI.Borders.empty(2)
+      border = JBUI.Borders.empty(2, 10, 2, 2)
       add(JBLabel(CompilationChartsBundle.message("charts.module")))
       add(searchField)
       add(countLabel)
     })
 
     // legend
-    addToRight(JPanel().apply {
-      layout = BoxLayout(this, BoxLayout.LINE_AXIS)
-      border = JBUI.Borders.empty(2)
+    val actionManager = ActionManager.getInstance()
 
-      add(JBPanel<JBPanel<*>>(FlowLayout(FlowLayout.LEFT)).apply {
-        val block = JBLabel().apply {
-          preferredSize = Dimension(10, 10)
-          isOpaque = true
-          background = COLOR_PRODUCTION_BLOCK
-          border = BorderFactory.createLineBorder(COLOR_PRODUCTION_BORDER, 1)
-        }
-        add(block)
-        add(JBLabel(CompilationChartsBundle.message("charts.production.type")))
+    val actionGroup = DefaultActionGroup(
+      CompilationChartsStatsActionHolder(diagrams, vm),
+      Separator(),
+      actionManager.getAction("CompilationChartsZoomResetAction"),
+      actionManager.getAction("CompilationChartsZoomOutAction"),
+      actionManager.getAction("CompilationChartsZoomInAction"),
+      actionManager.getAction("CompilationChartsScrollToEndAction"),
+    )
 
-        addMouseListener(object : MouseAdapter() {
-          override fun mouseEntered(e: MouseEvent) {
-            block.border = BorderFactory.createLineBorder(COLOR_PRODUCTION_BORDER_SELECTED, 1)
-          }
-
-          override fun mouseExited(e: MouseEvent) {
-            block.border = BorderFactory.createLineBorder(COLOR_PRODUCTION_BORDER, 1)
-          }
-
-          override fun mouseClicked(e: MouseEvent) {
-            vm.filter.set(vm.filter.value.setProduction(!vm.filter.value.production))
-            if (vm.filter.value.production)
-              block.background = COLOR_PRODUCTION_BLOCK
-            else
-              block.background = COLOR_PRODUCTION_BLOCK_DISABLED
-          }
-        })
-
-      })
-
-      add(JBPanel<JBPanel<*>>(FlowLayout(FlowLayout.LEFT)).apply {
-        val block = JBLabel().apply {
-          preferredSize = Dimension(10, 10)
-          isOpaque = true
-          background = COLOR_TEST_BLOCK
-          border = BorderFactory.createLineBorder(COLOR_TEST_BORDER)
-        }
-        add(block)
-        add(JBLabel(CompilationChartsBundle.message("charts.test.type")))
-        addMouseListener(object : MouseAdapter() {
-          override fun mouseEntered(e: MouseEvent) {
-            block.border = BorderFactory.createLineBorder(COLOR_TEST_BORDER_SELECTED, 1)
-          }
-
-          override fun mouseExited(e: MouseEvent) {
-            block.border = BorderFactory.createLineBorder(COLOR_TEST_BORDER, 1)
-          }
-
-          override fun mouseClicked(e: MouseEvent) {
-            vm.filter.set(vm.filter.value.setTest(!vm.filter.value.test))
-            if (vm.filter.value.test)
-              block.background = COLOR_TEST_BLOCK
-            else
-              block.background = COLOR_TEST_BLOCK_DISABLED
-          }
-        })
-      })
-
-      add(JBPanel<JBPanel<*>>(FlowLayout(FlowLayout.LEFT)).apply {
-        val block = JBLabel().apply {
-          preferredSize = Dimension(10, 2)
-          isOpaque = true
-          background = COLOR_MEMORY_BORDER
-        }
-        val label = JBLabel(CompilationChartsBundle.message("charts.memory.type"))
-
-        add(block)
-        add(label)
-
-        addMouseListener(object : MouseAdapter() {
-          override fun mouseClicked(e: MouseEvent) {
-            when (vm.cpuMemory.value) {
-              CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY -> {
-                label.text = CompilationChartsBundle.message("charts.cpu.type")
-                block.background = COLOR_CPU_BORDER
-                vm.cpuMemory.set(CompilationChartsViewModel.CpuMemoryStatisticsType.CPU)
-              }
-              CompilationChartsViewModel.CpuMemoryStatisticsType.CPU -> {
-                label.text = CompilationChartsBundle.message("charts.memory.type")
-                block.background = COLOR_MEMORY_BORDER
-                vm.cpuMemory.set(CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY)
-              }
-            }
-          }
-        })
-      })
-    })
+    val toolbar = actionManager.createActionToolbar(Settings.Toolbar.ID, actionGroup, true).apply {
+      targetComponent = this@ActionPanel
+      component.border = JBUI.Borders.empty()
+    }
+    addToRight(toolbar.component)
 
     DumbAwareAction.create {
       val focusManager = IdeFocusManager.getInstance(project)
       if (focusManager.getFocusedDescendantFor(this@ActionPanel.component) != null) {
         focusManager.requestFocus(searchField, true)
       }
-    }.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND).shortcutSet, this@ActionPanel.component)
+    }.registerCustomShortcutSet(actionManager.getAction(IdeActions.ACTION_FIND).shortcutSet, this@ActionPanel.component)
   }
 
-  fun updateLabel(set: Set<CompilationChartsViewModel.Modules.EventKey>?, filter: CompilationChartsViewModel.Filter?) {
-    if (set == null || filter == null) {
+  fun updateLabel(count: Int) {
+    if (count == -1) {
       countLabel.text = ""
-    } else {
-      val count = set.count { filter.test(it) }
-      if (count == set.count()) {
-        countLabel.text = ""
-      } else {
-        countLabel.text = CompilationChartsBundle.message("charts.search.results", count)
-      }
     }
+    else {
+      countLabel.text = CompilationChartsBundle.message("charts.search.results", count)
+    }
+  }
+
+  internal class ScrollToEndAction : CompilationChartsActionBase() {
+    override fun actionPerformed(e: AnActionEvent) {
+      e.getData(COMPILATION_CHARTS_VIEW_KEY)?.scrollToEnd()
+    }
+  }
+
+  internal abstract class CompilationChartsActionBase : DumbAwareAction() {
+    override fun update(e: AnActionEvent) {
+      e.presentation.isEnabledAndVisible = e.getData(COMPILATION_CHARTS_VIEW_KEY) != null
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+  }
+
+  internal abstract class ZoomActionBase(private val zoomEvent: ZoomEvent) : CompilationChartsActionBase() {
+    override fun actionPerformed(e: AnActionEvent) {
+      e.getData(COMPILATION_CHARTS_VIEW_KEY)?.zoom(zoomEvent)
+    }
+  }
+
+  internal class ZoomInAction : ZoomActionBase(ZoomEvent.IN)
+
+  internal class ZoomOutAction : ZoomActionBase(ZoomEvent.OUT)
+
+  internal class ZoomResetAction : ZoomActionBase(ZoomEvent.RESET)
+
+  private class CompilationChartsStatsActionHolder(private val diagrams: CompilationChartsDiagramsComponent,
+                                                   private val vm: CompilationChartsViewModel) : DumbAwareAction(), CustomComponentAction {
+
+    override fun createCustomComponent(presentation: Presentation, place: String): JComponent = JPanel().apply {
+      layout = BoxLayout(this, BoxLayout.LINE_AXIS)
+      border = JBUI.Borders.empty(2)
+      add(JBPanel<JBPanel<*>>(FlowLayout(FlowLayout.LEFT)).apply {
+        val block = JBLabel().apply {
+          preferredSize = Dimension(10, 10)
+          isOpaque = true
+          background = Colors.Production.ENABLED
+          border = BorderFactory.createLineBorder(Colors.Production.BORDER, 1)
+        }
+        add(block)
+        add(JBLabel(CompilationChartsBundle.message("charts.production.type")))
+
+        addMouseListener(object : MouseAdapter() {
+          override fun mouseEntered(e: MouseEvent) {
+            block.border = BorderFactory.createLineBorder(Colors.Production.SELECTED, 1)
+          }
+
+          override fun mouseExited(e: MouseEvent) {
+            block.border = BorderFactory.createLineBorder(Colors.Production.BORDER, 1)
+          }
+
+          override fun mouseClicked(e: MouseEvent) {
+            if (vm.changeProduction())
+              block.background = Colors.Production.ENABLED
+            else
+              block.background = Colors.Production.DISABLED
+          }
+        })
+
+      })
+
+      add(JBPanel<JBPanel<*>>(FlowLayout(FlowLayout.LEFT)).apply {
+        val block = JBLabel().apply {
+          preferredSize = Dimension(10, 10)
+          isOpaque = true
+          background = Colors.Test.ENABLED
+          border = BorderFactory.createLineBorder(Colors.Test.BORDER)
+        }
+        add(block)
+        add(JBLabel(CompilationChartsBundle.message("charts.test.type")))
+        addMouseListener(object : MouseAdapter() {
+          override fun mouseEntered(e: MouseEvent) {
+            block.border = BorderFactory.createLineBorder(Colors.Test.SELECTED, 1)
+          }
+
+          override fun mouseExited(e: MouseEvent) {
+            block.border = BorderFactory.createLineBorder(Colors.Test.BORDER, 1)
+          }
+
+          override fun mouseClicked(e: MouseEvent) {
+            if (vm.changeTest())
+              block.background = Colors.Test.ENABLED
+            else
+              block.background = Colors.Test.DISABLED
+
+          }
+        })
+      })
+
+      add(JBPanel<JBPanel<*>>(FlowLayout(FlowLayout.LEFT)).apply {
+        val declaration = vm.changeStatistic()
+        val block = JBLabel().apply {
+          preferredSize = Dimension(10, 2)
+          isOpaque = true
+          background = declaration.color().background()
+        }
+        val label = JBLabel(declaration.title())
+        add(block)
+        add(label)
+
+        addMouseListener(object : MouseAdapter() {
+          override fun mouseClicked(e: MouseEvent) {
+            val declaration = vm.changeStatistic()
+            label.text = declaration.title()
+            block.background = declaration.color().background()
+            diagrams.smartDraw(true, true)
+          }
+        })
+      })
+    }
+
+    override fun actionPerformed(e: AnActionEvent) = Unit
   }
 }

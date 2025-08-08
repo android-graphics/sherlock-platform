@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.NullableNotNullManager;
@@ -12,6 +12,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
@@ -46,11 +47,6 @@ public final class FieldFromParameterUtils {
 
   public static @Nullable PsiType getSubstitutedType(@NotNull PsiParameter parameter) {
     PsiType type = getType(parameter);
-
-    if (type instanceof PsiArrayType) {
-      return type;
-    }
-
     PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(type);
     PsiClass psiClass = result.getElement();
     if (psiClass == null) {
@@ -65,7 +61,9 @@ public final class FieldFromParameterUtils {
     for (PsiTypeParameter usedTypeParameter : usedTypeParameters) {
       PsiType bound = TypeConversionUtil.typeParameterErasure(usedTypeParameter);
       PsiManager manager = usedTypeParameter.getManager();
-      subst = subst.put(usedTypeParameter, bound == null ? PsiWildcardType.createUnbounded(manager) : bound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ? bound : PsiWildcardType.createExtends(manager, bound));
+      subst = subst.put(usedTypeParameter, bound == null || bound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)
+                                           ? PsiWildcardType.createUnbounded(manager)
+                                           : PsiWildcardType.createExtends(manager, bound));
     }
 
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
@@ -75,10 +73,11 @@ public final class FieldFromParameterUtils {
       substitutor = substitutor.put(typeParameter, psiType != null ? subst.substitute(psiType) : null);
     }
 
-    if (psiClass instanceof PsiTypeParameter) {
-      return GenericsUtil.getVariableTypeByExpressionType(subst.substitute((PsiTypeParameter)psiClass));
-    }
-    return JavaPsiFacade.getElementFactory(parameter.getProject()).createType(psiClass, substitutor);
+    PsiType substitutedType = psiClass instanceof PsiTypeParameter
+                              ? GenericsUtil.getVariableTypeByExpressionType(subst.substitute((PsiTypeParameter)psiClass))
+                              : JavaPsiFacade.getElementFactory(parameter.getProject()).createType(psiClass, substitutor);
+    if (substitutedType == null) return null;
+    return PsiTypesUtil.createArrayType(substitutedType, type.getArrayDimensions());
   }
 
   public static @Nullable PsiField getParameterAssignedToField(@NotNull PsiParameter parameter) {
@@ -86,7 +85,7 @@ public final class FieldFromParameterUtils {
   }
 
   public static @Nullable PsiField getParameterAssignedToField(@NotNull PsiParameter parameter, boolean findIndirectAssignments) {
-    for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(parameter.getDeclarationScope()), false)) {
+    for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(parameter.getDeclarationScope()), false).asIterable()) {
       if (!(reference instanceof PsiReferenceExpression expression)) continue;
       PsiAssignmentExpression assignmentExpression;
       if (findIndirectAssignments) {
@@ -272,21 +271,35 @@ public final class FieldFromParameterUtils {
     return isAvailable(myParameter, type, targetClass, true);
   }
 
-  public static boolean isAvailable(@NotNull PsiParameter myParameter,
+  public static boolean isAvailable(@NotNull PsiParameter parameter,
                                     @Nullable PsiType type,
                                     @Nullable PsiClass targetClass,
                                     boolean findIndirectAssignments) {
-    if (!myParameter.isValid() ||
-        !BaseIntentionAction.canModify(myParameter) ||
-        !(myParameter.getDeclarationScope() instanceof PsiMethod method)) {
+    if (!parameter.isValid() ||
+        !BaseIntentionAction.canModify(parameter) ||
+        !(parameter.getDeclarationScope() instanceof PsiMethod method)) {
       return false;
     }
+    if (type == null || targetClass == null || !type.isValid()) {
+      return false;
+    }
+    PsiField existingField = targetClass.findFieldByName(parameter.getName(), true);
+    if (existingField != null) {
+      if (!existingField.getType().isAssignableFrom(type) ||
+          method.hasModifierProperty(PsiModifier.STATIC) != existingField.hasModifierProperty(PsiModifier.STATIC) ||
+          existingField.hasModifierProperty(PsiModifier.FINAL) && !method.isConstructor()) {
+        return false;
+      }
+    }
+    if (method.isConstructor()) {
+      PsiMethodCallExpression chainedCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
+      if (JavaPsiConstructorUtil.isChainedConstructorCall(chainedCall)) {
+        return false;
+      }
+    }
     return method.getBody() != null &&
-           type != null &&
-           type.isValid() &&
-           targetClass != null &&
            !targetClass.isInterface() &&
            (!targetClass.isRecord() || method.hasModifierProperty(PsiModifier.STATIC)) &&
-           getParameterAssignedToField(myParameter, findIndirectAssignments) == null;
+           getParameterAssignedToField(parameter, findIndirectAssignments) == null;
   }
 }

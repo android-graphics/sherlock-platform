@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.perFileVersion;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -23,12 +23,9 @@ public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersi
   private static final int UNINDEXED_STATE = -2;
   private static final int NULL_SUB_INDEXER = -3;
 
-  @NotNull
-  private final PersistentSubIndexerVersionEnumerator<SubIndexerVersion> myPersistentVersionEnumerator;
-  @NotNull
-  private final IntFileAttribute myFileAttribute;
-  @NotNull
-  private final CompositeDataIndexer<?, ?, SubIndexerType, SubIndexerVersion> myIndexer;
+  private final @NotNull PersistentSubIndexerVersionEnumerator<SubIndexerVersion> myPersistentVersionEnumerator;
+  private final @NotNull IntFileAttribute myFileAttribute;
+  private final @NotNull CompositeDataIndexer<?, ?, SubIndexerType, SubIndexerVersion> myIndexer;
 
   public PersistentSubIndexerRetriever(@NotNull ID<?, ?> id,
                                 int indexVersion,
@@ -91,15 +88,16 @@ public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersi
     return indexerId == 0 ? UNINDEXED_STATE : indexerId;
   }
 
-  public FileIndexingState getSubIndexerState(int fileId, @NotNull IndexedFile file) throws IOException {
-    int indexerId = myFileAttribute.readInt(fileId);
-    if (indexerId == 0) {
-      return FileIndexingState.OUT_DATED;
-    } else if (indexerId == UNINDEXED_STATE) {
-      return FileIndexingState.NOT_INDEXED;
+  public FileIndexingStateWithExplanation getSubIndexerState(int fileId, @NotNull IndexedFile file) throws IOException {
+    int subIndexerId = myFileAttribute.readInt(fileId);
+    if (subIndexerId == 0) {
+      return FileIndexingStateWithExplanation.outdated("subIndexerId == 0");
+    } else if (subIndexerId == UNINDEXED_STATE) {
+      return FileIndexingStateWithExplanation.notIndexed();
     } else {
       int actualVersion = getFileIndexerId(file);
-      return actualVersion == indexerId ? FileIndexingState.UP_TO_DATE : FileIndexingState.OUT_DATED;
+      return actualVersion == subIndexerId ? FileIndexingStateWithExplanation.upToDate() : FileIndexingStateWithExplanation.outdated(
+        () -> "actualSubIndexerId(" + actualVersion + ") != subIndexerId(" + subIndexerId + ")");
     }
   }
 
@@ -115,8 +113,7 @@ public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersi
   }
 
   @Override
-  @Nullable
-  public SubIndexerVersion getVersion(@NotNull IndexedFile file) {
+  public @Nullable SubIndexerVersion getVersion(@NotNull IndexedFile file) {
     SubIndexerType type = myIndexer.calculateSubIndexer(file);
     if (type == null) return null;
     return myIndexer.getSubIndexerVersion(type);

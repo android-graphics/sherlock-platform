@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Predicates
@@ -24,8 +25,10 @@ import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
 import com.intellij.util.containers.ConcurrentIntObjectMap
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import org.jetbrains.annotations.ApiStatus
 import java.util.stream.IntStream
 
+@ApiStatus.Internal
 class InlayHintsPass(
   private val rootElement: PsiElement,
   private val enabledCollectors: List<CollectorWithSettings<out Any>>,
@@ -57,9 +60,13 @@ class InlayHintsPass(
         Processor { element ->
           for (collectorInd in enabledCollectors.indices.minus(skippedCollectors)) {
             val collector = enabledCollectors[collectorInd]
-            if (!collector.collectHints(element, editor)) {
-              skippedCollectors.add(collectorInd)
-              continue
+            try {
+              if (!collector.collectHints(element, editor)) {
+                skippedCollectors.add(collectorInd)
+                continue
+              }
+            }
+            catch (_: IndexNotReadyException) {
             }
             progress.checkCanceled()
           }

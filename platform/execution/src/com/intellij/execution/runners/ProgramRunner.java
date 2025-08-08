@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionException;
@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,13 +44,11 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
     }
   }
 
-  @Nullable
-  static ProgramRunner<?> findRunnerById(@NotNull String id) {
+  static @Nullable ProgramRunner<?> findRunnerById(@NotNull String id) {
     return PROGRAM_RUNNER_EP.findFirstSafe(it -> id.equals(it.getRunnerId()));
   }
 
-  @Nullable
-  static ProgramRunner<RunnerSettings> getRunner(@NotNull String executorId, @NotNull RunProfile settings) {
+  static @Nullable ProgramRunner<RunnerSettings> getRunner(@NotNull String executorId, @NotNull RunProfile settings) {
     //noinspection unchecked
     return (ProgramRunner<RunnerSettings>)PROGRAM_RUNNER_EP.findFirstSafe(it -> it.canRun(executorId, settings));
   }
@@ -78,8 +77,7 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
    * @param settingsProvider source of assorted information about the configuration being edited.
    * @return the per-runner settings, or null if this runner doesn't use any per-runner settings.
    */
-  @Nullable
-  default Settings createConfigurationData(@NotNull ConfigurationInfoProvider settingsProvider) {
+  default @Nullable Settings createConfigurationData(@NotNull ConfigurationInfoProvider settingsProvider) {
     return null;
   }
 
@@ -95,8 +93,11 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
   default void onProcessStarted(RunnerSettings settings, ExecutionResult executionResult) {
   }
 
-  @Nullable
-  default SettingsEditor<Settings> getSettingsEditor(Executor executor, RunConfiguration configuration) {
+  default @Nullable @NlsActions.ActionText String getStartActionText(@NotNull Executor executor, @NotNull RunConfiguration configuration) {
+    return null;
+  }
+
+  default @Nullable SettingsEditor<Settings> getSettingsEditor(Executor executor, RunConfiguration configuration) {
     return null;
   }
 

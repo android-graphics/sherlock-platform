@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "RemoveRedundantQualifierName")
 
 package com.intellij.ide.ui.customization
 
@@ -24,7 +24,6 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.IconUtil
 import com.intellij.util.SmartList
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.with
 import com.intellij.util.ui.EmptyIcon
 import kotlinx.coroutines.CoroutineScope
@@ -42,6 +41,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 import javax.swing.tree.DefaultMutableTreeNode
+import kotlin.Throws
 
 private val LOG = logger<CustomActionsSchema>()
 
@@ -130,7 +130,6 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
     }
 
     @JvmStatic
-    @RequiresBlockingContext
     fun getInstance(): CustomActionsSchema = service<CustomActionsSchema>()
 
     suspend fun getInstanceAsync(): CustomActionsSchema = serviceAsync<CustomActionsSchema>()
@@ -147,6 +146,7 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
     windowManager.getFrameHelper(null)?.updateView()
   }
 
+  @ApiStatus.Internal
   fun addAction(url: ActionUrl) {
     synchronized(lock) {
       if (!actions.contains(url) && !actions.remove(url.inverted)) {
@@ -158,8 +158,10 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
   /**
    * Mutable list is returned.
    */
+  @ApiStatus.Internal
   fun getActions(): List<ActionUrl> = actions
 
+  @ApiStatus.Internal
   fun setActions(newActions: List<ActionUrl>) {
     synchronized(lock) {
       assert(actions !== newActions)
@@ -277,7 +279,6 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
     return element
   }
 
-  @RequiresBlockingContext
   fun getCorrectedAction(id: String): AnAction? {
     val name = idToName.get(id) ?: return ActionManager.getInstance().getAction(id)
     return getCorrectedAction(id, name)
@@ -383,6 +384,7 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
     return true
   }
 
+  @ApiStatus.Internal
   fun getChildActions(url: ActionUrl): List<ActionUrl> = getChildActions(url.groupPath)
 
   internal fun getChildActions(groupPath: List<String>): List<ActionUrl> {
@@ -447,13 +449,13 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
         continue
       }
 
-      initActionIcon(anAction = action, actionId = actionId, actionManager = actionManager)
+      initActionIcon(anAction = action, actionId = actionId, actionSupplier = { actionManager.getAction(it) })
       PresentationFactory.updatePresentation(action)
     }
   }
 
   @ApiStatus.Internal
-  fun initActionIcon(anAction: AnAction, actionId: String, actionManager: ActionManager) {
+  fun initActionIcon(anAction: AnAction, actionId: String, actionSupplier: (String) -> AnAction?) {
     LOG.assertTrue(anAction !is ActionStub)
     val presentation = anAction.templatePresentation
     val originalIcon = presentation.icon
@@ -461,7 +463,7 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
       presentation.putClientProperty(PROP_ORIGINAL_ICON, originalIcon)
     }
 
-    val icon = iconCustomizations.get(actionId)?.let { getIconForPath(actionManager = actionManager, iconPath = it) }
+    val icon = iconCustomizations.get(actionId)?.let { getIconForPath(actionSupplier = actionSupplier, iconPath = it) }
                ?: presentation.getClientProperty(PROP_ORIGINAL_ICON)
     presentation.icon = icon
     presentation.disabledIcon = if (icon == null) null else getDisabledIcon(icon)
@@ -595,8 +597,8 @@ private fun doLoadCustomIcon(urlString: String): Icon {
   return icon
 }
 
-internal fun getIconForPath(actionManager: ActionManager, iconPath: String): Icon? {
-  val reuseFrom = actionManager.getAction(iconPath)
+internal fun getIconForPath(actionSupplier: (String) -> AnAction?, iconPath: String): Icon? {
+  val reuseFrom = actionSupplier(iconPath)
   if (reuseFrom != null) {
     return getOriginalIconFrom(reuseFrom)
   }

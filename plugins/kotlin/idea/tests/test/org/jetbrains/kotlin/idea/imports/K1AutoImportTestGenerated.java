@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.imports;
 
@@ -75,6 +75,11 @@ public class K1AutoImportTestGenerated extends AbstractK1AutoImportTest {
         runTest("testData/editor/autoImport/functionReference/");
     }
 
+    @TestMetadata("intersectionReceiverType")
+    public void testIntersectionReceiverType() throws Exception {
+        runTest("testData/editor/autoImport/intersectionReceiverType/");
+    }
+
     @TestMetadata("invoke")
     public void testInvoke() throws Exception {
         runTest("testData/editor/autoImport/invoke/");
@@ -135,6 +140,16 @@ public class K1AutoImportTestGenerated extends AbstractK1AutoImportTest {
         runTest("testData/editor/autoImport/superConstructorCall/");
     }
 
+    @TestMetadata("typeParameterReceiverType")
+    public void testTypeParameterReceiverType() throws Exception {
+        runTest("testData/editor/autoImport/typeParameterReceiverType/");
+    }
+
+    @TestMetadata("typeParameterReceiverTypeWithBounds")
+    public void testTypeParameterReceiverTypeWithBounds() throws Exception {
+        runTest("testData/editor/autoImport/typeParameterReceiverTypeWithBounds/");
+    }
+
     @TestMetadata("typeReference")
     public void testTypeReference() throws Exception {
         runTest("testData/editor/autoImport/typeReference/");
@@ -168,5 +183,10 @@ public class K1AutoImportTestGenerated extends AbstractK1AutoImportTest {
     @TestMetadata("withoutAutoImport")
     public void testWithoutAutoImport() throws Exception {
         runTest("testData/editor/autoImport/withoutAutoImport/");
+    }
+
+    @TestMetadata("wrongReceiverType")
+    public void testWrongReceiverType() throws Exception {
+        runTest("testData/editor/autoImport/wrongReceiverType/");
     }
 }

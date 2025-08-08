@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighter;
 
@@ -82,6 +82,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/dsl/ImplementsDslInterface.kt");
         }
 
+        @TestMetadata("ImplicitReceiver.kt")
+        public void testImplicitReceiver() throws Exception {
+            runTest("testData/highlighterMetaInfo/dsl/ImplicitReceiver.kt");
+        }
+
         @TestMetadata("NestedReceivers.kt")
         public void testNestedReceivers() throws Exception {
             runTest("testData/highlighterMetaInfo/dsl/NestedReceivers.kt");
@@ -95,6 +100,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
         @TestMetadata("SubclassOfDslClass.kt")
         public void testSubclassOfDslClass() throws Exception {
             runTest("testData/highlighterMetaInfo/dsl/SubclassOfDslClass.kt");
+        }
+
+        @TestMetadata("TopLevelFunctions.kt")
+        public void testTopLevelFunctions() throws Exception {
+            runTest("testData/highlighterMetaInfo/dsl/TopLevelFunctions.kt");
         }
     }
 
@@ -140,6 +150,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("JavaClassWithStaticStarImport.kt")
+        public void testJavaClassWithStaticStarImport() throws Exception {
+            runTest("testData/highlighterMetaInfo/jvm/JavaClassWithStaticStarImport.kt");
+        }
+
         @TestMetadata("javaFields.kt")
         public void testJavaFields() throws Exception {
             runTest("testData/highlighterMetaInfo/jvm/javaFields.kt");
@@ -165,9 +180,34 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/jvm/KotlinAnnotationsInJava.kt");
         }
 
+        @TestMetadata("KotlinInfixFunctionInjection.kt")
+        public void testKotlinInfixFunctionInjection() throws Exception {
+            runTest("testData/highlighterMetaInfo/jvm/KotlinInfixFunctionInjection.kt");
+        }
+
         @TestMetadata("KotlinInjection.kt")
         public void testKotlinInjection() throws Exception {
             runTest("testData/highlighterMetaInfo/jvm/KotlinInjection.kt");
+        }
+
+        @TestMetadata("KotlinOperatorFunctionInjection.kt")
+        public void testKotlinOperatorFunctionInjection() throws Exception {
+            runTest("testData/highlighterMetaInfo/jvm/KotlinOperatorFunctionInjection.kt");
+        }
+
+        @TestMetadata("KotlinSimpleInjection.kt")
+        public void testKotlinSimpleInjection() throws Exception {
+            runTest("testData/highlighterMetaInfo/jvm/KotlinSimpleInjection.kt");
+        }
+
+        @TestMetadata("KotlinVarargsParametersInjection.kt")
+        public void testKotlinVarargsParametersInjection() throws Exception {
+            runTest("testData/highlighterMetaInfo/jvm/KotlinVarargsParametersInjection.kt");
+        }
+
+        @TestMetadata("LibraryVarargParameterWithFunctionalType.kt")
+        public void testLibraryVarargParameterWithFunctionalType() throws Exception {
+            runTest("testData/highlighterMetaInfo/jvm/LibraryVarargParameterWithFunctionalType.kt");
         }
 
         @TestMetadata("NonExistingKotlinMethodFromJava.kt")

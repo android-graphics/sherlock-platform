@@ -65,8 +65,8 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.io.File;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public class FileChooserDialogImpl extends DialogWrapper implements FileChooserDialog, PathChooserDialog {
   public static final String FILE_CHOOSER_SHOW_PATH_PROPERTY = "FileChooser.ShowPath";
@@ -195,8 +195,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     return label;
   }
 
-  @NotNull
-  protected FileLookup.Finder createFinder() {
+  protected @NotNull FileLookup.Finder createFinder() {
     return new LocalFsFinder();
   }
 
@@ -470,7 +469,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     }
   }
 
-  protected final class MyPanel extends JPanel implements DataProvider {
+  protected final class MyPanel extends JPanel implements UiDataProvider {
     final PasteProvider myPasteProvider = new PasteProvider() {
       @Override
       public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -515,17 +514,11 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     }
 
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (FileSystemTree.DATA_KEY.is(dataId)) {
-        return myFileSystemTree;
-      }
-      if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-        return myFileSystemTree == null ? null : myFileSystemTree.getSelectedFiles();
-      }
-      if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
-        return myPasteProvider;
-      }
-      return myChooserDescriptor.getUserData(dataId);
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(FileSystemTree.DATA_KEY, myFileSystemTree);
+      sink.set(CommonDataKeys.VIRTUAL_FILE_ARRAY, myFileSystemTree == null ? null : myFileSystemTree.getSelectedFiles());
+      sink.set(PlatformDataKeys.PASTE_PROVIDER, myPasteProvider);
+      DataSink.uiDataSnapshot(sink, dataId -> myChooserDescriptor.getUserData(dataId));
     }
   }
 
@@ -534,9 +527,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     updateTextFieldShowing();
   }
 
-  @NotNull
-  @NlsSafe
-  protected String getPresentableUrl(@NotNull VirtualFile virtualFile) {
+  protected @NotNull @NlsSafe String getPresentableUrl(@NotNull VirtualFile virtualFile) {
     return VfsUtil.getReadableUrl(virtualFile);
   }
 

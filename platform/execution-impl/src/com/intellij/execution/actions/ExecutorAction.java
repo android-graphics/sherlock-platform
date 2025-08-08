@@ -4,6 +4,7 @@ package com.intellij.execution.actions;
 import com.intellij.execution.*;
 import com.intellij.execution.compound.CompoundRunConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.impl.ExecutionManagerImplKt;
@@ -28,6 +29,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -56,6 +58,8 @@ import static java.util.Collections.emptyList;
 @ApiStatus.Internal
 public class ExecutorAction extends AnAction
   implements DumbAware, ActionRemotePermissionRequirements.RunAccess, ActionIdProvider {
+
+  public static final Key<Boolean> WOULD_BE_ENABLED_BUT_STARTING = Key.create("WOULD_BE_ENABLED_BUT_STARTING");
 
   private static final Logger LOG = Logger.getInstance(ExecutorAction.class);
 
@@ -105,8 +109,13 @@ public class ExecutorAction extends AnAction
       actionStatus = setupActionStatus(e, project, selectedSettings, presentation);
       presentation.setIcon(getInformativeIcon(project, selectedSettings, e));
       RunConfiguration configuration = selectedSettings.getConfiguration();
+      Ref<Boolean> isStartingTracker = Ref.create(false);
       if (!isSuppressed(project)) {
-        enabled = ExecutorRegistryImpl.RunnerHelper.canRun(project, myExecutor, configuration);
+        enabled = ExecutorRegistryImpl.RunnerHelper.canRun(project, myExecutor, configuration, isStartingTracker);
+        if (enabled && isStartingTracker.get() == Boolean.TRUE) {
+          enabled = false;
+          presentation.putClientProperty(WOULD_BE_ENABLED_BUT_STARTING, true);
+        }
       }
       if (!(configuration instanceof CompoundRunConfiguration)) {
         runConfigAsksToHideDisabledExecutorButtons = configuration.hideDisabledExecutorButtons();
@@ -125,7 +134,9 @@ public class ExecutorAction extends AnAction
         }
       }
       else {
-        text = myExecutor.getStartActionText(configuration.getName());
+        ProgramRunner<RunnerSettings> runner = ProgramRunner.getRunner(getId(), configuration);
+        String actionText = runner == null ? null : runner.getStartActionText(myExecutor, configuration);
+        text = actionText != null ? actionText : myExecutor.getStartActionText(configuration.getName());
       }
     }
     else {
@@ -152,7 +163,7 @@ public class ExecutorAction extends AnAction
       }
     }
 
-    if (actionStatus != ExecutorActionStatus.LOADING && (runConfigAsksToHideDisabledExecutorButtons || hideDisabledExecutorButtons())) {
+    if (actionStatus != ExecutorActionStatus.LOADING && runConfigAsksToHideDisabledExecutorButtons) {
       presentation.setEnabledAndVisible(enabled);
     }
     else {
@@ -196,10 +207,6 @@ public class ExecutorAction extends AnAction
       }
     }
     return status;
-  }
-
-  protected boolean hideDisabledExecutorButtons() {
-    return false;
   }
 
   private @NotNull RunCurrentFileActionStatus getRunCurrentFileActionStatus(@NotNull AnActionEvent e,

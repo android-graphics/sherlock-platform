@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.postfix;
 
@@ -256,6 +256,11 @@ public abstract class K1PostfixTemplateTestGenerated extends AbstractK1PostfixTe
 
         @TestMetadata("valAtLambaArgumentInCall.kt")
         public void testValAtLambaArgumentInCall() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("valInsideLambda.kt")
+        public void testValInsideLambda() throws Exception {
             performTest();
         }
 

@@ -315,7 +315,7 @@ class DefaultScriptingSupport(manager: CompositeScriptConfigurationManager) : De
         file: VirtualFile,
         newReports: List<ScriptDiagnostic>
     ) {
-        val oldReports = IdeScriptReportSink.getReports(file)
+        val oldReports = getScriptReports(file)
         if (oldReports != newReports) {
             scriptingDebugLog(file) { "new script reports = $newReports" }
 
@@ -418,6 +418,10 @@ abstract class DefaultScriptingSupportBase(val manager: CompositeScriptConfigura
     ): ScriptCompilationConfigurationWrapper? {
         val cached = getAppliedConfiguration(virtualFile)
         if (cached != null) return cached.configuration
+
+        // It is known that write access results to the
+        // ERROR: A write action should never be executed inside an analysis context (i.e. an `analyze` call).
+        if (ApplicationManager.getApplication().isWriteAccessAllowed) return null
 
         val ktFile = project.getKtFile(virtualFile, preloadedKtFile) ?: return null
         manager.updater.update {

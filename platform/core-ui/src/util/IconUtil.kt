@@ -26,7 +26,9 @@ import com.intellij.ui.scale.ScaleContextAware
 import com.intellij.ui.scale.ScaleType
 import com.intellij.ui.svg.paintIconWithSelection
 import com.intellij.util.IconUtil.ICON_FLAG_IGNORE_MASK
+import com.intellij.util.IconUtil.computeFileIcon
 import com.intellij.util.ui.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
@@ -40,12 +42,13 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Supplier
 import java.util.function.ToIntFunction
 import javax.swing.*
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToLong
 
 private val ICON_NULLABLE_FUNCTION = { key: FileIconKey ->
-  IconUtil.computeFileIcon(file = key.file, flags = key.flags, project = key.project)
+  computeFileIcon(file = key.file, flags = key.flags, project = key.project)
 }
 
 private val toolbarDecoratorIconsFolder: @NonNls String
@@ -306,6 +309,17 @@ object IconUtil {
       override fun getIconHeight(): Int = sizeValue.get()
       override fun toString(): String = "IconUtil.resizeSquared for $source"
     }
+  }
+
+  @JvmStatic
+  @ApiStatus.Experimental
+  fun downscaleIconToSize(icon: Icon, maxIconWidth: Int, maxIconHeight: Int): Icon {
+    val scale = min(maxIconWidth.toFloat() / icon.iconWidth.toFloat(),
+                    maxIconHeight.toFloat() / icon.iconHeight.toFloat())
+    if (scale >= 1.0) return icon
+    if (abs(scale - 1) < 0.01f) return icon
+    val currentScale = if (icon is ScalableIcon) icon.getScale() else 1.0f
+    return scale(icon, null, scale * currentScale)
   }
 
   /**
@@ -635,7 +649,8 @@ class CropIcon internal constructor(val sourceIcon: Icon, val crop: Rectangle) :
   override fun hashCode(): Int = Objects.hash(sourceIcon, crop)
 }
 
-private class ColorFilter(color: Color, private val keepGray: Boolean) : RGBImageFilter() {
+@Internal
+class ColorFilter(val color: Color, val keepGray: Boolean) : RGBImageFilter() {
   private val base = Color.RGBtoHSB(color.red, color.green, color.blue, null)
 
   override fun filterRGB(x: Int, y: Int, rgba: Int): Int {

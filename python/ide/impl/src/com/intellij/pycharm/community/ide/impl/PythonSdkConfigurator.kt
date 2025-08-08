@@ -32,6 +32,7 @@ import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setReady
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setSdkUsingExtension
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.suppressTipAndInspectionsFor
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
+import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * @see [PyConfigureSdkOnWslTest]
@@ -60,7 +61,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     if (sdk != null || isProjectCreatedWithWizard) {
       return
     }
-    if (PySdkFromEnvironmentVariableConfigurator.getPycharmPythonPathProperty()?.isNotBlank() == true) {
+    if (PySdkFromEnvironmentVariable.getPycharmPythonPathProperty()?.isNotBlank() == true) {
       return
     }
 
@@ -78,16 +79,21 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
   }
 
   private fun findExtension(module: Module): PyProjectSdkConfigurationExtension? {
-    return if (!module.project.isTrusted() || ApplicationManager.getApplication().let { it.isHeadlessEnvironment || it.isUnitTestMode }) {
+    return if (!module.project.isTrusted() || ApplicationManager.getApplication().isUnitTestMode) {
       null
     }
-    else PyProjectSdkConfigurationExtension.EP_NAME.findFirstSafe { it.getIntention(module) != null }
+    else PyProjectSdkConfigurationExtension.EP_NAME.findFirstSafe {
+      it.getIntention(module) != null && (!ApplicationManager.getApplication().isHeadlessEnvironment || it.supportsHeadlessModel())
+    }
   }
-
-  fun configureSdk(project: Project,
-                           module: Module,
-                           extension: PyProjectSdkConfigurationExtension?,
-                           indicator: ProgressIndicator) {
+  // TODO: PythonInterpreterService: detect and validate system python
+@Internal
+fun configureSdk(
+    project: Project,
+    module: Module,
+    extension: PyProjectSdkConfigurationExtension?,
+    indicator: ProgressIndicator,
+  ) {
     // please keep this method in sync with com.jetbrains.python.inspections.PyInterpreterInspection.Visitor.getSuitableSdkFix
 
     indicator.isIndeterminate = true
@@ -128,15 +134,15 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     LOGGER.debug("Looking for a virtual environment related to the project")
     guardIndicator(indicator) { detectAssociatedEnvironments(module, existingSdks, context).firstOrNull() }?.let {
       LOGGER.debug { "Detected virtual environment related to the project: $it" }
-      val newSdk = it.setupAssociated(existingSdks, module.basePath) ?: return
+      val newSdk = it.setupAssociated(existingSdks, module.basePath, true).getOrElse { err->
+        LOGGER.error(err)
+        return
+      }
+
       LOGGER.debug { "Created virtual environment related to the project: $newSdk" }
 
       runInEdt {
         SdkConfigurationUtil.addSdk(newSdk)
-        newSdk.associateWithModule(module, null)
-        ApplicationManager.getApplication().runWriteAction {
-          newSdk.sdkModificator.commitChanges()
-        }
         setReadyToUseSdk(project, module, newSdk)
       }
 

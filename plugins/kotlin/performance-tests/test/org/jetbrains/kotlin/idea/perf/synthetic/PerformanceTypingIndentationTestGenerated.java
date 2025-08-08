@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.perf.synthetic;
 
@@ -2328,6 +2328,11 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
             @TestMetadata("SplitStringByEnterExistingParentheses.after.kt")
             public void testSplitStringByEnterExistingParentheses() throws Exception {
                 runTest("../idea/tests/testData/editor/enterHandler/SplitStringByEnterExistingParentheses.after.kt");
+            }
+
+            @TestMetadata("SplitStringByEnterMultiCaret.after.kt")
+            public void testSplitStringByEnterMultiCaret() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/SplitStringByEnterMultiCaret.after.kt");
             }
         }
     }

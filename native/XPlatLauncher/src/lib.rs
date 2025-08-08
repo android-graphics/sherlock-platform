@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 #![warn(
 absolute_paths_not_starting_with_crate,
@@ -11,7 +11,6 @@ missing_abi,
 missing_copy_implementations,
 non_ascii_idents,
 noop_method_call,
-pointer_structural_match,
 rust_2021_incompatible_closure_captures,
 rust_2021_incompatible_or_patterns,
 rust_2021_prefixes_incompatible_syntax,
@@ -39,12 +38,14 @@ use serde::Deserialize;
 
 #[cfg(target_os = "windows")]
 use {
-    std::os::windows::ffi::OsStrExt,
-    windows::core::{GUID, PCWSTR, PWSTR},
+    std::io::Write,
+    std::ptr::null_mut,
     windows::Win32::Foundation,
-    windows::Win32::UI::Shell,
-    windows::Win32::System::Console::{AllocConsole, ATTACH_PARENT_PROCESS, AttachConsole},
+    windows::Win32::Foundation::HANDLE,
+    windows::Win32::System::Console::{ATTACH_PARENT_PROCESS, AttachConsole, SetStdHandle, STD_ERROR_HANDLE, STD_OUTPUT_HANDLE},
     windows::Win32::System::LibraryLoader,
+    windows::Win32::UI::Shell,
+    windows::core::{HSTRING, GUID, PCWSTR, PWSTR},
 };
 
 #[cfg(target_family = "unix")]
@@ -71,10 +72,12 @@ const CLASS_PATH_SEPARATOR: &str = ":";
 
 pub fn main_lib() {
     let exe_path = env::current_exe().unwrap_or_else(|_| PathBuf::from(env::args().next().unwrap()));
-    let remote_dev = exe_path.file_name().unwrap().to_string_lossy().starts_with("remote-dev-server");
+    let remote_dev_launcher_used = exe_path.file_name().unwrap().to_string_lossy().starts_with("remote-dev-server");
+    let server_mode_argument_used = env::args().nth(1).map(|x| x == "serverMode").unwrap_or(false);
+    let remote_dev = remote_dev_launcher_used || server_mode_argument_used;
     let sandbox_subprocess = cfg!(target_os = "windows") && env::args().any(|arg| arg.contains("--type="));
 
-    let debug_mode = remote_dev || env::var(DEBUG_MODE_ENV_VAR).is_ok();
+    let debug_mode = env::var(DEBUG_MODE_ENV_VAR).is_ok();
 
     #[cfg(target_os = "windows")]
     {
@@ -83,8 +86,9 @@ pub fn main_lib() {
         }
     }
 
-    if let Err(e) = main_impl(exe_path, remote_dev, debug_mode, sandbox_subprocess) {
-        ui::show_error(!debug_mode, e);
+    if let Err(e) = main_impl(exe_path, remote_dev, debug_mode, sandbox_subprocess, remote_dev_launcher_used) {
+        let gui_mode = !debug_mode && !sandbox_subprocess;
+        ui::show_error(gui_mode, e);
         std::process::exit(1);
     }
 }
@@ -92,16 +96,43 @@ pub fn main_lib() {
 #[cfg(target_os = "windows")]
 fn attach_console() {
     unsafe {
+        let mut err = None;
         if AttachConsole(ATTACH_PARENT_PROCESS).is_err() {
-            eprintln!("AttachConsole(ATTACH_PARENT_PROCESS): {:?}", Foundation::GetLastError());
-            if AllocConsole().is_err() {
-                eprintln!("AllocConsole(): {:?}", Foundation::GetLastError());
+            err = Some(Foundation::GetLastError());
+        }
+
+        // case: races when restarting in remote-dev on Windows
+        // (ssh session -> tb proxy -> tb agent -> IDE -> restarter.exe (dying too fast) -> IDE)
+        // cannot repro on a smaller setup (e.g. cmd /C via ssh)
+        // * case: console is alive, but in a state of being closed
+        // * AttachConsole does not always error
+        // * GetStdHandle for STD_OUT_HANDLE returns without errors and the handle is not zero/invalid
+        // * println!/eprintln! panics when it can't write
+        // * setting various process creation flags in restarter does not seem to help
+        // this is the only reliable way I've found to check if it's possible to call println! without panic
+        if writeln!(std::io::stderr(), ".").is_err() {
+            // usually it's Os { code: 232, kind: BrokenPipe, message: "The pipe is being closed." }
+            // but even if it's some other error, let's not write there
+            // passing null here is not explicitly documented,
+            // but it works and is consistent with the GetStdHandle returning null
+            if SetStdHandle(STD_ERROR_HANDLE, HANDLE(null_mut())).is_err() {
+                std::process::exit(1011)
             }
+        }
+
+        if writeln!(std::io::stdout(), ".").is_err() {
+            if SetStdHandle(STD_OUTPUT_HANDLE, HANDLE(null_mut())).is_err() {
+                std::process::exit(1012)
+            }
+        }
+
+        if let Some(err) = err {
+            eprintln!("AttachConsole(ATTACH_PARENT_PROCESS): {:?}", err)
         }
     }
 }
 
-fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool, sandbox_subprocess: bool) -> Result<()> {
+fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool, sandbox_subprocess: bool, started_via_remote_dev_launcher: bool) -> Result<()> {
     let level = if debug_mode { LevelFilter::Debug } else { LevelFilter::Error };
     mini_logger::init(level).expect("Cannot initialize the logger");
     debug!("Executable: {exe_path:?}");
@@ -134,7 +165,7 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool, sandbox_subp
     }
 
     debug!("** Preparing launch configuration");
-    let configuration = get_configuration(remote_dev, &exe_path.strip_ns_prefix()?).context("Cannot detect a launch configuration")?;
+    let configuration = get_configuration(remote_dev, &exe_path.strip_ns_prefix()?, started_via_remote_dev_launcher).context("Cannot detect a launch configuration")?;
 
     debug!("** Locating runtime");
     let (jre_home, main_class) = configuration.prepare_for_launch().context("Cannot find a runtime")?;
@@ -197,14 +228,12 @@ fn set_dll_search_path(jre_home: &Path) -> Result<()> {
 
     let jre_bin_dir = jre_home.join("bin");
     debug!("[JVM] Adding {:?} to the DLL search path", jre_bin_dir);
-    let jre_bin_dir_chars = jre_bin_dir.as_os_str().encode_wide().chain([0u16]).collect::<Vec<u16>>();
-    let jre_bin_dir_str = PCWSTR::from_raw(jre_bin_dir_chars.as_ptr());
-    let jre_bin_dir_cookie = unsafe { LibraryLoader::AddDllDirectory(jre_bin_dir_str) };
+    let jre_bin_dir_cookie = unsafe { LibraryLoader::AddDllDirectory(&HSTRING::from(jre_bin_dir.as_path())) };
     if jre_bin_dir_cookie.is_null() {
         return Err(anyhow::Error::from(std::io::Error::last_os_error()))
             .context(format!("Failed to add '{}' to 'jvm.dll' dependencies search path", jre_bin_dir.display()));
     }
-    
+
     Ok(())
 }
 
@@ -235,6 +264,7 @@ macro_rules! jvm_property {
 pub struct ProductInfo {
     pub productCode: String,
     pub productVendor: String,
+    pub envVarBaseName: String,
     pub dataDirectoryName: String,
     pub launch: Vec<ProductInfoLaunchField>
 }
@@ -259,6 +289,7 @@ pub struct ProductInfoCustomCommandField {
     #[serde(default = "Vec::new")]
     pub additionalJvmArguments: Vec<String>,
     pub mainClass: Option<String>,
+    pub envVarBaseName: Option<String>,
     pub dataDirectoryName: Option<String>,
 }
 
@@ -270,19 +301,19 @@ pub trait LaunchConfiguration {
     fn prepare_for_launch(&self) -> Result<(PathBuf, &str)>;
 }
 
-fn get_configuration(is_remote_dev: bool, exe_path: &Path) -> Result<Box<dyn LaunchConfiguration>> {
+fn get_configuration(is_remote_dev: bool, exe_path: &Path, started_via_remote_dev_launcher: bool) -> Result<Box<dyn LaunchConfiguration>> {
     let cmd_args: Vec<String> = env::args().collect();
     debug!("Args: {:?}", &cmd_args);
 
     if is_remote_dev {
-        RemoteDevLaunchConfiguration::new(exe_path, cmd_args)
+        RemoteDevLaunchConfiguration::new(exe_path, cmd_args, started_via_remote_dev_launcher)
     } else {
         let configuration = DefaultLaunchConfiguration::new(exe_path, cmd_args[1..].to_vec())?;
         Ok(Box::new(configuration))
     }
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 fn init_cef_sandbox(jre_home: &Path, sandbox_subprocess: bool) -> Result<Option<CefScopedSandboxInfo>> {
     debug!("** Initializing CEF sandbox");
     let cef_sandbox = CefScopedSandboxInfo::new();
@@ -297,7 +328,7 @@ fn init_cef_sandbox(jre_home: &Path, sandbox_subprocess: bool) -> Result<Option<
             let proc: libloading::Symbol<'_, unsafe extern "system" fn(*mut std::os::raw::c_void, *mut std::os::raw::c_void) -> i32> = lib.get(b"execute_subprocess\0")
                 .context("Cannot find 'execute_subprocess' in 'jcef_helper.dll'")?;
 
-            let mut h_instance = LibraryLoader::GetModuleHandleW(PCWSTR(std::ptr::null_mut()))?;
+            let mut h_instance = LibraryLoader::GetModuleHandleW(PCWSTR::null())?;
             proc(&mut h_instance as *mut _ as *mut std::os::raw::c_void, cef_sandbox.ptr)
         };
         debug!("  finished: {}", exit_code);
@@ -307,7 +338,7 @@ fn init_cef_sandbox(jre_home: &Path, sandbox_subprocess: bool) -> Result<Option<
     Ok(Some(cef_sandbox))
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(not(all(target_os = "windows", feature = "cef")))]
 fn init_cef_sandbox(_jre_home: &Path, _sandbox_subprocess: bool) -> Result<Option<CefScopedSandboxInfo>> {
     Ok(None)
 }
@@ -328,7 +359,7 @@ fn get_full_vm_options(configuration: &dyn LaunchConfiguration, _cef_sandbox: &O
     let class_path = configuration.get_class_path()?.join(CLASS_PATH_SEPARATOR);
     vm_options.push(jvm_property!("java.class.path", class_path));
 
-    #[cfg(target_os = "windows")]
+    #[cfg(all(target_os = "windows", feature = "cef"))]
     {
         if let Some(cef_sandbox) = _cef_sandbox {
             vm_options.push(jvm_property!("jcef.sandbox.ptr", format!("{:016X}", cef_sandbox.ptr as usize)));
@@ -345,9 +376,14 @@ pub fn get_config_home() -> Result<PathBuf> {
 }
 
 #[cfg(target_os = "windows")]
+pub fn get_caches_home() -> Result<PathBuf> {
+    get_known_folder_path(&Shell::FOLDERID_LocalAppData, "FOLDERID_LocalAppData")
+}
+
+#[cfg(target_os = "windows")]
 fn get_known_folder_path(rfid: &GUID, rfid_debug_name: &str) -> Result<PathBuf> {
     debug!("Calling SHGetKnownFolderPath({})", rfid_debug_name);
-    let result: PWSTR = unsafe { Shell::SHGetKnownFolderPath(rfid, Shell::KF_FLAG_CREATE, Foundation::HANDLE::default()) }?;
+    let result: PWSTR = unsafe { Shell::SHGetKnownFolderPath(rfid, Shell::KF_FLAG_CREATE, None) }?;
     let result_str = unsafe { result.to_string() }?;
     debug!("  result: {}", result_str);
     Ok(PathBuf::from(result_str))
@@ -358,9 +394,19 @@ pub fn get_config_home() -> Result<PathBuf> {
     Ok(get_user_home()?.join("Library/Application Support"))
 }
 
+#[cfg(target_os = "macos")]
+pub fn get_caches_home() -> Result<PathBuf> {
+    Ok(get_user_home()?.join("Library/Caches"))
+}
+
 #[cfg(target_os = "linux")]
 pub fn get_config_home() -> Result<PathBuf> {
     get_xdg_dir("XDG_CONFIG_HOME", ".config")
+}
+
+#[cfg(target_os = "linux")]
+pub fn get_caches_home() -> Result<PathBuf> {
+    get_xdg_dir("XDG_CACHE_HOME", ".cache")
 }
 
 #[cfg(target_os = "linux")]
@@ -386,12 +432,12 @@ fn get_user_home() -> Result<PathBuf> {
 
 #[cfg(target_family = "windows")]
 fn win_user_profile_dir() -> Result<String> {
-    let token = Foundation::HANDLE(-4isize as *mut std::ffi::c_void);  // as defined in `GetCurrentProcessToken()`
+    let token = HANDLE(-4isize as *mut std::ffi::c_void);  // as defined in `GetCurrentProcessToken()`
     let mut buf = [0u16; Foundation::MAX_PATH as usize];
     let mut size = buf.len() as u32;
     debug!("Calling GetUserProfileDirectoryW({:?})", token);
     let result = unsafe {
-        Shell::GetUserProfileDirectoryW(token, PWSTR::from_raw(buf.as_mut_ptr()), std::ptr::addr_of_mut!(size))
+        Shell::GetUserProfileDirectoryW(token, Some(PWSTR::from_raw(buf.as_mut_ptr())), std::ptr::addr_of_mut!(size))
     };
     debug!("  result: {:?}, size: {}", result, size);
     if result.is_ok() {

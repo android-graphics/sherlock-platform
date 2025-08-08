@@ -2,8 +2,8 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
@@ -14,6 +14,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.AbstractMavenModuleBuilder
 import org.jetbrains.idea.maven.wizards.MavenJavaModuleBuilder
 import org.junit.Test
+import java.nio.file.Path
 
 class MavenModuleBuilderSameFolderAsParentTest : MavenMultiVersionImportingTestCase() {
   private var myBuilder: AbstractMavenModuleBuilder? = null
@@ -25,10 +26,10 @@ class MavenModuleBuilderSameFolderAsParentTest : MavenMultiVersionImportingTestC
     setModuleNameAndRoot("module", projectPath)
   }
 
-  private fun setModuleNameAndRoot(name: String, root: String) {
+  private fun setModuleNameAndRoot(name: String, root: Path) {
     myBuilder!!.name = name
-    myBuilder!!.moduleFilePath = "$root/$name.iml"
-    myBuilder!!.setContentEntryPath(root)
+    myBuilder!!.moduleFilePath = Path.of(root.toString(), "$name.iml").toString()
+    myBuilder!!.setContentEntryPath(root.toString())
   }
 
   private fun setParentProject(pom: VirtualFile) {
@@ -37,17 +38,17 @@ class MavenModuleBuilderSameFolderAsParentTest : MavenMultiVersionImportingTestC
 
   private suspend fun createNewModule(id: MavenId) {
     myBuilder!!.projectId = id
-    WriteAction.runAndWait<Exception> {
-      val model = getInstance(project).getModifiableModel()
-      myBuilder!!.createModule(model)
-      model.commit()
+    waitForImportWithinTimeout {
+      edtWriteAction {
+        val model = getInstance(project).getModifiableModel()
+        myBuilder!!.createModule(model)
+        model.commit()
+      }
     }
-    updateAllProjects()
   }
 
   @Test
   fun testSameFolderAsParent() = runBlocking {
-    configConfirmationForYesAnswer()
     val customPomXml = createProjectSubFile("custompom.xml", createPomXml(
       """
         <groupId>test</groupId>

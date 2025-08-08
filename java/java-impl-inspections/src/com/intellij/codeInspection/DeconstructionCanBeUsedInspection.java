@@ -22,16 +22,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public final class DeconstructionCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class DeconstructionCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
 
   @Override
   public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
     return Set.of(JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
@@ -103,10 +102,8 @@ public final class DeconstructionCanBeUsedInspection extends AbstractBaseJavaLoc
   }
 
   private static class PatternVariableCanBeUsedFix extends PsiUpdateModCommandQuickFix {
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("inspection.deconstruction.can.be.used.fix.family.name");
     }
 

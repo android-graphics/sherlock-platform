@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper;
+import com.intellij.openapi.externalSystem.service.project.ModifiableWorkspaceModel;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
@@ -27,13 +28,14 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.*;
 
+@ApiStatus.Internal
 @Order(ExternalSystemConstants.BUILTIN_LIBRARY_DATA_SERVICE_ORDER)
 public final class LibraryDataService extends AbstractProjectDataService<LibraryData, Library> {
 
@@ -106,17 +108,6 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     return null;
   }
 
-  private static void refreshVfsFiles(Collection<? extends File> files) {
-    VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
-    for (File file : files) {
-      Path path = file.toPath();
-      // search for jar file first otherwise lib root won't be found!
-      if (virtualFileManager.findFileByNioPath(path) == null) {
-        virtualFileManager.refreshAndFindFileByNioPath(path);
-      }
-    }
-  }
-
   static @NotNull Map<OrderRootType, Collection<File>> prepareLibraryFiles(@NotNull LibraryData data) {
     Map<OrderRootType, Collection<File>> result = new HashMap<>();
     for (LibraryPathType pathType: LibraryPathType.values()) {
@@ -129,7 +120,6 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
         continue;
       }
       List<File> files = ContainerUtil.map(paths, File::new);
-      refreshVfsFiles(files);
       result.put(orderRootType, files);
     }
     return result;
@@ -211,6 +201,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
 
     final List<Library> orphanIdeLibraries = new SmartList<>();
     final LibraryTable.ModifiableModel librariesModel = modelsProvider.getModifiableProjectLibrariesModel();
+    final ModifiableWorkspaceModel workspaceModel = modelsProvider.getModifiableWorkspaceModel();
     final Map<String, Library> namesToLibs = new HashMap<>();
     final Set<Library> potentialOrphans = new HashSet<>();
     RootPolicy<Void> excludeUsedLibraries = new RootPolicy<>() {
@@ -242,8 +233,8 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
       }
     }
 
-    for (Library lib: potentialOrphans) {
-      if (!modelsProvider.isSubstituted(lib.getName())) {
+    for (Library lib : potentialOrphans) {
+      if (!workspaceModel.isLibrarySubstituted(lib)) {
         orphanIdeLibraries.add(lib);
       }
     }
@@ -307,8 +298,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     }
   }
 
-  @NotNull
-  private static String getLocalPath(@NotNull String url) {
+  private static @NotNull String getLocalPath(@NotNull String url) {
     if (url.startsWith(StandardFileSystems.JAR_PROTOCOL_PREFIX)) {
       url = StringUtil.trimEnd(url, JarFileSystem.JAR_SEPARATOR);
     }

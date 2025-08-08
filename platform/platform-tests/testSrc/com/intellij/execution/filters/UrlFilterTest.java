@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
 import com.intellij.ide.browsers.OpenUrlHyperlinkInfo;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -45,7 +45,7 @@ public class UrlFilterTest extends BasePlatformTestCase {
   public void testPerformanceSimple() {
     List<LinkInfo> expected = List.of(new FileLinkInfo(7, 30, "/home/file.txt", 3, -1),
                                       new FileLinkInfo(34, 62, "/home/result.txt", 3, 30));
-    PerformanceTestUtil.newPerformanceTest("Find file hyperlinks", () -> {
+    Benchmark.newBenchmark("Find file hyperlinks", () -> {
       for (int i = 0; i < 100_000; i++) {
         Filter.Result result = applyFilter("before file:///home/file.txt:3 -> file:///home/result.txt:3:30 after");
         assertHyperlinks(result, expected);
@@ -60,6 +60,15 @@ public class UrlFilterTest extends BasePlatformTestCase {
                         "/home/wrongly%EncodedPath/file.kt", 3, 10);
     assertFileHyperlink("Click file:////wsl$/Ubuntu-20.04/path-test-gradle%206/src/main/kotlin/base/Starter.kt:4:10",
                         6, 90, "//wsl$/Ubuntu-20.04/path-test-gradle 6/src/main/kotlin/base/Starter.kt", 4, 10);
+  }
+
+  public void testUrlAndFileInOneString() {
+    assertHyperlinks(applyFilter(
+                       "w: file:///Users/kmp-app-march/shared/build.gradle.kts:9:13: 'kotlinOptions(KotlinJvmOptions.() -> Unit): Unit' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln\n\n"),
+                     List.of(
+                       new FileLinkInfo(3, 59, "/Users/kmp-app-march/shared/build.gradle.kts", 9, 13),
+                       new LinkInfo(193, 215)
+                     ));
   }
 
   private Filter.Result applyFilter(@NotNull String line) {
@@ -97,9 +106,9 @@ public class UrlFilterTest extends BasePlatformTestCase {
   }
 
   private static void assertFileLink(@NotNull FileLinkInfo expected, @NotNull UrlFilter.FileUrlHyperlinkInfo actual) {
-    assertEquals(expected.myFilePath, actual.myFilePath);
-    assertEquals(expected.myLine, actual.myDocumentLine == -1 ? -1 : actual.myDocumentLine + 1);
-    assertEquals(expected.myColumn, actual.myDocumentColumn == -1 ? -1 : actual.myDocumentColumn + 1);
+    assertEquals(expected.myFilePath, actual.filePath);
+    assertEquals(expected.myLine, actual.documentLine == -1 ? -1 : actual.documentLine + 1);
+    assertEquals(expected.myColumn, actual.documentColumn == -1 ? -1 : actual.documentColumn + 1);
   }
 
   private static final class FileLinkInfo extends LinkInfo {

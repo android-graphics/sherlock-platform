@@ -3,6 +3,10 @@ from __future__ import print_function
 import pytest
 
 from _pydevd_bundle.smart_step_into import get_stepping_variants
+from _pydevd_bundle.pydevd_constants import IS_PY38
+from _pydevd_bundle.pydevd_constants import IS_PY39
+from _pydevd_bundle.pydevd_constants import IS_PY310
+from _pydevd_bundle.pydevd_constants import IS_PY314
 
 
 @pytest.fixture
@@ -70,22 +74,51 @@ def consecutive_calls():
     return i.__code__
 
 
-def test_candidates_for_inner_decorator(inner_decorator_code):
+@pytest.mark.python2(reason="Python 3 is required to step into binary operators")
+@pytest.mark.xfail(not IS_PY38, reason="PCQA-718")
+def test_candidates_for_inner_decorator_py2(inner_decorator_code):
+    variants = list(get_stepping_variants(inner_decorator_code))
+    assert len(variants) == 1
+    assert variants[0].argval == 'f'
+
+
+@pytest.mark.python3(reason="Python 3 is required to step into binary operators")
+@pytest.mark.xfail(IS_PY314, reason='PCQA-943')
+def test_candidates_for_inner_decorator_py3(inner_decorator_code):
     variants = list(get_stepping_variants(inner_decorator_code))
     assert len(variants) == 2
     assert variants[0].argval == 'f'
     assert variants[1].argval == '__pow__'
 
 
-def test_candidates_for_function_with_try_except(function_with_try_except_code):
+@pytest.mark.python2(reason="Python 3 is required to step into binary operators")
+def test_candidates_for_function_with_try_except_py2(function_with_try_except_code):
     variants = list(get_stepping_variants(function_with_try_except_code))
-    assert len(variants) == 3
-    assert variants[0].argval == '__div__'
+    assert len(variants) == 2
+    assert variants[0].argval == 'print'
     assert variants[1].argval == 'print'
-    assert variants[2].argval == 'print'
 
 
-def test_candidates_for_consecutive_calls(consecutive_calls):
+@pytest.mark.python3(reason="Python 3 is required to step into binary operators")
+def test_candidates_for_function_with_try_except_py3(function_with_try_except_code):
+    variants = list(map(lambda instr: instr.argval, get_stepping_variants(function_with_try_except_code)))
+    assert '__div__' in variants
+    assert 'print' in variants
+
+    if len(variants) > 3:
+        assert 'RERAISE' in variants
+
+@pytest.mark.python2(reason="Python 3 is required to step into binary operators")
+def test_candidates_for_consecutive_calls_py2(consecutive_calls):
+    variants = list(get_stepping_variants(consecutive_calls))
+    assert len(variants) == 3
+    assert variants[0].argval == 'f'
+    assert variants[1].argval == 'g'
+    assert variants[2].argval == 'h'
+
+
+@pytest.mark.python3(reason="Python 3 is required to step into binary operators")
+def test_candidates_for_consecutive_calls_py3(consecutive_calls):
     variants = list(get_stepping_variants(consecutive_calls))
     assert len(variants) == 5
     assert variants[0].argval == 'f'
@@ -95,6 +128,7 @@ def test_candidates_for_consecutive_calls(consecutive_calls):
     assert variants[4].argval == '__add__'
 
 
+@pytest.mark.xfail(IS_PY38 or IS_PY39 or IS_PY310, reason='PCQA-592')
 def test_candidates_for_returned_object_method(returned_object_method):
     variants = list(get_stepping_variants(returned_object_method))
     assert len(variants) == 3

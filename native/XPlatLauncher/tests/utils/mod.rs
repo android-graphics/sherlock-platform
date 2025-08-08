@@ -4,7 +4,7 @@ use std::{env, fs, thread, time};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::fs::{File, OpenOptions};
-use std::io::{BufReader, Read, Write};
+use std::io::{Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Stdio};
 use std::sync::Once;
@@ -14,7 +14,7 @@ use log::debug;
 use serde::{Deserialize, Serialize};
 use tempfile::{Builder, TempDir};
 
-use xplat_launcher::{DEBUG_MODE_ENV_VAR, get_config_home, PathExt};
+use xplat_launcher::{DEBUG_MODE_ENV_VAR, PathExt};
 
 static INIT: Once = Once::new();
 static mut SHARED: Option<TestEnvironmentShared> = None;
@@ -208,7 +208,7 @@ fn init_test_environment_once() -> Result<TestEnvironmentShared> {
     let product_info_path = project_root.join(format!("resources/product_info_{}.json", env::consts::OS));
     let vm_options_path = project_root.join("resources/xplat.vmoptions");
 
-    // on build agents, a temp directory may reside in a different filesystem, so copies are needed for later linking
+    // on build agents, a temp directory may reside in a different filesystem, so copies are necessary for later linking
     let temp_dir = Builder::new().prefix("xplat_launcher_shared_").tempdir().context("Failed to create temp directory")?;
     let launcher_path = temp_dir.path().join(launcher_file.file_name().unwrap());
     fs::copy(&launcher_file, &launcher_path).with_context(|| format!("Failed to copy {launcher_file:?} to {launcher_path:?}"))?;
@@ -329,7 +329,7 @@ fn layout_launcher(
     // .
     // └── XPlatLauncher
     //     ├── bin/
-    //     │   └── xplat-launcher.exe | remote-dev-server.exe
+    //     │   └── xplat64.exe | remote-dev-server.exe
     //     │   └── xplat64.exe.vmoptions
     //     │   └── idea.properties
     //     ├── lib/
@@ -339,7 +339,7 @@ fn layout_launcher(
     //     └── product-info.json
 
     let launcher_rel_path = match launcher_location {
-        LauncherLocation::Standard => "bin\\xplat-launcher.exe",
+        LauncherLocation::Standard => "bin\\xplat64.exe",
         LauncherLocation::RemoteDev => "bin\\remote-dev-server.exe"
     };
     let dist_root = target_dir.join("XPlatLauncher");
@@ -422,14 +422,6 @@ fn symlink(original: &Path, link: &Path) -> Result<()> {
     result.with_context(|| format!("Failed to create symlink {link:?} -> {original:?}; {message}"))
 }
 
-pub fn get_custom_config_dir() -> PathBuf {
-    get_jetbrains_config_root().join("XPlatLauncherTest")
-}
-
-pub fn get_jetbrains_config_root() -> PathBuf {
-    get_config_home().unwrap().join("JetBrains")
-}
-
 pub struct LauncherRunSpec {
     location: LauncherLocation,
     dump: bool,
@@ -492,8 +484,8 @@ impl LauncherRunResult {
 impl Debug for LauncherRunResult {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!(
-            "\n** exit code: {:?} ({:?})\n** stderr: <<<{}>>>\n** stdout: <<<{}>>>",
-            self.exit_status.code(), self.exit_status, self.stderr, self.stdout))
+            "\n** exit status: {} (code: {:?})\n** stderr: <<<{}>>>\n** stdout: <<<{}>>>",
+            self.exit_status, self.exit_status.code(), self.stderr, self.stdout))
     }
 }
 
@@ -512,7 +504,7 @@ pub fn run_launcher(run_spec: &LauncherRunSpec) -> LauncherRunResult {
 }
 
 pub fn run_launcher_ext(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> LauncherRunResult {
-    match run_launcher_impl(test_env, run_spec) {
+    match run_launcher_with_retries(test_env, run_spec) {
         Ok(result) => {
             if run_spec.assert_status {
                 assert!(result.exit_status.success(), "The exit status of the launcher is not successful: {:?}", result);
@@ -523,6 +515,38 @@ pub fn run_launcher_ext(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) 
             panic!("Failed to get launcher run result: {:?}", e)
         }
     }
+}
+
+#[cfg(target_family = "windows")]
+fn run_launcher_with_retries(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> Result<LauncherRunResult> {
+    run_launcher_impl(test_env, run_spec)
+}
+
+#[cfg(target_family = "unix")]
+fn run_launcher_with_retries(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> Result<LauncherRunResult> {
+    use std::os::unix::process::ExitStatusExt;
+
+    // on macOS, the test process is inexplicably killed sometimes
+    let mut retries = 3;
+    let mut run_result = run_launcher_impl(test_env, run_spec);
+    loop {
+        if let Ok(result) = &run_result {
+            if let Some(signal) = result.exit_status.signal() {
+                if signal == libc::SIGKILL {
+                    debug!("test process killed; retrying...");
+                    retries -= 1;
+                    if retries == 0 {
+                        panic!("The test process was killed 3 times in a row; giving up. Last result: {:?}", run_result);
+                    }
+                    thread::sleep(time::Duration::from_secs(1));
+                    run_result = run_launcher_impl(test_env, run_spec);
+                    continue;
+                }
+            }
+        }
+        break;
+    }
+    run_result
 }
 
 fn run_launcher_impl(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> Result<LauncherRunResult> {
@@ -554,6 +578,7 @@ fn run_launcher_impl(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> 
             (DEBUG_MODE_ENV_VAR, "1")
         ]),
         LauncherLocation::RemoteDev => HashMap::from([
+            (DEBUG_MODE_ENV_VAR, "1"),
             ("CWM_NO_PASSWORD", "1"),
             ("CWM_HOST_PASSWORD", "1"),
             ("REMOTE_DEV_NON_INTERACTIVE", "1"),
@@ -607,7 +632,7 @@ fn read_output_file(path: &Path) -> Result<String> {
     if let Ok(string) = String::from_utf8(bytes.to_owned()) {
         Ok(string)
     } else {
-        for line in bytes.split(|b| *b == '\n' as u8) {
+        for line in bytes.split(|b| *b == b'\n') {
             if let Err(e) = String::from_utf8(line.to_owned()) {
                 bail!("{}: {:?} {:?}", e, line, String::from_utf8_lossy(line))
             }
@@ -617,12 +642,8 @@ fn read_output_file(path: &Path) -> Result<String> {
 }
 
 fn read_launcher_run_result(path: &Path) -> Result<IntellijMainDumpedLaunchParameters> {
-    let file = File::open(path)?;
-    let mut reader = BufReader::new(file);
-    let mut text = String::new();
-    reader.read_to_string(&mut text)?;
-    let dump: IntellijMainDumpedLaunchParameters = serde_json::from_str(&text)?;
-    Ok(dump)
+    let text = fs::read_to_string(path)?;
+    Ok(serde_json::from_str(&text)?)
 }
 
 pub fn test_runtime_selection(result: LauncherRunResult, expected_rt: PathBuf) {

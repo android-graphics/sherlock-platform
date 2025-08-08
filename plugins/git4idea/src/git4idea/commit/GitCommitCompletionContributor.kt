@@ -29,7 +29,8 @@ class GitCommitCompletionContributor : CompletionContributor(), DumbAware {
     val completionPrefix = file.text.take(parameters.offset) // match from the start of the document only
     val gitPrefixes = listOf(
       GitPrefix("fixup!", "fixu"),
-      GitPrefix("squash!", "squ")
+      GitPrefix("squash!", "squ"),
+      GitPrefix("amend!", "amen")
     )
     gitPrefixes
       .filter { prefix -> completionPrefix.startsWith(prefix.prefixToMatch) }
@@ -88,5 +89,5 @@ class GitCommitCompletionCharFilter : CharFilter() {
 
 private fun isCommitMessageFile(project: Project, file: PsiFile): Boolean {
   val document = PsiDocumentManager.getInstance(project).getDocument(file) ?: return false
-  return document.getUserData(CommitMessage.DATA_KEY) != null
+  return CommitMessage.isCommitMessage(document)
 }

@@ -2,11 +2,9 @@
 package com.intellij.platform.execution.serviceView;
 
 import com.intellij.execution.services.*;
-import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.RecursionManager;
 import com.intellij.platform.execution.serviceView.ServiceModel.ServiceViewItem;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.AutoScrollToSourceHandler;
@@ -58,8 +56,7 @@ abstract class ServiceView extends JPanel implements UiDataProvider, Disposable 
     myModel.saveState(state);
   }
 
-  @NotNull
-  abstract List<ServiceViewItem> getSelectedItems();
+  abstract @NotNull List<ServiceViewItem> getSelectedItems();
 
   abstract Promise<Void> select(@NotNull Object service, @NotNull Class<?> contributorClass);
 
@@ -123,17 +120,13 @@ abstract class ServiceView extends JPanel implements UiDataProvider, Disposable 
     sink.set(ServiceViewActionProvider.SERVICES_SELECTED_ITEMS, selection);
 
     ServiceViewContributor<?> contributor = ServiceViewDragHelper.getTheOnlyRootContributor(selection);
-    DataProvider delegate = contributor == null ? null : contributor.getViewDescriptor(myProject).getDataProvider();
-    DeleteProvider deleteProvider = delegate == null ? null : PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getData(delegate);
-    ServiceViewDeleteProvider viewDeleteProvider = new ServiceViewDeleteProvider(this);
-    if (deleteProvider == null) {
-      sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, viewDeleteProvider);
+    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, ServiceViewDefaultDeleteProvider.getInstance());
+    ServiceViewDescriptor contributorDescriptor = contributor != null ? contributor.getViewDescriptor(myProject) : null;
+    if (contributorDescriptor instanceof UiDataProvider uiDataProvider) {
+      sink.uiDataSnapshot(uiDataProvider);
     }
     else {
-      if (deleteProvider instanceof ServiceViewContributorDeleteProvider o) {
-        o.setFallbackProvider(viewDeleteProvider);
-      }
-      sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, deleteProvider);
+      DataSink.uiDataSnapshot(sink, contributorDescriptor != null ? contributorDescriptor.getDataProvider() : null);
     }
     sink.set(PlatformDataKeys.COPY_PROVIDER, new ServiceViewCopyProvider(this));
     sink.set(ServiceViewActionUtils.CONTRIBUTORS_KEY,
@@ -145,13 +138,11 @@ abstract class ServiceView extends JPanel implements UiDataProvider, Disposable 
              navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY));
 
     ServiceViewDescriptor descriptor = onlyItem == null || onlyItem.isRemoved() ? null : onlyItem.getViewDescriptor();
-    DataProvider dataProvider = descriptor == null ? null : descriptor.getDataProvider();
-    if (dataProvider != null) {
-      RecursionManager.doPreventingRecursion(
-        this, false, () -> {
-          DataSink.uiDataSnapshot(sink, dataProvider);
-          return null;
-        });
+    if (descriptor instanceof UiDataProvider uiDataProvider) {
+      sink.uiDataSnapshot(uiDataProvider);
+    }
+    else {
+      DataSink.uiDataSnapshot(sink, descriptor != null ? descriptor.getDataProvider() : null);
     }
   }
 

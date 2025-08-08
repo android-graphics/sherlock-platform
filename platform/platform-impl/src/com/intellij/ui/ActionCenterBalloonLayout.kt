@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -22,12 +21,13 @@ import java.awt.*
 import java.util.*
 import javax.swing.JLayeredPane
 import javax.swing.JPanel
+import javax.swing.JRootPane
 import javax.swing.SwingConstants
 
 /**
  * @author Alexander Lobas
  */
-internal class ActionCenterBalloonLayout(parent: IdeRootPane, insets: Insets) : BalloonLayoutImpl(parent, insets) {
+internal class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayoutImpl(parent, insets) {
   private val collapsedData = HashMap<Balloon, CollapseInfo>()
 
   override fun dispose() {
@@ -190,23 +190,19 @@ internal class ActionCenterBalloonLayout(parent: IdeRootPane, insets: Insets) : 
   }
 
   override fun setBounds(balloons: List<Balloon>, startX: Int, startY: Int) {
-    val javaShadow = ShadowJava2DPainter.enabled()
-    val shadowVerticalOffset = if (javaShadow) 0 else JBUI.scale(8)
-    var verticalOffset = if (javaShadow) 0 else JBUI.scale(2)
+    val shadowVerticalOffset = 0
+    var verticalOffset = 0
     var startX = startX
     var y = startY
-
-    if (javaShadow) {
-      val startOffset = JBUI.scale(10)
-      val insets = ShadowJava2DPainter.getInsets("Notification")
-      val rightOffset = startOffset - insets.right
-      val bottomOffset = startOffset - insets.bottom
-      if (bottomOffset > 0) {
-        y -= bottomOffset
-      }
-      if (rightOffset > 0) {
-        startX -= rightOffset
-      }
+    val startOffset = JBUI.scale(10)
+    val insets = ShadowJava2DPainter.Type.NOTIFICATION.insets
+    val rightOffset = startOffset - insets.right
+    val bottomOffset = startOffset - insets.bottom
+    if (bottomOffset > 0) {
+      y -= bottomOffset
+    }
+    if (rightOffset > 0) {
+      startX -= rightOffset
     }
 
     for (balloon in balloons) {

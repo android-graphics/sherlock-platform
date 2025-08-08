@@ -77,7 +77,8 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     return run(createModulesBuildTask(modules, false, false, false));
   }
 
-  private ProjectTask createModulesFilesTask(VirtualFile @NotNull [] files) {
+  @ApiStatus.Internal
+  public ProjectTask createModulesFilesTask(VirtualFile @NotNull [] files) {
     Map<Module, List<Pair<VirtualFile, Module>>> modulesMap = stream(files)
       .map(file -> new Pair<>(file, ProjectFileIndex.getInstance(myProject).getModuleForFile(file, false)))
       .filter(pair -> pair.second != null)
@@ -193,6 +194,17 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
       for (ProjectTaskManagerListener listener : myListeners) {
         try {
           listener.beforeRun(context);
+        }
+        catch (ExecutionException e) {
+          sendAbortedEmptyResult(context, new ResultConsumer(promiseResult));
+          activity.first.finished(() -> activity.second);
+          return;
+        }
+      }
+
+      for (ProjectTaskManagerListenerExtensionPoint listener : ProjectTaskManagerListenerExtensionPoint.EP_NAME.getExtensionList()) {
+        try {
+          listener.beforeRun(myProject, context);
         }
         catch (ExecutionException e) {
           sendAbortedEmptyResult(context, new ResultConsumer(promiseResult));
@@ -413,6 +425,9 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
           try {
             for (ProjectTaskManagerListener listener : myListeners) {
               listener.afterRun(result);
+            }
+            for (ProjectTaskManagerListenerExtensionPoint listener : ProjectTaskManagerListenerExtensionPoint.EP_NAME.getExtensionList()) {
+              listener.afterRun(myProject, result);
             }
             notify(result);
           }

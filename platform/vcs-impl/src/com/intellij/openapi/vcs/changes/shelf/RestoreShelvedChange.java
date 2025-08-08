@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.idea.ActionsBundle;
@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -18,13 +19,14 @@ import java.util.List;
 import static com.intellij.util.containers.ContainerUtil.isEmpty;
 import static com.intellij.util.containers.ContainerUtil.notNullize;
 
+@ApiStatus.Internal
 public class RestoreShelvedChange extends DumbAwareAction {
   public RestoreShelvedChange() {
     super(ActionsBundle.messagePointer("action.RestoreShelvedChange.text"));
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     Presentation presentation = e.getPresentation();
     if (project == null || project.isDisposed()) {
@@ -44,7 +46,7 @@ public class RestoreShelvedChange extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
     List<ShelvedChangeList> lists = e.getData(ShelvedChangesViewManager.SHELVED_DELETED_CHANGELIST_KEY);

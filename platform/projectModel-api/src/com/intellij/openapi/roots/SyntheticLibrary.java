@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.navigation.ItemPresentation;
@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.BooleanSupplier;
@@ -100,7 +101,7 @@ public abstract class SyntheticLibrary {
    * and {@link SyntheticLibrary#myConstantExcludeCondition} to provide it, as it allows incremental rescan of the library.
    */
   @Deprecated
-  public @Nullable Condition<VirtualFile> getExcludeFileCondition() {
+  public @Nullable Condition<? super VirtualFile> getExcludeFileCondition() {
     return null;
   }
 
@@ -110,8 +111,8 @@ public abstract class SyntheticLibrary {
     return myConstantExcludeCondition.transformToCondition(allRoots);
   }
 
-  public final @Nullable Condition<VirtualFile> getUnitedExcludeCondition() {
-    Condition<VirtualFile> condition = getExcludeFileCondition();
+  public final @Nullable Condition<? super VirtualFile> getUnitedExcludeCondition() {
+    Condition<? super VirtualFile> condition = getExcludeFileCondition();
     if (condition == null) return getConstantExcludeConditionAsCondition();
     Condition<VirtualFile> otherCondition = getConstantExcludeConditionAsCondition();
     if (otherCondition == null) return condition;
@@ -183,11 +184,11 @@ public abstract class SyntheticLibrary {
     return new ImmutableSyntheticLibrary(comparisonId, sourceRoots, binaryRoots, excludedRoots, null, excludeCondition);
   }
 
-  public final @NotNull Collection<VirtualFile> getAllRoots() {
+  public final @Unmodifiable @NotNull Collection<VirtualFile> getAllRoots() {
     return getRoots(true, true);
   }
 
-  private @NotNull Collection<VirtualFile> getRoots(boolean includeSources, boolean includeBinaries) {
+  private @Unmodifiable @NotNull Collection<VirtualFile> getRoots(boolean includeSources, boolean includeBinaries) {
     if (includeSources && includeBinaries) {
       Collection<VirtualFile> sourceRoots = getSourceRoots();
       Collection<VirtualFile> binaryRoots = getBinaryRoots();

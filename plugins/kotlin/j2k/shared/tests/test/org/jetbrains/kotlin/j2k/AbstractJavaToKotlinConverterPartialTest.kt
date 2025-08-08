@@ -2,13 +2,20 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
 import org.jetbrains.kotlin.nj2k.NewJavaToKotlinConverter
 
 abstract class AbstractJavaToKotlinConverterPartialTest : AbstractJavaToKotlinConverterSingleFileTest() {
-    override fun fileToKotlin(text: String, settings: ConverterSettings, preprocessorExtensions: List<J2kPreprocessorExtension>, postprocessorExtensions: List<J2kPostprocessorExtension>): String {
+    override fun fileToKotlin(
+        text: String,
+        settings: ConverterSettings,
+        preprocessorExtensions: List<J2kPreprocessorExtension>,
+        postprocessorExtensions: List<J2kPostprocessorExtension>
+    ): String {
         val file = createJavaFile(text)
         val element = myFixture.elementAtCaret
 
@@ -16,11 +23,19 @@ abstract class AbstractJavaToKotlinConverterPartialTest : AbstractJavaToKotlinCo
         val extension = J2kConverterExtension.extension(j2kKind)
         val postProcessor = extension.createPostProcessor()
 
-        return NewJavaToKotlinConverter(project, module, settings).filesToKotlin(
-            listOf(file),
-            postProcessor,
-            EmptyProgressIndicator(),
-        { it == element }, preprocessorExtensions = emptyList(), postprocessorExtensions = emptyList()
-        ).results.single()
+        var converterResult: FilesResult? = null
+        val process = {
+            converterResult = NewJavaToKotlinConverter(project, module, settings).filesToKotlin(
+                listOf(file),
+                postProcessor,
+                EmptyProgressIndicator(),
+                { it == element }, preprocessorExtensions = emptyList(), postprocessorExtensions = emptyList()
+            )
+        }
+
+        project.executeCommand("J2K") {
+            ProgressManager.getInstance().runProcessWithProgressSynchronously(process, "Testing J2K", /* canBeCanceled = */ true, project)
+        }
+        return converterResult!!.results.single()
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -113,7 +113,7 @@ class ActionButton implements ActionListener {
     if (changed) {
       myInplaceButton.setIcons(myIconButton);
       String tooltipText = KeymapUtil.createTooltipText(p.getText(), myAction);
-      myInplaceButton.setToolTipText(tooltipText.length() > 0 ? tooltipText : null);
+      myInplaceButton.setToolTipText(!tooltipText.isEmpty() ? tooltipText : null);
       myInplaceButton.setVisible(p.isEnabled() && p.isVisible());
     }
 
@@ -155,8 +155,8 @@ class ActionButton implements ActionListener {
     DataContext dataContext = CustomizedDataContext.withSnapshot(parent, sink -> {
       sink.set(CommonDataKeys.VIRTUAL_FILE, ObjectUtils.tryCast(myTabInfo.getObject(), VirtualFile.class));
     });
-    return new AnActionEvent(inputEvent, dataContext, myPlace != null ? myPlace : ActionPlaces.UNKNOWN, presentation,
-                             ActionManager.getInstance(), modifiers);
+    return new AnActionEvent(dataContext, presentation, myPlace != null ? myPlace : ActionPlaces.UNKNOWN,
+                             ActionUiKind.TOOLBAR, inputEvent, modifiers, ActionManager.getInstance());
   }
 
   public void setAutoHide(final boolean autoHide) {

@@ -2,6 +2,9 @@ package com.intellij.driver.sdk.ui
 
 import java.awt.Component
 
+/**
+ * See [com.jetbrains.performancePlugin.remotedriver.xpath.XpathDataModelCreator]
+ */
 class QueryBuilder {
   fun byAccessibleName(name: String) = byAttribute("accessiblename", name)
 
@@ -21,12 +24,18 @@ class QueryBuilder {
 
   fun byAttribute(name: String, value: String) = "@$name=${value.escapeQuoteWithConcat()}"
 
+  fun byText(text: String) = byAttribute("text", text)
+
   fun contains(condition: String): String {
     val arguments = condition.split("=")
     require(arguments.size == 2) { "contains condition must have format 'attribute=value'" }
     val name = arguments[0]
     val value = arguments[1]
     return "contains($name, $value)"
+  }
+
+  fun not(condition: String): String {
+    return "not($condition)"
   }
 
   fun and(condition: String, condition2: String,  vararg conditions: String): String {

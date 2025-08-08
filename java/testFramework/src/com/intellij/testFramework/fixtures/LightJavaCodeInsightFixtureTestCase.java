@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.lang.Language;
@@ -62,7 +62,12 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLanguageLevel);
-      addJetBrainsAnnotations(model);
+      if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+        addJetBrainsAnnotationsWithTypeUse(model);
+      }
+      else {
+        addJetBrainsAnnotations(model);
+      }
     }
   }
 
@@ -123,8 +128,7 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
     IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_6);
   }
 
-  @NotNull
-  protected TempDirTestFixture getTempDirFixture() {
+  protected @NotNull TempDirTestFixture getTempDirFixture() {
     IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
     return policy != null
            ? policy.createTempDirTestFixture()
@@ -154,8 +158,7 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
     return "";
   }
 
-  @NotNull
-  protected LightProjectDescriptor getProjectDescriptor() {
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
     return JAVA_LATEST;
   }
 

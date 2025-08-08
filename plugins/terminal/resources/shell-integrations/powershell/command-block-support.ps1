@@ -63,7 +63,7 @@ function Global:Prompt() {
 
   $Result = ""
   $CommandEndMarker = Global:__JetBrainsIntellijGetCommandEndMarker
-  $PromptStateOSC = Global:__JetBrainsIntellijCreatePromptStateOSC
+
   if ($__JetBrainsIntellijTerminalInitialized) {
     if (($ExitCode -eq $null) -or ($ExitCode -eq 0 -and -not $Success)) {
       $ExitCode = if ($Success) { 0 } else { 1 }
@@ -72,7 +72,8 @@ function Global:Prompt() {
       [Console]::WriteLine("command_finished exit_code=$ExitCode")
     }
     $CommandFinishedEvent = Global:__JetBrainsIntellijOSC "command_finished;exit_code=$ExitCode"
-    $Result = $CommandEndMarker + $PromptStateOSC + $CommandFinishedEvent
+    $Result = $CommandFinishedEvent + $CommandEndMarker
+    [Console]::Write($Result)
   }
   else {
     # For some reason there is no error if I delete the history file, just an empty string returned.
@@ -86,9 +87,12 @@ function Global:Prompt() {
       [Console]::WriteLine("initialized")
     }
     $InitializedEvent = Global:__JetBrainsIntellijOSC "initialized;shell_info=$(__JetBrainsIntellijEncode $ShellInfo)"
-    $Result = $CommandEndMarker + $PromptStateOSC + $HistoryOSC + $InitializedEvent
+    $Result = $HistoryOSC + $InitializedEvent + $CommandEndMarker
+    [Console]::Write($Result)
   }
-  return $Result
+  $PromptStateOSC = Global:__JetBrainsIntellijCreatePromptStateOSC
+  [Console]::Write($PromptStateOSC)
+  return ""
 }
 
 function Global:__JetBrainsIntellijCreatePromptStateOSC() {
@@ -198,13 +202,19 @@ function Global:__jetbrains_intellij_get_directory_files([string]$Path) {
   return $FilesString
 }
 
+function Global:__jetbrains_intellij_get_aliases() {
+  $Global:__JetBrainsIntellijGeneratorRunning = $true
+  $Aliases = Get-Alias | ForEach-Object { [PSCustomObject]@{ name = $_.Name; definition = $_.Definition } }
+  return $Aliases | ConvertTo-Json -Compress
+}
+
 function Global:__jetbrains_intellij_get_environment() {
   $Global:__JetBrainsIntellijGeneratorRunning = $true
   $FunctionTypes = @("Function", "Filter", "ExternalScript", "Script")
-  $Functions = Get-Command -CommandType $FunctionTypes
-  $Cmdlets = Get-Command -CommandType Cmdlet
-  $Commands = Get-Command -CommandType Application
-  $Aliases = Get-Alias | ForEach-Object { [PSCustomObject]@{ name = $_.Name; definition = $_.Definition } }
+  $Functions = Get-Command -ListImported -CommandType $FunctionTypes
+  $Cmdlets = Get-Command -ListImported -CommandType Cmdlet
+  $Commands = Get-Command -ListImported -CommandType Application
+  $Aliases = Global:__jetbrains_intellij_get_aliases
 
   $EnvObject = [PSCustomObject]@{
     envs = ""
@@ -212,7 +222,7 @@ function Global:__jetbrains_intellij_get_environment() {
     builtins = ($Cmdlets | ForEach-Object { $_.Name }) -join "`n"
     functions = ($Functions | ForEach-Object { $_.Name }) -join "`n"
     commands = ($Commands | ForEach-Object { $_.Name }) -join "`n"
-    aliases = $Aliases | ConvertTo-Json -Compress
+    aliases = $Aliases
   }
   $EnvJson = $EnvObject | ConvertTo-Json -Compress
   return $EnvJson

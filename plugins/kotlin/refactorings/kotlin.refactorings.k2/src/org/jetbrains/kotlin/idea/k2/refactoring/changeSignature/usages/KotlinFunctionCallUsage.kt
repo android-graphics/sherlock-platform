@@ -10,30 +10,33 @@ import com.intellij.refactoring.changeSignature.CallerUsageInfo
 import com.intellij.refactoring.changeSignature.ChangeInfo
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
-import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.imports.addImport
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.k2.refactoring.canMoveLambdaOutsideParentheses
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfoBase
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.K2IntroduceVariableHandler
+import org.jetbrains.kotlin.idea.refactoring.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.isInsideOfCallerBody
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.replaceListPsiAndKeepDelimiters
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -42,6 +45,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
@@ -101,13 +105,14 @@ internal class KotlinFunctionCallUsage(
     }
 
     @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
-    private val extensionReceiver: String? =
+    private val explicitToImplicitExtensionReceiver: Pair<String?, String?> =
         allowAnalysisFromWriteAction {
             allowAnalysisOnEdt {
                 analyze(element) {
                     val partiallyAppliedSymbol = element.resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol
-                    when (val receiver = partiallyAppliedSymbol?.extensionReceiver) {
-                        is KaExplicitReceiverValue -> receiver.expression.text
+                    val receiverValue = partiallyAppliedSymbol?.extensionReceiver
+                    when (val receiver = (receiverValue as? KaSmartCastedReceiverValue)?.original ?: receiverValue) {
+                        is KaExplicitReceiverValue -> receiver.expression.text to null
                         is KaImplicitReceiverValue -> {
                             val symbol = receiver.symbol
                             val thisText = if (symbol is KaClassifierSymbol && symbol !is KaAnonymousObjectSymbol) {
@@ -115,13 +120,26 @@ internal class KotlinFunctionCallUsage(
                             } else {
                                 "this"
                             }
-                            thisText
+                            null to thisText
                         }
-                        else -> null
+                        else -> null to null
                     }
                 }
             }
         }
+
+    @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
+    private val onReceiver  = allowAnalysisFromWriteAction { allowAnalysisOnEdt { analyze(element) { onReceiver(element) } } }
+
+    context(KaSession)
+    private fun onReceiver(element: KtElement): Boolean {
+        val partiallyAppliedSymbol = element.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
+        val receiverValue = (partiallyAppliedSymbol?.dispatchReceiver ?: partiallyAppliedSymbol?.extensionReceiver)?.let { (it as? KaSmartCastedReceiverValue)?.original ?: it }
+
+        if ((receiverValue as? KaImplicitReceiverValue)?.symbol is KaReceiverParameterSymbol) return true
+
+        return receiverValue is KaExplicitReceiverValue && onReceiver(receiverValue.expression)
+    }
 
     override fun processUsage(
       changeInfo: KotlinChangeInfoBase,
@@ -247,7 +265,16 @@ internal class KotlinFunctionCallUsage(
             val oldIndex = param.oldIndex
             val resolvedArgument = argumentMapping[oldIndex]
             val receiverValue = if (oldIndex == originalReceiverInfo?.oldIndex) {
-                (if (PsiTreeUtil.isAncestor(changeInfo.method, element, false)) "${param.name}." else "") + extensionReceiver
+                val explicitExtensionReceiver = explicitToImplicitExtensionReceiver.first
+                if (PsiTreeUtil.isAncestor(changeInfo.method, element, false)) {
+                    if (onReceiver) {
+                        param.name + (if (explicitExtensionReceiver != null) ".$explicitExtensionReceiver" else "")
+                    } else {
+                        explicitExtensionReceiver ?: param.name
+                    }
+                } else {
+                    explicitExtensionReceiver ?: explicitToImplicitExtensionReceiver.second
+                }
             } else null
             ArgumentInfo(param, index, resolvedArgument, receiverValue)
         }.toList()
@@ -295,7 +322,7 @@ internal class KotlinFunctionCallUsage(
 
                     else -> {
                         val expression = resolvedArgument.element ?: continue
-                        var newArgument: KtValueArgument = expression.parent as KtValueArgument
+                        var newArgument: KtValueArgument = expression.parent as? KtValueArgument ?: continue
                         if (newArgument.getArgumentName()?.asName != name || newArgument is KtLambdaArgument) {
                             newArgument = psiFactory.createArgument(newArgument.getArgumentExpression(), name)
                         }
@@ -349,10 +376,24 @@ internal class KotlinFunctionCallUsage(
             }
 
             newElement = fullCallElement.replace(replacingElement) as KtElement
+            if (changeInfo is KotlinChangeInfo) {
+                val declaration = changeInfo.methodDescriptor.method
+                if (declaration is KtCallableDeclaration && !declaration.isTopLevelKtOrJavaMember()) {
+                    declaration.kotlinFqName?.let {
+                        newElement.containingKtFile.addImport(it)
+                    }
+                }
+            }
         }
 
         val newCallExpression = newElement.safeAs<KtExpression>()?.getPossiblyQualifiedCallExpression()
-        if (newCallExpression != null && allowAnalysisFromWriteAction { allowAnalysisOnEdt { newCallExpression.canMoveLambdaOutsideParentheses(false) } }) {
+        if (newCallExpression != null && allowAnalysisFromWriteAction {
+                allowAnalysisOnEdt {
+                    analyze(newCallExpression) {
+                        newCallExpression.canMoveLambdaOutsideParentheses(false)
+                    }
+                }
+            }) {
             newCallExpression.moveFunctionLiteralOutsideParentheses()
         }
 
@@ -398,7 +439,7 @@ internal class KotlinFunctionCallUsage(
                 element is KtConstantExpression || element is KtThisExpression || element is KtSimpleNameExpression -> false
                 element is KtBinaryExpression && OperatorConventions.ASSIGNMENT_OPERATIONS.contains(element.operationToken) -> true
                 element is KtUnaryExpression && OperatorConventions.INCREMENT_OPERATIONS.contains(element.operationToken) -> true
-                element is KtCallExpression -> true
+                element is KtCallExpression -> element.calleeExpression?.mainReference?.resolve() is KtConstructor<*>
                 else -> element.children.any { needSeparateVariable(it) }
             }
         }

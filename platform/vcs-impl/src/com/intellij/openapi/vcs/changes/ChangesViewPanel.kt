@@ -8,15 +8,16 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.ui.*
-import com.intellij.ui.IdeBorderFactory.createBorder
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 import kotlin.properties.Delegates.observable
 
+@ApiStatus.Internal
 class ChangesViewPanel(val changesView: ChangesListView) : BorderLayoutPanel() {
   val toolbarActionGroup = DefaultActionGroup()
 

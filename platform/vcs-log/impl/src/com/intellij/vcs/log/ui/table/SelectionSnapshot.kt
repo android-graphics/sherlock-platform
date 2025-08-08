@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.ui.table
 
 import com.google.common.primitives.Ints
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ScrollingUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.graph.VisibleGraph
@@ -9,6 +10,7 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.awt.Rectangle
 import java.util.function.IntConsumer
+import javax.swing.JScrollPane
 import javax.swing.JTable
 import kotlin.math.max
 
@@ -19,8 +21,12 @@ internal class SelectionSnapshot(private val table: VcsLogGraphTable) {
 
   init {
     val selectedRows = ContainerUtil.sorted(Ints.asList(*table.selectedRows))
-    val selectedRowsToCommits = selectedRows.associateWith { table.visibleGraph.getRowInfo(it).commit }
-    selectedCommits.addAll(selectedRowsToCommits.values)
+    val selectedRowsToCommits = mutableMapOf<Int, Int>()
+    for (row in selectedRows) {
+      val commitId = table.model.getId(row) ?: continue
+      selectedRowsToCommits[row] = commitId
+      selectedCommits.add(commitId)
+    }
 
     val visibleRows = getVisibleRows(table)
     if (visibleRows == null) {
@@ -31,7 +37,7 @@ internal class SelectionSnapshot(private val table: VcsLogGraphTable) {
       isOnTop = visibleRows.first == 0
 
       val visibleRow = selectedRowsToCommits.keys.find { visibleRows.contains(it) } ?: visibleRows.first
-      val visibleCommit = selectedRowsToCommits[visibleRow] ?: table.visibleGraph.getRowInfo(visibleRow).commit
+      val visibleCommit = selectedRowsToCommits[visibleRow] ?: table.model.getId(visibleRow)
       scrollingTarget = ScrollingTarget(visibleCommit, getTopGap(visibleRow))
     }
   }
@@ -74,7 +80,7 @@ internal class SelectionSnapshot(private val table: VcsLogGraphTable) {
   private fun mapCommitsToRows(graph: VisibleGraph<Int>, scroll: Boolean): MutableMap<Int, Int> {
     val commits = mutableSetOf<Int>()
     commits.addAll(selectedCommits)
-    if (scroll && scrollingTarget != null) commits.add(scrollingTarget.commit)
+    if (scroll && scrollingTarget != null && scrollingTarget.commit != null) commits.add(scrollingTarget.commit)
     return mapCommitsToRows(commits, graph)
   }
 
@@ -91,10 +97,14 @@ internal class SelectionSnapshot(private val table: VcsLogGraphTable) {
   }
 
   private fun scrollToRow(row: Int?, delta: Int?) {
+    // We're scrolling after changing the table model, and the JTable size must be up to date.
+    val scrollPane = ComponentUtil.getParentOfType(JScrollPane::class.java, table)
+    scrollPane?.validate()
+
     val startRect = table.getCellRect(row!!, 0, true)
     table.scrollRectToVisible(Rectangle(startRect.x, max(startRect.y - delta!!, 0),
                                         startRect.width, table.visibleRect.height))
   }
 }
 
-private data class ScrollingTarget(val commit: Int, val topGap: Int)
+private data class ScrollingTarget(val commit: Int?, val topGap: Int)

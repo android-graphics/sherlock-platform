@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -11,14 +11,16 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
@@ -28,6 +30,9 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiManager;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ScreenUtil;
@@ -35,11 +40,13 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
+import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
@@ -50,7 +57,7 @@ import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import com.intellij.xdebugger.impl.ui.visualizedtext.VisualizedTextPopup;
+import com.intellij.xdebugger.impl.ui.visualizedtext.VisualizedTextPopupUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -60,12 +67,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 public final class DebuggerUIUtil {
-  @NonNls public static final String FULL_VALUE_POPUP_DIMENSION_KEY = "XDebugger.FullValuePopup";
+  public static final @NonNls String FULL_VALUE_POPUP_DIMENSION_KEY = "XDebugger.FullValuePopup";
 
   private DebuggerUIUtil() {
   }
@@ -91,8 +97,7 @@ public final class DebuggerUIUtil {
     ApplicationManager.getApplication().invokeLater(runnable);
   }
 
-  @Nullable
-  public static RelativePoint getPositionForPopup(@NotNull Editor editor, int line) {
+  public static @Nullable RelativePoint getPositionForPopup(@NotNull Editor editor, int line) {
     if (line > -1) {
       Point p = editor.logicalPositionToXY(new LogicalPosition(line + 1, 0));
       boolean isRemoteEditor = !ClientId.isLocal(ClientEditorManager.getClientId(editor));
@@ -135,17 +140,16 @@ public final class DebuggerUIUtil {
                                     @NotNull MouseEvent event,
                                     @NotNull Project project,
                                     @Nullable Editor editor) {
-    VisualizedTextPopup.INSTANCE.evaluateAndShowValuePopup(evaluator, event, project, editor);
+    WriteIntentReadAction.run((Runnable)() -> VisualizedTextPopupUtil.evaluateAndShowValuePopup(evaluator, event, project, editor));
   }
 
+  /**
+   * Create read-only {@link TextViewer} for plain text data.
+   * @see #createFormattedTextViewer(String, FileType, Project, Disposable)
+   */
   @ApiStatus.Experimental
   public static TextViewer createTextViewer(@NotNull String initialText, @NotNull Project project) {
-    return createTextViewer(initialText, project, FileTypes.PLAIN_TEXT);
-  }
-
-  @ApiStatus.Experimental
-  public static TextViewer createTextViewer(@NotNull String initialText, @NotNull Project project, FileType fileType) {
-    TextViewer textArea = new TextViewer(initialText, project, fileType);
+    TextViewer textArea = new TextViewer(initialText, project);
     textArea.setBackground(HintUtil.getInformationColor());
 
     textArea.addSettingsProvider(e -> {
@@ -156,61 +160,48 @@ public final class DebuggerUIUtil {
     return textArea;
   }
 
+  /**
+   * Create {@link Editor} for text data with syntax highlighting, folding and other {@link Editor} features.
+   * @see #createTextViewer(String, Project)
+   * @see #createFormattedTextViewer(String, FileType, Project, Disposable)
+   */
   @ApiStatus.Experimental
-  public static ComponentPopupBuilder createTextViewerPopupBuilder(@NotNull JComponent popupContent,
-                                                                   @NotNull TextViewer textViewer,
-                                                                   @NotNull XFullValueEvaluator evaluator,
-                                                                   @NotNull Project project,
-                                                                   @Nullable Runnable afterFullValueEvaluation,
-                                                                   @Nullable Runnable hideRunnable) {
+  public static Editor createFormattedTextEditor(@NotNull String initialText, @NotNull FileType type, @NotNull Project project, @NotNull Disposable parentDisposable, boolean isViewer) {
+    // Proper highlighting requires presense of PSIFile corresponding to the Document, see IJPL-157652.
+    var virtualFile = new LightVirtualFile("", type, initialText);
+    var psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+    assert psiFile != null;
+    var document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+    assert document != null;
 
-    AtomicBoolean evaluationObsolete = new AtomicBoolean(false);
-    var callback = new XFullValueEvaluator.XFullValueEvaluationCallback() {
-      @Override
-      public void evaluated(@NotNull final String fullValue, @Nullable final Font font) {
-        AppUIUtil.invokeOnEdt(() -> {
-          textViewer.setText(fullValue);
-          if (font != null) {
-            textViewer.setFont(font);
-          }
-          if (afterFullValueEvaluation != null) {
-            afterFullValueEvaluation.run();
-          }
-        });
-      }
+    var editor = EditorFactory.getInstance().createEditor(document, project, virtualFile, isViewer);
+    Disposer.register(parentDisposable, () -> {
+      EditorFactory.getInstance().releaseEditor(editor);
+    });
+    editor.getSettings().setLineNumbersShown(false);
+    editor.getSettings().setUseSoftWraps(true);
+    return editor;
+  }
 
-      @Override
-      public void errorOccurred(@NotNull final String errorMessage) {
-        AppUIUtil.invokeOnEdt(() -> {
-          textViewer.setForeground(XDebuggerUIConstants.ERROR_MESSAGE_ATTRIBUTES.getFgColor());
-          textViewer.setText(errorMessage);
-        });
-      }
-
-      @Override
-      public boolean isObsolete() {
-        return evaluationObsolete.get();
-      }
-    };
-
-    Runnable cancelCallback = () -> {
-      evaluationObsolete.set(true);
-      if (hideRunnable != null) {
-        hideRunnable.run();
-      }
-    };
-
-    evaluator.startEvaluation(callback);
-    return createCancelablePopupBuilder(project, popupContent, textViewer, cancelCallback, null);
+  /**
+   * Create read-only {@link Editor} for text data with syntax highlighting, folding and other {@link Editor} features.
+   * @see #createTextViewer(String, Project)
+   * @see #createFormattedTextEditor(String, FileType, Project, Disposable, boolean)
+   */
+  @ApiStatus.Experimental
+  public static Editor createFormattedTextViewer(@NotNull String initialText, @NotNull FileType type, @NotNull Project project, @NotNull Disposable parentDisposable) {
+    return createFormattedTextEditor(initialText, type, project, parentDisposable, true);
   }
 
   public static JBPopup createValuePopup(Project project,
                                          JComponent component,
                                          @Nullable Runnable cancelCallback) {
+    component.putClientProperty(UIUtil.ENABLE_IME_FORWARDING_IN_POPUP, true);
     return createCancelablePopupBuilder(project, component, null, cancelCallback, FULL_VALUE_POPUP_DIMENSION_KEY).createPopup();
   }
 
-  private static ComponentPopupBuilder createCancelablePopupBuilder(Project project,
+  @ApiStatus.Experimental
+  public static ComponentPopupBuilder createCancelablePopupBuilder(Project project,
                                                                     JComponent component,
                                                                     JComponent preferableFocusComponent,
                                                                     @Nullable Runnable cancelCallback,
@@ -232,14 +223,23 @@ public final class DebuggerUIUtil {
   }
 
   public static void showXBreakpointEditorBalloon(final Project project,
-                                                  @Nullable final Point point,
+                                                  final @Nullable Point point,
                                                   final JComponent component,
                                                   final boolean showAllOptions,
-                                                  @NotNull final XBreakpoint breakpoint) {
+                                                  final @NotNull XBreakpoint breakpoint) {
+    showXBreakpointEditorBalloon(project, point, component, showAllOptions, showAllOptions, breakpoint);
+  }
+
+  public static void showXBreakpointEditorBalloon(final Project project,
+                                                  final @Nullable Point point,
+                                                  final JComponent component,
+                                                  final boolean showActionOptions,
+                                                  final boolean showAllOptions,
+                                                  final @NotNull XBreakpoint breakpoint) {
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     final XLightBreakpointPropertiesPanel propertiesPanel =
       new XLightBreakpointPropertiesPanel(project, breakpointManager, (XBreakpointBase)breakpoint,
-                                          showAllOptions, true);
+                                          showActionOptions, showAllOptions, true);
 
     final Ref<Balloon> balloonRef = Ref.create(null);
     final Ref<Boolean> isLoading = Ref.create(Boolean.FALSE);
@@ -253,7 +253,7 @@ public final class DebuggerUIUtil {
         balloonRef.get().hide();
       }
       propertiesPanel.dispose();
-      showXBreakpointEditorBalloon(project, point, component, true, breakpoint);
+      showXBreakpointEditorBalloon(project, point, component, true, false, breakpoint);
       moreOptionsRequested.set(true);
     });
 
@@ -300,7 +300,7 @@ public final class DebuggerUIUtil {
   public static Balloon showBreakpointEditor(Project project, final JComponent mainPanel,
                                              final Point whereToShow,
                                              final JComponent component,
-                                             @Nullable final Runnable showMoreOptions, Object breakpoint) {
+                                             final @Nullable Runnable showMoreOptions, Object breakpoint) {
     final BreakpointEditor editor = new BreakpointEditor();
     editor.setPropertiesPanel(mainPanel);
     editor.setShowMoreOptionsLink(true);
@@ -374,18 +374,15 @@ public final class DebuggerUIUtil {
     return balloon;
   }
 
-  @NotNull
-  public static EditorColorsScheme getColorScheme() {
+  public static @NotNull EditorColorsScheme getColorScheme() {
     return EditorColorsUtil.getGlobalOrDefaultColorScheme();
   }
 
-  @NotNull
-  public static EditorColorsScheme getColorScheme(@Nullable JComponent component) {
+  public static @NotNull EditorColorsScheme getColorScheme(@Nullable JComponent component) {
     return EditorColorsUtil.getColorSchemeForComponent(component);
   }
 
-  @Nullable
-  public static String getNodeRawValue(@NotNull XValueNodeImpl valueNode) {
+  public static @Nullable String getNodeRawValue(@NotNull XValueNodeImpl valueNode) {
     String res = null;
     if (valueNode.getValueContainer() instanceof XValueTextProvider) {
       res = ((XValueTextProvider)valueNode.getValueContainer()).getValueText();
@@ -397,15 +394,19 @@ public final class DebuggerUIUtil {
   }
 
   public static void addToWatches(@NotNull XWatchesView watchesView, @NotNull XValueNodeImpl node) {
-    node.calculateEvaluationExpression().onSuccess(expression -> {
+    addToWatches(watchesView, node.getValueContainer());
+  }
+
+  @ApiStatus.Internal
+  public static void addToWatches(@NotNull XWatchesView watchesView, @NotNull XValue value) {
+    value.calculateEvaluationExpression().onSuccess(expression -> {
       if (expression != null) {
         invokeLater(() -> watchesView.addWatchExpression(expression, -1, false));
       }
     });
   }
 
-  @Nullable
-  public static XWatchesView getWatchesView(@NotNull AnActionEvent e) {
+  public static @Nullable XWatchesView getWatchesView(@NotNull AnActionEvent e) {
     XWatchesView view = e.getData(XWatchesView.DATA_KEY);
     Project project = e.getProject();
     if (view == null && project != null) {
@@ -443,14 +444,12 @@ public final class DebuggerUIUtil {
     }
   }
 
-  @NotNull
-  public static @NlsContexts.PopupAdvertisement String getSelectionShortcutsAdText(String... actionNames) {
+  public static @NotNull @NlsContexts.PopupAdvertisement String getSelectionShortcutsAdText(String... actionNames) {
     String text = StreamEx.of(actionNames).map(DebuggerUIUtil::getActionShortcutText).nonNull().collect(NlsMessages.joiningOr());
     return StringUtil.isEmpty(text) ? "" : XDebuggerBundle.message("ad.extra.selection.shortcut", text);
   }
 
-  @Nullable
-  public static String getActionShortcutText(String actionName) {
+  public static @Nullable String getActionShortcutText(String actionName) {
     KeyStroke stroke = KeymapUtil.getKeyStroke(ActionManager.getInstance().getAction(actionName).getShortcutSet());
     if (stroke != null) {
       return KeymapUtil.getKeystrokeText(stroke);
@@ -481,7 +480,7 @@ public final class DebuggerUIUtil {
       }
 
       @Override
-      public void errorOccurred(@NotNull final String errorMessage) {
+      public void errorOccurred(final @NotNull String errorMessage) {
         AppUIUtil.invokeOnEdt(() -> {
           tree.rebuildAndRestore(treeState);
           errorConsumer.consume(errorMessage);
@@ -495,8 +494,7 @@ public final class DebuggerUIUtil {
     return event.getData(XDebugSessionTab.TAB_KEY) == null;
   }
 
-  @Nullable
-  public static XDebugSessionData getSessionData(AnActionEvent e) {
+  public static @Nullable XDebugSessionData getSessionData(AnActionEvent e) {
     XDebugSessionData data = e.getData(XDebugSessionData.DATA_KEY);
     if (data == null) {
       XDebugSession session = getSession(e);
@@ -507,8 +505,7 @@ public final class DebuggerUIUtil {
     return data;
   }
 
-  @Nullable
-  public static XDebugSession getSession(@NotNull AnActionEvent e) {
+  public static @Nullable XDebugSession getSession(@NotNull AnActionEvent e) {
     XDebugSession session = e.getData(XDebugSession.DATA_KEY);
     if (session == null) {
       Project project = e.getProject();
@@ -538,15 +535,21 @@ public final class DebuggerUIUtil {
     }
   }
 
-  public static boolean shouldUseAntiFlickeringPanel() {
+  private static boolean shouldUseAntiFlickeringPanel() {
     return !ApplicationManager.getApplication().isUnitTestMode() && Registry.intValue("debugger.anti.flickering.delay", 0) > 0;
   }
 
+  @ApiStatus.Internal
+  public static @NotNull JComponent wrapWithAntiFlickeringPanel(@NotNull JComponent component) {
+    return shouldUseAntiFlickeringPanel() ? new AntiFlickeringPanel(component) : component;
+  }
+
+  @ApiStatus.Internal
   public static boolean freezePaintingToReduceFlickering(@Nullable Component component) {
     if (component instanceof AntiFlickeringPanel antiFlickeringPanel) {
       int delay = Registry.intValue("debugger.anti.flickering.delay", 0);
       if (delay > 0) {
-        antiFlickeringPanel.freezePainting(delay);
+        ApplicationManager.getApplication().invokeAndWait(() -> antiFlickeringPanel.freezePainting(delay), ModalityState.any());
         return true;
       }
     }

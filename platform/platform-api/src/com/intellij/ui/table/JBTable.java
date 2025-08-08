@@ -738,7 +738,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         }
       }
       else {
-        Color hovered = isHoverPaintingDisabled(this) ? null : getHoveredRowBackground();
+        Color hovered = isHoverPaintingDisabled(this) || isHoverPaintingDisabled(component) ? null : getHoveredRowBackground();
         if (hovered != null) {
           if (row == TableHoverListener.getHoveredRow(this)) {
             setRendererBackground(component, hovered);
@@ -1378,11 +1378,12 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     private boolean canMoveOrResizeColumn(@NotNull MouseEvent e) {
       JTable table = header.getTable();
-      return canMoveOrResizeColumn(table.getColumnModel().getColumnIndexAtX(e.getX()));
+      int modelIndex = table.convertColumnIndexToModel(table.getColumnModel().getColumnIndexAtX(e.getX()));
+      return canMoveOrResizeColumn(modelIndex);
     }
 
-    private boolean canMoveOrResizeColumn(int index) {
-      return ((InvisibleResizableHeader)header).canMoveOrResizeColumn(index);
+    private boolean canMoveOrResizeColumn(int modelIndex) {
+      return ((InvisibleResizableHeader)header).canMoveOrResizeColumn(modelIndex);
     }
   }
 

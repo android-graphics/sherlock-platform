@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.hint.DeclarationRangeUtil;
@@ -24,7 +24,9 @@ public class JavaBraceMatcher implements PairedBraceMatcher {
       new BracePair(JavaTokenType.LBRACE, JavaTokenType.RBRACE, true),
       new BracePair(JavaTokenType.LBRACKET, JavaTokenType.RBRACKET, false),
       new BracePair(JavaDocTokenType.DOC_INLINE_TAG_START, JavaDocTokenType.DOC_INLINE_TAG_END, false),
-      new BracePair(JavaTokenType.LT, JavaTokenType.GT, false)
+      new BracePair(JavaTokenType.LT, JavaTokenType.GT, false),
+      new BracePair(JavaDocTokenType.DOC_LBRACKET, JavaDocTokenType.DOC_RBRACKET, false),
+      new BracePair(JavaDocTokenType.DOC_LPAREN, JavaDocTokenType.DOC_RPAREN, false)
   };
   public JavaBraceMatcher() {
   }
@@ -35,7 +37,7 @@ public class JavaBraceMatcher implements PairedBraceMatcher {
   }
 
   @Override
-  public boolean isPairedBracesAllowedBeforeType(@NotNull final IElementType lbraceType, @Nullable final IElementType contextType) {
+  public boolean isPairedBracesAllowedBeforeType(final @NotNull IElementType lbraceType, final @Nullable IElementType contextType) {
     if (contextType instanceof IJavaElementType) return isPairedBracesAllowedBeforeTypeInJava(contextType);
     return true;
   }

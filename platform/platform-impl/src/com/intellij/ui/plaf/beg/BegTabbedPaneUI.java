@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -12,6 +13,7 @@ import javax.swing.plaf.metal.MetalTabbedPaneUI;
 import javax.swing.text.View;
 import java.awt.*;
 
+@ApiStatus.Internal
 public final class BegTabbedPaneUI extends MetalTabbedPaneUI {
   private static final Color LIGHT = new Color(247, 243, 239);
   private static final Color DARK = new Color(189, 187, 182);
@@ -351,11 +353,11 @@ public final class BegTabbedPaneUI extends MetalTabbedPaneUI {
 
     SwingUtilities.layoutCompoundLabel(tabPane,
                                        metrics, title, icon,
-                                       SwingUtilities.CENTER,
+                                       SwingConstants.CENTER,
                                        // left align title on LEFT/RIGHT placed tab
-                                       tabPlacement == RIGHT || tabPlacement == LEFT ? SwingUtilities.LEFT : SwingUtilities.CENTER,
-                                       SwingUtilities.CENTER,
-                                       SwingUtilities.TRAILING,
+                                       tabPlacement == RIGHT || tabPlacement == LEFT ? SwingConstants.LEFT : SwingConstants.CENTER,
+                                       SwingConstants.CENTER,
+                                       SwingConstants.TRAILING,
                                        tabRect,
                                        iconRect,
                                        textRect,

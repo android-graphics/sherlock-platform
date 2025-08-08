@@ -236,9 +236,8 @@ public interface BasicJavaElementType {
       myParentElementTypes = Collections.singleton(parentElementType);
     }
 
-    @NotNull
     @Override
-    public ASTNode createCompositeNode() {
+    public @NotNull ASTNode createCompositeNode() {
       return myConstructor.get();
     }
 
@@ -251,25 +250,23 @@ public interface BasicJavaElementType {
   final class JavaDummyElementType extends ILazyParseableElementType implements ICompositeElementType, ParentProviderElementType {
     private static final Set<IElementType> PARENT_ELEMENT_TYPES = Collections.singleton(BASIC_DUMMY_ELEMENT);
     private final Function<LanguageLevel, JavaDocLexer> javaDocLexer;
-    private final Function<LanguageLevel, BasicJavaLexer> javaLexer;
+    private final Function<LanguageLevel, ? extends Lexer> javaLexer;
 
     public JavaDummyElementType(@NotNull Function<LanguageLevel, JavaDocLexer> lexer,
-                                @NotNull Function<LanguageLevel, BasicJavaLexer> javaLexer) {
+                                @NotNull Function<LanguageLevel, Lexer> javaLexer) {
       super("DUMMY_ELEMENT", JavaLanguage.INSTANCE);
       javaDocLexer = lexer;
       this.javaLexer = javaLexer;
     }
 
-    @NotNull
     @Override
-    public ASTNode createCompositeNode() {
+    public @NotNull ASTNode createCompositeNode() {
       return new CompositePsiElement(this) {
       };
     }
 
-    @Nullable
     @Override
-    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
+    public @Nullable ASTNode parseContents(final @NotNull ASTNode chameleon) {
       assert chameleon instanceof BasicJavaDummyElement : chameleon;
       final BasicJavaDummyElement dummyElement = (BasicJavaDummyElement)chameleon;
       return BasicJavaParserUtil.parseFragment(chameleon, dummyElement.getParser(), dummyElement.consumeAll(),
@@ -304,7 +301,7 @@ public interface BasicJavaElementType {
     }
 
     @Override
-    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
+    public ASTNode parseContents(final @NotNull ASTNode chameleon) {
       final PsiBuilder builder = BasicJavaParserUtil.createBuilder(chameleon, languageLevelFunction, myLexerFunction, psiAsLexer);
       myJavaThinParser.get().getStatementParser().parseCodeBlockDeep(builder, true);
       return builder.getTreeBuilt().getFirstChildNode();
@@ -364,9 +361,8 @@ public interface BasicJavaElementType {
       }
     };
 
-    @Nullable
     @Override
-    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
+    public @Nullable ASTNode parseContents(final @NotNull ASTNode chameleon) {
       return BasicJavaParserUtil.parseFragment(chameleon, myParser, myDocLexerFunction, myLexerFunction);
     }
 
@@ -437,9 +433,8 @@ public interface BasicJavaElementType {
       this.parentElementTypes = Collections.singleton(parentElementType);
     }
 
-    @Nullable
     @Override
-    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
+    public @Nullable ASTNode parseContents(final @NotNull ASTNode chameleon) {
       return BasicJavaParserUtil.parseFragment(chameleon, myParser, javaDocLexer, javaLexer);
     }
 

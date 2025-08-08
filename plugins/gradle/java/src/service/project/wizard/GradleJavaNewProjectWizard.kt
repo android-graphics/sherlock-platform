@@ -3,15 +3,8 @@ package org.jetbrains.plugins.gradle.service.project.wizard
 
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeFinished
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
-import com.intellij.ide.projectWizard.generators.AssetsJavaNewProjectWizardStep
-import com.intellij.ide.projectWizard.generators.AssetsJavaNewProjectWizardStep.Companion.proposeToGenerateOnboardingTipsByDefault
-import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizard
-import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData
-import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
-import com.intellij.ide.starters.local.StandardAssetsProvider
+import com.intellij.ide.projectWizard.generators.*
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
@@ -39,11 +32,8 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
 
     override val addSampleCodeProperty = propertyGraph.property(true)
       .bindBooleanStorage(ADD_SAMPLE_CODE_PROPERTY_NAME)
-    override val generateOnboardingTipsProperty = propertyGraph.property(proposeToGenerateOnboardingTipsByDefault())
-      .bindBooleanStorage(NewProjectWizardStep.GENERATE_ONBOARDING_TIPS_NAME)
 
     override var addSampleCode by addSampleCodeProperty
-    override var generateOnboardingTips by generateOnboardingTipsProperty
 
     private fun setupSampleCodeUI(builder: Panel) {
       builder.row {
@@ -54,23 +44,14 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
       }
     }
 
-    private fun setupSampleCodeWithOnBoardingTipsUI(builder: Panel) {
-      builder.indent {
-        row {
-          checkBox(UIBundle.message("label.project.wizard.new.project.generate.onboarding.tips"))
-            .bindSelected(generateOnboardingTipsProperty)
-            .whenStateChangedFromUi { logAddSampleOnboardingTipsChanged(it) }
-            .onApply { logAddSampleOnboardingTipsFinished(generateOnboardingTips) }
-        }
-      }.enabledIf(addSampleCodeProperty)
-    }
+    @Deprecated("The onboarding tips generated unconditionally")
+    protected fun setupSampleCodeWithOnBoardingTipsUI(builder: Panel) = Unit
 
     override fun setupSettingsUI(builder: Panel) {
       setupJavaSdkUI(builder)
       setupGradleDslUI(builder)
       setupParentsUI(builder)
       setupSampleCodeUI(builder)
-      setupSampleCodeWithOnBoardingTipsUI(builder)
     }
 
     override fun setupAdvancedSettingsUI(builder: Panel) {
@@ -79,36 +60,41 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
       setupArtifactIdUI(builder)
     }
 
-    override fun setupProject(project: Project) {
-      linkGradleProject(project) {
-        withJavaPlugin()
-        withJUnit()
-      }
-    }
-
     init {
       data.putUserData(GradleJavaNewProjectWizardData.KEY, this)
     }
   }
 
-  private class AssetsStep(
-    private val parent: Step
-  ) : AssetsJavaNewProjectWizardStep(parent) {
+  private class AssetsStep(parent: Step) : GradleAssetsNewProjectWizardStep<Step>(parent) {
 
     override fun setupAssets(project: Project) {
       if (context.isCreatingNewProject) {
-        addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
+        addGradleGitIgnoreAsset()
+        addGradleWrapperAsset(parent.gradleVersionToUse)
       }
-      if (parent.addSampleCode) {
-        withJavaSampleCodeAsset("src/main/java", parent.groupId, parent.generateOnboardingTips)
-      }
-    }
 
-    override fun setupProject(project: Project) {
-      if (parent.generateOnboardingTips) {
-        prepareOnboardingTips(project)
+      addEmptyDirectoryAsset("src/main/java")
+      addEmptyDirectoryAsset("src/main/resources")
+      addEmptyDirectoryAsset("src/test/java")
+      addEmptyDirectoryAsset("src/test/resources")
+
+      if (parent.addSampleCode) {
+        withJavaSampleCodeAsset(project, "src/main/java", parent.groupId)
       }
-      super.setupProject(project)
+
+      addOrConfigureSettingsScript {
+        if (parent.isCreatingDaemonToolchain) {
+          withFoojayPlugin()
+        }
+      }
+      addBuildScript {
+
+        addGroup(parent.groupId)
+        addVersion(parent.version)
+
+        withJavaPlugin()
+        withJUnit()
+      }
     }
   }
 }

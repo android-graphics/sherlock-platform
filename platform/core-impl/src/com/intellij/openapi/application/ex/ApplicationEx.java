@@ -1,14 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.ex;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.ThrowableComputable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -29,12 +30,6 @@ public interface ApplicationEx extends Application {
   int ELEVATE = 0x08;
 
   /**
-   * @return true if this thread is inside read action.
-   * @see #runReadAction(Runnable)
-   */
-  boolean holdsReadLock();
-
-  /**
    * @return true if the EDT is performing write action right now.
    * @see #runWriteAction(Runnable)
    */
@@ -45,23 +40,6 @@ public interface ApplicationEx extends Application {
    * @see #runWriteAction(Runnable)
    */
   boolean isWriteActionPending();
-
-  /**
-   * Acquires IW lock if it's not acquired by the current thread.
-   *
-   * @param invokedClassFqn fully qualified name of the class requiring the write-intent lock.
-   * @return {@code true} if this call acquired lock, {@code false} if lock was taken already.
-   */
-  @ApiStatus.Internal
-  default boolean acquireWriteIntentLock(@NotNull String invokedClassFqn) {
-    return false;
-  }
-
-  /**
-   * Releases IW lock.
-   */
-  @ApiStatus.Internal
-  default void releaseWriteIntentLock() {}
 
   void setSaveAllowed(boolean value);
 
@@ -75,7 +53,7 @@ public interface ApplicationEx extends Application {
 
   @Override
   default void exit() {
-    exit(SAVE);
+    exit(isSaveAllowed() ? SAVE : 0);
   }
 
   /**
@@ -150,7 +128,7 @@ public interface ApplicationEx extends Application {
   /**
    * Tries to acquire the read lock and run the {@code action}.
    *
-   * @return true if action was run while holding the lock, false if was unable to get the lock and action was not run
+   * @return true if the action was run while holding the lock, false if was unable to get the lock and the action was not run
    */
   boolean tryRunReadAction(@NotNull Runnable action);
 
@@ -196,7 +174,7 @@ public interface ApplicationEx extends Application {
 
   /**
    * Runs the specified action under the write-intent lock. Can be called from any thread. The action is executed immediately
-   * if no write-intent action is currently running, or blocked until the currently running write-intent action completes.
+   * if no write-intent action is currently running or blocked until the currently running write-intent action completes.
    * <p>
    * This method is used to implement higher-level API. Please do not use it directly.
    * Use {@link #invokeLaterOnWriteThread}, {@link com.intellij.openapi.application.WriteThread} or
@@ -218,35 +196,9 @@ public interface ApplicationEx extends Application {
   }
 
   // in some cases, we cannot get service by class
-  /**
-   * Light service is not supported.
-   */
-  @Override
-  @ApiStatus.Internal
-  <T> @Nullable T getServiceByClassName(@NotNull String serviceClassName);
 
   /**
-   * Runs specified action with disabled implicit read lock if this feature is enabled with system property.
-   * @see com.intellij.idea.StartupUtil#isImplicitReadOnEDTDisabled() StartupUtil.isImplicitReadOnEDTDisabled()
-   * @param runnable action to run with disabled implicit read lock.
-   */
-  @ApiStatus.Internal
-  default void runWithoutImplicitRead(@NotNull Runnable runnable) {
-    runnable.run();
-  }
-
-  /**
-   * Runs specified action with enabeld implicit read lock, if this feature is disabled with system property.
-   * @see com.intellij.idea.StartupUtil#isImplicitReadOnEDTDisabled() StartupUtil.isImplicitReadOnEDTDisabled()
-   * @param runnable action to run with enabled implicit read lock.
-   */
-  @ApiStatus.Internal
-  default void runWithImplicitRead(@NotNull Runnable runnable) {
-    runnable.run();
-  }
-
-  /**
-   * @deprecated Use {@link IdeEventQueue#flushNativeEventQueue}
+   * @deprecated Use {@link com.intellij.ide.IdeEventQueue#flushNativeEventQueue IdeEventQueue.flushNativeEventQueue()}
    */
   @ApiStatus.Internal
   @Deprecated
@@ -255,5 +207,26 @@ public interface ApplicationEx extends Application {
   @ApiStatus.Internal
   default void dispatchCoroutineOnEDT(Runnable runnable, ModalityState state) {
     invokeLater(runnable, state, Conditions.alwaysFalse());
+  }
+
+  @ApiStatus.Internal
+  default void addReadActionListener(@NotNull ReadActionListener listener, @NotNull Disposable parentDisposable) { }
+
+  @ApiStatus.Experimental
+  default void addWriteActionListener(@NotNull WriteActionListener listener, @NotNull Disposable parentDisposable) { }
+
+  @ApiStatus.Internal
+  default void addWriteIntentReadActionListener(@NotNull WriteIntentReadActionListener listener, @NotNull Disposable parentDisposable) { }
+
+  @ApiStatus.Internal
+  default void addLockAcquisitionListener(@NotNull LockAcquisitionListener listener, @NotNull Disposable parentDisposable) { }
+
+  @ApiStatus.Internal
+  @ApiStatus.Obsolete
+  default void addSuspendingWriteActionListener(@NotNull SuspendingWriteActionListener listener, @NotNull Disposable parentDisposable) { }
+
+  @ApiStatus.Internal
+  default void prohibitTakingLocksInsideAndRun(@NotNull Runnable runnable, boolean failSoftly, @NlsSafe String advice) {
+    runnable.run();
   }
 }

@@ -9,7 +9,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
@@ -25,6 +24,8 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import javax.swing.Icon
+
+private const val maxIconsInStatusBar = 3
 
 internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : EditorBasedStatusBarPopup(project, false, scope) {
   /**
@@ -44,8 +45,6 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
   }
 
   override fun getWidgetState(file: VirtualFile?): WidgetState {
-    if (!Registry.`is`("language.service.status.bar.widget")) return WidgetState.HIDDEN
-
     // If there are more than maxIconsInStatusBar services, then not all icons show up in the status bar.
     // Sorting helps to make sure that icons with an error marker go first.
     val allItems = LanguageServiceWidgetItemsProvider.EP_NAME.extensionList
@@ -138,9 +137,5 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
     }
 
     override fun actionPerformed(e: AnActionEvent) {}
-  }
-
-  private companion object {
-    const val maxIconsInStatusBar = 3
   }
 }

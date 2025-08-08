@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
 import com.intellij.application.options.CodeStyle
@@ -79,7 +79,7 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
                 ?.let { MethodReferencesSearch.search(it, it.getUseScope(), true) }
                 ?: ReferencesSearch.search(method, method.getUseScope()))
 
-            references.forEach { ref ->
+            references.asIterable().forEach { ref ->
                 val element = ref.element
                 val caller = PsiTreeUtil.getParentOfType(element, PsiMethod::class.java, false)?.let { listOf(it) }
                     ?: PsiTreeUtil.getParentOfType(element, KtDeclaration::class.java, false)?.toLightMethods()
@@ -149,7 +149,7 @@ public @interface NotNull {
     }
 
     protected fun findTargetElement(): PsiElement? {
-        val provider = LanguageRefactoringSupport.INSTANCE.forContext(file)
+        val provider = LanguageRefactoringSupport.getInstance().forContext(file)
         return provider!!.changeSignatureHandler!!.findTargetMember(file, editor)
     }
 

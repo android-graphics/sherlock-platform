@@ -2,7 +2,6 @@
 package com.intellij;
 
 import com.intellij.idea.ExcludeFromTestDiscovery;
-import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.idea.IJIgnore;
 import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.nastradamus.NastradamusClient;
@@ -21,6 +20,7 @@ import kotlin.text.StringsKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -44,7 +44,6 @@ public class TestCaseLoader {
   public static final String RUN_ONLY_AFFECTED_TEST_FLAG = "idea.run.only.affected.tests";
   public static final String TEST_RUNNERS_COUNT_FLAG = "idea.test.runners.count";
   public static final String TEST_RUNNER_INDEX_FLAG = "idea.test.runner.index";
-  public static final String HARDWARE_AGENT_REQUIRED_FLAG = "idea.hardware.agent.required";
   public static final String VERBOSE_LOG_ENABLED_FLAG = "idea.test.log.verbose";
   public static final String FAIR_BUCKETING_FLAG = "idea.fair.bucketing";
   public static final String IS_TESTS_DURATION_BUCKETING_ENABLED_FLAG = "idea.tests.duration.bucketing.enabled";
@@ -56,7 +55,6 @@ public class TestCaseLoader {
   private static final boolean INCLUDE_UNCONVENTIONALLY_NAMED_TESTS = Boolean.getBoolean(INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG);
   private static final boolean RUN_ONLY_AFFECTED_TESTS = Boolean.getBoolean(RUN_ONLY_AFFECTED_TEST_FLAG);
   private static final boolean RUN_WITH_TEST_DISCOVERY = System.getProperty("test.discovery.listener") != null;
-  private static final boolean HARDWARE_AGENT_REQUIRED = Boolean.getBoolean(HARDWARE_AGENT_REQUIRED_FLAG);
   public static final boolean IS_VERBOSE_LOG_ENABLED = Boolean.getBoolean(VERBOSE_LOG_ENABLED_FLAG);
 
   public static final int TEST_RUNNERS_COUNT = Integer.parseInt(System.getProperty(TEST_RUNNERS_COUNT_FLAG, "1"));
@@ -142,7 +140,7 @@ public class TestCaseLoader {
   /**
    * @deprecated use `TestCaseLoader.Builder.defaults().withTestGroupsResourcePath(classFilterName).build();` instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public TestCaseLoader(String classFilterName) {
     this(classFilterName, false);
   }
@@ -150,7 +148,7 @@ public class TestCaseLoader {
   /**
    * @deprecated use `TestCaseLoader.Builder.defaults().withTestGroupsResourcePath(classFilterName).withForceLoadPerformanceTests(flag).build();` instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public TestCaseLoader(String classFilterName, boolean forceLoadPerformanceTests) {
     this(getFilter(getTestPatterns(), classFilterName, getTestGroups(), false), forceLoadPerformanceTests);
   }
@@ -271,7 +269,7 @@ public class TestCaseLoader {
     }
   }
 
-  private static List<String> getTestGroups() {
+  private static @Unmodifiable List<String> getTestGroups() {
     return StringUtil.split(System.getProperty("intellij.build.test.groups", System.getProperty("idea.test.group", "")).trim(), ";");
   }
 
@@ -371,9 +369,6 @@ public class TestCaseLoader {
 
     if (checkForExclusion) {
       if (shouldExcludeTestClass(moduleName, testCaseClass)) return false;
-
-      boolean isHardwareAgentRequired = getAnnotationInHierarchy(testCaseClass, HardwareAgentRequired.class) != null;
-      if (isHardwareAgentRequired != HARDWARE_AGENT_REQUIRED) return false;
     }
 
     if (TestCase.class.isAssignableFrom(testCaseClass) || TestSuite.class.isAssignableFrom(testCaseClass)) {
@@ -526,7 +521,7 @@ public class TestCaseLoader {
     Comparator<String> classNameComparator = REVERSE_ORDER ? Comparator.reverseOrder() : Comparator.naturalOrder();
     return new TestSorter() {
       @Override
-      public @NotNull List<Class<?>> sorted(@NotNull List<Class<?>> testClasses, @NotNull ToIntFunction<? super Class<?>> ranker) {
+      public @Unmodifiable @NotNull List<Class<?>> sorted(@NotNull List<Class<?>> testClasses, @NotNull ToIntFunction<? super Class<?>> ranker) {
         return ContainerUtil.sorted(testClasses,
                                     Comparator.<Class<?>>comparingInt(ranker).thenComparing(Class::getName, classNameComparator));
       }

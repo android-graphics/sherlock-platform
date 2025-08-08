@@ -26,7 +26,7 @@ public class FilesToUpdateCollector {
 
   private final DirtyFiles myDirtyFiles = new DirtyFiles();
 
-  public void scheduleForUpdate(@NotNull FileIndexingRequest request, @NotNull Set<Project> containingProjects, @NotNull Collection<Project> dirtyQueueProjects) {
+  public void scheduleForUpdate(@NotNull FileIndexingRequest request, @NotNull Set<Project> containingProjects, @NotNull Collection<? extends Project> dirtyQueueProjects) {
     VirtualFile file = request.getFile();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       if (!request.isDeleteRequest() && containingProjects.isEmpty()) {
@@ -41,8 +41,7 @@ public class FilesToUpdateCollector {
     myFilesToUpdate.put(fileId, request);
   }
 
-  @NotNull
-  public DirtyFiles getDirtyFiles() {
+  public @NotNull DirtyFiles getDirtyFiles() {
     return myDirtyFiles;
   }
 

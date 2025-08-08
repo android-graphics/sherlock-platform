@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.refactoring.rename;
 
@@ -163,6 +163,11 @@ public class FirMultiModuleRenameTestGenerated extends AbstractFirMultiModuleRen
     @TestMetadata("overrideFunctionsByPlatformModule/overrideFunctionsByPlatformModule.test")
     public void testOverrideFunctionsByPlatformModule_OverrideFunctionsByPlatformModule() throws Exception {
         runTest("../../idea/tests/testData/refactoring/renameMultiModule/overrideFunctionsByPlatformModule/overrideFunctionsByPlatformModule.test");
+    }
+
+    @TestMetadata("overrideInternalPropertyByCommonModule/overrideFunctionsByCommonModule.test")
+    public void testOverrideInternalPropertyByCommonModule_OverrideFunctionsByCommonModule() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/renameMultiModule/overrideInternalPropertyByCommonModule/overrideFunctionsByCommonModule.test");
     }
 
     @TestMetadata("suspendFunImplInImplModule/suspendFunImplInImplModule.test")

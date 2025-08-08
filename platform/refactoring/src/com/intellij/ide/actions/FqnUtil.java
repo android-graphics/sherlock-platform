@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
@@ -22,16 +22,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public class FqnUtil {
-  @Nullable
-  public static String getQualifiedNameFromProviders(@Nullable PsiElement element) {
+public final class FqnUtil {
+  public static @Nullable String getQualifiedNameFromProviders(@Nullable PsiElement element) {
     if (element == null) return null;
     return DumbService.getInstance(element.getProject()).computeWithAlternativeResolveEnabled(() ->
                                                                                                 QualifiedNameProviderUtil.getQualifiedName(element));
   }
 
-  @Nullable
-  public static String elementToFqn(@Nullable final PsiElement element, @Nullable Editor editor) {
+  public static @Nullable String elementToFqn(final @Nullable PsiElement element, @Nullable Editor editor) {
     String result = getQualifiedNameFromProviders(element);
     if (result != null) return result;
 
@@ -53,14 +51,12 @@ public class FqnUtil {
     return null;
   }
 
-  @NotNull
-  public static @NlsSafe String getFileFqn(final PsiFile file) {
+  public static @NotNull @NlsSafe String getFileFqn(final PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
     return virtualFile == null ? file.getName() : getVirtualFileFqn(virtualFile, file.getProject());
   }
 
-  @NotNull
-  public static String getVirtualFileFqn(@NotNull VirtualFile virtualFile, @NotNull Project project) {
+  public static @NotNull String getVirtualFileFqn(@NotNull VirtualFile virtualFile, @NotNull Project project) {
     for (VirtualFileQualifiedNameProvider provider : VirtualFileQualifiedNameProvider.EP_NAME.getExtensionList()) {
       String qualifiedName = provider.getQualifiedName(project, virtualFile);
       if (qualifiedName != null) {

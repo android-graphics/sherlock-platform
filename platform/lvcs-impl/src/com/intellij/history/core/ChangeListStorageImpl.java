@@ -15,6 +15,7 @@ import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.storage.AbstractStorage;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,7 @@ import java.text.MessageFormat;
 import static com.intellij.history.core.LocalHistoryNotificationIdsHolder.STORAGE_CORRUPTED;
 import static com.intellij.history.core.LocalHistoryNotificationIdsHolderKt.getLocalHistoryNotificationGroup;
 
+@ApiStatus.Internal
 public final class ChangeListStorageImpl implements ChangeListStorage {
   private static final int VERSION = 7;
   private static final @NonNls String STORAGE_FILE = "changes";
@@ -131,12 +133,12 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
   }
 
   @Override
-  public synchronized void close() {
+  public void close() {
     Disposer.dispose(myStorage);
   }
 
   @Override
-  public synchronized void force() {
+  public void force() {
     try {
       myStorage.force();
     }
@@ -224,7 +226,6 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
         eachBlockId = doReadPrevSafely(eachBlockId, recursionGuard);
       }
       myStorage.deleteRecordsUpTo(firstObsoleteId);
-      force();
     }
     catch (IOException e) {
       handleError(e, null);

@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
@@ -13,6 +14,7 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Function
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -58,15 +60,17 @@ class K2MoveDirectoryWithClassesHelper : MoveDirectoryWithClassesHelper() {
 
     override fun preprocessUsages(
         project: Project,
-        files: MutableSet<PsiFile>,
-        infos: Array<out UsageInfo>,
-        targetDirectory: PsiDirectory,
+        files: Set<PsiFile>,
+        infos: Ref<Array<out UsageInfo>>,
+        targetDirectory: PsiDirectory?,
         conflicts: MultiMap<PsiElement, String>
     ) {
         // processing kotlin usages from Java declarations will result in non-deterministic retargeting of the references
         // to fix this, all usages are sorted by start offset
-        infos.sortBy { it.element?.startOffset ?: -1 }
-        moveFileHandler.detectConflicts(conflicts, files.filterIsInstance<KtFile>().toTypedArray(), infos, targetDirectory)
+        infos.get().sortedBy { it.element?.startOffset ?: -1 }
+        if (targetDirectory != null) { // TODO probably this should never be null but it happens when there are multiple source roots
+            moveFileHandler.detectConflicts(conflicts, files.filterIsInstance<KtFile>().toTypedArray(), infos.get(), targetDirectory)
+        }
     }
 
     override fun beforeMove(psiFile: PsiFile?) {
@@ -91,10 +95,10 @@ class K2MoveDirectoryWithClassesHelper : MoveDirectoryWithClassesHelper() {
         moveFileHandler.updateMovedFile(newElement)
     }
 
-    override fun retargetUsages(usages: MutableList<UsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>) {
+    override fun retargetUsages(usages: List<UsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>): List<UsageInfo> {
         val usagesToProcess = usages.filterIsInstance<K2MoveRenameUsageInfo>()
         moveFileHandler.retargetUsages(usagesToProcess, oldToNewMap)
-        usages.removeAll(usagesToProcess)
+        return usages.filter { !usagesToProcess.contains(it) }
     }
 
     override fun postProcessUsages(usages: Array<out UsageInfo>?, newDirMapper: Function<in PsiDirectory, out PsiDirectory>?) {

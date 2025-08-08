@@ -12,10 +12,12 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SmartList;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
+import com.jetbrains.jsonSchema.fus.JsonSchemaHighlightingSessionStatisticsCollector;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,6 +60,10 @@ public final class JsonSchemaComplianceChecker {
   }
 
   public void annotate(final @NotNull PsiElement element) {
+    JsonSchemaHighlightingSessionStatisticsCollector.getInstance().recordSchemaFeaturesUsage(myRootSchema, () -> doAnnotate(element));
+  }
+
+  private void doAnnotate(@NotNull PsiElement element) {
     Project project = element.getProject();
     final JsonPropertyAdapter firstProp = myWalker.getParentPropertyAdapter(element);
     if (firstProp != null) {
@@ -152,10 +158,7 @@ public final class JsonSchemaComplianceChecker {
   }
 
   private boolean checkIfAlreadyProcessed(@NotNull PsiElement property) {
-    Set<PsiElement> data = mySession.getUserData(ANNOTATED_PROPERTIES);
-    if (data == null) {
-      data = mySession.putUserDataIfAbsent(ANNOTATED_PROPERTIES, ConcurrentCollectionFactory.createConcurrentSet());
-    }
+    Set<PsiElement> data = ConcurrencyUtil.computeIfAbsent(mySession, ANNOTATED_PROPERTIES, () -> ConcurrentCollectionFactory.createConcurrentSet());
     return !data.add(property);
   }
 }

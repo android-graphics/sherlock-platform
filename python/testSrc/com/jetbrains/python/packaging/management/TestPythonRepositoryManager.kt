@@ -6,18 +6,20 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.packaging.PyPackageVersion
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
-import com.jetbrains.python.packaging.repository.PyEmptyPackagePackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import org.jetbrains.annotations.TestOnly
 
 @TestOnly
-class TestPythonRepositoryManager(project: Project, sdk: Sdk) : PythonRepositoryManager(project, sdk) {
+internal class TestPythonRepositoryManager(
+  override val project: Project,
+  @Deprecated("Don't use sdk from here") override val sdk: Sdk
+) : PythonRepositoryManager {
 
-  private var packageNames: List<String> = emptyList()
+  private var packageNames: Set<String> = emptySet()
   private var packageDetails: PythonPackageDetails? = null
 
   fun withPackageNames(packageNames: List<String>): TestPythonRepositoryManager {
-    this.packageNames = packageNames
+    this.packageNames = packageNames.toSet()
     return this
   }
 
@@ -26,7 +28,7 @@ class TestPythonRepositoryManager(project: Project, sdk: Sdk) : PythonRepository
     return this
   }
 
-  fun buildPackageDetails(rawInfo: String?, spec: PythonPackageSpecification): PythonPackageDetails {
+  override fun buildPackageDetails(rawInfo: String?, spec: PythonPackageSpecification): PythonPackageDetails {
     TODO("Not yet implemented")
   }
 
@@ -39,13 +41,9 @@ class TestPythonRepositoryManager(project: Project, sdk: Sdk) : PythonRepository
   }
 
   override val repositories: List<PyPackageRepository>
-    get() = listOf(PyEmptyPackagePackageRepository)
+    get() = listOf(TestPackageRepository(packageNames))
 
-  override fun allPackages(): List<String> {
-    return packageNames
-  }
-
-  override fun packagesFromRepository(repository: PyPackageRepository): List<String> {
+  override fun allPackages(): Set<String> {
     return packageNames
   }
 
@@ -58,11 +56,15 @@ class TestPythonRepositoryManager(project: Project, sdk: Sdk) : PythonRepository
     TODO("Not yet implemented")
   }
 
-  override suspend fun refreshCashes() {
-    TODO("Not yet implemented")
+  override suspend fun refreshCaches() {
   }
 
   override suspend fun initCaches() {
-    TODO("Not yet implemented")
+  }
+}
+
+internal class TestPackageRepository(private val packages: Set<String>): PyPackageRepository("test repository", null, null) {
+  override fun getPackages(): Set<String> {
+    return packages
   }
 }

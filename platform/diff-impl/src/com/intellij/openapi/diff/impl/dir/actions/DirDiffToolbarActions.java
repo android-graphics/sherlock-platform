@@ -65,8 +65,11 @@ public class DirDiffToolbarActions extends ActionGroup implements DumbAware {
     if (action instanceof DirDiffModelHolder) {
       ((DirDiffModelHolder)action).setModel(model);
     }
-    if (action instanceof ActionGroup) {
-      for (AnAction child : ((ActionGroup)action).getChildren(null)) {
+    if (action instanceof ActionGroup actionGroup) {
+      AnAction[] actionChildren = actionGroup instanceof DefaultActionGroup defaultActionGroup
+                                  ? defaultActionGroup.getChildren(ActionManager.getInstance())
+                                  : actionGroup.getChildren(null);
+      for (AnAction child : actionChildren) {
         setUp(model, panel, child);
       }
     }
@@ -74,6 +77,10 @@ public class DirDiffToolbarActions extends ActionGroup implements DumbAware {
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+    return myActions;
+  }
+
+  public AnAction @NotNull [] getActions() {
     return myActions;
   }
 }

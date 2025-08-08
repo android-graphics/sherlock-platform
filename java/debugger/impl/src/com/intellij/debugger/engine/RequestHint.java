@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
@@ -36,8 +36,7 @@ public class RequestHint {
   private final int myFrameCount;
   private boolean mySteppedOut = false;
 
-  @Nullable
-  private final MethodFilter myMethodFilter;
+  private final @Nullable MethodFilter myMethodFilter;
   private int myFilterMatchedCount = 0;
   private boolean myTargetMethodMatched = false;
 
@@ -45,8 +44,7 @@ public class RequestHint {
   private boolean myResetIgnoreFilters = false;
   private boolean myRestoreBreakpoints = false;
 
-  @Nullable
-  private final RequestHint myParentHint;
+  private final @Nullable RequestHint myParentHint;
 
   public RequestHint(final ThreadReferenceProxyImpl stepThread, final SuspendContextImpl suspendContext, @NotNull MethodFilter methodFilter) {
     this(stepThread, suspendContext, StepRequest.STEP_LINE, StepRequest.STEP_INTO, methodFilter);
@@ -116,8 +114,7 @@ public class RequestHint {
     return myDepth;
   }
 
-  @Nullable
-  public MethodFilter getMethodFilter() {
+  public @Nullable MethodFilter getMethodFilter() {
     return myMethodFilter;
   }
 
@@ -169,8 +166,7 @@ public class RequestHint {
     return method.isBridge() || DebuggerUtilsEx.isProxyClass(method.declaringType());
   }
 
-  @Nullable
-  protected final Integer processSteppingFilters(@NotNull SuspendContextImpl context, @Nullable Location location) {
+  protected final @Nullable Integer processSteppingFilters(@NotNull SuspendContextImpl context, @Nullable Location location) {
     final DebuggerSettings settings = DebuggerSettings.getInstance();
 
     if ((myMethodFilter != null || (settings.SKIP_SYNTHETIC_METHODS && !myIgnoreFilters)) &&
@@ -198,7 +194,7 @@ public class RequestHint {
           }
         }
 
-        if (settings.SKIP_CLASSLOADERS && DebuggerUtilsEx.isAssignableFrom("java.lang.ClassLoader", location.declaringType())) {
+        if (settings.SKIP_CLASSLOADERS && DebuggerUtils.instanceOf(location.declaringType(), "java.lang.ClassLoader")) {
           return StepRequest.STEP_OUT;
         }
       }
@@ -270,8 +266,7 @@ public class RequestHint {
     debugProcess.doStep(suspendContext, stepThread, size, depth, this, commandToken);
   }
 
-  @Nullable
-  final RequestHint getParentHint() {
+  final @Nullable RequestHint getParentHint() {
     return myParentHint;
   }
 }

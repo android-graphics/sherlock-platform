@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.intention.*;
@@ -9,6 +9,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -31,6 +32,8 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -52,9 +55,6 @@ import java.util.function.Supplier;
 
 import static com.intellij.ui.border.NamedBorderKt.withName;
 
-/**
- * @author Dmitry Avdeev
- */
 public class EditorNotificationPanel extends JPanel implements IntentionActionProvider, Weighted {
 
   private static final Supplier<EditorColorsScheme> GLOBAL_SCHEME_SUPPLIER = () -> EditorColorsManager.getInstance().getGlobalScheme();
@@ -400,7 +400,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
   public interface ActionHandler {
     /**
-     * Invoked when an action-link click from the notification panel
+     * Invoked when an action-link clicks from the notification panel
      */
     void handlePanelActionClick(@NotNull EditorNotificationPanel panel,
                                 @NotNull HyperlinkEvent event);
@@ -486,13 +486,17 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
       public void handlePanelActionClick(@NotNull EditorNotificationPanel panel,
                                          @NotNull HyperlinkEvent e) {
         logNotificationActionInvocation(action);
-        action.run();
+        try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+          action.run();
+        }
       }
 
       @Override
       public void handleQuickFixClick(@NotNull Editor editor, @NotNull PsiFile file) {
         logNotificationActionInvocation(action);
-        action.run();
+        try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+          action.run();
+        }
       }
     };
   }
@@ -716,15 +720,15 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     }
   }
 
-  @NotNull
-  private static Icon getPromoIcon() {
-    // todo it can be different in PyCharm Pro
+  private static @NotNull Icon getPromoIcon() {
+    if (PlatformUtils.isPyCharm()) return AllIcons.Ultimate.PycharmLock;
+
     return AllIcons.Ultimate.Lock;
   }
 
   public enum Status {
     Info(JBUI.CurrentTheme.Banner.INFO_BACKGROUND, JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR, () -> AllIcons.General.BalloonInformation),
-    Success(JBUI.CurrentTheme.Banner.SUCCESS_BACKGROUND, JBUI.CurrentTheme.Banner.SUCCESS_BORDER_COLOR, () -> AllIcons.Debugger.ThreadStates.Idle),
+    Success(JBUI.CurrentTheme.Banner.SUCCESS_BACKGROUND, JBUI.CurrentTheme.Banner.SUCCESS_BORDER_COLOR, () -> AllIcons.Status.Success),
     Warning(JBUI.CurrentTheme.Banner.WARNING_BACKGROUND, JBUI.CurrentTheme.Banner.WARNING_BORDER_COLOR, () -> AllIcons.General.BalloonWarning),
     Error(JBUI.CurrentTheme.Banner.ERROR_BACKGROUND, JBUI.CurrentTheme.Banner.ERROR_BORDER_COLOR, () -> AllIcons.General.BalloonError),
     Promo(JBUI.CurrentTheme.Banner.INFO_BACKGROUND, JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR, EditorNotificationPanel::getPromoIcon);

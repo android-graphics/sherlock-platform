@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.navigation;
 
@@ -28,6 +28,11 @@ public class KotlinGotoImplementationMultiModuleTestGenerated extends AbstractKo
 
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    }
+
+    @TestMetadata("actualFunction")
+    public void testActualFunction() throws Exception {
+        runTest("testData/navigation/implementations/multiModule/actualFunction/");
     }
 
     @TestMetadata("actualTypeAliasWithAnonymousSubclass")

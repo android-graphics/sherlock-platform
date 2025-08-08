@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.trustedProjects
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.NioPathPrefixTreeFactory
+import com.intellij.openapi.util.io.PathPrefixTree
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -62,7 +62,7 @@ interface TrustedProjectsLocator {
       project: Project?,
       getProjectRoots: TrustedProjectsLocator.() -> List<Path>
     ): LocatedProject {
-      val projectRoots = NioPathPrefixTreeFactory.createSet()
+      val projectRoots = PathPrefixTree.createSet()
       EP_NAME.forEachExtensionSafe { locator ->
         for (projectRoot in locator.getProjectRoots()) {
           projectRoots.add(projectRoot)

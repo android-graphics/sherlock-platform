@@ -1,19 +1,19 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,8 +25,7 @@ public final class UnnecessarySuperQualifierInspection extends BaseInspection im
   public boolean ignoreClarification;
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "unnecessary.super.qualifier.problem.descriptor"
     );
@@ -39,15 +38,13 @@ public final class UnnecessarySuperQualifierInspection extends BaseInspection im
   }
 
   @Override
-  @Nullable
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new UnnecessarySuperQualifierFix();
   }
 
   private static class UnnecessarySuperQualifierFix extends PsiUpdateModCommandQuickFix {
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "unnecessary.super.qualifier.quickfix");
     }
@@ -88,7 +85,7 @@ public final class UnnecessarySuperQualifierInspection extends BaseInspection im
         }
 
         if (myIgnoreClarification) {
-          PsiClass containingClass = ClassUtils.getContainingClass(expression);
+          PsiClass containingClass = PsiUtil.getContainingClass(expression);
           if (containingClass != null) {
             final PsiElement classParent = containingClass.getParent();
             String referenceName = methodCallExpression.getMethodExpression().getReferenceName();
@@ -108,7 +105,7 @@ public final class UnnecessarySuperQualifierInspection extends BaseInspection im
           return;
         }
         if (myIgnoreClarification) {
-          PsiClass containingClass = ClassUtils.getContainingClass(expression);
+          PsiClass containingClass = PsiUtil.getContainingClass(expression);
           if (containingClass != null) {
             final PsiElement classParent = containingClass.getParent();
             final String referenceText = referenceExpression.getReferenceName();

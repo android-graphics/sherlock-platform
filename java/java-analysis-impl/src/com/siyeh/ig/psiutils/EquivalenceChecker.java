@@ -771,8 +771,7 @@ public class EquivalenceChecker {
     }
   }
 
-  @NotNull
-  protected Match thisExpressionsMatch(@NotNull PsiThisExpression thisExpression1, @NotNull PsiThisExpression thisExpression2) {
+  protected @NotNull Match thisExpressionsMatch(@NotNull PsiThisExpression thisExpression1, @NotNull PsiThisExpression thisExpression2) {
     final PsiClass containingClass1 = PsiUtil.resolveClassInClassTypeOnly(thisExpression1.getType());
     final PsiClass containingClass2 = PsiUtil.resolveClassInClassTypeOnly(thisExpression2.getType());
     if (containingClass1 == null || containingClass2 == null) {
@@ -900,12 +899,12 @@ public class EquivalenceChecker {
     PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(ref.getQualifierExpression());
     if (qualifier instanceof PsiQualifiedExpression) {
       PsiJavaCodeReferenceElement classRef = ((PsiQualifiedExpression)qualifier).getQualifier();
-      return classRef != null ? tryCast(classRef.resolve(), PsiClass.class) : ClassUtils.getContainingClass(ref);
+      return classRef != null ? tryCast(classRef.resolve(), PsiClass.class) : PsiUtil.getContainingClass(ref);
     }
     if (qualifier == null) {
       PsiMember member = tryCast(ref.resolve(), PsiMember.class);
       if (member != null) {
-        PsiClass currentClass = ClassUtils.getContainingClass(ref);
+        PsiClass currentClass = PsiUtil.getContainingClass(ref);
         PsiClass memberClass = member.getContainingClass();
         if (memberClass != null && currentClass != null) {
           return currentClass == memberClass || InheritanceUtil.isInheritorOrSelf(currentClass, memberClass, true) ?
@@ -1256,13 +1255,12 @@ public class EquivalenceChecker {
     return incompleteMatch == null ? EXACT_MATCH : incompleteMatch;
   }
 
-  @NotNull
-  private static Match getComplexElementDecision(Match equivalence1,
-                                                 Match equivalence2,
-                                                 PsiElement left1,
-                                                 PsiElement right1,
-                                                 PsiElement left2,
-                                                 PsiElement right2) {
+  private static @NotNull Match getComplexElementDecision(Match equivalence1,
+                                                          Match equivalence2,
+                                                          PsiElement left1,
+                                                          PsiElement right1,
+                                                          PsiElement left2,
+                                                          PsiElement right2) {
     if (equivalence2 == EXACT_MATCH) {
       if (equivalence1 == EXACT_MATCH) {
         return EXACT_MATCH;

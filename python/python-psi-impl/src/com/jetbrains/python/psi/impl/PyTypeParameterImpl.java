@@ -4,10 +4,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.stubs.PyTypeParameterStub;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.PyType;
@@ -35,8 +35,7 @@ public class PyTypeParameterImpl extends PyBaseElementImpl<PyTypeParameterStub> 
   }
 
   @Override
-  @Nullable
-  public String getName() {
+  public @Nullable String getName() {
     PyTypeParameterStub stub = getStub();
 
     if (stub != null) {
@@ -48,8 +47,7 @@ public class PyTypeParameterImpl extends PyBaseElementImpl<PyTypeParameterStub> 
   }
 
   @Override
-  @Nullable
-  public String getBoundExpressionText() {
+  public @Nullable String getBoundExpressionText() {
     PyTypeParameterStub stub = getStub();
     if (stub != null) {
       return stub.getBoundExpressionText();
@@ -59,8 +57,17 @@ public class PyTypeParameterImpl extends PyBaseElementImpl<PyTypeParameterStub> 
   }
 
   @Override
-  @NotNull
-  public PyTypeParameter.Kind getKind() {
+  public @Nullable String getDefaultExpressionText() {
+    PyTypeParameterStub stub = getStub();
+    if (stub != null) {
+      return stub.getDefaultExpressionText();
+    }
+
+    return PyTypeParameter.super.getDefaultExpressionText();
+  }
+
+  @Override
+  public @NotNull PyTypeParameter.Kind getKind() {
     PyTypeParameterStub stub = getStub();
 
     if (stub != null) {
@@ -84,18 +91,22 @@ public class PyTypeParameterImpl extends PyBaseElementImpl<PyTypeParameterStub> 
   }
 
   @Override
-  @Nullable
-  public PyType getType(@NotNull TypeEvalContext context, TypeEvalContext.@NotNull Key key) {
+  public @Nullable PyType getType(@NotNull TypeEvalContext context, TypeEvalContext.@NotNull Key key) {
     PyPsiFacade facade = PyPsiFacade.getInstance(this.getProject());
     Kind kind = this.getKind();
     PyClass pyClass = switch (kind) {
       case TypeVar -> facade.createClassByQName(PyTypingTypeProvider.TYPE_VAR, this);
       case TypeVarTuple -> facade.createClassByQName(PyTypingTypeProvider.TYPE_VAR_TUPLE, this);
-      case ParamSpec -> facade.createClassByQName(PyTypingTypeProvider.TYPING_PARAM_SPEC, this);
+      case ParamSpec -> facade.createClassByQName(PyTypingTypeProvider.PARAM_SPEC, this);
     };
     if (pyClass != null) {
       return new PyClassTypeImpl(pyClass, false);
     }
     return null;
+  }
+
+  @Override
+  public @Nullable String getQualifiedName() {
+    return QualifiedNameFinder.getQualifiedName(this);
   }
 }

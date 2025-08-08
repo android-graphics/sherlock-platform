@@ -14,7 +14,14 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.use
-import com.intellij.platform.ijent.*
+import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelExecApi.ExecuteProcessError
+import com.intellij.platform.eel.impl.fs.EelProcessResultImpl
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.ijent.IjentExecApi
+import com.intellij.platform.ijent.IjentPosixApi
+import com.intellij.platform.ijent.IjentProcessInfo
+import com.intellij.platform.ijent.IjentTunnelsPosixApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -413,8 +420,12 @@ class WSLDistributionTest {
     fun `workingDirectory is preserved`() {
       val options = WSLCommandLineOptions()
 
+      val uncPrefix = WSLUtil.getUncPrefix()
+
+      val workDir = """${uncPrefix}$WSL_ID\foo\bar"""
+
       val sourceCmd = GeneralCommandLine("true")
-        .withWorkDirectory("""\\wsl.localhost\$WSL_ID\foo\bar""")
+        .withWorkDirectory(workDir)
 
       val cmd = WslTestStrategy.Ijent.patch(sourceCmd, options)
 
@@ -491,11 +502,15 @@ class WSLDistributionTest {
         sourceCommandLine.isProcessCreatorSet should be(true)
       }
 
+      withClue("Eel should not be set for a patched command line") {
+        sourceCommandLine.tryGetEel() should beNull()
+      }
+
       withClue("Checking that the mock works") {
         val err = shouldThrow<ProcessNotCreatedException> {
           sourceCommandLine.createProcess()
         }
-        err.message should be(executeResultMock.message)
+        err.message should be(executeResultMock.error.message)
       }
       adapter
     }
@@ -504,15 +519,29 @@ class WSLDistributionTest {
 enum class WslTestStrategy { Legacy, Ijent }
 
 private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser: Boolean) : IjentPosixApi {
-  override val id: IjentId get() = throw UnsupportedOperationException()
+  override val descriptor: EelDescriptor
+    get() = object : EelDescriptor {
+      override val operatingSystem: EelPath.OS
+        get() = EelPath.OS.UNIX
 
-  override val platform: IjentPlatform get() = throw UnsupportedOperationException()
+      override suspend fun upgrade(): EelApi {
+        throw UnsupportedOperationException()
+      }
+    }
+
+  override val platform: EelPlatform.Posix get() = throw UnsupportedOperationException()
+
+  override val archive: EelArchiveApi get() = throw UnsupportedOperationException()
 
   override val isRunning: Boolean get() = true
 
-  override val info: IjentPosixInfo get() = throw UnsupportedOperationException()
+  override val ijentProcessInfo: IjentProcessInfo get() = throw UnsupportedOperationException()
+
+  override val userInfo: EelUserPosixInfo get() = throw UnsupportedOperationException()
 
   override fun close(): Unit = Unit
+
+  override suspend fun waitUntilExit(): Unit = Unit
 
   override val exec: IjentExecApi get() = MockIjentExecApi(adapter, rootUser)
 
@@ -522,49 +551,28 @@ private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser
 }
 
 private class MockIjentExecApi(private val adapter: GeneralCommandLine, private val rootUser: Boolean) : IjentExecApi {
-  override fun executeProcessBuilder(exe: String): IjentExecApi.ExecuteProcessBuilder =
-    MockIjentApiExecuteProcessBuilder(adapter.apply { exePath = exe }, rootUser)
+
+  override val descriptor: EelDescriptor get() = throw UnsupportedOperationException()
+
+  override suspend fun execute(builder: EelExecApi.ExecuteProcessOptions): EelResult<EelProcess, ExecuteProcessError> = executeResultMock.also {
+    adapter.exePath = builder.exe
+    if (rootUser) {
+      adapter.putUserData(TEST_ROOT_USER_SET, true)
+    }
+    adapter.addParameters(builder.args)
+    adapter.setWorkDirectory(builder.workingDirectory?.toString())
+    adapter.environment.putAll(builder.env)
+  }
 
   override suspend fun fetchLoginShellEnvVariables(): Map<String, String> = mapOf("SHELL" to TEST_SHELL)
+  override suspend fun findExeFilesInPath(binaryName: String): List<EelPath> = listOf(EelPath.parse("/bin/$binaryName", descriptor))
 }
 
 private val TEST_ROOT_USER_SET by lazy { Key.create<Boolean>("TEST_ROOT_USER_SET") }
 
-private class MockIjentApiExecuteProcessBuilder(
-  private val adapter: GeneralCommandLine,
-  rootUser: Boolean,
-) : IjentExecApi.ExecuteProcessBuilder {
-  init {
-    if (rootUser) {
-      adapter.putUserData(TEST_ROOT_USER_SET, true)
-    }
-  }
-
-  override fun args(args: List<String>): IjentExecApi.ExecuteProcessBuilder = apply {
-    adapter.parametersList.run {
-      clearAll()
-      addAll(args)
-    }
-  }
-
-  override fun env(env: Map<String, String>): IjentExecApi.ExecuteProcessBuilder = apply {
-    adapter.environment.run {
-      clear()
-      putAll(env)
-    }
-  }
-
-  override fun pty(pty: IjentExecApi.Pty?): IjentExecApi.ExecuteProcessBuilder = this
-
-  override fun workingDirectory(workingDirectory: String?): IjentExecApi.ExecuteProcessBuilder = apply {
-    adapter.setWorkDirectory(workingDirectory)
-  }
-
-  override suspend fun execute(): IjentExecApi.ExecuteProcessResult = executeResultMock
-}
 
 private val executeResultMock by lazy {
-  IjentExecApi.ExecuteProcessResult.Failure(errno = 12345, message = "mock result ${Ksuid.generate()}")
+  EelProcessResultImpl.createErrorResult(errno = 12345, message = "mock result ${Ksuid.generate()}")
 }
 
 private class WslTestStrategyExtension

@@ -12,11 +12,8 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
-import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
-import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.ui.KotlinChangePropertySignatureDialog
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.ui.KotlinChangeSignatureDialog
@@ -49,7 +46,7 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
     @OptIn(KaAllowAnalysisOnEdt::class)
     fun findDeclaration(element: PsiElement, context: PsiElement, project: Project, editor: Editor?): PsiElement? {
         if (element !is KtElement) return element
-        val module = KaModuleProvider.getModule(project, context, useSiteModule = null)
+        val module = context.getKaModule(project, useSiteModule = null)
         return allowAnalysisOnEdt {
             analyze(module) {
                 val ktSymbol = when (element) {
@@ -78,6 +75,7 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
 
                 val elementKind = when {
                     ktSymbol == null -> InapplicabilityKind.Null
+                    ktSymbol is KaLocalVariableSymbol -> InapplicabilityKind.Null
                     ktSymbol is KaNamedFunctionSymbol && ktSymbol.valueParameters.any { it.isVararg } -> InapplicabilityKind.Varargs
                     ktSymbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED -> InapplicabilityKind.Synthetic
                     ktSymbol.origin == KaSymbolOrigin.LIBRARY -> InapplicabilityKind.Library

@@ -8,6 +8,7 @@ import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.Nls
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
@@ -47,8 +48,17 @@ enum class DslComponentProperty {
    *
    * Value: [JComponent]
    */
-  // todo replace usage by INTERACTIVE_COMPONENT and deprecate
+  @Deprecated(message = "Use INTERACTIVE_COMPONENT/SKIP_LABEL_FOR_ASSIGNMENT instead", level = DeprecationLevel.ERROR)
+  @ScheduledForRemoval
   LABEL_FOR,
+
+  /**
+   * By default, [Cell.label] assigns [javax.swing.JLabel.setLabelFor] for the cell component.
+   * It can be turned off via this property, which could be useful when shortcut is processed manually with some specific action
+   *
+   * Value: [Boolean]
+   */
+  SKIP_LABEL_FOR_ASSIGNMENT,
 
   /**
    * Some compound components can contain several components inside itself. [INTERACTIVE_COMPONENT] points to main interactive one
@@ -127,7 +137,15 @@ fun interface IconsProvider {
  * true - force setting [SpacingConfiguration.verticalComponentGap]
  * false - force setting 0 as a vertical gap
  */
-data class VerticalComponentGap(val top: Boolean? = null, val bottom: Boolean? = null)
+data class VerticalComponentGap(val top: Boolean? = null, val bottom: Boolean? = null) {
+  companion object {
+    @JvmField
+    val NONE: VerticalComponentGap = VerticalComponentGap(top = false, bottom = false)
+
+    @JvmField
+    val BOTH: VerticalComponentGap = VerticalComponentGap(top = true, bottom = true)
+  }
+}
 
 fun UINumericRange.asRange(): IntRange = min..max
 

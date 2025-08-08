@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +16,8 @@ import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.SwitchHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.struct.match.IMatchable;
+import org.jetbrains.java.decompiler.util.StartEndPair;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.*;
@@ -50,7 +52,11 @@ public final class SwitchStatement extends Statement {
       regularSuccessors.remove(post);
     }
     defaultEdge = head.getSuccessorEdges(EdgeType.DIRECT_ALL).get(0);
-    for (Statement successor : regularSuccessors) {
+
+    //We need to use set above in case we have multiple edges to the same node. But HashSets iterator is not ordered, so sort
+    List<Statement> sorted = new ArrayList<>(regularSuccessors);
+    Collections.sort(sorted, Comparator.comparingInt(o -> o.id));
+    for (Statement successor : sorted) {
       stats.addWithKey(successor, successor.id);
     }
   }
@@ -136,8 +142,7 @@ public final class SwitchStatement extends Statement {
     useCustomDefault = true;
   }
 
-  @Nullable
-  public static Statement isHead(@NotNull Statement head) {
+  public static @Nullable Statement isHead(@NotNull Statement head) {
     if (head.type == StatementType.BASIC_BLOCK && head.getLastBasicType() == StatementType.SWITCH) {
       List<Statement> statements = new ArrayList<>();
       if (DecHelper.isChoiceStatement(head, statements)) {
@@ -156,8 +161,7 @@ public final class SwitchStatement extends Statement {
   }
 
   @Override
-  @NotNull
-  public TextBuffer toJava(int indent, @NotNull BytecodeMappingTracer tracer) {
+  public @NotNull TextBuffer toJava(int indent, @NotNull BytecodeMappingTracer tracer) {
     SwitchHelper.simplifySwitchOnEnum(this);
     TextBuffer buf = new TextBuffer();
     buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
@@ -255,9 +259,8 @@ public final class SwitchStatement extends Statement {
   }
 
   @Override
-  @NotNull
-  public List<Object> getSequentialObjects() {
-    List<Object> result = new ArrayList<>(stats);
+  public @NotNull List<IMatchable> getSequentialObjects() {
+    List<IMatchable> result = new ArrayList<>(stats);
     result.add(1, headExprent);
     return result;
   }
@@ -280,8 +283,7 @@ public final class SwitchStatement extends Statement {
   }
 
   @Override
-  @NotNull
-  public Statement getSimpleCopy() {
+  public @NotNull Statement getSimpleCopy() {
     return new SwitchStatement();
   }
 
@@ -290,6 +292,17 @@ public final class SwitchStatement extends Statement {
     first = stats.get(0);
     defaultEdge = first.getSuccessorEdges(EdgeType.DIRECT_ALL).get(0);
     sortEdgesAndNodes();
+  }
+
+  @Override
+  public StartEndPair getStartEndRange() {
+    StartEndPair[] sepairs = new StartEndPair[caseStatements.size() + 1];
+    int i = 0;
+    sepairs[i++] = super.getStartEndRange();
+    for (Statement st : caseStatements) {
+      sepairs[i++] = st.getStartEndRange();
+    }
+    return StartEndPair.join(sepairs);
   }
 
   public void sortEdgesAndNodes() {
@@ -430,33 +443,27 @@ public final class SwitchStatement extends Statement {
     }
   }
 
-  @NotNull
-  public List<Exprent> getHeadExprentList() {
+  public @NotNull List<Exprent> getHeadExprentList() {
     return Collections.singletonList(headExprent);
   }
 
-  @Nullable
-  public Exprent getHeadExprent() {
+  public @Nullable Exprent getHeadExprent() {
     return headExprent;
   }
 
-  @NotNull
-  public List<List<StatEdge>> getCaseEdges() {
+  public @NotNull List<List<StatEdge>> getCaseEdges() {
     return caseEdges;
   }
 
-  @NotNull
-  public List<Statement> getCaseStatements() {
+  public @NotNull List<Statement> getCaseStatements() {
     return caseStatements;
   }
 
-  @NotNull
-  public StatEdge getDefaultEdge() {
+  public @NotNull StatEdge getDefaultEdge() {
     return defaultEdge;
   }
 
-  @NotNull
-  public List<List<@Nullable Exprent>> getCaseValues() {
+  public @NotNull List<List<@Nullable Exprent>> getCaseValues() {
     return caseValues;
   }
 }

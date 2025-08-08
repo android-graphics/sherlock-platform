@@ -2,6 +2,7 @@
 package com.intellij.ui.codeFloatingToolbar
 
 import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -11,7 +12,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class GotoNextFloatingToolbarMenu: AnAction() {
 
   companion object {
@@ -48,7 +51,8 @@ class GotoNextFloatingToolbarMenu: AnAction() {
         DefaultActionGroup(button.action),
         DataManager.getInstance().getDataContext(editor.component),
         JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
-        true
+        true,
+        ActionPlaces.EDITOR_FLOATING_TOOLBAR,
       )
       floatingToolbar.attachPopupToButton(button, popup)
       popup.showUnderneathOf(button)

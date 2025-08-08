@@ -3,6 +3,7 @@ package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.databind.type.TypeFactory
 import com.intellij.DynamicBundle.LanguageBundleEP
+import com.intellij.codeInsight.daemon.impl.InspectionVisitorOptimizer
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveProjectsAndApp
@@ -21,7 +22,6 @@ import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.TopHitCache
 import com.intellij.ide.ui.UIThemeProvider
-import com.intellij.ide.util.TipAndTrickManager
 import com.intellij.idea.IdeaLogger
 import com.intellij.lang.Language
 import com.intellij.notification.NotificationType
@@ -40,10 +40,12 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.application.impl.inModalContext
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -55,6 +57,7 @@ import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
@@ -76,11 +79,17 @@ import com.intellij.ui.IconDeferrer
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.CachedValuesManagerImpl
 import com.intellij.util.MemoryDumpHelper
+import com.intellij.util.ObjectUtils
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.WeakList
+import com.intellij.util.messages.impl.DynamicPluginUnloaderCompatibilityLayer
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.ref.GCWatcher
+import com.intellij.util.xmlb.clearPropertyCollectorCache
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.Nls
 import java.awt.KeyboardFocusManager
 import java.awt.Window
 import java.nio.channels.FileChannel
@@ -96,6 +105,12 @@ private val LOG = logger<DynamicPlugins>()
 private val classloadersFromUnloadedPlugins = mutableMapOf<PluginId, WeakList<PluginClassLoader>>()
 
 object DynamicPlugins {
+  private val VETOER_EP_NAME: ExtensionPointName<DynamicPluginVetoer> = ExtensionPointName.create("com.intellij.ide.dynamicPluginVetoer");
+
+  private var myProcessRun = 0
+  private val myProcessCallbacks = mutableListOf<Runnable>()
+  private val myLock = Any()
+
   @JvmStatic
   @JvmOverloads
   fun allowLoadUnloadWithoutRestart(descriptor: IdeaPluginDescriptorImpl,
@@ -112,8 +127,10 @@ object DynamicPlugins {
    * @return true if the requested enabled state was applied without restart, false if restart is required
    */
   fun loadPlugins(descriptors: Collection<IdeaPluginDescriptorImpl>, project: Project?): Boolean {
-    return updateDescriptorsWithoutRestart(descriptors, load = true) {
-      loadPlugin(it, project)
+    return runProcess {
+      updateDescriptorsWithoutRestart(descriptors, load = true) {
+        doLoadPlugin(it, project)
+      }
     }
   }
 
@@ -126,8 +143,40 @@ object DynamicPlugins {
     parentComponent: JComponent? = null,
     options: UnloadPluginOptions = UnloadPluginOptions(disable = true),
   ): Boolean {
-    return updateDescriptorsWithoutRestart(descriptors, load = false) {
-      unloadPluginWithProgress(project, parentComponent, it, options)
+    return runProcess {
+      updateDescriptorsWithoutRestart(descriptors, load = false) {
+        doUnloadPluginWithProgress(project, parentComponent, it, options)
+      }
+    }
+  }
+
+  private fun runProcess(process: () -> Boolean): Boolean {
+    try {
+      synchronized(myLock) {
+        myProcessRun++
+      }
+      return process.invoke()
+    }
+    finally {
+      val callbacks = mutableListOf<Runnable>()
+      synchronized(myLock) {
+        myProcessRun--
+        callbacks.addAll(myProcessCallbacks)
+        myProcessCallbacks.clear()
+      }
+      callbacks.forEach { it.run() }
+    }
+  }
+
+  fun runAfter(runAlways: Boolean, callback: Runnable) {
+    synchronized(myLock) {
+      if (myProcessRun > 0) {
+        myProcessCallbacks.add(callback)
+        return
+      }
+    }
+    if (runAlways) {
+      callback.run()
     }
   }
 
@@ -168,9 +217,7 @@ object DynamicPlugins {
     //  2) SortedModuleGraph;
     //  3) SortedModuleGraph.topologicalComparator;
     //  4) PluginSetBuilder.sortedModuleGraph.
-    var comparator = PluginSetBuilder(allPlugins)
-      .moduleGraph
-      .topologicalComparator
+    var comparator = PluginSetBuilder(allPlugins).topologicalComparator
 
     if (!load) {
       comparator = comparator.reversed()
@@ -230,12 +277,10 @@ object DynamicPlugins {
         return null
       }
 
-      try {
-        app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).checkUnloadPlugin(module)
+      val vetoMessage = VETOER_EP_NAME.computeSafeIfAny {
+        it.vetoPluginUnload(module)
       }
-      catch (e: CannotUnloadPluginException) {
-        return e.cause?.localizedMessage ?: "checkUnloadPlugin listener blocked plugin unload"
-      }
+      if (vetoMessage != null) return vetoMessage
     }
 
     if (!Registry.`is`("ide.plugins.allow.unload.from.sources")) {
@@ -386,21 +431,41 @@ object DynamicPlugins {
                                parentComponent: JComponent?,
                                pluginDescriptor: IdeaPluginDescriptorImpl,
                                options: UnloadPluginOptions): Boolean {
+    return runProcess {
+      doUnloadPluginWithProgress(project, parentComponent, pluginDescriptor, options)
+    }
+  }
+
+  private fun doUnloadPluginWithProgress(project: Project? = null,
+                                         parentComponent: JComponent?,
+                                         pluginDescriptor: IdeaPluginDescriptorImpl,
+                                         options: UnloadPluginOptions): Boolean {
     var result = false
+    val modalOwner = project?.let { ModalTaskOwner.project(it) } ?: ModalTaskOwner.guess()
     if (options.save) {
       runInAutoSaveDisabledMode {
         FileDocumentManager.getInstance().saveAllDocuments()
-        runWithModalProgressBlocking(project?.let { ModalTaskOwner.project(it) } ?: ModalTaskOwner.guess(), "") {
+        runWithModalProgressBlocking(modalOwner, "") {
           saveProjectsAndApp(true)
         }
       }
     }
-    val indicator = PotemkinProgress(IdeBundle.message("plugins.progress.unloading.plugin.title", pluginDescriptor.name),
-                                     project,
-                                     parentComponent,
-                                     null)
-    indicator.runInSwingThread {
-      result = unloadPluginWithoutProgress(pluginDescriptor, options.withSave(false))
+    // We are doing a very bad thing here: we are using `PotemkinProgress` with a non-modal state.
+    // We cannot properly replace it with the classic modal progress, because the function inside frequently uses write actions,
+    // and we need to update the progress bar.
+    // The problem here is that because of the non-modal state,
+    // any dialog can appear on top of PotemkinProgress. But PotemkinProgress blocks input events if they are not related to the appeared dialog,
+    // hence the user cannot interact with the dialog.
+    // We are using an ad-hoc modality here to block any attempts to initiate a modal dialog stemming from a non-modal state.
+    // A proper fix would be to transfer the inner write actions to background, and show normal running modal progress dialog instead of Potemkin; see IJPL-182690
+    inModalContext(ObjectUtils.sentinel("Unloading of ${pluginDescriptor.name}")) {
+      val indicator = PotemkinProgress(IdeBundle.message("plugins.progress.unloading.plugin.title", pluginDescriptor.name),
+                                       project,
+                                       parentComponent,
+                                       null)
+      indicator.runInSwingThread {
+        result = unloadPluginWithoutProgress(pluginDescriptor, options.withSave(false))
+      }
     }
     return result
   }
@@ -446,7 +511,9 @@ object DynamicPlugins {
   @JvmOverloads
   fun unloadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl,
                    options: UnloadPluginOptions = UnloadPluginOptions(disable = true)): Boolean {
-    return unloadPluginWithProgress(project = null, parentComponent = null, pluginDescriptor, options)
+    return runProcess {
+      doUnloadPluginWithProgress(project = null, parentComponent = null, pluginDescriptor, options)
+    }
   }
 
   private fun unloadPluginWithoutProgress(pluginDescriptor: IdeaPluginDescriptorImpl,
@@ -465,8 +532,6 @@ object DynamicPlugins {
     }
 
     try {
-      TipAndTrickManager.getInstance().closeTipDialog()
-
       app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor, options.isUpdate)
       IdeEventQueue.getInstance().flushQueue()
     }
@@ -495,8 +560,6 @@ object DynamicPlugins {
           unloadDependencyDescriptors(pluginDescriptor, pluginSet, classLoaders)
           unloadModuleDescriptorNotRecursively(pluginDescriptor)
 
-          clearPluginClassLoaderParentListCache(pluginSet)
-
           app.extensionArea.clearUserCache()
           for (project in ProjectUtil.getOpenProjects()) {
             (project.extensionArea as ExtensionsAreaImpl).clearUserCache()
@@ -504,6 +567,8 @@ object DynamicPlugins {
           clearCachedValues()
 
           jdomSerializer.clearSerializationCaches()
+          clearPropertyCollectorCache()
+          InspectionVisitorOptimizer.clearCache()
           TypeFactory.defaultInstance().clearCache()
           TopHitCache.getInstance().clear()
           ActionToolbarImpl.resetAllToolbars()
@@ -528,12 +593,17 @@ object DynamicPlugins {
           @Suppress("TestOnlyProblems")
           (ProjectManager.getInstanceIfCreated() as? ProjectManagerImpl)?.disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests()
 
+          // clear parents as much late as possible because allParents are a lazy list and calculated on demand
+          // it may happen that too early invalidation may lead to unloaded loaders appear in allParents again (IJPL-171566)
+          clearPluginClassLoaderParentListCache(pluginSet)
           val newPluginSet = pluginSet.withoutModule(
             module = pluginDescriptor,
             disable = options.disable,
           ).createPluginSetWithEnabledModulesMap()
 
           PluginManagerCore.setPluginSet(newPluginSet)
+          // clear parents cache for newPluginSet just for a case
+          clearPluginClassLoaderParentListCache(newPluginSet)
         }
         finally {
           try {
@@ -704,10 +774,12 @@ object DynamicPlugins {
     val app = ApplicationManager.getApplication() as ApplicationImpl
     (ActionManager.getInstance() as ActionManagerImpl).unloadActions(module)
 
-    if (module.pluginId.idString == "com.intellij.jsp") {
-      println("Unloading")
+    val openedProjects = ProjectUtil.getOpenProjects().toMutableList()
+    @Suppress("TestOnlyProblems")
+    if (ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized) {
+      openedProjects.add(ProjectManagerEx.getInstanceEx().defaultProject)
     }
-    val openedProjects = ProjectUtil.getOpenProjects().asList()
+
     val appExtensionArea = app.extensionArea
     val priorityUnloadListeners = mutableListOf<Runnable>()
     val unloadListeners = mutableListOf<Runnable>()
@@ -753,9 +825,9 @@ object DynamicPlugins {
     module.appContainerDescriptor.listeners?.let { appMessageBus.unsubscribeLazyListeners(module, it) }
 
     for (project in openedProjects) {
-      (project as ComponentManagerImpl).unloadServices(module, module.projectContainerDescriptor.services)
+      (project.actualComponentManager as ComponentManagerImpl).unloadServices(module, module.projectContainerDescriptor.services)
       module.projectContainerDescriptor.listeners?.let {
-        ((project as ComponentManagerImpl).messageBus as MessageBusEx).unsubscribeLazyListeners(module, it)
+        ((project.actualComponentManager as ComponentManagerImpl).messageBus as MessageBusEx).unsubscribeLazyListeners(module, it)
       }
 
       val moduleServices = module.moduleContainerDescriptor.services
@@ -822,7 +894,22 @@ object DynamicPlugins {
 
   @JvmOverloads
   fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, project: Project? = null): Boolean {
+    return runProcess {
+      doLoadPlugin(pluginDescriptor, project)
+    }
+  }
+
+  private fun doLoadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, project: Project? = null): Boolean {
     var result = false
+
+    val isVetoed = VETOER_EP_NAME.findFirstSafe {
+      it.vetoPluginLoad(pluginDescriptor)
+    } != null
+
+    if (isVetoed) {
+      return false
+    }
+
     val indicator = PotemkinProgress(IdeBundle.message("plugins.progress.loading.plugin.title", pluginDescriptor.name),
                                      project,
                                      null,
@@ -1049,9 +1136,7 @@ private fun optionalDependenciesOnPlugin(
   }
 
   // 2. sort topologically
-  val topologicalComparator = PluginSetBuilder(dependentPluginsAndItsModule.map { it.first })
-    .moduleGraph
-    .topologicalComparator
+  val topologicalComparator = PluginSetBuilder(dependentPluginsAndItsModule.map { it.first }).topologicalComparator
   dependentPluginsAndItsModule.sortWith(Comparator { o1, o2 -> topologicalComparator.compare(o1.first, o2.first) })
 
   return dependentPluginsAndItsModule
@@ -1067,7 +1152,7 @@ private fun optionalDependenciesOnPlugin(
 private fun loadModules(modules: List<IdeaPluginDescriptorImpl>, app: ApplicationImpl, listenerCallbacks: MutableList<in Runnable>) {
   app.registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)
   for (openProject in getOpenedProjects()) {
-    (openProject as ComponentManagerImpl).registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)
+    (openProject.actualComponentManager as ComponentManagerImpl).registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)
 
     for (module in ModuleManager.getInstance(openProject).modules) {
       (module as ComponentManagerImpl).registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)
@@ -1360,8 +1445,9 @@ private fun setClassLoaderState(pluginDescriptor: IdeaPluginDescriptorImpl, stat
 }
 
 private fun clearPluginClassLoaderParentListCache(pluginSet: PluginSet) {
-  // yes, clear not only enabled plugins, but all, just to be sure; it's a cheap operation
-  for (descriptor in pluginSet.allPlugins) {
+  // yes, clear not only enabled plugins, but (all + enabledModules) because enabledModules is a superset of enabledPlugins
+  // it's a cheap operation and even if some modules may repeat due to concatenation, it should be not a problem (making a set is probably even slower)
+  for (descriptor in pluginSet.allPlugins + pluginSet.getEnabledModules()) {
     (descriptor.pluginClassLoader as? PluginClassLoader)?.clearParentListCache()
   }
 }
@@ -1382,4 +1468,17 @@ private fun checkUnloadActions(module: IdeaPluginDescriptorImpl): String? {
     }
   }
   return null
+}
+
+internal class FallbackPluginVetoer : DynamicPluginVetoer {
+  override fun vetoPluginUnload(pluginDescriptor: IdeaPluginDescriptor): @Nls String? {
+    val vetoMessage = DynamicPluginUnloaderCompatibilityLayer.queryPluginUnloadVetoers(pluginDescriptor, ApplicationManager.getApplication().messageBus)
+    if (vetoMessage != null) return vetoMessage
+
+    for (project in ProjectManager.getInstance().openProjects) {
+      val vetoMessage = DynamicPluginUnloaderCompatibilityLayer.queryPluginUnloadVetoers(pluginDescriptor, project.messageBus)
+      if (vetoMessage != null) return vetoMessage
+    }
+    return null
+  }
 }

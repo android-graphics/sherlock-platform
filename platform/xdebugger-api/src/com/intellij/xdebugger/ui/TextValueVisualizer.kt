@@ -1,7 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.ui
 
-import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
@@ -15,18 +16,17 @@ import javax.swing.JComponent
  */
 @ApiStatus.Experimental // until we consider collection visualizers
 interface TextValueVisualizer {
+  /**
+   * Visualizes the given value, possibly in several ways.
+   * Returns an empty list, if [value] cannot be visualized.
+   */
+  fun visualize(value: @NlsSafe String): List<VisualizedContentTab>
 
   /**
-   * Returns whether this extension can visualize the given value.
-   * If `true`, then [visualize] returns a non-empty list.
+   * Try to detect the file type of given [value] visualizable by this visualizer.
+   * It might be used to view/edit raw [value] without any visualization/formatting.
    */
-  fun canVisualize(value: String): Boolean {
-    // Default implementation, feel free to override it if there is a more efficient way to check this.
-    return visualize(value).isNotEmpty()
-  }
-
-  /** Visualizes the given value, possibly in several ways. */
-  fun visualize(value: @NlsSafe String): List<VisualizedContentTab>
+  fun detectFileType(value: @NlsSafe String): FileType? = null
 }
 
 @ApiStatus.Experimental // until we consider collection visualizers
@@ -38,7 +38,7 @@ interface VisualizedContentTab {
   val id: String
 
   /** Create the visualized content component. */
-  fun createComponent(project: Project): JComponent
+  fun createComponent(project: Project, parentDisposable: Disposable): JComponent
 
   /**
    * This callback is called when the tab is shown.

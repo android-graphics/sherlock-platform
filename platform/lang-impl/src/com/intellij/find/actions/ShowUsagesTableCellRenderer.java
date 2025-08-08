@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions;
 
 import com.intellij.find.FindBundle;
@@ -17,7 +17,6 @@ import com.intellij.usages.impl.UsageNode;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,10 +31,7 @@ import java.awt.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
-
-@ApiStatus.Internal
 final class ShowUsagesTableCellRenderer implements TableCellRenderer {
-
   static final int MARGIN = 2;
 
   private final @NotNull Predicate<? super Usage> myOriginUsageCheck;
@@ -256,26 +252,24 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
            ColorUtil.hackBrightness(back, 1, 1 / 1.05f); // Olga insisted on very-pale almost invisible gray. oh well
   }
 
-  @NotNull
-  private static SimpleTextAttributes getAttributes(boolean isSelected,
-                                                    Color fileBgColor,
-                                                    Color selectionBg,
-                                                    Color selectionFg,
-                                                    @NotNull TextChunk chunk) {
+  private static @NotNull SimpleTextAttributes getAttributes(boolean isSelected,
+                                                             Color fileBgColor,
+                                                             Color selectionBg,
+                                                             Color selectionFg,
+                                                             @NotNull TextChunk chunk) {
     SimpleTextAttributes background = chunk.getSimpleAttributesIgnoreBackground();
     return isSelected
            ? new SimpleTextAttributes(selectionBg, selectionFg, null, background.getStyle())
            : deriveBgColor(background, fileBgColor);
   }
 
-  @NotNull
-  private static JComponent textComponentSpanningWholeRow(
+  private static @NotNull JComponent textComponentSpanningWholeRow(
     @NotNull SimpleColoredComponent chunks,
     Color rowBackground,
     Color rowSelectionBackground,
     Color rowForeground,
     final int column,
-    @NotNull final JTable table
+    final @NotNull JTable table
   ) {
     final SimpleColoredComponent component = new SimpleColoredComponent() {
       @Override
@@ -299,9 +293,8 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
         g.translate(+offset, 0);
       }
 
-      @NotNull
       @Override
-      public Dimension getPreferredSize() {
+      public @NotNull Dimension getPreferredSize() {
         //return super.getPreferredSize();
         return column == table.getColumnModel().getColumnCount() - 1 ? super.getPreferredSize() : new Dimension(0, 0);
         // it should span the whole row, so we can't return any specific value here,
@@ -326,8 +319,7 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     return result;
   }
 
-  @NotNull
-  private static SimpleTextAttributes deriveBgColor(@NotNull SimpleTextAttributes attributes, @Nullable Color fileBgColor) {
+  private static @NotNull SimpleTextAttributes deriveBgColor(@NotNull SimpleTextAttributes attributes, @Nullable Color fileBgColor) {
     if (fileBgColor != null) {
       attributes = attributes.derive(-1, null, fileBgColor, null);
     }
@@ -459,8 +451,7 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
   }
 
   private static final class MyLayout extends BoxLayout {
-
-    public MyLayout(Container target) {
+    MyLayout(Container target) {
       super(target, BoxLayout.X_AXIS);
     }
 

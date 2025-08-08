@@ -15,6 +15,7 @@ import com.intellij.ui.scale.ScaleType
 import com.intellij.ui.scale.isHiDPIEnabledAndApplicable
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.concurrency.Semaphore
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.TestOnly
@@ -73,8 +74,7 @@ object StartupUiUtil {
       return if (isUnderDarcula) 140 else 230
     }
 
-    @Suppress("SpellCheckingInspection")
-    val lcdContrastValue = (Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints") as? Map<*, *>)
+    val lcdContrastValue = (Toolkit.getDefaultToolkit().getDesktopProperty(GraphicsUtil.DESKTOP_HINTS) as? Map<*, *>)
                              ?.get(RenderingHints.KEY_TEXT_LCD_CONTRAST) as Int? ?: return 140
     return normalizeLcdContrastValue(lcdContrastValue)
   }
@@ -186,6 +186,13 @@ object StartupUiUtil {
     return SystemInfoRt.isUnix
            && !SystemInfoRt.isMac
            &&  "sun.awt.X11.XToolkit" == Toolkit.getDefaultToolkit().javaClass.name
+  }
+
+  @ApiStatus.Internal
+  @JvmStatic
+  fun isLWCToolkit(): Boolean {
+    return SystemInfoRt.isMac
+           && "sun.lwawt.macosx.LWCToolkit" == Toolkit.getDefaultToolkit().javaClass.name
   }
 
   /**

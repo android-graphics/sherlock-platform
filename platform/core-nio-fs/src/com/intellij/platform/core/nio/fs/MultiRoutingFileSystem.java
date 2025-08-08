@@ -4,9 +4,9 @@ package com.intellij.platform.core.nio.fs;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.FileStore;
-import java.nio.file.FileSystem;
-import java.nio.file.Path;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.*;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -20,23 +20,63 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
   private final FileSystem myLocalFS;
 
   private static class Backend {
-    @NotNull final String root;
+    final @NotNull String root;
     final boolean prefix;
     final boolean caseSensitive;
-    @NotNull final FileSystem fileSystem;
+    final @NotNull FileSystem fileSystem;
 
     Backend(@NotNull String root, boolean prefix, boolean caseSensitive, @NotNull FileSystem fileSystem) {
-      this.root = root;
+      this.root = sanitizeRoot(root, caseSensitive);
       this.prefix = prefix;
       this.caseSensitive = caseSensitive;
       this.fileSystem = fileSystem;
     }
 
-    boolean matchRoot(@NotNull String candidate) {
-      if (!prefix && candidate.length() != root.length()) {
-        return false;
+    private static @NotNull String sanitizeRoot(@NotNull String root, boolean caseSensitive) {
+      // On Unix, a file name may contain `\` but may not contain `/`.
+      // On Windows, a file name may contain neither `\` nor `/`.
+      // It happens sometimes that a Windows path uses `/` as a separator.
+      // An assumption that all paths use `/` as a separator makes matching easier.
+      root = root.replace(File.separatorChar, '/');
+      root = root.substring(0, trimEndSlashes(root));
+      if (!caseSensitive) {
+        root = root.toLowerCase(Locale.ROOT);
       }
-      return candidate.regionMatches(!caseSensitive, 0, root, 0, root.length());
+      return root;
+    }
+
+    private static int trimEndSlashes(@NotNull String root) {
+      int i = root.length() - 1;
+      while (i >= 0 && root.charAt(i) == '/') {
+        --i;
+      }
+      return i + 1;
+    }
+
+    boolean matchPath(@NotNull String candidate) {
+      if (candidate.length() < root.length()) return false;
+
+      for (int i = 0; i < root.length(); i++) {
+        char candidateChar = candidate.charAt(i);
+        char rootChar = root.charAt(i);
+
+        if (!caseSensitive && candidateChar >= 'A' && candidateChar <= 'Z') {
+          candidateChar -= 'A';
+          candidateChar += 'a';
+        }
+        else if (candidateChar == '\\') {
+          candidateChar = '/';
+        }
+
+        if (candidateChar != rootChar) {
+          return false;
+        }
+      }
+
+      return prefix ||
+             candidate.length() == root.length() ||
+             candidate.charAt(root.length()) == '/' ||
+             candidate.charAt(root.length()) == '\\';
     }
   }
 
@@ -57,13 +97,14 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
     BiFunction<? super @NotNull FileSystemProvider, ? super @Nullable FileSystem, @Nullable FileSystem> compute
   ) {
     myBackends.updateAndGet(oldList -> {
-      List<@NotNull Backend> newList = new ArrayList<>(oldList);
-      ListIterator<@NotNull Backend> iter = newList.listIterator();
+      String sanitizedRoot = Backend.sanitizeRoot(root, caseSensitive);
+      List<Backend> newList = new ArrayList<>(oldList);
+      ListIterator<Backend> iterator = newList.listIterator();
       FileSystem newFs = null;
-      while (iter.hasNext()) {
-        Backend current = iter.next();
-        if (current.root.equals(root)) {
-          iter.remove();
+      while (iterator.hasNext()) {
+        Backend current = iterator.next();
+        if (current.root.equals(sanitizedRoot)) {
+          iterator.remove();
           newFs = compute.apply(myProvider.myLocalProvider, current.fileSystem);
           if (newFs == null) {
             return newList;
@@ -79,7 +120,7 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
         }
       }
 
-      iter.add(new Backend(root, isPrefix, caseSensitive, newFs));
+      iterator.add(new Backend(sanitizedRoot, isPrefix, caseSensitive, newFs));
 
       // To ease finding the appropriate backend for a specific root, the roots should be ordered by their lengths in the descending order.
       // This operation is quite rare and the list is quite small. There's no reason to deal with error-prone bisecting.
@@ -101,24 +142,21 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
 
   @Override
   protected @NotNull FileSystem getDelegate(@NotNull String root) {
-    if (MultiRoutingFileSystemProvider.ourForceDefaultFs) {
-      return myLocalFS;
-    }
-    return getBackend(root);
+    return MultiRoutingFileSystemProvider.ourForceDefaultFs ? myLocalFS : getBackend(root);
   }
 
   @Override
   public Iterable<Path> getRootDirectories() {
     Map<String, Path> rootDirectories = new LinkedHashMap<>();
     for (Path root : myLocalFS.getRootDirectories()) {
-      rootDirectories.put(root.toString(), root);
+      rootDirectories.put(root.toString(), new MultiRoutingFsPath(this, root));
     }
     // Some of the backend file systems may override the roots.
     // However, it's important to check that they override only the registered paths.
     for (Backend backend : myBackends.get()) {
       for (Path candidate : backend.fileSystem.getRootDirectories()) {
-        if (backend.matchRoot(candidate.toString())) {
-          rootDirectories.put(candidate.toString(), candidate);
+        if (backend.matchPath(candidate.toString())) {
+          rootDirectories.put(candidate.toString(), new MultiRoutingFsPath(this, candidate));
           break;
         }
       }
@@ -142,21 +180,41 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
 
   @Override
   public Set<String> supportedFileAttributeViews() {
-    Set<String> result = new HashSet<>(myLocalFS.supportedFileAttributeViews());
-    for (Backend backend : myBackends.get()) {
-      result.addAll(backend.fileSystem.supportedFileAttributeViews());
-    }
-    return result;
+    return myLocalFS.supportedFileAttributeViews();
   }
 
-  @NotNull
-  FileSystem getBackend(@NotNull String root) {
-    // It's important that the backends are sorted by the root length in the reverse order. Otherwise, prefixes won't work correctly.
+  @NotNull FileSystem getBackend(@NotNull String path) {
+    // It's important that the backends are sorted by the path length in the reverse order. Otherwise, prefixes won't work correctly.
     for (Backend backend : myBackends.get()) {
-      if (backend.matchRoot(root)) {
+      if (backend.matchPath(path)) {
         return backend.fileSystem;
       }
     }
     return myLocalFS;
+  }
+
+  /**
+   * Returns {@code true} if this path will be handled by a registered backend.
+   * It is reasonable to assume that if this method returns {@code false}, then the path will be handled by the local NIO file system.
+   * In some sense, this method is an approximation of a predicate "is this path remote?"
+   */
+  public final boolean isRoutable(@NotNull Path path) {
+    Path root = path.getRoot();
+    if (root == null) {
+      return false;
+    }
+    String rootRepresentation = root.toString();
+    for (Backend backend : myBackends.get()) {
+      if (backend.matchPath(rootRepresentation)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public WatchService newWatchService() throws IOException {
+    // TODO Move it to DelegatingFileSystem.
+    return new MultiRoutingWatchServiceDelegate(super.newWatchService(), myProvider);
   }
 }

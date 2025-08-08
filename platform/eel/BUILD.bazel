@@ -1,0 +1,34 @@
+### auto-generated section `build intellij.platform.eel` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "eel",
+  module_name = "intellij.platform.eel",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlinx-coroutines-core",
+  ]
+)
+### auto-generated section `build intellij.platform.eel` end
+
+### auto-generated section `build intellij.platform.eel.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_test")
+
+jvm_test(
+  name = "eel-tests_test",
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/eel",
+    "@lib//:junit5",
+    "@lib//:junit5Params",
+    "@lib//:kotlin-test",
+    "@lib//:kotlin-test-assertions-core-jvm",
+    "@lib//:kotlinx-coroutines-test",
+  ]
+)
+### auto-generated section `build intellij.platform.eel.tests` end

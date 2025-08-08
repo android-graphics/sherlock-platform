@@ -1,12 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core.script.dependencies
 
-import com.intellij.ide.IdeBundle
+import com.intellij.codeInsight.multiverse.CodeInsightContext
+import com.intellij.codeInsight.multiverse.defaultContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem
 import com.intellij.psi.PsiManager
 import com.intellij.psi.ResolveScopeProvider
 import com.intellij.psi.search.DelegatingGlobalSearchScope
@@ -14,6 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptModuleInfo
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.compilerAllowsAnyScriptsInSourceRoots
@@ -24,57 +24,22 @@ import org.jetbrains.kotlin.idea.isEnabled
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider
+import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
-import java.io.IOException
-import java.io.OutputStream
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.isStandalone
 
-class KotlinScriptSearchScope(project: Project, baseScope: GlobalSearchScope) : DelegatingGlobalSearchScope(project, baseScope) {
-    override fun contains(file: VirtualFile): Boolean {
-        return when (file) {
-            KotlinScriptMarkerFileSystem.rootFile -> true
-            else -> super.contains(file)
-        }
-    }
-}
-
-object KotlinScriptMarkerFileSystem : DummyFileSystem(), NonPhysicalFileSystem {
-    override fun getProtocol() = "kotlin-script-dummy"
-
-    val rootFile = object : VirtualFile() {
-        override fun getFileSystem() = this@KotlinScriptMarkerFileSystem
-
-        override fun getName() = "root"
-        override fun getPath() = "/$name"
-
-        override fun getLength(): Long = 0
-        override fun isWritable() = false
-        override fun isDirectory() = true
-        override fun isValid() = true
-
-        override fun getParent() = null
-        override fun getChildren(): Array<VirtualFile> = emptyArray()
-
-        override fun getTimeStamp(): Long = -1
-        override fun refresh(asynchronous: Boolean, recursive: Boolean, postRunnable: Runnable?) {}
-
-        override fun contentsToByteArray() = throw IOException(IdeBundle.message("file.read.error", url))
-        override fun getInputStream() = throw IOException(IdeBundle.message("file.read.error", url))
-
-        override fun getOutputStream(requestor: Any?, newModificationStamp: Long, newTimeStamp: Long): OutputStream {
-            throw IOException(IdeBundle.message("file.write.error", url))
-        }
-    }
-}
+class KotlinScriptSearchScope(project: Project, baseScope: GlobalSearchScope) : DelegatingGlobalSearchScope(project, baseScope)
 
 class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
 
-    override fun getResolveScope(file: VirtualFile, project: Project): GlobalSearchScope? {
+    override fun getResolveScope(file: VirtualFile, project: Project): GlobalSearchScope? =
+        getResolveScope(file, defaultContext(), project)
+
+    override fun getResolveScope(file: VirtualFile, context: CodeInsightContext, project: Project): GlobalSearchScope? {
         if (!file.isKotlinFileType()) return null
 
-        val ktFile = PsiManager.getInstance(project).findFile(file) as? KtFile ?: return null
+        val ktFile = PsiManager.getInstance(project).findFile(file, context) as? KtFile ?: return null
         val scriptDefinition = ktFile.findScriptDefinition() ?: return null
 
         // This is a workaround for completion in REPL to provide module dependencies
@@ -98,7 +63,8 @@ class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
         return ktFile.calculateScopeForStandaloneScript(file, project)
     }
 
-    private fun KtFile.isStandaloneScript() = moduleInfoOrNull is ScriptModuleInfo // not ModuleSourceInfo (production|test)
+    @OptIn(K1ModeProjectStructureApi::class)
+    private fun KtFile.isStandaloneScript(): Boolean = moduleInfoOrNull is ScriptModuleInfo // not ModuleSourceInfo (production|test)
 
     private fun KtFile.getScopeAccordingToLanguageFeature(
         file: VirtualFile,
@@ -151,7 +117,7 @@ class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
     }
 
     private fun KtFile.isStandaloneScriptByDesign(project: Project, definition: ScriptDefinition): Boolean {
-        val configuration = ScriptDependenciesProvider.getInstance(project)?.getScriptConfiguration(this)?.configuration
+        val configuration = ScriptConfigurationsProvider.getInstance(project)?.getScriptConfiguration(this)?.configuration
             ?: definition.compilationConfiguration
         val isStandalone = configuration[ScriptCompilationConfiguration.isStandalone] == true
         debugLog { "standalone-by-design: $isStandalone" }

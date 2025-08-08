@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.types
 
-import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx.ChangeScopeAction
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor
 import com.intellij.ide.hierarchy.HierarchyTreeStructure
 import com.intellij.ide.hierarchy.JavaHierarchyUtil
 import com.intellij.ide.hierarchy.TypeHierarchyBrowserBase
+import com.intellij.ide.hierarchy.type.TypeHierarchyNodeDescriptor
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.IdeActions
@@ -13,12 +13,12 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.psi.ElementDescriptionUtil
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.usageView.UsageViewLongNameLocation
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import java.text.MessageFormat
-import java.util.Comparator
 import javax.swing.JPanel
 import javax.swing.JTree
 
@@ -45,7 +45,7 @@ class KotlinTypeHierarchyBrowser(project: Project, klass: KtClassOrObject) : Typ
     }
 
     override fun getElementFromDescriptor(descriptor: HierarchyNodeDescriptor): PsiElement? {
-        return (descriptor as? KotlinTypeHierarchyNodeDescriptor)?.psiElement
+        return (descriptor as? KotlinTypeHierarchyNodeDescriptor)?.psiElement ?: (descriptor as? TypeHierarchyNodeDescriptor)?.psiElement
     }
 
     override fun createLegendPanel(): JPanel? {
@@ -82,11 +82,11 @@ class KotlinTypeHierarchyBrowser(project: Project, klass: KtClassOrObject) : Typ
     }
 
     override fun canBeDeleted(psiElement: PsiElement?): Boolean {
-        return psiElement is KtClassOrObject && psiElement.name != null
+        return psiElement is KtClassOrObject && psiElement.name != null || psiElement is PsiClass && psiElement.name != null
     }
 
     override fun getQualifiedName(psiElement: PsiElement?): String? {
-        return (psiElement as? KtClassOrObject)?.fqName?.asString() ?: ""
+        return (psiElement as? KtClassOrObject)?.fqName?.asString() ?: (psiElement as? PsiClass)?.qualifiedName ?: ""
     }
 
     companion object {

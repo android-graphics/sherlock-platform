@@ -1,16 +1,19 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.CollectZippedLogsAction
+import com.intellij.ide.actions.COLLECT_LOGS_NOTIFICATION_GROUP
 import com.intellij.ide.actions.ReportFeedbackService
 import com.intellij.ide.logsUploader.LogPacker
+import com.intellij.ide.logsUploader.LogUploader
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.reportProgress
 import com.intellij.util.io.jackson.obj
 import com.intellij.util.ui.IoErrorText
 import io.netty.channel.ChannelHandlerContext
@@ -24,8 +27,7 @@ import java.io.IOException
 
 private const val propertyKeyForTrustedHosts = "idea.api.collectLogs.hosts.trusted"
 
-class UploadLogsService : RestService() {
-
+private class UploadLogsService : RestService() {
   private val trustedPredefinedHosts = setOf("intellij-support.jetbrains.com")
   private val serviceName = "logs"
 
@@ -57,24 +59,32 @@ class UploadLogsService : RestService() {
       service<ReportFeedbackService>().coroutineScope.launch {
         try {
           withBackgroundProgress(project, IdeBundle.message("collect.upload.logs.progress.title"), true) {
-            try {
-              val byteOut = BufferExposingByteArrayOutputStream()
-              val uploadedID = LogPacker.uploadLogs(project)
-              JsonFactory().createGenerator(byteOut).useDefaultPrettyPrinter().use { writer ->
-                writer.obj {
-                  writer.writeStringField("Upload_id", uploadedID)
+            reportProgress { reporter ->
+              reporter.indeterminateStep {
+                @Suppress("IncorrectCancellationExceptionHandling")
+                try {
+                  val file = LogPacker.packLogs(project)
+                  checkCanceled()
+                  val uploadedID = LogUploader.uploadFile(file)
+                  LogUploader.notify(project, uploadedID)
+                  val byteOut = BufferExposingByteArrayOutputStream()
+                  JsonFactory().createGenerator(byteOut).useDefaultPrettyPrinter().use { writer ->
+                    writer.obj {
+                      writer.writeStringField("Upload_id", uploadedID)
+                    }
+                  }
+                  send(byteOut, request, context)
+                }
+                catch (_: CancellationException) {
+                  sendStatus(HttpResponseStatus.BAD_REQUEST, false, channel)
                 }
               }
-              send(byteOut, request, context)
-            }
-            catch (_: CancellationException) {
-              sendStatus(HttpResponseStatus.BAD_REQUEST, false, channel)
             }
           }
         }
         catch (x: IOException) {
           val message = IdeBundle.message("collect.logs.notification.error", IoErrorText.message(x))
-          Notification(CollectZippedLogsAction.NOTIFICATION_GROUP, message, NotificationType.ERROR).notify(project)
+          Notification(COLLECT_LOGS_NOTIFICATION_GROUP, message, NotificationType.ERROR).notify(project)
           sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR, false, channel)
         }
       }

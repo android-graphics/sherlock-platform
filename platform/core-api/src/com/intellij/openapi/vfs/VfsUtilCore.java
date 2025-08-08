@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
@@ -12,6 +12,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -410,8 +411,8 @@ public class VfsUtilCore {
    * please prefer {@link VirtualFile#contentsToByteArray()} as more efficient.
    */
   public static byte @NotNull [] loadBytes(@NotNull VirtualFile file) throws IOException {
-    return FileUtilRt.isTooLarge(file.getLength()) ?
-           loadNBytes(file, FileUtilRt.LARGE_FILE_PREVIEW_SIZE) :
+    return VirtualFileUtil.isTooLarge(file) ?
+           loadNBytes(file, FileSizeLimit.getPreviewLimit(file.getExtension())) :
            file.contentsToByteArray();
   }
 
@@ -480,7 +481,7 @@ public class VfsUtilCore {
    * @see #virtualToIoFile(VirtualFile)
    * @see VirtualFile#toNioPath()
    */
-  public static List<File> virtualToIoFiles(@NotNull Collection<? extends VirtualFile> files) {
+  public static @Unmodifiable List<File> virtualToIoFiles(@NotNull Collection<? extends VirtualFile> files) {
     return ContainerUtil.map(files, file -> virtualToIoFile(file));
   }
 
@@ -771,6 +772,18 @@ public class VfsUtilCore {
         return 1;
       }
 
+      boolean isOrphan1 = v1.getParent() == null;
+      boolean isOrphan2 = v2.getParent() == null;
+      if (isOrphan1 && isOrphan2) {
+        return v1.getPath().compareTo(v2.getPath());
+      }
+      else if (isOrphan1) {
+        return -1;
+      }
+      else if (isOrphan2) {
+        return 1;
+      }
+
       VirtualFile[] parents1 = getPathComponents(v1);
       VirtualFile[] parents2 = getPathComponents(v2);
       for (int i = 0; i < Math.min(parents1.length, parents2.length); i++) {
@@ -778,7 +791,7 @@ public class VfsUtilCore {
           return parents1[i].getName().compareTo(parents2[i].getName());
         }
       }
-      return v1.getName().compareTo(v2.getName());
+      return Integer.compare(parents1.length, parents2.length);
     }
     return 0;
   }

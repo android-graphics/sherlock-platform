@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
+import com.intellij.modcommand.ModCommandAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findParentOfType
 import com.intellij.util.containers.addIfNotNull
@@ -10,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
+import org.jetbrains.kotlin.analysis.api.annotations.KaNamedAnnotationValue
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.fir.utils.getActualAnnotationTargets
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -28,25 +30,33 @@ import org.jetbrains.kotlin.resolve.checkers.OptInNames
 
 internal object OptInFixFactories {
 
-    val optInUsageFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.OptInUsage ->
+    val optInUsageFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.OptInUsage ->
         createQuickFix(diagnostic)
     }
 
-    val optInUsageErrorFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.OptInUsageError ->
+    val optInUsageErrorFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.OptInUsageError ->
         createQuickFix(diagnostic)
     }
 
-    val optInOverrideFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.OptInOverride ->
+    val optInToInheritanceFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.OptInToInheritance ->
         createQuickFix(diagnostic)
     }
 
-    val optInOverrideErrorFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.OptInOverrideError ->
+    val optInToInheritanceErrorFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.OptInToInheritanceError ->
+        createQuickFix(diagnostic)
+    }
+
+    val optInOverrideFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.OptInOverride ->
+        createQuickFix(diagnostic)
+    }
+
+    val optInOverrideErrorFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.OptInOverrideError ->
         createQuickFix(diagnostic)
     }
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class, KaImplementationDetail::class)
-    private fun createQuickFix(diagnostic: KaFirDiagnostic<PsiElement>): List<AddAnnotationFix> {
+    private fun createQuickFix(diagnostic: KaFirDiagnostic<PsiElement>): List<ModCommandAction> {
         val element = diagnostic.psi.findParentOfType<KtElement>(strict = false) ?: return emptyList()
         val annotationClassId = OptInFixUtils.optInMarkerClassId(diagnostic) ?: return emptyList()
 
@@ -57,7 +67,7 @@ internal object OptInFixFactories {
         if (!OptInFixUtils.annotationIsVisible(annotationSymbol, from = element)) return emptyList()
 
         val applicableTargets = annotationSymbol.annotationApplicableTargets
-        val result = mutableListOf<AddAnnotationFix>()
+        val result = mutableListOf<ModCommandAction>()
 
         val candidates = OptInGeneralUtils.collectCandidates(element)
 
@@ -65,7 +75,7 @@ internal object OptInFixFactories {
             if (targetElement !is KtDeclaration) return null
             if (applicableTargets == null) return null
 
-            val actualTargetList = (targetElement as? KtDeclaration)?.symbol?.getActualAnnotationTargets() ?: return null
+            val actualTargetList = targetElement.symbol.getActualAnnotationTargets() ?: return null
             return OptInGeneralUtils.collectPropagateOptInAnnotationFix(
                 targetElement,
                 kind,
@@ -102,15 +112,26 @@ private object OptInGeneralUtils : OptInGeneralUtilsBase() {
                 val typeReference = it.typeReference
                 val resolvedClass = typeReference?.type?.expandedSymbol ?: return false
                 val classAnnotation = resolvedClass.annotations[OptInNames.SUBCLASS_OPT_IN_REQUIRED_CLASS_ID].firstOrNull()
-                classAnnotation != null && findMarkerClassId(classAnnotation)?.asSingleFqName() == annotationFqName
+                classAnnotation != null && annotationFqName.isInSubclassArguments(classAnnotation)
             }
         }
     }
 
-    private fun findMarkerClassId(annotation: KaAnnotation): ClassId? {
-        val argument = annotation.arguments.find { arg -> arg.name == OptInNames.OPT_IN_ANNOTATION_CLASS } ?: return null
-        val value = argument.expression as? KaAnnotationValue.ClassLiteralValue ?: return null
-        val type = value.type as? KaClassType ?: return null
-        return type.classId.takeUnless { it.isLocal }
+    private fun FqName.isInSubclassArguments(subclassOptInAnnotation: KaAnnotation): Boolean {
+        val argument = subclassOptInAnnotation.arguments.find { arg -> arg.name == OptInNames.OPT_IN_ANNOTATION_CLASS } ?: return false
+        val classIds = getSubclassArgClassIds(argument)
+        return classIds.any {
+            !it.isLocal && it.asSingleFqName() == this
+        }
+    }
+
+    private fun getSubclassArgClassIds(argument: KaNamedAnnotationValue): List<ClassId> {
+        return when (val expression = argument.expression) {
+            // @SubclassOptInRequired for stdlib versions below 2.1
+            is KaAnnotationValue.ClassLiteralValue -> listOfNotNull((expression.type as? KaClassType)?.classId)
+            // @SubclassOptInRequired for stdlib versions 2.1 and above
+            is KaAnnotationValue.ArrayValue -> expression.values.mapNotNull { (it as? KaAnnotationValue.ClassLiteralValue)?.classId }
+            else -> emptyList()
+        }
     }
 }

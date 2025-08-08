@@ -63,16 +63,21 @@ private fun <T : CommandChain> T.appendRawLine(line: String): T = apply {
   addCommand(line)
 }
 
-fun <T : CommandChain> T.verifyFileEncoding(relativePath: String,
-                                            expectedCharsetName: String): T = apply {
+fun <T : CommandChain> T.verifyFileEncoding(
+  relativePath: String,
+  expectedCharsetName: String,
+): T = apply {
   addCommand("${CMD_PREFIX}assertEncodingFileCommand", relativePath, expectedCharsetName)
 }
 
-fun <T : CommandChain> T.openFile(relativePath: String,
-                                  timeoutInSeconds: Long = 0,
-                                  suppressErrors: Boolean = false,
-                                  warmup: Boolean = false,
-                                  disableCodeAnalysis: Boolean = false): T = apply {
+fun <T : CommandChain> T.openFile(
+  relativePath: String,
+  timeoutInSeconds: Long = 0,
+  suppressErrors: Boolean = false,
+  warmup: Boolean = false,
+  disableCodeAnalysis: Boolean = false,
+  useWaitForCodeAnalysisCode: Boolean = true,
+): T = apply {
   val command = mutableListOf("${CMD_PREFIX}openFile", "-file ${relativePath.replace(" ", "SPACE_SYMBOL")}")
   if (timeoutInSeconds != 0L) {
     command.add("-timeout $timeoutInSeconds")
@@ -86,6 +91,9 @@ fun <T : CommandChain> T.openFile(relativePath: String,
   if (warmup) {
     command.add(WARMUP)
   }
+  if (useWaitForCodeAnalysisCode) {
+    command.add("-unwfca")
+  }
 
   addCommand(*command.toTypedArray())
 }
@@ -95,6 +103,7 @@ fun <T : CommandChain> T.openRandomFile(extension: String): T = apply {
 }
 
 fun <T : CommandChain> T.openProject(projectPath: Path, openInNewWindow: Boolean = true, detectProjectLeak: Boolean = false): T = apply {
+  if (detectProjectLeak && openInNewWindow) throw IllegalArgumentException("To analyze the project leak, we need to close the project")
   addCommand("${CMD_PREFIX}openProject", projectPath.toString(), (!openInNewWindow).toString(), detectProjectLeak.toString())
 }
 
@@ -152,11 +161,20 @@ fun <T : CommandChain> T.findUsages(expectedElementName: String = "", scope: Str
   navigateAndFindUsages(expectedElementName, "", scope, warmup = warmup)
 }
 
-fun <T : CommandChain> T.navigateAndFindUsages(expectedElementName: String,
-                                               position: String = "INTO",
-                                               scope: String = "Project Files",
-                                               warmup: Boolean = false): T = apply {
-  val command = mutableListOf("${CMD_PREFIX}findUsages")
+fun <T : CommandChain> T.navigateAndFindUsages(
+  expectedElementName: String,
+  position: String = "INTO",
+  scope: String = "Project Files",
+  warmup: Boolean = false,
+  runInBackground: Boolean = false,
+): T = apply {
+  val command = if (runInBackground) {
+    mutableListOf("${CMD_PREFIX}findUsagesInBackground")
+  }
+  else {
+    mutableListOf("${CMD_PREFIX}findUsages")
+  }
+
   if (expectedElementName.isNotEmpty()) {
     command.add("-expectedName $expectedElementName")
     if (position.isNotEmpty()) {
@@ -167,9 +185,11 @@ fun <T : CommandChain> T.navigateAndFindUsages(expectedElementName: String,
   if (scope.isNotEmpty()) {
     command.add("-scope $scope")
   }
+
   if (warmup) {
     command.add("WARMUP")
   }
+
   addCommandWithSeparator("|", *command.toTypedArray())
 }
 
@@ -214,6 +234,13 @@ fun <T : CommandChain> T.inspectCodeEx(
   resultCommand += " -hideResults $hideResults"
 
   addCommand("${CMD_PREFIX}InspectCodeEx" + resultCommand)
+}
+
+fun <T : CommandChain> T.configureNamedScope(
+  scopeName: String,
+  pattern: String,
+): T = apply {
+  addCommand("${CMD_PREFIX}configureNamedScope -scopeName $scopeName -pattern $pattern")
 }
 
 fun <T : CommandChain> T.checkOnRedCode(): T = apply {
@@ -341,16 +368,12 @@ fun <T : CommandChain> T.doComplete(times: Int): T = apply {
   }
 }
 
-fun <T : CommandChain> T.doHighlightingWarmup(): T = apply {
-  addCommand("${CMD_PREFIX}doHighlight", WARMUP)
-}
-
-fun <T : CommandChain> T.doHighlighting(): T = apply {
-  addCommand("${CMD_PREFIX}doHighlight")
-}
-
 fun <T : CommandChain> T.openProjectView(): T = apply {
   addCommand("${CMD_PREFIX}openProjectView")
+}
+
+fun <T : CommandChain> T.hideProjectView(): T = apply {
+  addCommand("${CMD_PREFIX}openProjectView false")
 }
 
 fun <T : CommandChain> T.getLibraryPathByName(name: String, path: Path): T = apply {
@@ -361,19 +384,43 @@ fun <T : CommandChain> T.convertJavaToKotlin(moduleName: String, filePath: Strin
   addCommand("${CMD_PREFIX}convertJavaToKotlin $moduleName $filePath")
 }
 
+/**
+ * @see [com.jetbrains.performancePlugin.commands.IdeEditorKeyCommand]
+ */
 fun <T : CommandChain> T.pressKey(key: Keys): T = apply {
   addCommand("${CMD_PREFIX}pressKey", key.name)
 }
 
-fun <T : CommandChain> T.delayType(delayMs: Int,
-                                   text: String,
-                                   calculateAnalyzesTime: Boolean = false,
-                                   disableWriteProtection: Boolean = false): T = apply {
+fun <T : CommandChain> T.pressKey(vararg keys: Keys): T = apply {
+  keys.forEach { addCommand("${CMD_PREFIX}pressKey", it.name) }
+}
+
+fun <T : CommandChain> T.pressKey(key: Keys, times: Int): T = apply {
+  repeat((1..times).count()) { addCommand("${CMD_PREFIX}pressKey", key.name) }
+}
+
+fun <T : CommandChain> T.pressKeyWithDelay(key: Keys, times: Int, timeUnit: TimeUnit, sleepDelay: () -> Long): T = apply {
+  repeat((1..times).count()) {
+    sleep(sleepDelay(), timeUnit)
+    addCommand("${CMD_PREFIX}pressKey", key.name)
+  }
+  sleep(sleepDelay(), timeUnit)
+}
+
+/**
+ * @see [com.jetbrains.performancePlugin.commands.DelayTypeCommand]
+ */
+fun <T : CommandChain> T.delayType(
+  delayMs: Int,
+  text: String,
+  calculateAnalyzesTime: Boolean = false,
+  disableWriteProtection: Boolean = false
+): T = apply {
   addCommand("${CMD_PREFIX}delayType", "$delayMs|$text|$calculateAnalyzesTime|$disableWriteProtection")
 }
 
 fun <T : CommandChain> T.doLocalInspection(spanTag: String? = null): T = apply {
-  val spanTagLine = spanTag?.let {  " spanTag $spanTag" } ?: ""
+  val spanTagLine = spanTag?.let { " spanTag $spanTag" } ?: ""
   addCommand("${CMD_PREFIX}doLocalInspection" + spanTagLine)
 }
 
@@ -399,10 +446,12 @@ fun <T : CommandChain> T.createAllServicesAndExtensions(): T = apply {
   addCommand("${CMD_PREFIX}CreateAllServicesAndExtensions")
 }
 
-fun <T : CommandChain> T.runConfiguration(configurationName: String,
-                                          mode: String = "TILL_TERMINATED",
-                                          failureExpected: Boolean = false,
-                                          debug: Boolean = false): T = apply {
+fun <T : CommandChain> T.runConfiguration(
+  configurationName: String,
+  mode: String = "TILL_TERMINATED",
+  failureExpected: Boolean = false,
+  debug: Boolean = false,
+): T = apply {
   val command = mutableListOf("${CMD_PREFIX}runConfiguration")
   command.add("-configurationName=$configurationName")
   command.add("-mode=$mode")
@@ -427,12 +476,25 @@ fun <T : CommandChain> T.stopPowerSave(): T = apply {
   addCommand("${CMD_PREFIX}stopPowerSave")
 }
 
-fun <T : CommandChain> T.searchEverywhere(tab: String = "all",
-                                          textToInsert: String = "",
-                                          textToType: String = "",
-                                          close: Boolean = false,
-                                          selectFirst: Boolean = false,
-                                          warmup: Boolean = false): T = apply {
+fun <T : CommandChain> T.searchEverywhere(
+  tab: CommonSearchEverywhereTabs,
+  textToInsert: String = "",
+  textToType: String = "",
+  close: Boolean = false,
+  selectFirst: Boolean = false,
+  warmup: Boolean = false,
+  startThoughAction: Boolean = false,
+): T = searchEverywhere(tab.tabId, textToInsert, textToType, close, selectFirst, warmup, startThoughAction)
+
+fun <T : CommandChain> T.searchEverywhere(
+  tab: String = "all",
+  textToInsert: String = "",
+  textToType: String = "",
+  close: Boolean = false,
+  selectFirst: Boolean = false,
+  warmup: Boolean = false,
+  startThoughAction: Boolean = false,
+): T = apply {
   val closeOnOpenArgument = when {
     close -> "-close"
     else -> ""
@@ -445,11 +507,12 @@ fun <T : CommandChain> T.searchEverywhere(tab: String = "all",
     textToType.isNotEmpty() -> "-type $textToType"
     else -> ""
   }
-  val warmupText = if(warmup) "|WARMUP" else ""
+  val warmupText = if (warmup) "|WARMUP" else ""
+  val startThroughActionText = if (startThoughAction) "|START_THROUGH_ACTION" else ""
   if (selectFirstArgument.isNotEmpty() && closeOnOpenArgument.isNotEmpty()) {
     throw Exception("selectFirst=true argument will be ignored since close=true and SE will be closed first")
   }
-  addCommand("${CMD_PREFIX}searchEverywhere", "-tab $tab $closeOnOpenArgument $selectFirstArgument $argumentForTyping|$textToInsert$warmupText")
+  addCommand("${CMD_PREFIX}searchEverywhere", "-tab $tab $closeOnOpenArgument $selectFirstArgument $argumentForTyping|$textToInsert$warmupText$startThroughActionText")
 }
 
 fun <T : CommandChain> T.selectFileInProjectView(relativePath: String): T = apply {
@@ -565,9 +628,11 @@ enum class AssertModuleJdkVersionMode {
   EQUALS
 }
 
-fun <T : CommandChain> T.assertModuleJdkVersion(moduleName: String,
-                                                jdkVersion: String,
-                                                mode: AssertModuleJdkVersionMode = AssertModuleJdkVersionMode.CONTAINS): T {
+fun <T : CommandChain> T.assertModuleJdkVersion(
+  moduleName: String,
+  jdkVersion: String,
+  mode: AssertModuleJdkVersionMode = AssertModuleJdkVersionMode.CONTAINS,
+): T {
   val command = mutableListOf("${CMD_PREFIX}assertModuleJdkVersionCommand")
   command.add("-moduleName=$moduleName")
   command.add("-jdkVersion=$jdkVersion")
@@ -614,8 +679,10 @@ fun <T : CommandChain> T.refreshGradleProject(): T = apply {
   addCommand("${CMD_PREFIX}refreshGradleProject")
 }
 
-fun <T : CommandChain> T.setGradleDelegatedBuildCommand(delegatedBuild: Boolean = true,
-                                                        gradleTestRunner: GradleTestRunner = GradleTestRunner.GRADLE): T = apply {
+fun <T : CommandChain> T.setGradleDelegatedBuildCommand(
+  delegatedBuild: Boolean = true,
+  gradleTestRunner: GradleTestRunner = GradleTestRunner.GRADLE,
+): T = apply {
   addCommand("${CMD_PREFIX}setGradleDelegatedBuildCommand $delegatedBuild $gradleTestRunner")
 }
 
@@ -661,6 +728,14 @@ fun <T : CommandChain> T.createSpringProject(newMavenProjectDto: NewSpringProjec
 fun <T : CommandChain> T.updateMavenGoal(settings: MavenGoalConfigurationDto): T = apply {
   val options = objectMapper.writeValueAsString(settings)
   addCommand("${CMD_PREFIX}updateMavenGoal $options")
+}
+
+fun <T : CommandChain> T.setupInlineCompletionListener(): T = apply {
+  addCommand("${CMD_PREFIX}setupInlineCompletionListener")
+}
+
+fun <T : CommandChain> T.callInlineCompletionCommand(): T = apply {
+  addCommand("${CMD_PREFIX}callInlineCompletionCommand")
 }
 
 fun <T : CommandChain> T.validateMavenGoal(settings: MavenGoalConfigurationDto): T = apply {
@@ -739,9 +814,11 @@ fun <T : CommandChain> T.setGradleJdk(jdk: SdkObject): T = apply {
   addCommand("${CMD_PREFIX}setGradleJdk ${jdk.sdkName}|${jdk.sdkType}|${jdk.sdkPath}")
 }
 
-fun <T : CommandChain> T.showEvaluateExpression(expression: String = "",
-                                                performEvaluateCount: Int = 0,
-                                                warmup: Boolean = false): T = apply {
+fun <T : CommandChain> T.showEvaluateExpression(
+  expression: String = "",
+  performEvaluateCount: Int = 0,
+  warmup: Boolean = false,
+): T = apply {
   val command = mutableListOf("${CMD_PREFIX}showEvaluateExpression")
   if (expression.isNotEmpty()) {
     command.add("-expression $expression")
@@ -755,6 +832,20 @@ fun <T : CommandChain> T.showEvaluateExpression(expression: String = "",
 
 fun <T : CommandChain> T.executeEditorAction(action: String): T = apply {
   addCommand("${CMD_PREFIX}executeEditorAction $action")
+}
+
+fun <T : CommandChain> T.moveFiles(moveFileData: MoveFilesData): T = apply {
+  val jsonData = objectMapper.writeValueAsString(moveFileData)
+  addCommand("${CMD_PREFIX}moveFiles $jsonData")
+}
+
+fun <T : CommandChain> T.moveDeclarations(moveDeclarationData: MoveDeclarationsData): T = apply {
+  val jsonData = objectMapper.writeValueAsString(moveDeclarationData)
+  addCommand("${CMD_PREFIX}moveDeclarations $jsonData")
+}
+
+fun <T : CommandChain> T.performGC(): T = apply {
+  addCommand("${CMD_PREFIX}performGC")
 }
 
 fun <T : CommandChain> T.copy(): T = apply {
@@ -825,6 +916,12 @@ fun <T : CommandChain> T.goToDeclaration(expectedOpenedFile: String? = null, spa
   executeEditorAction(action.toString())
 }
 
+fun <T : CommandChain> T.goToImplementation(): T = apply {
+  val action = StringBuilder("GotoImplementation")
+  executeEditorAction(action.toString())
+}
+
+
 fun <T : CommandChain> T.collectAllFiles(extension: String, fromSources: Boolean = true): T = apply {
   addCommand("${CMD_PREFIX}collectAllFiles $extension $fromSources")
 }
@@ -856,10 +953,6 @@ fun <T : CommandChain> T.clearSourceCaches(): T = apply {
 
 fun <T : CommandChain> T.clearLibraryCaches(): T = apply {
   addCommand("${CMD_PREFIX}clearLibraryCaches")
-}
-
-fun <T : CommandChain> T.performGC(): T = apply {
-  addCommand("${CMD_PREFIX}performGC")
 }
 
 fun <T : CommandChain> T.convertJavaToKotlinByDefault(value: Boolean): T = apply {
@@ -941,8 +1034,10 @@ enum class EnableSettingSyncOptions {
   GET, PUSH, NONE
 }
 
-fun <T : CommandChain> T.enableSettingsSync(enableCrossIdeSync: Boolean = false,
-                                            action: EnableSettingSyncOptions = EnableSettingSyncOptions.NONE): T = apply {
+fun <T : CommandChain> T.enableSettingsSync(
+  enableCrossIdeSync: Boolean = false,
+  action: EnableSettingSyncOptions = EnableSettingSyncOptions.NONE,
+): T = apply {
   addCommand("${CMD_PREFIX}enableSettingsSync ${enableCrossIdeSync} ${action.name}")
 }
 
@@ -981,12 +1076,12 @@ fun <T : CommandChain> T.waitInlineCompletion(): T = apply {
   addCommand("${CMD_PREFIX}waitInlineCompletion")
 }
 
-fun <T : CommandChain> T.waitInlineCompletionWarmup(): T = apply {
-  addCommand("${CMD_PREFIX}waitInlineCompletion WARMUP")
+fun <T : CommandChain> T.logInlineCompletion(): T = apply {
+  addCommand("${CMD_PREFIX}logInlineCompletion")
 }
 
-fun <T : CommandChain> T.clearLLMInlineCompletionCache(): T = apply {
-  addCommand("${CMD_PREFIX}clearLLMInlineCompletionCache")
+fun <T : CommandChain> T.waitInlineCompletionWarmup(): T = apply {
+  addCommand("${CMD_PREFIX}waitInlineCompletion WARMUP")
 }
 
 fun <T : CommandChain> T.waitForVcsLogUpdate(): T = apply {
@@ -1019,6 +1114,10 @@ fun <T : CommandChain> T.collectFilesNotMarkedAsIndex(): T = apply {
 
 fun <T : CommandChain> T.gitCommitFile(pathToFile: String, commitMessage: String): T = apply {
   addCommand("${CMD_PREFIX}gitCommit ${pathToFile},${commitMessage}")
+}
+
+fun <T : CommandChain> T.gitRollbackFile(pathToFile: String): T = apply {
+  addCommand("${CMD_PREFIX}gitRollbackFile ${pathToFile}")
 }
 
 fun <T : CommandChain> T.replaceText(startOffset: Int? = null, endOffset: Int? = null, newText: String? = null): T = apply {
@@ -1112,4 +1211,56 @@ fun <T : CommandChain> T.waitForProjectView(): T = apply {
  */
 fun <T : CommandChain> T.expandProjectView(relativePath: String): T = apply {
   addCommand("${CMD_PREFIX}expandProjectView $relativePath")
+}
+
+fun <T : CommandChain> T.startNewSpan(spanName: String): T = apply {
+  addCommand("${CMD_PREFIX}handleSpan $spanName")
+}
+
+fun <T : CommandChain> T.stopSpan(spanName: String): T = apply {
+  addCommand("${CMD_PREFIX}handleSpan $spanName")
+}
+
+/** @see com.jetbrains.performancePlugin.commands.MeasureVfsMassUpdateCommand */
+@Suppress("KDocUnresolvedReference")
+fun <T : CommandChain> T.massCreateFiles(extension: String, numberOfFiles: Int): T = apply {
+  addCommand("${CMD_PREFIX}measureVfsMassUpdate CREATE $extension $numberOfFiles")
+}
+
+/**
+ * @see com.jetbrains.performancePlugin.commands.MeasureVfsMassUpdateCommand
+ * Only works if massCreateFiles() was called before it
+ */
+@Suppress("KDocUnresolvedReference")
+fun <T : CommandChain> T.massModifyFiles(): T = apply {
+  addCommand("${CMD_PREFIX}measureVfsMassUpdate MODIFY")
+}
+
+/**
+ * @see com.jetbrains.performancePlugin.commands.MeasureVfsMassUpdateCommand
+ * Only works if massCreateFiles() was called before it
+ */
+@Suppress("KDocUnresolvedReference")
+fun <T : CommandChain> T.massDeleteFiles(): T = apply {
+  addCommand("${CMD_PREFIX}measureVfsMassUpdate DELETE")
+}
+
+enum class MassVfsRefreshSpan(val spanName: String) {
+  CREATE("vfsRefreshAfterMassCreate"),
+  MODIFY("vfsRefreshAfterMassModify"),
+  DELETE("vfsRefreshAfterMassDelete")
+}
+
+/** @see com.jetbrains.performancePlugin.commands.MeasureVfsMassUpdateCommand */
+@Suppress("KDocUnresolvedReference")
+fun <T : CommandChain> T.refreshVfsAfterMassChange(span: MassVfsRefreshSpan): T = apply {
+  addCommand("${CMD_PREFIX}measureVfsMassUpdate REFRESH ${span.spanName}")
+}
+
+fun <T : CommandChain> T.waitForVfsRefreshSelectedEditor(): T = apply {
+  addCommand("${CMD_PREFIX}waitForVfsRefreshSelectedEditor")
+}
+
+fun <T : CommandChain> T.closeLookup(): T = apply {
+  addCommand("${CMD_PREFIX}closeLookup")
 }

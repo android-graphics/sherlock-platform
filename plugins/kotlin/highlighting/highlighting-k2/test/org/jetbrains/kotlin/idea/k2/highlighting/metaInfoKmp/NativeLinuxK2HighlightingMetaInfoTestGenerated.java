@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.highlighting.metaInfoKmp;
 
@@ -94,6 +94,11 @@ public abstract class NativeLinuxK2HighlightingMetaInfoTestGenerated extends Abs
             runTest("../../idea/tests/testData/highlighterMetaInfo/dsl/ImplementsDslInterface.kt");
         }
 
+        @TestMetadata("ImplicitReceiver.kt")
+        public void testImplicitReceiver() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/dsl/ImplicitReceiver.kt");
+        }
+
         @TestMetadata("NestedReceivers.kt")
         public void testNestedReceivers() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/dsl/NestedReceivers.kt");
@@ -107,6 +112,11 @@ public abstract class NativeLinuxK2HighlightingMetaInfoTestGenerated extends Abs
         @TestMetadata("SubclassOfDslClass.kt")
         public void testSubclassOfDslClass() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/dsl/SubclassOfDslClass.kt");
+        }
+
+        @TestMetadata("TopLevelFunctions.kt")
+        public void testTopLevelFunctions() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/dsl/TopLevelFunctions.kt");
         }
     }
 

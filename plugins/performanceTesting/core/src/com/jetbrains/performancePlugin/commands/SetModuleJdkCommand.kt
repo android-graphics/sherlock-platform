@@ -1,6 +1,6 @@
 package com.jetbrains.performancePlugin.commands
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.ui.playback.PlaybackContext
@@ -21,7 +21,7 @@ class SetModuleJdkCommand(text: String, line: Int) : PerformanceCommandCoroutine
   override suspend fun doExecute(context: PlaybackContext) {
     val project = context.project
     val options = SetModuleJdkArguments()
-    Args.parse(options, extractCommandArgument(PREFIX).split("|").flatMap { it.split("=") }.toTypedArray())
+    Args.parse(options, extractCommandArgument(PREFIX).split("|").flatMap { it.split("=") }.toTypedArray(), false)
 
     val moduleManager = ModuleManager.getInstance(project)
     val module = moduleManager.findModuleByName(options.moduleName)
@@ -36,7 +36,7 @@ class SetModuleJdkCommand(text: String, line: Int) : PerformanceCommandCoroutine
     ModuleRootModificationUtil.updateModel(module) { model ->
       model.setSdk(jdk)
     }
-    writeAction { moduleManager.getModifiableModel().commit() }
+    edtWriteAction { moduleManager.getModifiableModel().commit() }
   }
 
   override fun getName(): String {

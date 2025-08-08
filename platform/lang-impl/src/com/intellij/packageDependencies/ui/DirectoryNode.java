@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.packageDependencies.ui;
 
@@ -140,6 +140,7 @@ public final class DirectoryNode extends PackageDependenciesNode {
     return false;
   }
 
+  @Override
   public String toString() {
     if (myFQName != null) return myFQName;
     if (myCompactPackages) {
@@ -180,8 +181,7 @@ public final class DirectoryNode extends PackageDependenciesNode {
     return getTargetDirectory();
   }
 
-  @Nullable
-  private PsiDirectory getPsiDirectory() {
+  private @Nullable PsiDirectory getPsiDirectory() {
     if (myDirectory == null) {
       if (myVDirectory.isValid() && !myProject.isDisposed()) {
         myDirectory = PsiManager.getInstance(myProject).findDirectory(myVDirectory);
@@ -205,6 +205,7 @@ public final class DirectoryNode extends PackageDependenciesNode {
     return 3;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (isEquals()) {
       return super.equals(o);
@@ -219,6 +220,7 @@ public final class DirectoryNode extends PackageDependenciesNode {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return toString().hashCode();
   }
@@ -267,8 +269,7 @@ public final class DirectoryNode extends PackageDependenciesNode {
     return myWrapper;
   }
 
-  @Nullable
-  public DirectoryNode getCompactedDirNode() {
+  public @Nullable DirectoryNode getCompactedDirNode() {
     return myCompactPackages ? myCompactedDirNode : null;
   }
 

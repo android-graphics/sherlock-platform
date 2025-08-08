@@ -12,7 +12,7 @@ import <info descr="Not resolved until the project is fully loaded">my</info>.<i
 
 public class Simple {
   int test() {
-    test().<error descr="Cannot call method because 'test()' has primitive type int">run</error>();
+    test().<error descr="Cannot call methods on 'int' type">run</error>();
     return 0;
   }
 
@@ -23,6 +23,12 @@ public class Simple {
     System.out.println(s.<error descr="Cannot resolve symbol 'field'">field</error>);
   }
   
+  void callKnownCtor(<info descr="Not resolved until the project is fully loaded">Cls</info> cls) {
+    new IOException(cls);
+    // No three-arg ctor anyway
+    new IOException<error descr="Cannot resolve constructor 'IOException(Cls, Cls, Cls)'">(cls, cls, cls)</error>;
+  }
+  
   void testImports(<info descr="Not resolved until the project is fully loaded">Cls</info>.<info descr="Not resolved until the project is fully loaded">UnusedClass</info> inner) {
     <info descr="null">var</info> x = <error descr="Cannot resolve symbol 'Value'">Value</error>;
     System.out.println(<info descr="Not resolved until the project is fully loaded">UsedInClassObject</info>.class);
@@ -31,7 +37,7 @@ public class Simple {
   
   void testMethodRef() {
     Runnable r1 = <info descr="Not resolved until the project is fully loaded">UsedInMethodRef</info>::new;
-    <error descr="Incompatible types. Found: '<method reference>', required: 'java.lang.Runnable'">Runnable r2 = <info descr="Not resolved until the project is fully loaded">UsedInMethodRef</info>[]::new;</error>
+    Runnable r2 = <info descr="Not resolved until the project is fully loaded">UsedInMethodRef</info>[]::<error descr="Incompatible types. Found: '<method reference>', required: 'java.lang.Runnable'">new</error>;
     IntFunction<<info descr="Not resolved until the project is fully loaded">UsedInMethodRef</info>[]> r3 = <info descr="Not resolved until the project is fully loaded">UsedInMethodRef</info>[]::new;
     Runnable r4 = String::<error descr="Cannot resolve method 'blahblah'">blahblah</error>;
     Runnable r5 = <error descr="Non-static method cannot be referenced from a static context">String::getBytes</error>;
@@ -46,14 +52,14 @@ public class Simple {
   }
 
   void assign(<info descr="Not resolved until the project is fully loaded">Unknown</info> u) {
-    <error descr="Incompatible types. Found: 'Unknown', required: 'java.lang.String'">String s = u;</error>
+    String s = <error descr="Incompatible types. Found: 'Unknown', required: 'java.lang.String'">u</error>;
     Number n = u;
     <info descr="Not resolved until the project is fully loaded">Unknown2</info> u2 = u;
-    <error descr="Incompatible types. Found: 'java.lang.String', required: 'Unknown2'"><info descr="Not resolved until the project is fully loaded">Unknown2</info> u3 = s;</error>
+    <info descr="Not resolved until the project is fully loaded">Unknown2</info> u3 = <error descr="Incompatible types. Found: 'java.lang.String', required: 'Unknown2'">s</error>;
   }
   
   void knownTypes(String s) {
-    <error descr="Incompatible types. Found: 'java.lang.String', required: 'java.lang.Boolean'">Boolean b = s;</error>
+    Boolean b = <error descr="Incompatible types. Found: 'java.lang.String', required: 'java.lang.Boolean'">s</error>;
     
   }
   
@@ -108,12 +114,60 @@ public class Simple {
     mySet.toArray(<info descr="Not resolved until the project is fully loaded">Cls</info>.<info descr="Not resolved until the project is fully loaded">EMPTY_ARRAY</info>);
   }
   
+  void varTest() {
+    <info descr="null">var</info> x = <info descr="Not resolved until the project is fully loaded">Cls</info>.<info descr="Not resolved until the project is fully loaded">getSomething</info>();
+    x.<info descr="Not resolved until the project is fully loaded">getSomethingElse</info>();
+    <info descr="null">var</info> y = x;
+    <info descr="null">var</info> z = y.<info descr="Not resolved until the project is fully loaded">getSomethingCompletelyDifferent</info>();
+    z.<info descr="Not resolved until the project is fully loaded">getFromZ</info>();
+    
+    <info descr="null">var</info> t = <error descr="Cannot infer type for 't', it is used in its own variable initializer">t</error>;
+  }
+  
   void overloaded(int x) {}
   void overloaded(boolean x) {}
+  
+  void useInner() {
+    Clss.Inner cls = new Clss.Inner();
+    Clss.Inner[] result = (Clss.Inner[]) cls.<info descr="Not resolved until the project is fully loaded">toArray</info>(12);
+  }
+
+
+  void testThrow(<info descr="Not resolved until the project is fully loaded">Cls</info> cls) {
+    try {
+      cls.<info descr="Not resolved until the project is fully loaded">unknownM</info>();
+    } catch (<info descr="Not resolved until the project is fully loaded">Cls</info> x) {
+
+    } catch (IOException | RuntimeException ex) {
+
+    }
+  }
+  
+  void testThrow2() {
+    try {
+      declaredUnknownException();
+    }
+    catch (<info descr="Not resolved until the project is fully loaded">Cls</info> x) {}
+  }
+  
+  void testThrow3() {
+    // We don't know whether Cls is checked or not
+    declaredUnknownException();
+  }
+  
+  void declaredUnknownException() throws <info descr="Not resolved until the project is fully loaded">Cls</info> {}
+  
+  void testConcat(<info descr="Not resolved until the project is fully loaded">Cls</info> cls) {
+    System.out.println("hello " + cls.<info descr="Not resolved until the project is fully loaded">getSomething</info>() + "!!!");
+  }
   
   static class Clss implements <info descr="Not resolved until the project is fully loaded">MyInterface</info> {
     void run() {
       <info descr="Not resolved until the project is fully loaded">foo</info>(<info descr="Not resolved until the project is fully loaded">bar</info>);
+    }
+    
+    static class Inner extends <info descr="Not resolved until the project is fully loaded">Cls</info> {
+      
     }
   }
 }

@@ -50,3 +50,22 @@ final class Test {
   <warning descr="Class member declared 'protected' in 'final' class">protected</warning> void bar3() {
   }
 }
+final class UnresolvedTests extends <error descr="Cannot resolve symbol 'Unresolved'">Unresolved</error> {
+  void test() {
+    new <error descr="Cannot resolve symbol 'Unresolved'">Unresolved</error>() {
+      @Override
+      protected void foo() {}
+    };
+  }
+  
+  @Override
+  protected void foo() {}
+}
+
+abstract class AbstractCentral {
+  protected record Listener(String key) {
+    protected Listener {
+      System.out.println("1");
+    }
+  }
+}

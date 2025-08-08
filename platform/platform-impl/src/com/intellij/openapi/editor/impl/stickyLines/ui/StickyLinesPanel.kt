@@ -11,7 +11,9 @@ import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.components.JBPanel
 import java.awt.Color
 import java.awt.Graphics
+import java.awt.Graphics2D
 import javax.swing.BoxLayout
+import javax.swing.border.LineBorder
 
 internal class StickyLinesPanel(
   private val editor: EditorEx,
@@ -59,7 +61,7 @@ internal class StickyLinesPanel(
   // ------------------------------------------- Impl -------------------------------------------
 
   private fun repaintLinesImpl() {
-    val panelWidth: Int = (editor as EditorImpl).stickyLinesPanelWidth
+    val panelWidth: Int = stickyLinesPanelWidth()
     val lineHeight: Int = editor.lineHeight
     var index = 0
     val components: Iterator<StickyLineComponent> = stickyComponents.unboundComponents().iterator()
@@ -88,20 +90,25 @@ internal class StickyLinesPanel(
     repaint()
   }
 
-  override fun setBounds(x: Int, y: Int, width: Int, height: Int) {
-    super.setBounds(x, y, width, height)
-    shadowPainter.updateShadow(width, height, editor.lineHeight)
-  }
-
   override fun paintComponent(g: Graphics?) {
     super.paintComponent(g)
-    shadowPainter.paintShadow(g)
+    val panelHeight = panelH
+    val panelWidth = stickyLinesPanelWidth() // panelW can be outdated here
+    val lineHeight = editor.lineHeight
+    if (g is Graphics2D && panelHeight > 0 && panelWidth > 0 && lineHeight > 0) {
+      val borderHeight = (border as LineBorder).thickness
+      shadowPainter.paintShadow(g, panelHeight + borderHeight, panelWidth, lineHeight)
+    }
   }
 
   // ------------------------------------------- Utils -------------------------------------------
 
   private fun isPanelSizeChanged(panelWidth: Int, panelHeight: Int): Boolean {
     return this.panelW != panelWidth || this.panelH != panelHeight
+  }
+
+  private fun stickyLinesPanelWidth(): Int {
+    return (editor as EditorImpl).stickyLinesPanelWidth
   }
 
   private fun isPanelEnabled(): Boolean {

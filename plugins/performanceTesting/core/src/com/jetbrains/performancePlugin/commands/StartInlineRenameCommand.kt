@@ -9,7 +9,6 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.InplaceRefactoringContinuation
-import com.intellij.refactoring.RefactoringSettings
 import com.intellij.refactoring.actions.RenameElementAction
 import com.intellij.refactoring.rename.Renamer
 import com.intellij.refactoring.rename.RenamerFactory
@@ -27,8 +26,6 @@ class StartInlineRenameCommand(text: String, line: Int) : AbstractCommand(text, 
   }
 
   override fun _execute(context: PlaybackContext): Promise<Any?> {
-    //disable popup
-    RefactoringSettings.getInstance().RENAME_SHOW_AUTOMATIC_RENAMING_DIALOG = false
     val actionCallback = ActionCallbackProfilerStopper()
     val project = context.project
     ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(Runnable {

@@ -13,6 +13,7 @@ import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.SETabSwitcherListener.Companion.SE_TAB_TOPIC
 import com.intellij.ide.actions.searcheverywhere.SETabSwitcherListener.SETabSwitchedEvent
 import com.intellij.ide.actions.searcheverywhere.footer.createTextExtendedInfo
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector.wrapEventWithActionStartData
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.ide.util.scopeChooser.ScopeOption
 import com.intellij.ide.util.scopeChooser.ScopeService
@@ -47,13 +48,13 @@ import java.lang.ref.WeakReference
 import javax.swing.ListCellRenderer
 
 @ApiStatus.Internal
-class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhereContributor<SearchEverywhereItem>,
-                                                        SearchFieldActionsContributor,
-                                                        SearchEverywhereExtendedInfoProvider,
-                                                        PossibleSlowContributor,
-                                                        SearchEverywhereEmptyTextProvider,
-                                                        SearchEverywherePreviewProvider,
-                                                        DumbAware, ScopeSupporting, Disposable {
+open class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhereContributor<SearchEverywhereItem>,
+                                                             SearchFieldActionsContributor,
+                                                             SearchEverywhereExtendedInfoProvider,
+                                                             PossibleSlowContributor,
+                                                             SearchEverywhereEmptyTextProvider,
+                                                             SearchEverywherePreviewProvider,
+                                                             DumbAware, ScopeSupporting, Disposable {
 
   private val project = event.getRequiredData(CommonDataKeys.PROJECT)
   private val model = FindManager.getInstance(project).findInProjectModel
@@ -287,7 +288,7 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
       }
 
       override fun actionPerformed(e: AnActionEvent) {
-        showInSearchEverywherePopup(ID, e, true, true)
+        showInSearchEverywherePopup(ID, wrapEventWithActionStartData(e), true, true)
       }
     }
   }

@@ -7,27 +7,29 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.QuickFixAction;
 import com.intellij.codeInspection.ui.actions.suppress.SuppressActionWrapper;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
 
 /**
  * @author Dmitry Batkovich
  */
+@ApiStatus.Internal
 public final class QuickFixPreviewPanelFactory {
   private static final Logger LOG = Logger.getInstance(QuickFixPreviewPanelFactory.class);
   private static final int MAX_FIX_COUNT = 3;
@@ -42,10 +44,11 @@ public final class QuickFixPreviewPanelFactory {
     }
   }
 
-  private static final class QuickFixReadyPanel extends JPanel {
+  protected static final class QuickFixReadyPanel extends JPanel {
     private final @NotNull InspectionResultsView myView;
     private final InspectionToolWrapper myWrapper;
     private final boolean myEmpty;
+    private AnAction @NotNull [] myAvailableSuppressors = AnAction.EMPTY_ARRAY;
 
     QuickFixReadyPanel(@NotNull InspectionResultsView view) {
       myView = view;
@@ -61,7 +64,9 @@ public final class QuickFixPreviewPanelFactory {
       if (multipleDescriptors && commonFixes.length == 0) {
         partialFixes = view.getProvider().getPartialQuickFixes(myWrapper, tree, tree.getSelectedDescriptors());
       }
-      myEmpty = fillPanel(commonFixes, partialFixes, multipleDescriptors, view);
+      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162775")) {
+        myEmpty = fillPanel(commonFixes, partialFixes, multipleDescriptors, view);
+      }
     }
 
     public boolean isEmpty() {
@@ -92,10 +97,9 @@ public final class QuickFixPreviewPanelFactory {
       if (hasFixes) {
         actions.addAll(createFixActions(fixes, multipleDescriptors));
       }
-      final AnAction suppressionCombo = createSuppressionCombo(myView);
-      if (suppressionCombo != null) {
-        actions.add(suppressionCombo);
-      }
+      final AnAction suppressionCombo = createSuppressionCombo();
+      updateAvailableSuppressors(view);
+      actions.add(suppressionCombo);
 
       if (partialFixes.length != 0) {
         actions.add(createPartialFixCombo(partialFixes));
@@ -139,32 +143,25 @@ public final class QuickFixPreviewPanelFactory {
       };
     }
 
-    private static @Nullable AnAction createSuppressionCombo(InspectionResultsView view) {
-      final AnActionEvent
-        event = AnActionEvent.createFromDataContext(ActionPlaces.CODE_INSPECTION, null, DataManager.getInstance().getDataContext(view));
-      final AnAction[] suppressors = new SuppressActionWrapper().getChildren(event);
-      final AnAction[] availableSuppressors = Arrays.stream(suppressors).filter(s -> {
-        event.getPresentation().setEnabled(false);
-        s.update(event);
-        return event.getPresentation().isEnabled();
-      }).toArray(AnAction[]::new);
-      if (availableSuppressors.length == 0) {
-        return null;
-      }
+    private AnAction createSuppressionCombo() {
       final ComboBoxAction action = new ComboBoxAction() {
-        {
-          getTemplatePresentation().setText(CodeInsightBundle.messagePointer("action.presentation.QuickFixPreviewPanelFactory.text.suppress"));
-        }
+        @Override public @NotNull ActionUpdateThread getActionUpdateThread() { return ActionUpdateThread.EDT; }
 
         @Override
         protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
           DefaultActionGroup group = new DefaultCompactActionGroup();
-          group.addAll(availableSuppressors);
+          group.addAll(myAvailableSuppressors);
           return group;
         }
       };
+
+      action.getTemplatePresentation().setText(CodeInsightBundle.messagePointer("action.presentation.QuickFixPreviewPanelFactory.text.suppress"));
       action.setSmallVariant(false);
       return action;
+    }
+
+    void updateAvailableSuppressors(InspectionResultsView view) {
+      myAvailableSuppressors = SuppressActionWrapper.getSuppressionActions(view);
     }
 
     private static AnAction @NotNull [] createFixActions(QuickFixAction[] fixes, boolean multipleDescriptors) {
@@ -194,7 +191,6 @@ public final class QuickFixPreviewPanelFactory {
       }
       return fixes;
     }
-
   }
 
 

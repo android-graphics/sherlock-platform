@@ -5,7 +5,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,6 +21,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -54,7 +54,7 @@ public final class CommonJavaRefactoringUtil {
   );
 
   public static @NotNull JavaBaseRefactoringSupportProvider getRefactoringSupport() {
-    var provider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+    var provider = LanguageRefactoringSupport.getInstance().forLanguage(JavaLanguage.INSTANCE);
     return (JavaBaseRefactoringSupportProvider)provider;
   }
 
@@ -67,15 +67,15 @@ public final class CommonJavaRefactoringUtil {
     return type;
   }
 
-  public static PsiType getTypeByExpression(PsiExpression expr, final PsiElementFactory factory) {
+  public static @Nullable PsiType getTypeByExpression(@Nullable PsiExpression expr, @NotNull final PsiElementFactory factory) {
     PsiType type = RefactoringChangeUtil.getTypeByExpression(expr);
     if (PsiTypes.nullType().equals(type)) {
       ExpectedTypeInfo[] infos = ExpectedTypesProvider.getExpectedTypes(expr, false);
       if (infos.length > 0) {
         type = infos[0].getType();
-        if (type instanceof PsiPrimitiveType) {
+        if (type instanceof PsiPrimitiveType primitiveType) {
           type = infos.length > 1 && !(infos[1].getType() instanceof PsiPrimitiveType) ? infos[1].getType()
-                                                                                       : ((PsiPrimitiveType)type).getBoxedType(expr);
+                                                                                       : primitiveType.getBoxedType(expr);
         }
       }
       else {
@@ -83,7 +83,7 @@ public final class CommonJavaRefactoringUtil {
       }
     }
 
-    return type;
+    return type == null ? null : PsiTypesUtil.removeExternalAnnotations(type);
   }
 
   @Contract("null, _ -> null")
@@ -457,7 +457,7 @@ public final class CommonJavaRefactoringUtil {
 
   public static boolean canBeDeclaredFinal(@NotNull PsiVariable variable) {
     LOG.assertTrue(variable instanceof PsiLocalVariable || variable instanceof PsiParameter);
-    final boolean isReassigned = HighlightControlFlowUtil
+    final boolean isReassigned = ControlFlowUtil
       .isReassigned(variable, new HashMap<>());
     return !isReassigned;
   }
@@ -591,7 +591,7 @@ public final class CommonJavaRefactoringUtil {
     }
     ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(expr, false);
     if (expectedTypes.length == 1 || (isFunctionalType || detectConjunct) && expectedTypes.length > 0 ) {
-      if (typeByExpression != null && Arrays.stream(expectedTypes).anyMatch(typeInfo -> typeByExpression.isAssignableFrom(typeInfo.getType()))) {
+      if (typeByExpression != null && ContainerUtil.exists(expectedTypes, typeInfo -> typeByExpression.isAssignableFrom(typeInfo.getType()))) {
         return type;
       }
       type = expectedTypes[0].getType();

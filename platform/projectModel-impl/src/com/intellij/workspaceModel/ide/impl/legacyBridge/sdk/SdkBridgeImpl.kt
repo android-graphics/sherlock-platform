@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.sdk
 
 import com.intellij.openapi.Disposable
@@ -15,6 +15,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SdkRoot
@@ -22,12 +23,14 @@ import com.intellij.platform.workspace.jps.serialization.impl.JpsGlobalEntitiesS
 import com.intellij.platform.workspace.jps.serialization.impl.JpsSdkEntitySerializer
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
+import kotlin.io.path.Path
 
 
 // SdkBridgeImpl.clone called from com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.reset
@@ -68,13 +71,15 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
   override fun getRootProvider(): RootProvider = this
 
   override fun getUrls(rootType: OrderRootType): Array<String> {
-    return sdkEntityBuilder.roots.filter { it.type.name == rootType.customName }
+    val customName = rootType.customName
+    return sdkEntityBuilder.roots.filter { it.type.name == customName }
       .map { it.url.url }
       .toTypedArray()
   }
 
   override fun getFiles(rootType: OrderRootType): Array<VirtualFile> {
-    return sdkEntityBuilder.roots.filter { it.type.name == rootType.customName }
+    val customName = rootType.customName
+    return sdkEntityBuilder.roots.filter { it.type.name == customName }
       .mapNotNull { it.url.virtualFile }
       .toTypedArray()
   }
@@ -119,7 +124,7 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
 
   override fun readExternal(element: Element) {
     val sdkSerializer = createSerializer()
-    val sdkEntity = sdkSerializer.loadSdkEntity(element, GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager())
+    val sdkEntity = sdkSerializer.loadSdkEntity(element, getVirtualFileUrlManager())
 
     sdkEntityBuilder.applyChangesFrom(sdkEntity)
     reloadAdditionalData()
@@ -135,7 +140,8 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
 
   private fun createSerializer(): JpsSdkEntitySerializer {
     val sortedRootTypes = OrderRootType.getSortedRootTypes().mapNotNull { it.sdkRootName }
-    return JpsGlobalEntitiesSerializers.createSdkSerializer(GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager(), sortedRootTypes)
+    return JpsGlobalEntitiesSerializers.createSdkSerializer(getVirtualFileUrlManager(), sortedRootTypes,
+                                                            Path(PathManager.getOptionsPath()))
   }
 
   fun getRawSdkAdditionalData(): String = sdkEntityBuilder.additionalData
@@ -172,16 +178,23 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
   }
 
   companion object {
-    private val SDK_BRIDGE_MAPPING_ID = ExternalMappingKey.create<ProjectJdkImpl>("intellij.sdk.bridge")
+    private val SDK_BRIDGE_MAPPING_ID = ExternalMappingKey.create<Sdk>("intellij.sdk.bridge")
 
-    val EntityStorage.sdkMap: ExternalEntityMapping<ProjectJdkImpl>
+    val EntityStorage.sdkMap: ExternalEntityMapping<Sdk>
       get() = getExternalMapping(SDK_BRIDGE_MAPPING_ID)
-    val MutableEntityStorage.mutableSdkMap: MutableExternalEntityMapping<ProjectJdkImpl>
+
+    val MutableEntityStorage.mutableSdkMap: MutableExternalEntityMapping<Sdk>
       get() = getMutableExternalMapping(SDK_BRIDGE_MAPPING_ID)
+
+    fun EntityStorage.findSdkEntity(sdk: Sdk): SdkEntity? =
+      sdkMap.getEntities(sdk).firstOrNull() as SdkEntity?
+
+    fun EntityStorage.findSdk(sdkEntity: SdkEntity): Sdk? =
+      sdkMap.getDataByEntity(sdkEntity)
 
     fun createEmptySdkEntity(name: String, type: String, homePath: String = "", version: String? = null): SdkEntity.Builder {
       val sdkEntitySource = createEntitySourceForSdk()
-      val virtualFileUrlManager = GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager()
+      val virtualFileUrlManager = getVirtualFileUrlManager()
       val homePathVfu = virtualFileUrlManager.getOrCreateFromUrl(homePath)
       return SdkEntity(name, type, emptyList(), "", sdkEntitySource) {
         this.homePath = homePathVfu
@@ -190,7 +203,7 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
     }
 
     fun createEntitySourceForSdk(): EntitySource {
-      val virtualFileUrlManager = GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager()
+      val virtualFileUrlManager = getVirtualFileUrlManager()
       val globalLibrariesFile = virtualFileUrlManager.getOrCreateFromUrl(
         PathManager.getOptionsFile(JpsGlobalEntitiesSerializers.SDK_FILE_NAME).absolutePath)
       return JpsGlobalFileEntitySource(globalLibrariesFile)
@@ -239,4 +252,9 @@ fun SdkEntity.Builder.applyChangesFrom(fromSdk: SdkEntity) {
   roots = sdkRoots
   additionalData = fromSdk.additionalData
   entitySource = fromSdk.entitySource
+}
+
+private fun getVirtualFileUrlManager(): VirtualFileUrlManager {
+  // here we can use LocalEelDescriptor, as we simply need to get the virtual file url manager
+  return GlobalWorkspaceModel.getInstance(LocalEelDescriptor).getVirtualFileUrlManager()
 }

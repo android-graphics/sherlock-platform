@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -11,6 +12,7 @@ import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class KeyStrokeMap {
 
   private static final Logger LOG = Logger.getInstance(KeyStrokeMap.class);
@@ -76,8 +78,8 @@ public final class KeyStrokeMap {
       }
 
       modifiers = modifierPlusAStroke.getModifiers();
-      if ((symbolStroke.getModifiers() & KeyEvent.SHIFT_MASK) > 0) {
-        modifiers |= KeyEvent.SHIFT_MASK;
+      if ((symbolStroke.getModifiers() & InputEvent.SHIFT_MASK) > 0) {
+        modifiers |= InputEvent.SHIFT_MASK;
       }
     }
 

@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import com.intellij.execution.process.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
@@ -24,6 +25,7 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.ImmediateEventExecutor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -33,7 +35,7 @@ import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.GlobalContextKey;
 import org.jetbrains.jps.javac.rpc.JavacRemoteProto;
 
-import javax.tools.Diagnostic;
+import javax.tools.*;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -46,10 +48,11 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public class ExternalJavacManager extends ProcessAdapter {
   private static final Logger LOG = Logger.getInstance(ExternalJavacManager.class);
 
-  public static final GlobalContextKey<ExternalJavacManager> KEY = GlobalContextKey.create("_external_javac_server_");
+  public static final GlobalContextKey<ExternalJavacManager> KEY = ExternalJavacManagerKey.KEY;
   public static final int DEFAULT_SERVER_PORT = 7878;
   public static final String STDOUT_LINE_PREFIX = "JAVAC_PROCESS[STDOUT]";
   public static final String STDERR_LINE_PREFIX = "JAVAC_PROCESS[STDERR]";
@@ -88,7 +91,7 @@ public class ExternalJavacManager extends ProcessAdapter {
       .channel(NioServerSocketChannel.class)
       .childOption(ChannelOption.TCP_NODELAY, true)
       .childOption(ChannelOption.SO_KEEPALIVE, true)
-      .childHandler(new ChannelInitializer() {
+      .childHandler(new ChannelInitializer<>() {
         @Override
         protected void initChannel(Channel channel) {
           channel.pipeline().addLast(myChannelRegistrar,
@@ -283,10 +286,10 @@ public class ExternalJavacManager extends ProcessAdapter {
 
   private boolean shutdownProcess(ExternalJavacProcessHandler process) {
     UUID processId = process.getProcessId();
-    debug(()-> "shutdownProcess: shutting down " + processId);
+    debug(() -> "shutdownProcess: shutting down " + processId);
     final Channel conn = myConnections.get(processId);
     if (conn != null && process.lock()) {
-      debug(()-> "shutdownProcess: sending shutdown request to " + processId);
+      debug(() -> "shutdownProcess: sending shutdown request to " + processId);
       conn.writeAndFlush(JavacProtoUtil.toMessage(processId, JavacProtoUtil.createShutdownRequest()));
       return true;
     }
@@ -460,7 +463,7 @@ public class ExternalJavacManager extends ProcessAdapter {
   }
 
   private static void appendParam(List<? super String> cmdLine, String parameter) {
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       if (parameter.contains("\"")) {
         parameter = parameter.replace("\"", "\\\"");
       }
@@ -597,7 +600,7 @@ public class ExternalJavacManager extends ProcessAdapter {
   }
 
   private Channel lookupChannel(UUID processId) {
-    Channel channel = null;
+    Channel channel;
     synchronized (myConnections) {
       channel = myConnections.get(processId);
       debug(channel, ch-> "lookupChannel: channel for " + processId + " is " + ch);

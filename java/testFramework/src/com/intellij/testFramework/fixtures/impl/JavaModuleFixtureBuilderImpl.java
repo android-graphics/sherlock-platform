@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.testFramework.fixtures.impl;
 
@@ -39,6 +39,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends ModuleFixtureBuilderImpl<T> implements JavaModuleFixtureBuilder<T> {
   private final List<Lib> myLibraries = new ArrayList<>();
   private final List<MavenLib> myMavenLibraries = new ArrayList<>();
@@ -55,16 +58,14 @@ public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> exte
     super(moduleType, fixtureBuilder);
   }
 
-  @NotNull
   @Override
-  public JavaModuleFixtureBuilder setLanguageLevel(@NotNull final LanguageLevel languageLevel) {
+  public @NotNull JavaModuleFixtureBuilder setLanguageLevel(final @NotNull LanguageLevel languageLevel) {
     myLanguageLevel = languageLevel;
     return this;
   }
 
-  @NotNull
   @Override
-  public JavaModuleFixtureBuilder addLibrary(String libraryName, String @NotNull ... classPath) {
+  public @NotNull JavaModuleFixtureBuilder addLibrary(String libraryName, String @NotNull ... classPath) {
     for (String path : classPath) {
       if (!new File(path).exists()) {
         System.out.println(path + " does not exist");
@@ -75,9 +76,8 @@ public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> exte
     return this;
   }
 
-  @NotNull
   @Override
-  public JavaModuleFixtureBuilder addLibrary(@NonNls final String libraryName, @NotNull final Map<OrderRootType, String[]> roots) {
+  public @NotNull JavaModuleFixtureBuilder addLibrary(final @NonNls String libraryName, final @NotNull Map<OrderRootType, String[]> roots) {
     myLibraries.add(new Lib(libraryName, roots));
     return this;
   }
@@ -88,9 +88,8 @@ public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> exte
     return this;
   }
 
-  @NotNull
   @Override
-  public JavaModuleFixtureBuilder addLibraryJars(String libraryName, @NotNull String basePath, String @NotNull ... jars) {
+  public @NotNull JavaModuleFixtureBuilder addLibraryJars(String libraryName, @NotNull String basePath, String @NotNull ... jars) {
     if (!basePath.endsWith("/")) {
       basePath += "/";
     }
@@ -101,15 +100,14 @@ public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> exte
     return addLibrary(libraryName, classPath);
   }
 
-  @NotNull
   @Override
-  public JavaModuleFixtureBuilder addJdk(@NotNull String jdkPath) {
+  public @NotNull JavaModuleFixtureBuilder addJdk(@NotNull String jdkPath) {
     myJdk = jdkPath;
     return this;
   }
 
   @Override
-  public void setMockJdkLevel(@NotNull final MockJdkLevel level) {
+  public void setMockJdkLevel(final @NotNull MockJdkLevel level) {
     myMockJdkLevel = level;
   }
 
@@ -210,18 +208,18 @@ public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> exte
     if (myOutputPath != null) {
       final File pathFile = new File(myOutputPath);
       if (!pathFile.mkdirs()) {
-        assert pathFile.exists() : "unable to create: " + myOutputPath;
+        assertTrue("unable to create: " + myOutputPath, pathFile.exists());
       }
       final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(myOutputPath);
-      assert virtualFile != null : "cannot find output path: " + myOutputPath;
+      assertNotNull("cannot find output path: " + myOutputPath, virtualFile);
       rootModel.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPath(virtualFile);
       rootModel.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(false);
       rootModel.getModuleExtension(CompilerModuleExtension.class).setExcludeOutput(false);
     }
     if (myTestOutputPath != null) {
-      assert new File(myTestOutputPath).mkdirs() : myTestOutputPath;
+      assertTrue(myTestOutputPath, new File(myTestOutputPath).mkdirs());
       final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(myTestOutputPath);
-      assert virtualFile != null : "cannot find test output path: " + myTestOutputPath;
+      assertNotNull("cannot find test output path: " + myTestOutputPath, virtualFile);
       rootModel.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPathForTests(virtualFile);
       rootModel.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(false);
       rootModel.getModuleExtension(CompilerModuleExtension.class).setExcludeOutput(false);

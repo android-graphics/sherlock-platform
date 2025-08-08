@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -21,8 +21,10 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -38,8 +40,7 @@ public final class JavaSuppressionUtil {
     return docComment != null && docComment.findTagByName(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME) != null;
   }
 
-  @Nullable
-  private static String getInspectionIdSuppressedInAnnotationAttribute(@NotNull PsiElement element) {
+  private static @Nullable String getInspectionIdSuppressedInAnnotationAttribute(@NotNull PsiElement element) {
     if (element instanceof PsiLiteralExpression) {
       Object value = ((PsiLiteralExpression)element).getValue();
       if (value instanceof String) {
@@ -58,8 +59,7 @@ public final class JavaSuppressionUtil {
     return null;
   }
 
-  @NotNull
-  public static Collection<String> getInspectionIdsSuppressedInAnnotation(@Nullable PsiModifierList modifierList) {
+  public static @NotNull Collection<String> getInspectionIdsSuppressedInAnnotation(@Nullable PsiModifierList modifierList) {
     if (modifierList == null) {
       return Collections.emptyList();
     }
@@ -76,8 +76,7 @@ public final class JavaSuppressionUtil {
                                         PsiModificationTracker.MODIFICATION_COUNT));
   }
 
-  @NotNull
-  private static Collection<String> getInspectionIdsSuppressedInAnnotation(@NotNull PsiAnnotation annotation) {
+  private static @NotNull @Unmodifiable Collection<String> getInspectionIdsSuppressedInAnnotation(@NotNull PsiAnnotation annotation) {
     PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
     if (attributes.length == 0) {
       return Collections.emptyList();
@@ -158,8 +157,7 @@ public final class JavaSuppressionUtil {
     return null;
   }
 
-  @NotNull
-  private static Collection<String> getInspectionIdsSuppressedInAnnotation(@NotNull PsiModifierListOwner owner) {
+  private static @NotNull Collection<String> getInspectionIdsSuppressedInAnnotation(@NotNull PsiModifierListOwner owner) {
     if (!PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, owner)) return Collections.emptyList();
     PsiModifierList modifierList = owner.getModifierList();
     return getInspectionIdsSuppressedInAnnotation(modifierList);
@@ -253,36 +251,38 @@ public final class JavaSuppressionUtil {
   private static PsiAnnotation createNewAnnotation(@NotNull Project project,
                                                    PsiElement container,
                                                    PsiAnnotation annotation,
-                                                   @NotNull String id) throws IncorrectOperationException {
+                                                   @NotNull String id) {
+    String escaped = '"' + StringUtil.escapeStringCharacters(id) + '"';
     if (annotation == null) {
       return JavaPsiFacade.getElementFactory(project)
-        .createAnnotationFromText("@" + SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "(\"" + id + "\")", container);
+        .createAnnotationFromText("@" + SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "(" + escaped + ")", container);
     }
-    String currentSuppressedId = "\"" + id + "\"";
-    String annotationText = annotation.getText();
-    if (annotationText.contains("{")) {
-      int curlyBraceIndex = annotationText.lastIndexOf('}');
-      if (curlyBraceIndex > 0) {
-        String oldSuppressWarning = annotationText.substring(0, curlyBraceIndex);
-        if (oldSuppressWarning.contains(currentSuppressedId)) return null;
-        return JavaPsiFacade.getElementFactory(project).createAnnotationFromText(
-          oldSuppressWarning + ", " + currentSuppressedId + "})", container);
+    StringBuilder newAnnotationText = new StringBuilder("@").append(SUPPRESS_INSPECTIONS_ANNOTATION_NAME).append("(");
+    PsiAnnotationMemberValue value = annotation.findAttributeValue("value");
+    if (value instanceof PsiArrayInitializerMemberValue array) {
+      PsiAnnotationMemberValue[] initializers = array.getInitializers();
+      if (initializers.length > 0) {
+        newAnnotationText.append('{');
+        for (PsiAnnotationMemberValue initializer : initializers) {
+          newAnnotationText.append(initializer.getText()).append(',');
+          if (initializer instanceof PsiExpression expression) {
+            if (id.equals(ExpressionUtils.computeConstantExpression(expression))) return null;
+          }
+        }
+        newAnnotationText.append(escaped).append('}');
       }
       else {
-        throw new IncorrectOperationException(annotationText);
+        newAnnotationText.append(escaped);
       }
+    }
+    else if (value instanceof PsiExpression expression) {
+      if (id.equals(ExpressionUtils.computeConstantExpression(expression))) return null;
+      newAnnotationText.append("{").append(expression.getText()).append(", ").append(escaped).append("}");
     }
     else {
-      PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
-      if (attributes.length == 1) {
-        String suppressedWarnings = attributes[0].getText();
-        if (suppressedWarnings.contains(currentSuppressedId)) return null;
-        return JavaPsiFacade.getElementFactory(project).createAnnotationFromText(
-            "@" + SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "({" + suppressedWarnings + ", " + currentSuppressedId + "})", container);
-
-      }
+      newAnnotationText.append(escaped);
     }
-    return null;
+    return JavaPsiFacade.getElementFactory(project).createAnnotationFromText(newAnnotationText.append(")").toString(), container);
   }
 
   public static boolean canHave15Suppressions(@NotNull PsiElement file) {
@@ -296,8 +296,7 @@ public final class JavaSuppressionUtil {
     return DaemonCodeAnalyzerSettings.getInstance().isSuppressWarnings() && is_1_5 && PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, file);
   }
 
-  @Nullable
-  public static PsiElement getElementToAnnotate(@NotNull PsiElement element, @NotNull PsiElement container) {
+  public static @Nullable PsiElement getElementToAnnotate(@NotNull PsiElement element, @NotNull PsiElement container) {
     if (container instanceof PsiDeclarationStatement) {
       if (canHave15Suppressions(element)) {
         PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)container;

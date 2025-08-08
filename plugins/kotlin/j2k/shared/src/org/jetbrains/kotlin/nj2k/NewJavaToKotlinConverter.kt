@@ -2,34 +2,33 @@
 
 package org.jetbrains.kotlin.nj2k
 
-import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix
-import com.intellij.ide.actions.QualifiedNameProviderUtil
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
-import com.intellij.psi.infos.MethodCandidateInfo
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK2Mode
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProductionOrTest
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.base.projectStructure.productionOrTestSourceModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.j2k.*
+import org.jetbrains.kotlin.j2k.ParseContext.*
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.J2KConversionPhase.*
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing
 import org.jetbrains.kotlin.nj2k.printing.JKCodeBuilder
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtImportList
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.resolve.ImportPath
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class NewJavaToKotlinConverter(
     val project: Project,
@@ -58,101 +57,51 @@ class NewJavaToKotlinConverter(
         preprocessorExtensions: List<J2kPreprocessorExtension>,
         postprocessorExtensions: List<J2kPostprocessorExtension>
     ): FilesResult {
+        ThreadingAssertions.assertBackgroundThread()
+
         val withProgressProcessor = NewJ2kWithProgressProcessor(progressIndicator, files, postProcessor.phasesCount + phasesCount)
 
-        return withProgressProcessor.process {
-            // TODO looks like the progress dialog doesn't appear immediately, but should
-            withProgressProcessor.updateState(fileIndex = null, phase = PREPROCESSING, KotlinNJ2KBundle.message("j2k.phase.preprocessing"))
-            if (isK2Mode()) {
-                runK2Preprocessing(files)
-            }
+        // TODO looks like the progress dialog doesn't appear immediately, but should
+        withProgressProcessor.updateState(fileIndex = null, phase = PREPROCESSING, KotlinNJ2KBundle.message("j2k.phase.preprocessing"))
 
-            PreprocessorExtensionsRunner.runProcessors(project, files, preprocessorExtensions)
+        PreprocessorExtensionsRunner.runProcessors(project, files, preprocessorExtensions)
 
-            val (results, externalCodeProcessing, context) = runReadAction {
-                elementsToKotlin(files, withProgressProcessor, bodyFilter)
-            }
-
-            val kotlinFiles = results.mapIndexed { i, result ->
-                runUndoTransparentActionInEdt(inWriteAction = true) {
-                    val javaFile = files[i]
-                    withProgressProcessor.updateState(fileIndex = i, phase = CREATE_FILES, phaseDescription)
-                    KtPsiFactory.contextual(files[i]).createPhysicalFile(javaFile.name.replace(".java", ".kt"), result!!.text)
-                        .also { it.addImports(result.importsToAdd) }
-                }
-            }
-
-            postProcessor.doAdditionalProcessing(MultipleFilesPostProcessingTarget(kotlinFiles), context) { phase, description ->
-                withProgressProcessor.updateState(fileIndex = null, phase = phase + phasesCount, description = description)
-            }
-
-            PostprocessorExtensionsRunner.runProcessors(project, kotlinFiles, postprocessorExtensions)
-
-            FilesResult(kotlinFiles.map { it.text }, externalCodeProcessing)
+        val (results, externalCodeProcessing, context) = runReadAction {
+            elementsToKotlin(files, withProgressProcessor, bodyFilter)
         }
+
+        val kotlinFiles = results.mapIndexed { i, result ->
+            val javaFile = files[i]
+            withProgressProcessor.updateState(fileIndex = i, phase = CREATE_FILES, phaseDescription)
+            runUndoTransparentActionInEdt(inWriteAction = true) {
+                KtPsiFactory.contextual(javaFile.parent ?: javaFile).createPhysicalFile(javaFile.name.replace(".java", ".kt"), result!!.text)
+                    .also { it.addImports(result.importsToAdd) }
+            }
+        }
+
+        postProcessor.doAdditionalProcessing(MultipleFilesPostProcessingTarget(kotlinFiles), context) { phase, description ->
+            withProgressProcessor.updateState(fileIndex = null, phase = phase + phasesCount, description = description)
+        }
+
+        PostprocessorExtensionsRunner.runProcessors(project, kotlinFiles, postprocessorExtensions)
+
+        return FilesResult(kotlinFiles.map { it.text }, externalCodeProcessing)
     }
 
-    // A preprocessing to add explicit type arguments (needed for K2 nullability inference).
-    // Resolve is done as a separate step for optimization.
-    private fun runK2Preprocessing(files: List<PsiJavaFile>) {
-        val set = mutableSetOf<PsiMethodCallExpression>()
-
-        runReadAction {
-            for (file in files) {
-                file.accept(object : JavaRecursiveElementWalkingVisitor() {
-                    override fun visitMethodCallExpression(expression: PsiMethodCallExpression) {
-                        super.visitMethodCallExpression(expression)
-
-                        if (expression.typeArguments.isNotEmpty()) return
-
-                        val resolveResult = expression.resolveMethodGenerics()
-                        if (resolveResult is MethodCandidateInfo && resolveResult.isApplicable) {
-                            val method = resolveResult.element
-                            if (method.isConstructor || !method.hasTypeParameters()) return
-
-                            // Avoid incorrect type arguments insertion that will lead to red code
-                            QualifiedNameProviderUtil.getQualifiedName(method)?.let { methodName ->
-                                if (methodName.startsWith("java.util.stream.Stream#collect") ||
-                                    methodName.startsWith("java.util.stream.Collectors")
-                                ) {
-                                    return
-                                }
-                            }
-                        }
-
-                        set += expression
-                    }
-                })
-            }
-        }
-
-        runUndoTransparentActionInEdt(inWriteAction = true) {
-            for (expression in set) {
-                val typeArgumentList = AddTypeArgumentsFix.addTypeArguments(expression, null, false)
-                    ?.safeAs<PsiMethodCallExpression>()
-                    ?.typeArgumentList
-                    ?: continue
-
-                expression.typeArgumentList.replace(typeArgumentList)
-            }
-        }
-    }
-
-    @OptIn(KaAllowAnalysisOnEdt::class)
     fun elementsToKotlin(
         inputElements: List<PsiElement>,
         processor: WithProgressProcessor,
         bodyFilter: ((PsiElement) -> Boolean)?,
         forInlining: Boolean = false
-    ): Result = allowAnalysisOnEdt {
+    ): Result {
         val contextElement = inputElements.firstOrNull() ?: return Result.EMPTY
-        val targetKaModule = targetModule?.productionOrTestSourceModuleInfo?.toKaModule()
+        val targetKaModule = targetModule?.toKaSourceModuleForProductionOrTest()
 
         // TODO
         // val originKtModule = ProjectStructureProvider.getInstance(project).getModule(contextElement, contextualModule = null)
         // doesn't work for copy-pasted code, in this case the module is NotUnderContentRootModuleByModuleInfo, which can't be analyzed
 
-        when {
+        return when {
             targetKaModule != null -> {
                 analyze(targetKaModule) {
                     doConvertElementsToKotlin(contextElement, inputElements, processor, bodyFilter, forInlining)
@@ -188,7 +137,12 @@ class NewJavaToKotlinConverter(
             else -> LanguageVersionSettingsImpl.DEFAULT
         }
 
-        val importStorage = JKImportStorage(languageVersionSettings)
+        val kaModule =
+            targetFile?.let { KaModuleProvider.getModule(project, it, useSiteModule = null) }
+                ?: targetModule?.toKaSourceModuleForProduction()
+                ?: KaModuleProvider.getModule(project, contextElement, useSiteModule = null)
+
+        val importStorage = JKImportStorage(kaModule.targetPlatform, project)
         val treeBuilder = JavaToJKTreeBuilder(symbolProvider, typeFactory, referenceSearcher, importStorage, bodyFilter, forInlining)
 
         // we want to leave all imports as is in the case when user is converting only imports
@@ -207,11 +161,10 @@ class NewJavaToKotlinConverter(
             inputElements.any { it == element || it.isAncestor(element, strict = true) }
 
         val externalCodeProcessing = NewExternalCodeProcessing(referenceSearcher, ::isInConversionContext)
-        val context = NewJ2kConverterContext(
+        val context = ConverterContext(
             symbolProvider,
             typeFactory,
             converter = this,
-            ::isInConversionContext,
             importStorage,
             JKElementInfoStorage(),
             externalCodeProcessing,
@@ -234,16 +187,15 @@ class NewJavaToKotlinConverter(
             processor.updateState(fileIndex = i, phase = PRINT_CODE, phaseDescription)
             val (element, ast) = elementWithAst
             if (ast == null) return@mapIndexed null
-            val code = JKCodeBuilder(context).run { printCodeOut(ast) }
+
+            val code = JKCodeBuilder(context).printCodeOut(ast)
+            val importsToAdd = importStorage.getImports()
             val parseContext = when (element) {
-                is PsiStatement, is PsiExpression -> ParseContext.CODE_BLOCK
-                else -> ParseContext.TOP_LEVEL
+                is PsiStatement, is PsiExpression -> CODE_BLOCK
+                else -> TOP_LEVEL
             }
-            ElementResult(
-                code,
-                importsToAdd = importStorage.getImports(),
-                parseContext = parseContext
-            )
+
+            ElementResult(code, importsToAdd, parseContext)
         }
 
         return Result(

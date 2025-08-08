@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.Comparing;
@@ -68,13 +68,13 @@ public class StringUtilTest {
 
   @Test
   public void doTestTrimCharSequence() {
-    assertEquals(StringUtil.trim((CharSequence)"").toString(), "");
-    assertEquals(StringUtil.trim((CharSequence)" ").toString(), "");
-    assertEquals(StringUtil.trim((CharSequence)" \n\t\r").toString(), "");
-    assertEquals(StringUtil.trim((CharSequence)"a").toString(), "a");
-    assertEquals(StringUtil.trim((CharSequence)" a").toString(), "a");
-    assertEquals(StringUtil.trim((CharSequence)"bc ").toString(), "bc");
-    assertEquals(StringUtil.trim((CharSequence)" b a c   ").toString(), "b a c");
+    assertEquals("", StringUtil.trim((CharSequence)"").toString());
+    assertEquals("", StringUtil.trim((CharSequence)" ").toString());
+    assertEquals("", StringUtil.trim((CharSequence)" \n\t\r").toString());
+    assertEquals("a", StringUtil.trim((CharSequence)"a").toString());
+    assertEquals("a", StringUtil.trim((CharSequence)" a").toString());
+    assertEquals("bc", StringUtil.trim((CharSequence)"bc ").toString());
+    assertEquals("b a c", StringUtil.trim((CharSequence)" b a c   ").toString());
   }
 
   @Test
@@ -895,6 +895,21 @@ public class StringUtilTest {
   }
 
   @Test
+  public void testReplaceUnicodeEscapeSequences() {
+    assertEquals("Z", StringUtil.replaceUnicodeEscapeSequences("\\uuu005a"));
+    assertEquals("ZZ", StringUtil.replaceUnicodeEscapeSequences("\\uuu005aZ"));
+    assertEquals("ZZZ", StringUtil.replaceUnicodeEscapeSequences("Z\\uuu005aZ"));
+    assertEquals("Z\\\\uuu005aZ", StringUtil.replaceUnicodeEscapeSequences("Z\\\\uuu005aZ"));
+    assertEquals("\\uuu005\\a\\u1\\u22\\u333", StringUtil.replaceUnicodeEscapeSequences("\\uuu005\\a\\u1\\u22\\u333"));
+    assertEquals("\\uA\\u1Z", StringUtil.replaceUnicodeEscapeSequences("\\u\\u0041\\u1\\u005a"));
+    assertEquals("\\u004", StringUtil.replaceUnicodeEscapeSequences("\\u004"));
+    assertEquals("\\", StringUtil.replaceUnicodeEscapeSequences("\\"));
+    assertEquals("\\u", StringUtil.replaceUnicodeEscapeSequences("\\u"));
+    assertEquals("\\uu", StringUtil.replaceUnicodeEscapeSequences("\\uu"));
+    assertEquals("\\uu1", StringUtil.replaceUnicodeEscapeSequences("\\uu1"));
+  }
+
+  @Test
   public void testStripCharFilter() {
     assertEquals("my-string", StringUtil.strip("\n   my -string ", CharFilter.NOT_WHITESPACE_FILTER));
     assertEquals("my-string", StringUtil.strip("my- string", CharFilter.NOT_WHITESPACE_FILTER));
@@ -1047,5 +1062,43 @@ public class StringUtilTest {
     assertEquals(Arrays.asList("a\u00A0b"), StringUtil.split("a\u00A0b", spaceSeparator, true, true));
 
     assertEquals(Arrays.asList("  \n\t", " "), StringUtil.split("a  \n\ta ", CharFilter.NOT_WHITESPACE_FILTER, true, true));
+  }
+
+  @Test
+  @SuppressWarnings({"OctalInteger", "UnnecessaryUnicodeEscape"}) // need to test octal numbers and escapes
+  public void testUnescapeAnsiStringCharacters() {
+    assertEquals("'", StringUtil.unescapeAnsiStringCharacters("\\'"));
+    assertEquals("\"", StringUtil.unescapeAnsiStringCharacters("\\\""));
+    assertEquals("?", StringUtil.unescapeAnsiStringCharacters("\\?"));
+    assertEquals("\\", StringUtil.unescapeAnsiStringCharacters("\\\\"));
+    assertEquals("" + (char)0x07, StringUtil.unescapeAnsiStringCharacters("\\a"));
+    assertEquals("" + (char)0x08, StringUtil.unescapeAnsiStringCharacters("\\b"));
+    assertEquals("" + (char)0x0c, StringUtil.unescapeAnsiStringCharacters("\\f"));
+    assertEquals("\n", StringUtil.unescapeAnsiStringCharacters("\\n"));
+    assertEquals("\r", StringUtil.unescapeAnsiStringCharacters("\\r"));
+    assertEquals("\t", StringUtil.unescapeAnsiStringCharacters("\\t"));
+    assertEquals("" + (char)0x0b, StringUtil.unescapeAnsiStringCharacters("\\v"));
+
+    // octal
+    assertEquals("" + (char)00, StringUtil.unescapeAnsiStringCharacters("\\0"));
+    assertEquals("" + (char)01, StringUtil.unescapeAnsiStringCharacters("\\1"));
+    assertEquals("" + (char)012, StringUtil.unescapeAnsiStringCharacters("\\12"));
+    assertEquals("" + (char)0123, StringUtil.unescapeAnsiStringCharacters("\\123"));
+
+    // hex
+    assertEquals("" + (char)0x0, StringUtil.unescapeAnsiStringCharacters("\\x0"));
+    assertEquals("" + (char)0xf, StringUtil.unescapeAnsiStringCharacters("\\xf"));
+    assertEquals("" + (char)0xff, StringUtil.unescapeAnsiStringCharacters("\\xff"));
+    assertEquals("" + (char)0xfff, StringUtil.unescapeAnsiStringCharacters("\\xfff"));
+    assertEquals("" + (char)0xffff, StringUtil.unescapeAnsiStringCharacters("\\xffff"));
+    assertEquals("" + (char)0xf, StringUtil.unescapeAnsiStringCharacters("\\x0000000000000000f"));
+    assertEquals("\\x110000", StringUtil.unescapeAnsiStringCharacters("\\x110000")); // invalid unicode codepoint
+
+    // 4 digit codepoint
+    assertEquals("\u1234", StringUtil.unescapeAnsiStringCharacters("\\u1234"));
+
+    // 8 digit codepoint
+    assertEquals("\u0061", StringUtil.unescapeAnsiStringCharacters("\\U00000061"));
+    assertEquals("\\U00110000", StringUtil.unescapeAnsiStringCharacters("\\U00110000")); // invalid unicode codepoint
   }
 }

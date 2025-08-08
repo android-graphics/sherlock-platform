@@ -39,6 +39,8 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
+import com.intellij.platform.project.PROJECT_ID
+import com.intellij.platform.project.ProjectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.serviceContainer.*
@@ -64,6 +66,8 @@ internal val projectMethodType: MethodType = MethodType.methodType(Void.TYPE, Pr
 internal val projectAndScopeMethodType: MethodType = MethodType.methodType(Void.TYPE, Project::class.java, CoroutineScope::class.java)
 
 private val LOG = logger<ProjectImpl>()
+
+private val DISPOSE_EARLY_DISPOSABLE_TRACE = Key.create<String>("ProjectImpl.DISPOSE_EARLY_DISPOSABLE_TRACE")
 
 @Internal
 open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName: String?)
@@ -111,7 +115,13 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
   @Suppress("LeakingThis")
   @Internal
   @JvmField
-  val asyncPreloadServiceScope: CoroutineScope = getCoroutineScope().childScope(supervisor = false)
+  val asyncPreloadServiceScope: CoroutineScope = getCoroutineScope()
+    .childScope(supervisor = false, name = "project service preloading")
+
+  @Internal
+  @JvmField
+  val activityScope: CoroutineScope = getCoroutineScope()
+    .childScope(supervisor = false, name = "project activities")
 
   private val earlyDisposable = AtomicReference(Disposer.newDisposable())
 
@@ -132,6 +142,9 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
 
     @Suppress("LeakingThis")
     putUserData(CREATION_TIME, System.nanoTime())
+
+    @Suppress("LeakingThis")
+    putUserData(PROJECT_ID, ProjectId.create())
 
     @Suppress("LeakingThis")
     registerServiceInstance(Project::class.java, this, fakeCorePluginDescriptor)
@@ -159,6 +172,10 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     coroutineScopeMethodType,
     emptyConstructorMethodType,
   )
+
+  override fun isComponentCreated(): Boolean {
+    return containerState.get() >= ContainerState.COMPONENT_CREATED
+  }
 
   override fun isInitialized(): Boolean {
     val containerState = containerState.get()
@@ -282,8 +299,6 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     }
     return earlyDisposable.get() ?: throw createEarlyDisposableError("earlyDisposable is null for")
   }
-
-  private val DISPOSE_EARLY_DISPOSABLE_TRACE = Key.create<String>("ProjectImpl.DISPOSE_EARLY_DISPOSABLE_TRACE")
 
   fun disposeEarlyDisposable() {
     if (LOG.isDebugEnabled || ApplicationManager.getApplication().isUnitTestMode) {
@@ -412,5 +427,6 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     super.stopServicePreloading()
 
     asyncPreloadServiceScope.cancel()
+    activityScope.cancel()
   }
 }

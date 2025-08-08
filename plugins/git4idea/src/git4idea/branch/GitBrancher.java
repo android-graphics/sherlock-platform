@@ -6,6 +6,7 @@ import git4idea.GitReference;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Map;
@@ -219,23 +220,26 @@ public interface GitBrancher {
   void merge(@NotNull GitReference reference,
              @NotNull DeleteOnMergeOption deleteOnMerge,
              @NotNull List<? extends @NotNull GitRepository> repositories,
-             @NotNull Boolean allowRollback);
+             boolean allowRollback);
 
   /**
-   * @deprecated use {@link #merge(GitReference, DeleteOnMergeOption, List, Boolean)}
-   * @param branchName
-   * @param deleteOnMerge
-   * @param repositories
+   * @deprecated use {@link #merge(GitReference, DeleteOnMergeOption, List)}
    */
   @Deprecated
   void merge(@NotNull String branchName,
              @NotNull DeleteOnMergeOption deleteOnMerge,
              @NotNull List<? extends @NotNull GitRepository> repositories);
 
+
   /**
-   * Call {@code git rebase <branchName>} for each of the given repositories.
+   * Call {@code git rebase <reference.name>} for each of the given repositories.
    */
-  void rebase(@NotNull List<? extends @NotNull GitRepository> repositories, @NotNull String branchName);
+  void rebase(@NotNull List<? extends @NotNull GitRepository> repositories, @NotNull GitReference reference);
+
+  /**
+   * Call {@code git rebase <reference>} for each of the given repositories.
+   */
+  void rebase(@NotNull List<? extends @NotNull GitRepository> repositories, @NotNull String reference);
 
   /**
    * Call {@code git rebase <upstream> <branchName>} for each of the given repositories
@@ -257,13 +261,15 @@ public interface GitBrancher {
    */
   void deleteTag(@NotNull String name, @NotNull List<? extends @NotNull GitRepository> repositories);
 
+  void deleteTags(@NotNull Map<String, List<? extends GitRepository>> tagsToContainingRepositories);
+
   /**
    * Deletes tag on all remotes
    *
    * @param repositories map from repository to expected tag commit for --force-with-lease
    *                     null will delete tag without explicit check
    */
-  void deleteRemoteTag(@NotNull String name, @NotNull Map<GitRepository, String> repositories);
+  void deleteRemoteTag(@NotNull String name, @NotNull @Unmodifiable Map<GitRepository, String> repositories);
 
   /**
    * What should be done after successful merging a branch: delete the merged branch, propose to delete or do nothing.

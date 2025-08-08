@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,6 +22,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.VcsActivity;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,10 +31,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
   private static final Logger LOG = Logger.getInstance(UnshelvePatchDefaultExecutor.class);
 
-  @NotNull private final ShelvedChangeList myCurrentShelveChangeList;
+  private final @NotNull ShelvedChangeList myCurrentShelveChangeList;
 
   public UnshelvePatchDefaultExecutor(@NotNull Project project, @NotNull ShelvedChangeList changeList) {
     super(project);

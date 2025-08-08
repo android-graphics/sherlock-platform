@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware
 import com.intellij.openapi.externalSystem.autolink.UnlinkedProjectStartupActivity
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
@@ -19,9 +19,12 @@ import com.intellij.testFramework.openProjectAsync
 import com.intellij.testFramework.utils.vfs.getDirectory
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
+import org.jetbrains.jps.model.java.JdkVersionDetector.JdkVersionInfo
 import org.jetbrains.plugins.gradle.service.project.open.linkAndSyncGradleProject
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.OperationLeakTracker
+import org.jetbrains.plugins.gradle.testFramework.util.awaitGradleOpenProjectConfiguration
+import org.jetbrains.plugins.gradle.testFramework.util.awaitGradleProjectConfiguration
 import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
@@ -45,6 +48,8 @@ class GradleTestFixtureImpl(
 
   override lateinit var gradleJvm: String
 
+  override lateinit var gradleJvmInfo: JdkVersionInfo
+
   override fun setUp() {
     reloadLeakTracker = OperationLeakTracker { getGradleProjectReloadOperation(it) }
     reloadLeakTracker.setUp()
@@ -55,11 +60,12 @@ class GradleTestFixtureImpl(
     gradleJvmFixture.setUp()
     gradleJvmFixture.installProjectSettingsConfigurator()
     gradleJvm = gradleJvmFixture.gradleJvm
+    gradleJvmInfo = gradleJvmFixture.gradleJvmInfo
 
     fileFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture()
     fileFixture.setUp()
     runBlocking {
-      writeAction {
+      edtWriteAction {
         testRoot = fileFixture.findOrCreateDir(className)
           .findOrCreateDirectory(methodName)
           .findOrCreateDirectory(gradleVersion.version)
@@ -76,24 +82,22 @@ class GradleTestFixtureImpl(
     )
   }
 
-  override suspend fun openProject(relativePath: String, wait: Boolean): Project {
+  override suspend fun openProject(relativePath: String, numProjectSyncs: Int): Project {
     val projectRoot = testRoot.getDirectory(relativePath)
-    return closeOpenedProjectsIfFailAsync {
-      awaitAnyGradleProjectReload(wait = wait) {
-        openProjectAsync(projectRoot, UnlinkedProjectStartupActivity())
-      }
+    return awaitOpenProjectConfiguration(numProjectSyncs) {
+      openProjectAsync(projectRoot, UnlinkedProjectStartupActivity())
     }
   }
 
   override suspend fun linkProject(project: Project, relativePath: String) {
     val projectRoot = testRoot.getDirectory(relativePath)
-    awaitAnyGradleProjectReload(wait = true) {
+    awaitProjectConfiguration(project) {
       linkAndSyncGradleProject(project, projectRoot)
     }
   }
 
   override suspend fun reloadProject(project: Project, relativePath: String, configure: ImportSpecBuilder.() -> Unit) {
-    awaitAnyGradleProjectReload(wait = true) {
+    awaitProjectConfiguration(project) {
       ExternalSystemUtil.refreshProject(
         testRoot.getDirectory(relativePath).path,
         ImportSpecBuilder(project, GradleConstants.SYSTEM_ID)
@@ -102,14 +106,17 @@ class GradleTestFixtureImpl(
     }
   }
 
-  override suspend fun <R> awaitAnyGradleProjectReload(wait: Boolean, action: suspend () -> R): R {
-    if (!wait) {
-      return action()
-    }
-    return reloadLeakTracker.withAllowedOperationAsync(1) {
-      org.jetbrains.plugins.gradle.testFramework.util.awaitAnyGradleProjectReload {
-        action()
+  override suspend fun awaitOpenProjectConfiguration(numProjectSyncs: Int, openProject: suspend () -> Project): Project {
+    return closeOpenedProjectsIfFailAsync {
+      reloadLeakTracker.withAllowedOperationAsync(numProjectSyncs) {
+        awaitGradleOpenProjectConfiguration(openProject)
       }
+    }
+  }
+
+  override suspend fun <R> awaitProjectConfiguration(project: Project, numProjectSyncs: Int, action: suspend () -> R): R {
+    return reloadLeakTracker.withAllowedOperationAsync(numProjectSyncs) {
+      awaitGradleProjectConfiguration(project, action)
     }
   }
 

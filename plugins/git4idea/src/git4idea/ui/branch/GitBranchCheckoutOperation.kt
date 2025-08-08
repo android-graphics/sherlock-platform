@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.containers.ContainerUtil
 import git4idea.branch.GitBrancher
 import git4idea.branch.GitNewBranchOptions
@@ -15,7 +16,7 @@ import git4idea.history.GitHistoryUtils
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 
-internal class GitBranchCheckoutOperation(private val project: Project, private val repositories: List<GitRepository>) {
+internal class GitBranchCheckoutOperation(private val project: Project, private val repositories: Collection<GitRepository>) {
 
   private val brancher = GitBrancher.getInstance(project)
 
@@ -139,7 +140,7 @@ internal class GitBranchCheckoutOperation(private val project: Project, private 
     private val LOG = logger<GitBranchCheckoutOperation>()
 
     internal fun checkLocalHasMoreCommits(project: Project,
-                                         repositories: List<GitRepository>,
+                                         repositories: Collection<GitRepository>,
                                          localBranch: String, startPoint: String): Boolean {
       val existingLocalBranches = ContainerUtil.map2MapNotNull(repositories) { r: GitRepository ->
         val local = r.branches.findLocalBranch(localBranch)
@@ -157,9 +158,9 @@ internal class GitBranchCheckoutOperation(private val project: Project, private 
                                           repositories: List<GitRepository>,
                                           startRef: String,
                                           branchName: String): Boolean =
-      ProgressManager.getInstance().runProcessWithProgressSynchronously<Boolean, RuntimeException>(
-        { checkCommitsBetweenRefAndBranchName(project, repositories, startRef, branchName) },
-        GitBundle.message("branches.checking.existing.commits.process"), true, project)
+      runWithModalProgressBlocking(project, GitBundle.message("branches.checking.existing.commits.process")) {
+        checkCommitsBetweenRefAndBranchName(project, repositories, startRef, branchName)
+      }
 
     private fun checkCommitsBetweenRefAndBranchName(project: Project,
                                                     repositories: List<GitRepository>,

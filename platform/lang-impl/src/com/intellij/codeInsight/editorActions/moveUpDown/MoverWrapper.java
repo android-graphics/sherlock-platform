@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
@@ -27,7 +27,7 @@ final class MoverWrapper {
   private final StatementUpDownMover myMover;
   private final StatementUpDownMover.MoveInfo myInfo;
 
-  MoverWrapper(@NotNull final StatementUpDownMover mover, @NotNull final StatementUpDownMover.MoveInfo info, final boolean isDown) {
+  MoverWrapper(final @NotNull StatementUpDownMover mover, final @NotNull StatementUpDownMover.MoveInfo info, final boolean isDown) {
     myMover = mover;
     myIsDown = isDown;
 
@@ -238,7 +238,7 @@ final class MoverWrapper {
     int lineStartOffset = document.getLineStartOffset(line);
     int lineEndOffset = document.getLineEndOffset(line);
     @NonNls String text = document.getCharsSequence().subSequence(lineStartOffset, lineEndOffset).toString();
-    return text.trim().length() != 0;
+    return !text.trim().isEmpty();
   }
 
   private static void restoreSelection(Editor editor,

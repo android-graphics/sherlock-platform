@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.events.scheme
 
+import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil.getEventLogProvider
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.UsageCollectors
@@ -94,6 +97,7 @@ object EventsSchemeBuilder {
   @JvmOverloads
   fun buildEventsScheme(recorder: String?, pluginId: String? = null, brokenPluginIds: Set<String> = emptySet()): List<GroupDescriptor> {
     val result = mutableListOf<GroupDescriptor>()
+    val recorders = mutableSetOf<String>()
     val counterCollectors = ArrayList<FeatureUsageCollectorInfo>()
     UsageCollectors.COUNTER_EP_NAME.processWithPluginDescriptor { counterUsageCollectorEP, descriptor: PluginDescriptor ->
       if (counterUsageCollectorEP.implementationClass != null) {
@@ -101,26 +105,39 @@ object EventsSchemeBuilder {
         if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
           val collector = ApplicationManager.getApplication().instantiateClass<FeatureUsagesCollector>(
             counterUsageCollectorEP.implementationClass, descriptor)
+          recorders.add(collector.group.recorder)
           counterCollectors.add(FeatureUsageCollectorInfo(collector, PluginSchemeDescriptor(collectorPlugin)))
         }
       }
     }
+
     result.addAll(collectGroupsFromExtensions("counter", counterCollectors, recorder))
 
     val stateCollectors = ArrayList<FeatureUsageCollectorInfo>()
     UsageCollectors.APPLICATION_EP_NAME.processWithPluginDescriptor { bean, descriptor ->
       val collectorPlugin = descriptor.pluginId.idString
       if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
+        recorders.add(bean.collector.group.recorder)
         stateCollectors.add(FeatureUsageCollectorInfo(bean.collector, PluginSchemeDescriptor(collectorPlugin)))
       }
     }
     UsageCollectors.PROJECT_EP_NAME.processWithPluginDescriptor { bean, descriptor ->
       val collectorPlugin = descriptor.pluginId.idString
       if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
+        recorders.add(bean.collector.group.recorder)
         stateCollectors.add(FeatureUsageCollectorInfo(bean.collector, PluginSchemeDescriptor(collectorPlugin)))
       }
     }
     result.addAll(collectGroupsFromExtensions("state", stateCollectors, recorder))
+
+    //add event log system collectors for all recorders
+    val systemCollectors = ArrayList<FeatureUsageCollectorInfo>()
+    if (recorder != null) systemCollectors.add(calculateEventLogSystemCollector(recorder))
+    else {
+      recorders.forEach { systemCollectors.add(calculateEventLogSystemCollector(it)) }
+    }
+    result.addAll(collectGroupsFromExtensions("counter", systemCollectors, recorder))
+
     result.sortBy(GroupDescriptor::id)
     return result
   }
@@ -140,17 +157,57 @@ object EventsSchemeBuilder {
                                                   "it should have the same version (group=${group.id})")
       }
       val existingScheme = existingGroup?.schema ?: HashSet()
+      // why group by eventId?? eventId is unique within the group
       val eventsDescriptors = existingScheme + group.events.groupBy { it.eventId }
-        .map { (eventName, events) ->
-          EventDescriptor(eventName,
-                          buildFields(events, eventName, group.id),
-                          getEventDescription(events, eventName, group.id))
+        .map { (eventId, events) ->
+
+          val arrays = events.flatMap { event ->
+            event.getFields().flatMap { field ->
+              // From each field, we extract the paths of its object arrays
+              getObjectArrays(null, field)
+            }
+          }
+
+          EventDescriptor(eventId,
+                          buildFields(events, eventId, group.id),
+                          getEventDescription(events, eventId, group.id),
+                          objectArrays = arrays)
         }
         .toSet()
       result[group.id] = GroupDescriptor(group.id, groupType, group.version, eventsDescriptors, collectorClass.name, group.recorder,
-                                         PluginSchemeDescriptor(plugin.id), group.description)
+                                         PluginSchemeDescriptor(plugin.id), group.description, collector.fileName)
     }
     return result.values
+  }
+
+  // path: top_object.inner_object.field_name
+  fun getObjectArrays(parentPath: String?, field: EventField<*>): List<String> {
+    val path = parentPath?.let { it + "." + field.name } ?: field.name
+    val objectArrays = mutableListOf<String>()
+    if (field is ObjectListEventField) {
+      objectArrays.add(path)
+      field.fields.forEach {
+        objectArrays += getObjectArrays(path, it)
+      }
+    }
+    if (field is ObjectEventField) {
+      field.fields.forEach {
+        objectArrays += getObjectArrays(path, it)
+      }
+    }
+    return objectArrays
+  }
+
+  /**
+   * Get the event log group for each recorder from the event log provider of the recorder.
+   * If PluginDescriptor of the event log provider isn't found, then use core plugin id.
+   */
+  private fun calculateEventLogSystemCollector(recorder: String): FeatureUsageCollectorInfo {
+    val eventLogProvider = getEventLogProvider(recorder)
+    val eventLogSystemCollector = eventLogProvider.eventLogSystemLogger
+    val eventLogProviderPlugin = PluginManager.getPluginByClass(eventLogProvider.javaClass)?.pluginId?.idString
+    return FeatureUsageCollectorInfo(eventLogSystemCollector, PluginSchemeDescriptor(eventLogProviderPlugin
+                                                                                     ?: PluginManagerCore.CORE_PLUGIN_ID))
   }
 
   private fun getEventDescription(events: List<BaseEventId>, eventName: String, groupId: String): String? {

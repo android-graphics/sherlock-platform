@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ex;
 
@@ -49,6 +49,7 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.function.Supplier;
 
 public abstract class QuickFixAction extends AnAction implements CustomComponentAction {
   private static final Logger LOG = Logger.getInstance(QuickFixAction.class);
@@ -112,7 +113,7 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final InspectionResultsView view = getInvoker(e);
     final InspectionTree tree = view.getTree();
     try {
@@ -175,14 +176,14 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
                                      Set<? super PsiElement> ignoredElements) {
     final String templatePresentationText = getTemplatePresentation().getText();
     assert templatePresentationText != null;
-    Ref<@Nls String> messageRef = Ref.create();
-    CommandProcessor.getInstance().executeCommand(project, () -> {
+    executeAndNotify(project, () -> {
       CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
       boolean startInWriteAction = startInWriteAction();
       PerformFixesTask performFixesTask = new PerformFixesTask(project, descriptors, ignoredElements, context);
       if (startInWriteAction) {
         ((ApplicationImpl)ApplicationManager.getApplication())
           .runWriteActionWithCancellableProgressInDispatchThread(templatePresentationText, project, null, performFixesTask::doRun);
+        return null;
       }
       else {
         final SequentialModalProgressTask progressTask =
@@ -190,9 +191,16 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
         progressTask.setMinIterationTime(200);
         progressTask.setTask(performFixesTask);
         ProgressManager.getInstance().run(progressTask);
-        messageRef.set(performFixesTask.getResultMessage(templatePresentationText));
+        return performFixesTask.getResultMessage(templatePresentationText);
       }
-    }, templatePresentationText, null);
+    });
+  }
+
+  void executeAndNotify(@NotNull Project project, @NotNull Supplier<@Nls String> command) {
+    final String templatePresentationText = getTemplatePresentation().getText();
+    assert templatePresentationText != null;
+    Ref<@Nls String> messageRef = Ref.create();
+    CommandProcessor.getInstance().executeCommand(project, () -> messageRef.set(command.get()), templatePresentationText, null);
     String message = messageRef.get();
     if (message != null) {
       BATCH_QUICK_FIX_MESSAGES.createNotification(HtmlChunk.text(message).toString(), NotificationType.WARNING)
@@ -278,9 +286,8 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
     return true;
   }
 
-  @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     final JButton button = new JButton(presentation.getText());
     Icon icon = presentation.getIcon();
     if (icon == null) {
@@ -307,9 +314,8 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
   }
 
   private final class PerformFixesTask extends PerformFixesModalTask {
-    @NotNull private final GlobalInspectionContextImpl myContext;
-    @NotNull
-    private final Set<? super PsiElement> myIgnoredElements;
+    private final @NotNull GlobalInspectionContextImpl myContext;
+    private final @NotNull Set<? super PsiElement> myIgnoredElements;
 
     PerformFixesTask(@NotNull Project project,
                      @NotNull List<CommonProblemDescriptor[]> descriptors,

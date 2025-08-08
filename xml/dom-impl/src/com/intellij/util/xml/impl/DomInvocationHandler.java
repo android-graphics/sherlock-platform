@@ -34,6 +34,7 @@ import net.sf.cglib.proxy.AdvancedProxy;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.lang.annotation.Annotation;
@@ -61,7 +62,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   private volatile DomElement myProxy;
   private DomGenericInfoEx myGenericInfo;
   private final InvocationCache myInvocationCache;
-  private volatile Converter myScalarConverter = null;
+  private volatile Converter<?> myScalarConverter = null;
   private volatile SmartFMap<Method, Invocation> myAccessorInvocations = SmartFMap.emptyMap();
   protected @Nullable DomStub myStub;
 
@@ -413,22 +414,22 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     }
   }
 
-  protected final @NotNull Converter getScalarConverter() {
-    Converter converter = myScalarConverter;
+  protected final @NotNull Converter<?> getScalarConverter() {
+    Converter<?> converter = myScalarConverter;
     if (converter == null) {
       myScalarConverter = converter = createConverter(ourGetValue);
     }
     return converter;
   }
 
-  private @NotNull Converter createConverter(final JavaMethod method) {
+  private @NotNull Converter<?> createConverter(final JavaMethod method) {
     final Type returnType = method.getGenericReturnType();
     final Type type = returnType == void.class ? method.getGenericParameterTypes()[0] : returnType;
     final Class parameter = DomUtil.substituteGenericType(type, myType);
     if (parameter == null) {
       LOG.error(type + " " + myType);
     }
-    Converter converter = getConverter(new AnnotatedElement() {
+    Converter<?> converter = getConverter(new AnnotatedElement() {
       @Override
       public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
         return myInvocationCache.getMethodAnnotation(method, annotationClass);
@@ -466,8 +467,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return myInvocationCache.getClassAnnotation(annotationClass);
   }
 
-  private @Nullable Converter getConverter(final AnnotatedElement annotationProvider,
-                                           Class parameter) {
+  private @Nullable Converter getConverter(final AnnotatedElement annotationProvider, Class parameter) {
     final Resolve resolveAnnotation = annotationProvider.getAnnotation(Resolve.class);
     if (resolveAnnotation != null) {
       final Class<? extends DomElement> aClass = resolveAnnotation.value();
@@ -482,8 +482,8 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     final ConverterManager converterManager = myManager.getConverterManager();
     Convert convertAnnotation = annotationProvider.getAnnotation(Convert.class);
     if (convertAnnotation != null) {
-      if (convertAnnotation instanceof ConvertAnnotationImpl) {
-        return ((ConvertAnnotationImpl)convertAnnotation).getConverter();
+      if (convertAnnotation instanceof ConvertAnnotationImpl annotation) {
+        return annotation.getConverter();
       }
       return converterManager.getConverterInstance(convertAnnotation.value());
     }
@@ -664,6 +664,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return tag.getValue().getTrimmedText();
   }
 
+  @Override
   public final String toString() {
     if (ReflectionUtil.isAssignable(GenericValue.class, getRawType())) {
       return ((GenericValue<?>)getProxy()).getStringValue();
@@ -750,11 +751,11 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return getXmlName().evaluateChildName(xmlName);
   }
 
-  public List<? extends DomElement> getCollectionChildren(final AbstractCollectionChildDescription description) {
+  public @Unmodifiable List<? extends DomElement> getCollectionChildren(final AbstractCollectionChildDescription description) {
     return getCollectionChildren(description, XmlStubBasedTagBase.shouldProcessIncludesNow());
   }
 
-  public List<? extends DomElement> getCollectionChildren(final AbstractCollectionChildDescription description, boolean processIncludes) {
+  public @Unmodifiable List<? extends DomElement> getCollectionChildren(final AbstractCollectionChildDescription description, boolean processIncludes) {
     if (myStub != null && description.isStubbed()) {
       if (description instanceof DomChildDescriptionImpl) {
         XmlName xmlName = ((DomChildDescriptionImpl)description).getXmlName();
@@ -805,7 +806,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return Collections.unmodifiableList(elements);
   }
 
-  private List<XmlTag> getCollectionSubTags(@NotNull AbstractCollectionChildDescription description, @NotNull XmlTag tag, boolean processIncludes) {
+  private @Unmodifiable List<XmlTag> getCollectionSubTags(@NotNull AbstractCollectionChildDescription description, @NotNull XmlTag tag, boolean processIncludes) {
     if (description instanceof CollectionChildDescriptionImpl) {
       return ((CollectionChildDescriptionImpl)description).getCollectionSubTags(this, tag, processIncludes);
     }
@@ -840,6 +841,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     }
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || !o.getClass().equals(getClass())) return false;
@@ -851,6 +853,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myChildDescription.hashCode();
   }

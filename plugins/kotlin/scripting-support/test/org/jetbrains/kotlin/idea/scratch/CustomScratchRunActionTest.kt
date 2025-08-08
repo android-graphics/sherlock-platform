@@ -19,14 +19,15 @@ class CustomScratchRunActionTest : AbstractScratchRunActionTest() {
     override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K1
 
-    fun testLongCommandLineWithRepl() {
-        assertEquals(
-            """|// REPL_MODE: true
-               |// INTERACTIVE_MODE: false
-               |1    // RESULT: res0: kotlin.Int = 1""".trimMargin(),
-            getOutput(true)
-        )
-    }
+    // See KTIJ-31394 for the reasoning why this test is ignored
+    //fun testLongCommandLineWithRepl() {
+    //    assertEquals(
+    //        """|// REPL_MODE: true
+    //           |// INTERACTIVE_MODE: false
+    //           |1    // RESULT: res0: kotlin.Int = 1""".trimMargin(),
+    //        getOutput(true)
+    //    )
+    //}
 
     fun testLongCommandLine() {
         assertEquals(

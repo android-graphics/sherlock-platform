@@ -38,6 +38,8 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
    */
   public static final DataKey<Point> ICON_CENTER_POSITION = DataKey.create("EditorGutter.ICON_CENTER_POSITION");
 
+  public abstract @NotNull EditorEx getEditor();
+
   public abstract @Nullable FoldRegion findFoldingAnchorAt(int x, int y);
 
   public abstract @NotNull List<GutterMark> getGutterRenderers(int line);
@@ -124,6 +126,14 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
 
   @ApiStatus.Internal
   public int getHoveredFreeMarkersLine() {
+    return -1;
+  }
+
+  /**
+   * @return y coordinate of the last mouse cursor point on the gutter's free markers area or -1 if the point is not on the area.
+   */
+  @ApiStatus.Internal
+  public int getHoveredFreeMarkersY() {
     return -1;
   }
 

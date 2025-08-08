@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.designSurface;
 
@@ -36,7 +36,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 
-public final class GridCaptionPanel extends JPanel implements ComponentSelectionListener, DataProvider {
+public final class GridCaptionPanel extends JPanel implements ComponentSelectionListener, UiDataProvider {
   private static final Logger LOG = Logger.getInstance(GridCaptionPanel.class);
 
   private final GuiEditor myEditor;
@@ -246,17 +246,11 @@ public final class GridCaptionPanel extends JPanel implements ComponentSelection
   }
 
   @Override
-  public @Nullable Object getData(@NotNull String dataId) {
-    if (GuiEditor.DATA_KEY.is(dataId)) {
-      return myEditor;
-    }
-    if (CaptionSelection.DATA_KEY.is(dataId)) {
-      return new CaptionSelection(mySelectedContainer, myIsRow, getSelectedCells(null), mySelectionModel.getLeadSelectionIndex());
-    }
-    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      return myDeleteProvider;
-    }
-    return myEditor.getData(dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(GuiEditor.DATA_KEY, myEditor);
+    sink.set(CaptionSelection.DATA_KEY, new CaptionSelection(mySelectedContainer, myIsRow, getSelectedCells(null), mySelectionModel.getLeadSelectionIndex()));
+    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteProvider);
+    DataSink.uiDataSnapshot(sink, myEditor);
   }
 
   public void attachToScrollPane(final JScrollPane scrollPane) {
@@ -329,10 +323,10 @@ public final class GridCaptionPanel extends JPanel implements ComponentSelection
       if (!checkShowPopupMenu(e)) {
         int cell = getCellAt(e.getPoint());
         if (cell == -1) return;
-        if ((e.getModifiers() & MouseEvent.CTRL_MASK) != 0) {
+        if ((e.getModifiers() & InputEvent.CTRL_MASK) != 0) {
           mySelectionModel.addSelectionInterval(cell, cell);
         }
-        else if ((e.getModifiers() & MouseEvent.SHIFT_MASK) != 0) {
+        else if ((e.getModifiers() & InputEvent.SHIFT_MASK) != 0) {
           mySelectionModel.addSelectionInterval(mySelectionModel.getAnchorSelectionIndex(), cell);
         }
       }
@@ -352,7 +346,7 @@ public final class GridCaptionPanel extends JPanel implements ComponentSelection
       if (!checkShowPopupMenu(e)) {
         int cell = getCellAt(e.getPoint());
         if (cell == -1) return;
-        if ((e.getModifiers() & (MouseEvent.CTRL_MASK | MouseEvent.SHIFT_MASK)) == 0) {
+        if ((e.getModifiers() & (InputEvent.CTRL_MASK | InputEvent.SHIFT_MASK)) == 0) {
           mySelectionModel.setSelectionInterval(cell, cell);
         }
       }
@@ -614,7 +608,7 @@ public final class GridCaptionPanel extends JPanel implements ComponentSelection
       int leadIndex = mySelectionModel.getLeadSelectionIndex();
       int newLeadIndex = leadIndex + delta;
       if (newLeadIndex >= 0 && newLeadIndex < getCellCount()) {
-        if ((e.getModifiers() & KeyEvent.SHIFT_MASK) != 0) {
+        if ((e.getModifiers() & InputEvent.SHIFT_MASK) != 0) {
           mySelectionModel.setSelectionInterval(mySelectionModel.getAnchorSelectionIndex(), newLeadIndex);
         }
         else {

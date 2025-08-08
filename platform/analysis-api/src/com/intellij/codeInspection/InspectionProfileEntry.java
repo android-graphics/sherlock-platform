@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -15,6 +15,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -30,9 +31,11 @@ import com.intellij.serialization.SerializationException;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
@@ -69,7 +72,8 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
   private Boolean myUseNewSerializer;
 
   /**
-   * For global tools read-only, for local tools would be used instead getID for modules with alternative classpath storage
+   * This alternative ID is a descriptive name to be used in "suppress" comments and annotations in modules with alternative
+   * classpath storage.
    */
   public @NonNls @Nullable String getAlternativeID() {
     return null;
@@ -77,11 +81,11 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
 
   @Override
   public boolean isSuppressedFor(@NotNull PsiElement element) {
-    Set<InspectionSuppressor> suppressors = getSuppressors(element);
+    Collection<InspectionSuppressor> suppressors = getSuppressors(element);
     return !suppressors.isEmpty() && isSuppressedFor(element, suppressors);
   }
 
-  private boolean isSuppressedFor(@NotNull PsiElement element, @NotNull Set<? extends InspectionSuppressor> suppressors) {
+  private boolean isSuppressedFor(@NotNull PsiElement element, @NotNull Collection<? extends InspectionSuppressor> suppressors) {
     String toolId = getSuppressId();
     for (InspectionSuppressor suppressor : suppressors) {
       if (isSuppressed(toolId, suppressor, element)) {
@@ -100,7 +104,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
     return HtmlChunk.empty();
   }
 
-  private static boolean isSuppressedForMerger(@NotNull PsiElement element, @NotNull Set<? extends InspectionSuppressor> suppressors, @NotNull InspectionElementsMerger merger) {
+  private static boolean isSuppressedForMerger(@NotNull PsiElement element, @NotNull Collection<? extends InspectionSuppressor> suppressors, @NotNull InspectionElementsMerger merger) {
     String[] suppressIds = merger.getSuppressIds();
     String[] sourceToolIds = suppressIds.length != 0 ? suppressIds : merger.getSourceToolNames();
     for (String sourceToolId : sourceToolIds) {
@@ -156,10 +160,10 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
       }
     });
 
-    Set<InspectionSuppressor> suppressors = getSuppressors(element);
+    Collection<InspectionSuppressor> suppressors = getSuppressors(element);
     PsiLanguageInjectionHost injectionHost = InjectedLanguageManager.getInstance(element.getProject()).getInjectionHost(element);
     if (injectionHost != null) {
-      Set<InspectionSuppressor> injectionHostSuppressors = getSuppressors(injectionHost);
+      Collection<InspectionSuppressor> injectionHostSuppressors = getSuppressors(injectionHost);
       for (InspectionSuppressor suppressor : injectionHostSuppressors) {
         addAllSuppressActions(fixes, injectionHost, suppressor, ThreeState.YES, getSuppressId());
       }
@@ -195,11 +199,11 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
     return alternativeId != null && !alternativeId.equals(toolId) && suppressor.isSuppressedFor(element, alternativeId);
   }
 
-  public static @NotNull Set<InspectionSuppressor> getSuppressors(@NotNull PsiElement element) {
+  public static @Unmodifiable @NotNull Collection<InspectionSuppressor> getSuppressors(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (file == null) {
       PsiUtilCore.ensureValid(element);
-      return Collections.emptySet();
+      return Collections.emptyList();
     }
     PsiUtilCore.ensureValid(file);
     FileViewProvider viewProvider = file.getViewProvider();
@@ -213,21 +217,33 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
         suppressors.addAll(LanguageInspectionSuppressors.INSTANCE.allForLanguage(language));
       }
       suppressors.addAll(elementLanguageSuppressors);
-      return suppressors;
+      return checkDumbMode(file, suppressors);
     }
     if (!elementLanguage.isKindOf(baseLanguage)) {
       // handling embedding elements {@link EmbeddingElementType}
       Set<InspectionSuppressor> suppressors = new LinkedHashSet<>();
       suppressors.addAll(LanguageInspectionSuppressors.INSTANCE.allForLanguage(baseLanguage));
       suppressors.addAll(elementLanguageSuppressors);
-      return suppressors;
+      return checkDumbMode(file, suppressors);
     }
-    int size = elementLanguageSuppressors.size();
+    Collection<InspectionSuppressor> dumbProofSuppressors = checkDumbMode(file, new LinkedHashSet<>(elementLanguageSuppressors));
+    int size = dumbProofSuppressors.size();
     return switch (size) {
       case 0 -> Collections.emptySet();
-      case 1 -> Collections.singleton(elementLanguageSuppressors.get(0));
-      default -> new HashSet<>(elementLanguageSuppressors);
+      case 1 -> Collections.singleton(dumbProofSuppressors.iterator().next());
+      default -> dumbProofSuppressors;
     };
+  }
+
+  private static @Unmodifiable @NotNull Collection<InspectionSuppressor> checkDumbMode(@NotNull PsiFile file,
+                                                                                       @NotNull Collection<InspectionSuppressor> suppressors) {
+    DumbService dumbService = DumbService.getInstance(file.getProject());
+    if (dumbService.isDumb()) {
+      return ContainerUtil.filter(suppressors, suppressor -> DumbService.isDumbAware(suppressor));
+    }
+    else {
+      return suppressors;
+    }
   }
 
   public void cleanup(@NotNull Project project) {
@@ -236,8 +252,8 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
   public void initialize(@NotNull GlobalInspectionContext context) {
   }
 
-  interface DefaultNameProvider {
-
+  @ApiStatus.Internal
+  public interface DefaultNameProvider {
     @NonNls
     @Nullable
     String getDefaultShortName();
@@ -258,7 +274,19 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
     String getDefaultGroupDisplayName();
   }
 
-  volatile DefaultNameProvider myNameProvider;
+  private volatile DefaultNameProvider myNameProvider;
+
+  @ApiStatus.Internal
+  @Transient
+  public DefaultNameProvider getNameProvider() {
+    return myNameProvider;
+  }
+
+  @ApiStatus.Internal
+  @Transient
+  public void setNameProvider(DefaultNameProvider nameProvider) {
+    myNameProvider = nameProvider;
+  }
 
   /**
    * @see InspectionEP#groupDisplayName
@@ -317,6 +345,8 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
 
   /**
    * DO NOT OVERRIDE this method.
+   * <p>
+   * This name is used as a unique identifier of the inspection.
    *
    * @see InspectionEP#shortName
    */
@@ -507,7 +537,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
     return null;
   }
 
-  private @NotNull Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
+  protected @NotNull Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
     return getClass();
   }
 

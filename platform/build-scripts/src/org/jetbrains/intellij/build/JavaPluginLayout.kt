@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.impl.LibraryPackMode
@@ -6,14 +6,15 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 
 object JavaPluginLayout {
   const val MAIN_MODULE_NAME = "intellij.java.plugin"
-  const val MAIN_FRONTEND_MODULE_NAME = "intellij.java.frontend"
 
   fun javaPlugin(addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
-    return PluginLayout.plugin(MAIN_MODULE_NAME, auto = true) { spec ->
+    return PluginLayout.plugin(mainModuleName = MAIN_MODULE_NAME, auto = true) { spec ->
       spec.directoryName = "java"
       spec.mainJarName = "java-impl.jar"
 
       spec.excludeFromModule("intellij.java.resources.en", "search/searchableOptions.xml")
+
+      spec.withProjectLibrary("netty-jps", "rt/netty-jps.jar")
 
       spec.withModule("intellij.platform.jps.build.launcher", "jps-launcher.jar")
       spec.withModule("intellij.platform.jps.build", "jps-builders.jar")
@@ -51,13 +52,17 @@ object JavaPluginLayout {
         "intellij.java.frontback.impl",
         "intellij.java.frontback.psi",
         "intellij.java.frontback.psi.impl",
+        "intellij.java.debugger.impl.shared",
       )) {
         spec.withModule(moduleName, "java-frontback.jar")
       }
 
       spec.withModules(listOf(
+        "intellij.java.codeserver.core",
+        "intellij.java.codeserver.highlighting",
         "intellij.java.compiler.impl",
         "intellij.java.debugger.impl",
+        "intellij.java.terminal",
         "intellij.java.debugger.memory.agent",
         "intellij.java.execution.impl",
         "intellij.java.ui",
@@ -85,7 +90,7 @@ object JavaPluginLayout {
       // used in JPS - do not use uber jar
       spec.withProjectLibrary("jgoodies-common", LibraryPackMode.STANDALONE_MERGED)
       spec.withProjectLibrary("jps-javac-extension", LibraryPackMode.STANDALONE_MERGED)
-      spec.withProjectLibrary("jetbrains.kotlinx.metadata.jvm", LibraryPackMode.STANDALONE_MERGED)
+      spec.withProjectLibrary("kotlin-metadata", LibraryPackMode.STANDALONE_MERGED)
       // gpl-cpe license - do not use uber jar
       spec.withProjectLibrary("jb-jdi", LibraryPackMode.STANDALONE_MERGED)
 
@@ -100,20 +105,6 @@ object JavaPluginLayout {
       addition?.invoke(spec)
 
       spec.excludeProjectLibrary("jetbrains-annotations-java5")
-    }
-  }
-
-  /**
-   * A special plugin for JetBrains Client
-   */
-  fun javaFrontendPlugin(): PluginLayout {
-    return PluginLayout.plugin(MAIN_FRONTEND_MODULE_NAME) { spec ->
-      @Suppress("SpellCheckingInspection")
-      spec.withModules(listOf(
-        "intellij.java.frontback.impl",
-        "intellij.java.frontback.psi",
-        "intellij.java.frontback.psi.impl",
-      ))
     }
   }
 }

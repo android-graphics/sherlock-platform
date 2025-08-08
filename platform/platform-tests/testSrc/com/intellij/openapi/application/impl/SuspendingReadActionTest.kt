@@ -10,19 +10,23 @@ import com.intellij.util.concurrency.ImplicitBlockingContextTest
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.concurrency.runWithImplicitBlockingContextEnabled
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.RepeatedTest
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.sync.Semaphore as KSemaphore
 
 private const val REPETITIONS: Int = 100
 
 @ExtendWith(ImplicitBlockingContextTest.Enabler::class)
 abstract class SuspendingReadActionTest : CancellableReadActionTests() {
+
 
   @RepeatedTest(REPETITIONS)
   fun context(): Unit = runWithImplicitBlockingContextEnabled {
@@ -34,6 +38,12 @@ abstract class SuspendingReadActionTest : CancellableReadActionTests() {
         assertEquals(job, Cancellation.currentJob())
         assertNull(ProgressManager.getGlobalProgressIndicator())
         application.assertReadAccessNotAllowed()
+      }
+
+      fun assertNestedContext(job: Job) {
+        assertEquals(job, Cancellation.currentJob())
+        assertNull(ProgressManager.getGlobalProgressIndicator())
+        application.assertReadAccessAllowed()
       }
 
       fun assertReadActionWithCurrentJob() {
@@ -56,7 +66,12 @@ abstract class SuspendingReadActionTest : CancellableReadActionTests() {
           val suspendingJob = Cancellation.currentJob()!!
           assertReadActionWithoutCurrentJob(suspendingJob) // TODO consider explicitly turning off RA inside runBlockingCancellable
           withContext(Dispatchers.Default) {
-            assertEmptyContext(coroutineContext.job)
+            if (isLockStoredInContext) {
+              assertNestedContext(coroutineContext.job)
+            }
+            else {
+              assertEmptyContext(coroutineContext.job)
+            }
           }
           assertReadActionWithoutCurrentJob(suspendingJob)
         }
@@ -145,8 +160,10 @@ abstract class SuspendingReadActionTest : CancellableReadActionTests() {
   @RepeatedTest(REPETITIONS)
   fun `read action works if already obtained`(): Unit = timeoutRunBlocking {
     cra {
+      assertTrue(ApplicationManager.getApplication().isReadAccessAllowed)
       runBlockingCancellable {
         assertEquals(42, cra {
+          assertTrue(ApplicationManager.getApplication().isReadAccessAllowed)
           42
         })
       }
@@ -376,6 +393,7 @@ class NonBlockingUndispatchedSuspendingReadActionTest : SuspendingReadActionTest
       override suspend fun awaitConstraint(): Unit = fail("must not be called")
     }
     cra {
+      assertTrue(ApplicationManager.getApplication().isReadAccessAllowed)
       runBlockingCancellable {
         assertThrows<IllegalStateException> {
           cra(unsatisfiableConstraint) {
@@ -410,6 +428,33 @@ class BlockingSuspendingReadActionTest : SuspendingReadActionTest() {
       attempt = true
       waitForPendingWrite().up()
       testNoExceptions()
+    }
+  }
+
+  @Test
+  fun `pending read action do not cause thread starvation for default dispatcher`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    setCompensationTimeout(1.seconds)
+    val operationsCount = Runtime.getRuntime().availableProcessors() * 2
+    val writeActionMayFinish = Job(coroutineContext.job).asCompletableFuture()
+    val writeActionStarted = Job(coroutineContext.job)
+    launch {
+      writeAction {
+        writeActionStarted.complete()
+        writeActionMayFinish.join()
+      }
+    }
+    launch(Dispatchers.IO) {
+      delay(5.seconds)
+      withContext(Dispatchers.Default) {
+        writeActionMayFinish.complete(Unit)
+      }
+    }
+    repeat(operationsCount) { index ->
+      launch {
+        writeActionStarted.join()
+        ReadAction.run<Throwable> {
+        }
+      }
     }
   }
 }

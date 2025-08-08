@@ -55,7 +55,10 @@ c:com.intellij.diff.DiffDialogHints
 - getParent():java.awt.Component
 - getWindowConsumer():com.intellij.util.Consumer
 com.intellij.diff.DiffEditorTitleCustomizer
+- sf:Companion:com.intellij.diff.DiffEditorTitleCustomizer$Companion
+- sf:EMPTY:com.intellij.diff.DiffEditorTitleCustomizer
 - a:getLabel():javax.swing.JComponent
+f:com.intellij.diff.DiffEditorTitleCustomizer$Companion
 a:com.intellij.diff.DiffExtension
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
@@ -85,6 +88,7 @@ a:com.intellij.diff.DiffRequestFactory
 - a:createClipboardVsValue(java.lang.String):com.intellij.diff.requests.ContentDiffRequest
 - a:createFromFiles(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):com.intellij.diff.requests.ContentDiffRequest
 - a:createFromFiles(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):com.intellij.diff.requests.ContentDiffRequest
+- a:createLoading(java.lang.String):com.intellij.diff.requests.DiffRequest
 - a:createMergeRequest(com.intellij.openapi.project.Project,com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.editor.Document,java.util.List,java.lang.String,java.util.List,com.intellij.util.Consumer):com.intellij.diff.merge.MergeRequest
 - a:createMergeRequest(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.List,com.intellij.diff.merge.ConflictType,java.lang.String,java.util.List):com.intellij.diff.merge.MergeRequest
 - a:createMergeRequest(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.List,com.intellij.diff.merge.ConflictType,java.lang.String,java.util.List,com.intellij.util.Consumer):com.intellij.diff.merge.MergeRequest
@@ -92,13 +96,20 @@ a:com.intellij.diff.DiffRequestFactory
 - a:createMergeRequest(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.List,java.lang.String,java.util.List,com.intellij.util.Consumer):com.intellij.diff.merge.MergeRequest
 - a:createMergeRequestFromFiles(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.List,com.intellij.util.Consumer):com.intellij.diff.merge.MergeRequest
 - a:createMergeRequestFromFiles(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.List,java.lang.String,java.util.List,com.intellij.util.Consumer):com.intellij.diff.merge.MergeRequest
+- a:createNothingToShow(java.lang.String):com.intellij.diff.requests.DiffRequest
+- a:createOperationCanceled(java.lang.String):com.intellij.diff.requests.DiffRequest
 - a:createTextMergeRequest(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.List,com.intellij.diff.merge.ConflictType,java.lang.String,java.util.List,com.intellij.util.Consumer):com.intellij.diff.merge.TextMergeRequest
 - a:createTextMergeRequest(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.List,java.lang.String,java.util.List,com.intellij.util.Consumer):com.intellij.diff.merge.TextMergeRequest
 - a:createTextMergeRequestFromFiles(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.List,java.lang.String,java.util.List,com.intellij.util.Consumer):com.intellij.diff.merge.TextMergeRequest
 - a:getContentTitle(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - s:getInstance():com.intellij.diff.DiffRequestFactory
+- a:getTitle(com.intellij.openapi.vcs.FilePath):java.lang.String
 - a:getTitle(com.intellij.openapi.vfs.VirtualFile):java.lang.String
-- a:getTitle(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- getTitle(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- a:getTitleForComparison(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.FilePath):java.lang.String
+- a:getTitleForComparison(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- a:getTitleForModification(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.FilePath):java.lang.String
+- a:getTitleForModification(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):java.lang.String
 com.intellij.diff.DiffRequestPanel
 - com.intellij.openapi.Disposable
 - a:getComponent():javax.swing.JComponent
@@ -121,6 +132,7 @@ com.intellij.diff.EditorDiffViewer
 - com.intellij.diff.FrameDiffTool$DiffViewer
 - getCurrentEditor():com.intellij.openapi.editor.Editor
 - a:getEditors():java.util.List
+- getHighlightEditors():java.util.List
 com.intellij.diff.FocusableContext
 - a:isFocusedInWindow():Z
 - a:requestFocusInWindow():V
@@ -128,8 +140,6 @@ com.intellij.diff.FrameDiffTool
 - com.intellij.diff.DiffTool
 - a:createComponent(com.intellij.diff.DiffContext,com.intellij.diff.requests.DiffRequest):com.intellij.diff.FrameDiffTool$DiffViewer
 - getToolType():com.intellij.diff.DiffToolType
-*:com.intellij.diff.FrameDiffTool$DiffInfo
-- a:getComponent():javax.swing.JComponent
 com.intellij.diff.FrameDiffTool$DiffViewer
 - com.intellij.openapi.Disposable
 - a:dispose():V
@@ -209,6 +219,7 @@ a:com.intellij.diff.comparison.ComparisonManager
 - a:compareLines(java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.openapi.progress.ProgressIndicator):java.util.List
 - a:compareLinesInner(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.openapi.progress.ProgressIndicator):java.util.List
 - a:compareWords(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.openapi.progress.ProgressIndicator):java.util.List
+- a:createCancellationChecker(com.intellij.openapi.progress.ProgressIndicator):com.intellij.diff.comparison.CancellationChecker
 - s:getInstance():com.intellij.diff.comparison.ComparisonManager
 - a:isEquals(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy):Z
 - a:mergeLines(java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.openapi.progress.ProgressIndicator):java.util.List
@@ -380,8 +391,6 @@ c:com.intellij.diff.requests.MessageDiffRequest
 c:com.intellij.diff.requests.NoDiffRequest
 - com.intellij.diff.requests.MessageDiffRequest
 - sf:INSTANCE:com.intellij.diff.requests.NoDiffRequest
-- <init>():V
-- <init>(java.lang.String):V
 c:com.intellij.diff.requests.ProxySimpleDiffRequest
 - com.intellij.diff.requests.SimpleDiffRequest
 - <init>(java.lang.String,java.util.List,java.util.List,com.intellij.openapi.util.UserDataHolder):V
@@ -441,7 +450,7 @@ c:com.intellij.diff.util.LineCol
 - s:toOffset(com.intellij.openapi.editor.Document,I,I):I
 - s:toOffset(com.intellij.openapi.editor.Document,com.intellij.diff.util.LineCol):I
 - toOffset(com.intellij.openapi.editor.Editor):I
-c:com.intellij.diff.util.LineRange
+f:com.intellij.diff.util.LineRange
 - f:end:I
 - f:start:I
 - <init>(I,I):V
@@ -575,9 +584,11 @@ f:com.intellij.openapi.ListSelection
 - s:createAt(java.util.List,I):com.intellij.openapi.ListSelection
 - s:createSingleton(java.lang.Object):com.intellij.openapi.ListSelection
 - s:empty():com.intellij.openapi.ListSelection
+- equals(java.lang.Object):Z
 - getExplicitSelection():java.util.List
 - getList():java.util.List
 - getSelectedIndex():I
+- hashCode():I
 - isEmpty():Z
 - isExplicitSelection():Z
 - map(com.intellij.util.NullableFunction):com.intellij.openapi.ListSelection
@@ -624,7 +635,7 @@ a:com.intellij.openapi.diff.LineTokenizerBase
 - getLineSeparator():java.lang.String
 - pa:length():I
 - pa:substring(I,I):java.lang.String
-c:com.intellij.openapi.diff.impl.GenericDataProvider
+Fc:com.intellij.openapi.diff.impl.GenericDataProvider
 - com.intellij.openapi.actionSystem.DataProvider
 - <init>():V
 - <init>(com.intellij.openapi.actionSystem.DataProvider):V

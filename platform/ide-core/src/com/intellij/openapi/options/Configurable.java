@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.UINumericRange;
@@ -148,10 +148,8 @@ public interface Configurable extends UnnamedConfigurable {
    *
    * @return the help topic, or {@code null} if no help is available
    */
-  @Nullable
-  @NonNls
   @Contract(pure = true)
-  default String getHelpTopic() {
+  default @Nullable @NonNls String getHelpTopic() {
     return null;
   }
 
@@ -232,6 +230,18 @@ public interface Configurable extends UnnamedConfigurable {
   @ApiStatus.Experimental
   interface InnerWithModifiableParent {
     @NotNull java.util.List<Configurable> getModifiableParents();
+  }
+
+  /**
+   * The interface is used when configuration opens as single configuration in dialog.
+   */
+  interface SingleEditorConfiguration {
+    /**
+     * Override to set default initial size of the window.
+     *
+     * @return initial window size
+     */
+    @NotNull Dimension getDialogInitialSize();
   }
 
   /**

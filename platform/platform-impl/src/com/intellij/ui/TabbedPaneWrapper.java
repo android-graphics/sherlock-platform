@@ -2,7 +2,8 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,6 +14,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +23,8 @@ import javax.swing.*;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.MouseListener;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TabbedPaneWrapper {
   private static final Logger LOG = Logger.getInstance(TabbedPaneWrapper.class);
@@ -352,7 +356,7 @@ public class TabbedPaneWrapper {
     TabWrapper createTabWrapper(@NotNull JComponent component);
   }
 
-  public static final class TabWrapper extends JPanel implements DataProvider {
+  public static final class TabWrapper extends JPanel implements UiCompatibleDataProvider {
     boolean myCustomFocus = true;
     private JComponent myComponent;
 
@@ -362,15 +366,9 @@ public class TabbedPaneWrapper {
       add(component, BorderLayout.CENTER);
     }
 
-    /*
-     * Make possible to search down for DataProviders
-     */
     @Override
-    public Object getData(final @NotNull String dataId) {
-      if (myComponent instanceof DataProvider) {
-        return ((DataProvider)myComponent).getData(dataId);
-      }
-      return null;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      DataSink.uiDataSnapshot(sink, myComponent);
     }
 
     public JComponent getComponent() {
@@ -555,11 +553,14 @@ public class TabbedPaneWrapper {
     }
   }
 
-  private final class _MyFocusTraversalPolicy extends IdeFocusTraversalPolicy {
+  private final class _MyFocusTraversalPolicy extends ComponentsListFocusTraversalPolicy {
     @Override
-    public Component getDefaultComponent(final Container focusCycleRoot) {
-      final JComponent component = getSelectedComponent();
-      return component == null ? null : IdeFocusTraversalPolicy.getPreferredFocusedComponent(component, this);
+    protected @NotNull List<Component> getOrderedComponents() {
+      List<Component> result = new ArrayList<>();
+      if (tabbedPane.getSelectedComponent() != null) {
+        result.add(tabbedPane.getSelectedComponent());
+      }
+      return result;
     }
   }
 }

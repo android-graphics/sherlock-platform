@@ -1,43 +1,49 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-@file:OptIn(KaAnalysisApiInternals::class, KaPlatformInterface::class)
+@file:OptIn(KaPlatformInterface::class)
 
 package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootModificationTracker
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.containers.ConcurrentFactoryMap
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
+import com.intellij.workspaceModel.ide.legacyBridge.findLibraryEntity
+import com.intellij.workspaceModel.ide.legacyBridge.findModule
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBuiltinsModuleImpl
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
-import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
-import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProviderBase
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaBuiltinsModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptDependencyModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.danglingFileResolutionMode
+import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
 import org.jetbrains.kotlin.analyzer.ModuleInfo
+import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.getOutsiderFileOrigin
 import org.jetbrains.kotlin.idea.base.util.isOutsiderFile
+import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_EXT
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
@@ -65,17 +71,24 @@ interface ProjectStructureInsightsProvider {
 }
 
 @ApiStatus.Internal
+@K1ModeProjectStructureApi
 fun IdeaModuleInfo.toKaModule(): KaModule = ProjectStructureProviderIdeImpl.getKtModuleByModuleInfo(this)
 
 @ApiStatus.Internal
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+@K1ModeProjectStructureApi
 inline fun <reified T : KaModule> IdeaModuleInfo.toKaModuleOfType(): @kotlin.internal.NoInfer T {
     return toKaModule() as T
 }
 
-internal class ProjectStructureProviderIdeImpl(private val project: Project) : KotlinProjectStructureProviderBase() {
+@K1ModeProjectStructureApi
+class ProjectStructureProviderIdeImpl(private val project: Project) : IDEProjectStructureProvider() {
+    override val self: IDEProjectStructureProvider get() = this
+
     @OptIn(KaExperimentalApi::class)
     override fun getModule(element: PsiElement, contextualModule: KaModule?): KaModule {
+        ProgressManager.checkCanceled()
+
         if (contextualModule is KtSourceModuleByModuleInfoForOutsider || contextualModule is KaScriptDependencyModule) {
             val virtualFile = element.containingFile?.virtualFile
             if (virtualFile != null && virtualFile in contextualModule.contentScope) {
@@ -119,16 +132,36 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : K
         return NotUnderContentRootModuleByModuleInfo(moduleInfo)
     }
 
+    override fun getImplementingModules(module: KaModule): List<KaModule> {
+        if (module is KaSourceModule) {
+            val implementingIdeaModules = module.openapiModule.implementingModules
+
+            val moduleKind = module.sourceModuleKind
+            if (moduleKind != null) {
+                return implementingIdeaModules.mapNotNull { it.toKaSourceModule(moduleKind) }
+            } else {
+                return implementingIdeaModules.mapNotNull { it.toKaSourceModuleForProductionOrTest() }
+            }
+        }
+
+        return emptyList()
+    }
+
     private fun isInSpecialSrcDir(psiElement: PsiElement): Boolean =
         ProjectStructureInsightsProvider.EP_NAME.extensionList.any { it.isInSpecialSrcDirectory(psiElement) }
 
     fun <T> computeModule(
         psiElement: PsiElement,
         contextualModule: T? = null
-    ): KaModule where T : KaModule, T : KtModuleByModuleInfoBase {
-        val containingFile = psiElement.containingFile
-        val virtualFile = containingFile?.virtualFile
+    ): KaModule where T : KaModule, T : KtModuleByModuleInfoBase =
+        psiElement.containingFile.let { computeModule(it, psiElement, contextualModule, it?.virtualFile) }
 
+    fun <T> computeModule(
+        containingFile: PsiFile?,
+        psiElement: PsiElement,
+        contextualModule: T?,
+        virtualFile: VirtualFile?
+    ): KaModule where T : KaModule, T : KtModuleByModuleInfoBase {
         if (containingFile != null) {
             computeSpecialModule(containingFile)?.let { return it }
         }
@@ -165,12 +198,7 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : K
     ): IdeaModuleInfo? where T : KaModule, T : KtModuleByModuleInfoBase {
         val infoProvider = ModuleInfoProvider.getInstance(project)
 
-        val config = ModuleInfoProvider.Configuration(
-            createSourceLibraryInfoForLibraryBinaries = false,
-            preferModulesFromExtensions = isScriptOrItsDependency(contextualModule, virtualFile) &&
-                    (!RootKindFilter.projectSources.matches(psiElement) || this.isInSpecialSrcDir(psiElement)),
-            contextualModuleInfo = contextualModule?.ideaModuleInfo,
-        )
+        val config = getConfiguration(contextualModule, virtualFile, psiElement)
 
         val baseModuleInfo = infoProvider.firstOrNull(psiElement, config)
         if (baseModuleInfo != null) {
@@ -188,6 +216,123 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : K
         return null
     }
 
+    private fun <T> getConfiguration(
+        contextualModule: T?,
+        virtualFile: VirtualFile?,
+        psiElement: PsiElement
+    ): ModuleInfoProvider.Configuration where T : KaModule, T : KtModuleByModuleInfoBase {
+        val preferModulesFromExtensions =
+            if (KotlinPluginModeProvider.isK2Mode()) {
+                isScriptOrItsDependency(contextualModule, virtualFile)
+            } else {
+                isScriptOrItsDependency(contextualModule, virtualFile) && (!RootKindFilter.projectSources.matches(psiElement) || isInSpecialSrcDir(psiElement))
+            }
+
+        return ModuleInfoProvider.Configuration(
+            createSourceLibraryInfoForLibraryBinaries = false,
+            preferModulesFromExtensions = preferModulesFromExtensions,
+            contextualModuleInfo = contextualModule?.ideaModuleInfo,
+        )
+    }
+
+    override fun getKaSourceModule(
+        moduleId: ModuleId,
+        type: KaSourceModuleKind
+    ): KaSourceModule? {
+        val snapshot = project.workspaceModel.currentSnapshot
+        val openapiModule = moduleId.resolve(snapshot)?.findModule(snapshot) ?: return null
+        return getKaSourceModule(openapiModule, type)
+    }
+
+    override fun getKaSourceModule(
+        moduleEntity: ModuleEntity,
+        kind: KaSourceModuleKind
+    ): KaSourceModule? {
+        val snapshot = project.workspaceModel.currentSnapshot
+        val openapiModule = moduleEntity.findModule(snapshot) ?: return null
+        return getKaSourceModule(openapiModule, kind)
+    }
+
+    override fun getKaSourceModuleKind(module: KaSourceModule): KaSourceModuleKind {
+        require(module is KtSourceModuleByModuleInfo)
+        val moduleInfo = module.moduleInfo as ModuleSourceInfo
+        return moduleInfo.sourceModuleKind
+    }
+
+    override fun getKaSourceModuleSymbolId(module: KaSourceModule): ModuleId {
+        require(module is KtSourceModuleByModuleInfo)
+        return module.moduleId
+    }
+
+    override fun getKaSourceModule(
+        openapiModule: Module,
+        type: KaSourceModuleKind
+    ): KaSourceModule? {
+        val moduleInfo = when (type) {
+            KaSourceModuleKind.PRODUCTION -> openapiModule.productionSourceInfo
+            KaSourceModuleKind.TEST -> openapiModule.testSourceInfo
+        } ?: return null
+        return getKtModuleByModuleInfo(moduleInfo) as KtSourceModuleByModuleInfo
+    }
+
+    override fun getOpenapiModule(module: KaSourceModule): Module {
+        require(module is KtSourceModuleByModuleInfo)
+        return module.ideaModule
+    }
+
+    override fun getKaLibraryModules(libraryId: LibraryId): List<KaLibraryModule> {
+        val snapshot = project.workspaceModel.currentSnapshot
+        val library = libraryId.resolve(snapshot)?.findLibraryBridge(snapshot) ?: return emptyList()
+        return getKaLibraryModules(library)
+    }
+
+    override fun getKaLibraryModules(libraryEntity: LibraryEntity): List<KaLibraryModule> {
+        val snapshot = project.workspaceModel.currentSnapshot
+        val library = libraryEntity.findLibraryBridge(snapshot) ?: return emptyList()
+        return getKaLibraryModules(library)
+    }
+
+    override fun getKaLibraryModules(library: Library): List<KaLibraryModule> {
+        return LibraryInfoCache.getInstance(project)[library].map { getKtModuleByModuleInfo(it) as KtLibraryModuleByModuleInfo }
+    }
+
+
+    override fun getKaLibraryModuleSymbolicId(libraryModule: KaLibraryModule): LibraryId {
+        require(libraryModule is KtLibraryModuleByModuleInfo)
+        return libraryModule.libraryInfo.library.findLibraryEntity(project.workspaceModel.currentSnapshot)?.symbolicId
+            ?: error("Cannot find library entity for ${libraryModule.libraryInfo.library.name}")
+    }
+
+    override fun getOpenapiLibrary(module: KaLibraryModule): Library? {
+        if (module is KtLibraryModuleByModuleInfo) {
+            return module.libraryInfo.library
+        }
+        return null
+    }
+
+    override fun getOpenapiSdk(module: KaLibraryModule): Sdk? {
+        if (module is KtSdkLibraryModuleByModuleInfo) {
+            return module.moduleInfo.sdk
+        }
+        return null
+    }
+
+    override fun getKaLibraryModule(sdk: Sdk): KaLibraryModule {
+        val moduleInfo = SdkInfo(project, sdk)
+        return getKtModuleByModuleInfo(moduleInfo) as KaLibraryModule
+    }
+
+    override fun getAssociatedKaModules(virtualFile: VirtualFile): List<KaModule> {
+        return ModuleInfoProvider.getInstance(project)
+            .collectLibraryBinariesModuleInfos(virtualFile)
+            .mapTo(mutableListOf()) { getKtModuleByModuleInfo(it) }
+    }
+
+    override fun getKotlinLibraries(module: KaLibraryModule): List<KotlinLibrary> {
+        val kotlinLibrary = (module.moduleInfo as? AbstractKlibLibraryInfo)?.resolvedKotlinLibrary ?: return emptyList()
+        return listOf(kotlinLibrary)
+    }
+
     companion object {
         // TODO maybe introduce some cache?
         fun getKtModuleByModuleInfo(moduleInfo: ModuleInfo): KaModule {
@@ -202,14 +347,28 @@ private fun <T> cachedKtModule(
 ): KaModule where T : KaModule, T : KtModuleByModuleInfoBase {
     val contextToKtModule = CachedValuesManager.getCachedValue(anchorElement) {
         val project = anchorElement.project
+        val containingFile = anchorElement.containingFile
+        val virtualFile = containingFile?.virtualFile
+        val isLibraryFile =
+            virtualFile?.let { RootKindMatcher.matches(project, it, RootKindFilter.libraryFiles) } ?: false
+        val dependencies = if (isLibraryFile) {
+            arrayOf(
+                ProjectRootModificationTracker.getInstance(project),
+                JavaLibraryModificationTracker.getInstance(project)
+            )
+        } else {
+            arrayOf(
+                ProjectRootModificationTracker.getInstance(project),
+                JavaLibraryModificationTracker.getInstance(project),
+                KotlinModificationTrackerFactory.getInstance(project).createProjectWideOutOfBlockModificationTracker()
+            )
+        }
         CachedValueProvider.Result.create(
             ConcurrentFactoryMap.createMap<T?, KaModule> { context ->
-                val projectStructureProvider = KotlinProjectStructureProvider.getInstance(project) as ProjectStructureProviderIdeImpl
-                projectStructureProvider.computeModule(anchorElement, context)
+                val projectStructureProvider = project.ideProjectStructureProvider.self as ProjectStructureProviderIdeImpl
+                projectStructureProvider.computeModule(containingFile, anchorElement, context, virtualFile)
             },
-            ProjectRootModificationTracker.getInstance(project),
-            JavaLibraryModificationTracker.getInstance(project),
-            KotlinModificationTrackerFactory.getInstance(project).createProjectWideOutOfBlockModificationTracker(),
+            dependencies,
         )
     }
 

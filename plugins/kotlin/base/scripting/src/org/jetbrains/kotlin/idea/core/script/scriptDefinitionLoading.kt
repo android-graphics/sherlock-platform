@@ -13,6 +13,10 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition.FromLegacy
+import org.jetbrains.kotlin.scripting.definitions.getEnvironment
+import org.jetbrains.kotlin.scripting.resolve.KotlinScriptDefinitionFromAnnotatedTemplate
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.io.File
 import java.nio.file.Files
@@ -62,7 +66,7 @@ fun loadDefinitionsFromTemplatesByPaths(
     val classpath = adjustClasspath(templateClasspath + additionalResolverClasspath)
     scriptingInfoLog("Loading script definitions: classes = $templateClassNames, classpath = ${classpath}")
 
-    val baseLoader = ScriptDefinitionContributor::class.java.classLoader
+    val baseLoader = ScriptDefinitionsSource::class.java.classLoader
     val loader = if (classpath.isEmpty())
         baseLoader
     else
@@ -80,12 +84,20 @@ fun loadDefinitionsFromTemplatesByPaths(
             }
 
             when {
-                template.annotations.firstIsInstanceOrNull<kotlin.script.templates.ScriptTemplateDefinition>() != null -> {
-                    ScriptDefinition.FromLegacyTemplate(hostConfiguration, template, templateClasspathAsFiles, defaultCompilerOptions)
-                }
-
                 template.annotations.firstIsInstanceOrNull<kotlin.script.experimental.annotations.KotlinScript>() != null -> {
                     ScriptDefinition.FromTemplate(hostConfiguration, template, ScriptDefinition::class, defaultCompilerOptions)
+                }
+
+                template.annotations.firstIsInstanceOrNull<kotlin.script.templates.ScriptTemplateDefinition>() != null -> {
+                    FromLegacy(
+                        hostConfiguration,
+                        KotlinScriptDefinitionFromAnnotatedTemplate(
+                            template,
+                            hostConfiguration[ScriptingHostConfiguration.getEnvironment]?.invoke(),
+                            templateClasspathAsFiles
+                        ),
+                        defaultCompilerOptions
+                    )
                 }
 
                 else -> {
@@ -130,6 +142,13 @@ private fun adjustClasspath(source: List<Path>): List<Path> {
     }
 }
 
+/**
+ * This workaround prevents Gradle sync from hanging up.
+ * Slow file read caused by a bug in p9rdr.sys (the plan 9 redirector driver), which handles the \wsl$<distro> file accesses.
+ * The bug causes a transaction to be left in a pending state forever resulting in the freeze for an enormous amount of time.
+ * This workaround is only applied on Windows with a project open from a WSL machine.
+ * The copy operation has no side effects from the bug in p9, and we can avoid the freeze.
+ */
 private fun moveJarFromWslToHost(source: Path, targetFolderPathResolver: Lazy<Path?>): Path {
     val targetFolderPath = targetFolderPathResolver.value ?: return source
     val fileNameWithExtension = PathUtil.getFileName(source.toCanonicalPath())

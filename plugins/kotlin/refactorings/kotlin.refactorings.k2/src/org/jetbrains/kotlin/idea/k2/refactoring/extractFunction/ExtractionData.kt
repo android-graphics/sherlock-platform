@@ -30,7 +30,7 @@ data class ExtractionData(
 
     override val project: Project = originalFile.project
     override val originalElements: List<PsiElement> = originalRange.elements
-    override val physicalElements = originalElements.map { it.substringContextOrThis }
+    override val physicalElements: List<PsiElement> = originalElements.map { it.substringContextOrThis }
 
     override val substringInfo: ExtractableSubstringInfo?
         get() = (originalElements.singleOrNull() as? KtExpression)?.extractableSubstringInfo
@@ -40,7 +40,7 @@ data class ExtractionData(
         it is KtDeclarationWithBody || it is KtAnonymousInitializer
     } ?: false
 
-    override val expressions = originalElements.filterIsInstance<KtExpression>()
+    override val expressions: List<KtExpression> = originalElements.filterIsInstance<KtExpression>()
 
     override val codeFragmentText: String by lazy {
         val originalElements = originalElements
@@ -59,8 +59,8 @@ data class ExtractionData(
                 val resolve = if (physicalRef is KtLabelReferenceExpression) null else physicalRef.mainReference.resolve()
                 val declaration =
                     resolve as? KtNamedDeclaration ?: resolve as? PsiMember
-                    //if this resolves to the receiver, then retrieve corresponding class
-                    ?: ((resolve as? KtTypeReference)?.typeElement as? KtUserType)?.referenceExpression?.mainReference?.resolve()
+                    //if this resolves to the receiver, then retrieve corresponding callable
+                    ?: ((resolve as? KtTypeReference)?.parent as? KtCallableDeclaration)?.takeIf { it.receiverTypeReference == resolve }
                 declaration?.putCopyableUserData(targetKey, physicalRef)
                 declaration?.let { ResolveResult<PsiElement, KtReferenceExpression>(physicalRef, declaration, declaration, physicalRef) }
             }

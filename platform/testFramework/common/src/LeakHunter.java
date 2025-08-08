@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.ide.IdeEventQueue;
@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.testFramework.common.DumpKt;
 import com.intellij.testFramework.common.TestApplicationKt;
@@ -20,8 +21,9 @@ import com.intellij.util.PairProcessor;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.io.PersistentEnumeratorCache;
 import com.intellij.util.ref.DebugReflectionUtil;
+import com.intellij.util.ref.GCUtil;
+import com.intellij.util.ref.IgnoredTraverseEntry;
 import com.intellij.util.ui.UIUtil;
-import kotlin.Suppress;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -50,6 +52,11 @@ public final class LeakHunter {
   }
 
   @TestOnly
+  public static void checkNonDefaultProjectLeakWithIgnoredEntries(@NotNull List<IgnoredTraverseEntry> ignoredTraverseEntries) {
+    checkLeak(allRoots(), ProjectImpl.class, ignoredTraverseEntries, project -> !project.isDefault());
+  }
+
+  @TestOnly
   public static void checkLeak(@NotNull Object root, @NotNull Class<?> suspectClass) throws AssertionError {
     checkLeak(root, suspectClass, null);
   }
@@ -61,7 +68,30 @@ public final class LeakHunter {
   public static <T> void checkLeak(@NotNull Supplier<? extends Map<Object, String>> rootsSupplier,
                                    @NotNull Class<T> suspectClass,
                                    @Nullable Predicate<? super T> isReallyLeak) throws AssertionError {
-    processLeaks(rootsSupplier, suspectClass, isReallyLeak, (leaked, backLink)->{
+    processLeaks(rootsSupplier, suspectClass, isReallyLeak, null, (leaked, backLink)->{
+      String message = getLeakedObjectDetails(leaked, backLink, true);
+
+      System.out.println(message);
+      System.out.println(";-----");
+      ThreadUtil.printThreadDump();
+
+      throw new AssertionError(message);
+    });
+  }
+
+  @TestOnly
+  public static <T> void checkLeak(@NotNull Supplier<? extends Map<Object, String>> rootsSupplier,
+                                   @NotNull Class<T> suspectClass,
+                                   @NotNull List<IgnoredTraverseEntry> ignoredTraverseEntries,
+                                   @Nullable Predicate<? super T> isReallyLeak) throws AssertionError {
+    processLeaks(rootsSupplier, suspectClass, isReallyLeak, (backLink) -> {
+      for (IgnoredTraverseEntry entry : ignoredTraverseEntries) {
+        if (entry.test(backLink)) {
+          return true;
+        }
+      }
+      return false;
+    }, (leaked, backLink) -> {
       String message = getLeakedObjectDetails(leaked, backLink, true);
 
       System.out.println(message);
@@ -79,6 +109,7 @@ public final class LeakHunter {
   public static <T> void processLeaks(@NotNull Supplier<? extends Map<Object, String>> rootsSupplier,
                                       @NotNull Class<T> suspectClass,
                                       @Nullable Predicate<? super T> isReallyLeak,
+                                      @Nullable Predicate<DebugReflectionUtil.BackLink<?>> leakBackLinkProcessor,
                                       @NotNull PairProcessor<? super T, Object> processor) throws AssertionError {
     if (SwingUtilities.isEventDispatchThread()) {
       UIUtil.dispatchAllInvocationEvents();
@@ -88,11 +119,13 @@ public final class LeakHunter {
     }
     PersistentEnumeratorCache.clearCacheForTests();
     flushTelemetry();
-    //noinspection CallToSystemGC
-    System.gc();
+    GCUtil.tryGcSoftlyReachableObjects();
     Runnable runnable = () -> {
       try (AccessToken ignored = ProhibitAWTEvents.start("checking for leaks")) {
         DebugReflectionUtil.walkObjects(10000, rootsSupplier.get(), suspectClass, __ -> true, (leaked, backLink) -> {
+          if (leakBackLinkProcessor != null && leakBackLinkProcessor.test(backLink)) {
+            return true;
+          }
           if (isReallyLeak == null || isReallyLeak.test(leaked)) {
             return processor.process(leaked, backLink);
           }
@@ -144,10 +177,9 @@ public final class LeakHunter {
   }
 
   @TestOnly
-  @NotNull
-  public static String getLeakedObjectDetails(@NotNull Object leaked,
-                                              @Nullable Object backLink,
-                                              boolean detailedErrorDescription) {
+  public static @NotNull String getLeakedObjectDetails(@NotNull Object leaked,
+                                                       @Nullable Object backLink,
+                                                       boolean detailedErrorDescription) {
     int hashCode = System.identityHashCode(leaked);
     String result = "Found a leaked instance of "+leaked.getClass()
                     +"\nInstance: "+leaked
@@ -174,11 +206,15 @@ public final class LeakHunter {
         Please make sure you dispose your resources properly. See https://plugins.jetbrains.com/docs/intellij/disposers.html""";
 
     if (TeamCityLogger.isUnderTC) {
-      result+="\n  You can find a memory snapshot `"
-        +TestApplicationKt.LEAKED_PROJECTS
-        +".hproof.zip` in the \"Artifacts\" tab of the build run.";
-      result+="\n  If you suspect a particular test, you can reproduce the problem locally " +
-              "calling TestApplicationManager.testProjectLeak() after the test.";
+      String buildUrl = TeamCityLogger.currentBuildUrl != null ? StringUtil.trimEnd(TeamCityLogger.currentBuildUrl, "/") : "";
+      String buildArtifactsLink = !buildUrl.isBlank() ? " " + buildUrl + "?buildTab=artifacts" : "";
+
+      result += "\n  You can find a memory snapshot `"
+                + TestApplicationKt.LEAKED_PROJECTS
+                + ".hprof.zip` in the \"Artifacts\" tab of the build run" + buildArtifactsLink + ".";
+      result += "\n  See leaks investigation guide https://jb.gg/ijpl-project-leaks.";
+      result += "\n  If you suspect a particular test, you can reproduce the problem locally " +
+                "calling TestApplicationManager.testProjectLeak() after the test.";
     }
     else if (knownHeapDumpPath != null) {
       result += "\n  Please see ``" + knownHeapDumpPath + "` for a memory dump";

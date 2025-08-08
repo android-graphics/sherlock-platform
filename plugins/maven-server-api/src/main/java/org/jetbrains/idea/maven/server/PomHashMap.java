@@ -6,25 +6,38 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class PomHashMap implements Serializable {
-  @NotNull
-  private final Map<@NotNull File, @NotNull PomHashValue> pomMap = new HashMap<>();
+  private final @NotNull Map<@NotNull File, @NotNull PomHashValue> pomMap = new HashMap<>();
+
+  private final @NotNull Map<@NotNull File, @NotNull HashSet<@NotNull File>> pomDependencies = new HashMap<>();
 
   public void put(@NotNull File pom, @Nullable String dependencyHash) {
     pomMap.put(pom, new PomHashValue(dependencyHash));
   }
 
-  @NotNull
-  public Set<@NotNull File> keySet() {
+  public void addFileDependency(@NotNull File pom, @NotNull File dependentPom) {
+    pomDependencies.putIfAbsent(pom, new HashSet<>());
+    pomDependencies.get(pom).add(dependentPom);
+  }
+
+  public void addFileDependencies(@NotNull File pom, @NotNull Collection<@NotNull File> dependentPoms) {
+    for (File dependentPom : dependentPoms) {
+      addFileDependency(pom, dependentPom);
+    }
+  }
+
+  public @NotNull Set<@NotNull File> getFileDependencies(@NotNull File pom) {
+    Set<@NotNull File> dependencies = pomDependencies.get(pom);
+    return dependencies == null ? Collections.emptySet() : dependencies;
+  }
+
+  public @NotNull Set<@NotNull File> keySet() {
     return pomMap.keySet();
   }
 
-  @Nullable
-  public String getDependencyHash(@NotNull File file) {
+  public @Nullable String getDependencyHash(@NotNull File file) {
     PomHashValue data = pomMap.get(file);
     return null == data ? null : data.getDependencyHash();
   }
@@ -44,15 +57,13 @@ public class PomHashMap implements Serializable {
 }
 
 class PomHashValue implements Serializable {
-  @Nullable
-  private final String dependencyHash;
+  private final @Nullable String dependencyHash;
 
   PomHashValue(@Nullable String dependencyHash) {
     this.dependencyHash = dependencyHash;
   }
 
-  @Nullable
-  public String getDependencyHash() {
+  public @Nullable String getDependencyHash() {
     return dependencyHash;
   }
 

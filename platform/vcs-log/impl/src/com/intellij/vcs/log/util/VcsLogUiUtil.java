@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.util;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -19,6 +19,7 @@ import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
@@ -94,8 +95,7 @@ public final class VcsLogUiUtil {
     return scrollPane;
   }
 
-  @NotNull
-  public static JComponent installScrollingAndProgress(@NotNull VcsLogGraphTable table, @NotNull Disposable disposableParent) {
+  public static @NotNull JComponent installScrollingAndProgress(@NotNull VcsLogGraphTable table, @NotNull Disposable disposableParent) {
     JScrollPane scrollPane = setupScrolledGraph(table, SideBorder.NONE);
     JComponent tableWithProgress = installProgress(scrollPane, table.getLogData(), table.getId(), disposableParent);
     ScrollableContentBorder.setup(scrollPane, Side.TOP, tableWithProgress);
@@ -173,7 +173,7 @@ public final class VcsLogUiUtil {
 
     @Override
     public void queryPlace(@NotNull Place place) {
-      List<Integer> commits = myUi.getTable().getSelection().getIds();
+      List<CommitId> commits = myUi.getTable().getSelection().getCommits();
       if (!commits.isEmpty()) {
         place.putPath(PLACE_KEY, commits.get(0));
       }
@@ -184,13 +184,13 @@ public final class VcsLogUiUtil {
       if (place == null) return ActionCallback.DONE;
 
       Object value = place.getPath(PLACE_KEY);
-      if (!(value instanceof Integer commitIndex)) return ActionCallback.REJECTED;
+      if (!(value instanceof CommitId commitId)) return ActionCallback.REJECTED;
 
       VcsLogUsageTriggerCollector.triggerPlaceHistoryUsed(myUi.getLogData().getProject());
 
       ActionCallback callback = new ActionCallback();
 
-      ListenableFuture<Boolean> future = VcsLogNavigationUtil.jumpToCommit(myUi, commitIndex, false, true);
+      ListenableFuture<Boolean> future = VcsLogNavigationUtil.jumpToCommit(myUi, commitId.getHash(), commitId.getRoot(), false, true);
 
       Futures.addCallback(future, new FutureCallback<>() {
         @Override

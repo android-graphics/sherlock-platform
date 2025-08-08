@@ -4,6 +4,7 @@ package com.intellij.ide.util.treeView
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.TreeState.CachedPresentationDataImpl
 import com.intellij.ui.treeStructure.CachingTreePath
+import com.intellij.util.SlowOperations
 import com.intellij.util.containers.nullize
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -49,10 +50,12 @@ class CachedTreePresentationData(
         val presentation = userObject.presentation
         val children = mutableListOf<CachedTreePresentationData>()
         val iconData = getIconData(presentation.getIcon(false))
-        val extraAttrs = (userObject as? TreeNodeWithCacheableAttributes)?.getCacheableAttributes()
+        val extraAttrs = SlowOperations.knownIssue("IJPL-162819").use {
+          (userObject as? TreeNodeWithCacheableAttributes)?.getCacheableAttributes()
+        }
         val isLeaf = model.isLeaf(node)
         val result = CachedTreePresentationData(
-          TreeState.PathElement(TreeState.calcId(userObject), TreeState.calcType(userObject), 0, null),
+          TreeState.PathElement(TreeState.calcId(node), TreeState.calcType(node), 0, null),
           CachedPresentationDataImpl(presentation.presentableText ?: "", iconData, isLeaf),
           extraAttrs,
           children
@@ -161,6 +164,8 @@ class CachedTreePresentation(rootPresentation: CachedTreePresentationData) {
 
   fun isLeaf(node: Any): Boolean = getCachedNode(node)?.isLeaf == true
 
+  fun isExpanded(node: Any): Boolean = getCachedNode(node)?.isExpanded == true
+
   fun getChildren(parent: Any): List<Any>? = getCachedChildren(parent)?.nullize()
 
   private fun getCachedChildren(parent: Any): List<CachedTreePresentationNode>? {
@@ -173,7 +178,10 @@ class CachedTreePresentation(rootPresentation: CachedTreePresentationData) {
   }
 
   private fun getCachedNode(node: Any): CachedTreePresentationNode? {
-    return if (node is CachedTreePresentationNode) return node else cachedNodeByRealNode[node]
+    if (node is CachedTreePresentationNode) return node
+    val userObject = TreeUtil.getUserObject(node)
+    if (userObject is CachedTreePresentationNode) return userObject
+    return cachedNodeByRealNode[node]
   }
 
   fun setExpanded(path: TreePath, isExpanded: Boolean) {

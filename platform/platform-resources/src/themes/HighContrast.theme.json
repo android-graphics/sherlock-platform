@@ -46,6 +46,11 @@
       "pressedBackground": "#000000"
     },
 
+    "Badge": {
+      "greenOutlineForeground": "#16F334",
+      "greenOutlineBorderColor": "#0DA522"
+    },
+
     "Button": {
       "startBackground": "#000000",
       "endBackground": "#000000",
@@ -72,8 +77,7 @@
     "DisclosureButton": {
       "defaultBackground": "#281A33",
       "hoverOverlay": "#450073",
-      "pressedOverlay": "#54008c",
-      "successBackground": "#092E15"
+      "pressedOverlay": "#54008c"
     },
 
     "Borders": {
@@ -487,6 +491,41 @@
 
     "Tree.modifiedItemForeground": "#4FF0FF",
 
+    "TrialWidget": {
+      "Default": {
+        "foreground": "#FFFFFF",
+        "background": "#000000",
+        "borderColor": "#FFFFFF",
+        "hoverForeground": "#000000",
+        "hoverBackground": "#FFFFFF",
+        "hoverBorderColor": "#FFFFFF"
+      },
+      "Active": {
+        "foreground": "#00E61F",
+        "background": "#000000",
+        "borderColor": "#00E61F",
+        "hoverForeground": "#FFFFFF",
+        "hoverBackground": "#00E61F",
+        "hoverBorderColor": "#00E61F"
+      },
+      "Alert": {
+        "foreground": "#F58231",
+        "background": "#000000",
+        "borderColor": "#F58231",
+        "hoverForeground": "#FFFFFF",
+        "hoverBackground": "#F58231",
+        "hoverBorderColor": "#F58231"
+      },
+      "Expiring": {
+        "foreground": "#FFFFFF",
+        "background": "#E6194B",
+        "borderColor": "#E6194B",
+        "hoverForeground": "#FFFFFF",
+        "hoverBackground": "#800002",
+        "hoverBorderColor": "#800002"
+      }
+    },
+
     "ValidationTooltip": {
       "errorBackground": "#800002",
       "errorBorderColor": "#E6194B",
@@ -599,6 +638,35 @@
       "LiveChart": {
         "horizontalAxisColor": "#E6E6E6"
       }
+    },
+    "CompilationCharts": {
+      "background": {
+        "odd": "#000000",
+        "even": "#1A1A1A",
+        "default": "#000000"
+      },
+      "test": {
+        "enabled": "#3E8E41",
+        "disabled": "#2B5931",
+        "stroke": "#6FAF6D",
+        "selected": "#5E9E57"
+      },
+      "production": {
+        "enabled": "#3F88C5",
+        "disabled": "#2D5D87",
+        "stroke": "#6EA7C9",
+        "selected": "#6EB8DF"
+      },
+      "memory": {
+        "background": "#3F88C5",
+        "stroke": "#6EB8DF"
+      },
+      "cpu": {
+        "background": "#3E8E41",
+        "stroke": "#5E9E57"
+      },
+      "lineColor": "#FFFFFF",
+      "textColor": "#FFFFFF"
     },
     "FlameGraph.Tooltip": {
       "scaleBackground": "#555454",

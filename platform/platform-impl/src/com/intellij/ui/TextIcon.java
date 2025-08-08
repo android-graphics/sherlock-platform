@@ -73,6 +73,10 @@ public final class TextIcon implements Icon {
     setText(text);
   }
 
+  public AffineTransform getFontTransform() {
+    return myFontTransform;
+  }
+
   public void setFontTransform(AffineTransform fontTransform) {
     myFontTransform = fontTransform;
   }
@@ -113,6 +117,38 @@ public final class TextIcon implements Icon {
   public void setFont(Font font) {
     myFont = font;
     myTextBounds = null;
+  }
+
+  public Insets getInsets() {
+    return myInsets;
+  }
+
+  public Integer getRound() {
+    return myRound;
+  }
+
+  public Boolean getWithBorders() {
+    return withBorders;
+  }
+
+  public Color getBackground() {
+    return myBackground;
+  }
+
+  public Color getForeground() {
+    return myForeground;
+  }
+
+  public Color getBorderColor() {
+    return myBorderColor;
+  }
+
+  public Font getFont() {
+    return myFont;
+  }
+
+  public String getText() {
+    return myText;
   }
 
   @Override

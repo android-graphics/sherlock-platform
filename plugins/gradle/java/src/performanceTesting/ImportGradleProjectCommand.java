@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.performanceTesting;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,9 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
-import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationListener;
-import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManagerImpl;
-import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsTaskId;
 import org.jetbrains.plugins.gradle.service.project.open.GradleProjectImportUtil;
 import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
@@ -46,7 +43,6 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.jetbrains.plugins.gradle.util.GradleJvmSupportMatrices.suggestGradleVersion;
@@ -58,9 +54,8 @@ public final class ImportGradleProjectCommand extends AbstractCommand {
     super(text, line);
   }
 
-  @NotNull
   @Override
-  protected Promise<Object> _execute(@NotNull PlaybackContext context) {
+  protected @NotNull Promise<Object> _execute(@NotNull PlaybackContext context) {
     ActionCallback actionCallback = new ActionCallbackProfilerStopper();
     runWhenGradleImportAndIndexingFinished(context, actionCallback);
     return Promises.toPromise(actionCallback);
@@ -98,8 +93,7 @@ public final class ImportGradleProjectCommand extends AbstractCommand {
     AsyncPromise<?> promise = new AsyncPromise<>();
     context.message("Waiting for current import resolve tasks", getLine());
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      ExternalSystemProcessingManager processingManager =
-        ApplicationManager.getApplication().getService(ExternalSystemProcessingManager.class);
+      var processingManager = ExternalSystemProcessingManager.getInstance();
       while (processingManager.hasTaskOfTypeInProgress(ExternalSystemTaskType.RESOLVE_PROJECT, project)) {
         final Object lock = new Object();
         synchronized (lock) {
@@ -126,7 +120,6 @@ public final class ImportGradleProjectCommand extends AbstractCommand {
     List<String> projectsPaths = ContainerUtil.map(projectsSettings, ExternalProjectSettings::getExternalProjectPath);
     AtomicInteger gradleProjectsToRefreshCount = new AtomicInteger(projectsSettings.size());
     StringBuilder projectsWithResolveErrors = new StringBuilder();
-    var hasAnnotations = subscribeAnnotationsProcessing(promise);
     for (GradleProjectSettings settings : projectsSettings) {
       ImportSpecBuilder importSpecBuilder = new ImportSpecBuilder(project, GradleConstants.SYSTEM_ID);
       importSpecBuilder.callback(new ExternalProjectRefreshCallback() {
@@ -152,9 +145,9 @@ public final class ImportGradleProjectCommand extends AbstractCommand {
             private void _onImportFinished(String projectPath) {
               if (!projectsPaths.contains(projectPath)) return;
               connection.disconnect();
-              if (gradleProjectsToRefreshCount.decrementAndGet() == 0 && !hasAnnotations.get()) {
-                ApplicationManager.getApplication().invokeLater(() -> {
+              if (gradleProjectsToRefreshCount.decrementAndGet() == 0) {
 
+                ApplicationManager.getApplication().invokeLater(() -> {
                   promise.setResult(null);
                 });
               }
@@ -170,7 +163,7 @@ public final class ImportGradleProjectCommand extends AbstractCommand {
           context.error("Gradle resolve failed for: " + settings.getExternalProjectPath() + ":" + errorMessage + ":" + errorDetails,
                         getLine());
           synchronized (projectsWithResolveErrors) {
-            if (projectsWithResolveErrors.length() != 0) {
+            if (!projectsWithResolveErrors.isEmpty()) {
               projectsWithResolveErrors.append(", ");
             }
             projectsWithResolveErrors.append(String.format("'%s'", new File(settings.getExternalProjectPath()).getName()));
@@ -184,27 +177,6 @@ public final class ImportGradleProjectCommand extends AbstractCommand {
       });
       ExternalSystemUtil.refreshProject(settings.getExternalProjectPath(), importSpecBuilder);
     }
-  }
-
-  private static @NotNull AtomicBoolean subscribeAnnotationsProcessing(@NotNull AsyncPromise<Void> promise) {
-    var annotationsCount = new AtomicInteger(0);
-    var hasAnnotations = new AtomicBoolean(false);
-    var annotationsListener = new ExternalAnnotationsProgressNotificationListener() {
-      @Override
-      public void onStartResolve(ExternalAnnotationsTaskId id) {
-        hasAnnotations.set(true);
-        annotationsCount.incrementAndGet();
-      }
-
-      @Override
-      public void onFinishResolve(ExternalAnnotationsTaskId id) {
-        if (annotationsCount.decrementAndGet() == 0) {
-          promise.setResult(null);
-        }
-      }
-    };
-    ExternalAnnotationsProgressNotificationManagerImpl.Companion.getInstanceImpl().addNotificationListener(annotationsListener);
-    return hasAnnotations;
   }
 
   public static Promise<Void> linkGradleProjectIfNeeded(@NotNull Project project,

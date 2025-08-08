@@ -55,16 +55,17 @@ import java.util.List;
 import java.util.function.Predicate;
 
 public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataProvider {
-  // when client property is put in toolwindow component, hides toolwindow label
+  // when client property is put in a toolwindow component, hides toolwindow label
   public static final @NonNls String HIDE_ID_LABEL = "HideIdLabel";
   public static final @NonNls Key<Boolean> ALLOW_DND_FOR_TABS = Key.create("AllowDragAndDropForTabs");
-  // when client property is set to true in toolwindow component, the toolbar is always visible in the tool window header
+  // when client property is set to true in a toolwindow component, the toolbar is always visible in the tool window header
   public static final @NonNls Key<Boolean> DONT_HIDE_TOOLBAR_IN_HEADER = Key.create("DontHideToolbarInHeader");
   private static final @NonNls String TOOLWINDOW_UI_INSTALLED = "ToolWindowUiInstalled";
   public static final DataKey<BaseLabel> SELECTED_CONTENT_TAB_LABEL = DataKey.create("SELECTED_CONTENT_TAB_LABEL");
   @ApiStatus.Internal public static final String HEADER_ICON = "HeaderIcon";
 
-  @ApiStatus.Internal public static final Key<Boolean> NOT_SELECTED_TAB_ICON_TRANSPARENT = Key.create("NotSelectedIconTransparent");
+  @ApiStatus.Experimental
+  public static final Key<Boolean> NOT_SELECTED_TAB_ICON_TRANSPARENT = Key.create("NotSelectedIconTransparent");
 
   private final @NotNull ContentManager contentManager;
   int dropOverIndex = -1;
@@ -126,7 +127,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
       public void contentAdded(@NotNull ContentManagerEvent event) {
         Content content = event.getContent();
         ContentManager manager = content.getManager();
-        // merge subContents to main content if they are together inside one content manager
+        // merge subContents to the main content if they are together inside one content manager
         if (manager != null && !(content instanceof SingleContentLayout.SubContent)) {
           List<Content> contents = manager.getContentsRecursively();
           List<Content> mainContents = contents.stream().filter(c -> !(c instanceof SingleContentLayout.SubContent)).toList();
@@ -156,7 +157,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
 
       @Override
       public void contentRemoved(@NotNull ContentManagerEvent event) {
-        if (window.isDisposed() || window.getToolWindowManager().getProject().isDisposed()) {
+        if (window.isDisposed() || window.toolWindowManager.getProject().isDisposed()) {
           return;
         }
 
@@ -183,7 +184,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
           else {
             return;
           }
-          window.getToolWindowManager()
+          window.toolWindowManager
             .hideToolWindow(window.getId(), /* hideSide = */ false, /* moveFocus = */ true, removeFromStripe, /* source = */ null);
         }
       }
@@ -199,7 +200,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
     };
     contentManager.addContentManagerListener(contentManagerListener);
     // some tool windows clients can use contentManager.removeAllContents(true)
-    // - ensure that we don't receive such events if window is already disposed
+    // - ensure that we don't receive such events if a window is already disposed
     Disposer.register(window.getDisposable(), new Disposable() {
       @Override
       public void dispose() {
@@ -268,7 +269,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
       return false;
     }
 
-    ToolWindowManagerImpl manager = window.getToolWindowManager();
+    ToolWindowManagerImpl manager = window.toolWindowManager;
     for (String id : manager.getIdsOn(window.getAnchor())) {
       if (id.equals(window.getId())) {
         continue;
@@ -300,6 +301,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
     rebuild();
   }
 
+  @ApiStatus.Internal
   public @NotNull ContentLayout getCurrentLayout() {
     if (type == ToolWindowContentUiType.TABBED) {
       return tabsLayout;
@@ -525,7 +527,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
         }
         if (ui.window.getAnchor() != ToolWindowAnchor.BOTTOM ||
             SwingUtilities.convertMouseEvent(e.getComponent(), e, decorator).getY() >
-            ToolWindowPane.Companion.getHeaderResizeArea$intellij_platform_ide_impl()) {
+            ToolWindowPane.Companion.getHeaderResizeArea()) {
           return true;
         }
         //it's drag, not resize!
@@ -638,7 +640,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
     }
 
     if (toolWindowGroup != null) {
-      group.addAll(toolWindowGroup);
+      group.add(toolWindowGroup);
     }
 
     final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, group);
@@ -699,7 +701,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
   public void uiDataSnapshot(@NotNull DataSink sink) {
     sink.set(PlatformDataKeys.TOOL_WINDOW, window);
     sink.set(PlatformCoreDataKeys.HELP_ID, window.getHelpId());
-    sink.set(CommonDataKeys.PROJECT, window.getToolWindowManager().getProject());
+    sink.set(CommonDataKeys.PROJECT, window.toolWindowManager.getProject());
     sink.set(CloseAction.CloseTarget.KEY, computeCloseTarget());
     if (getCurrentLayout() instanceof MorePopupAware o) {
       sink.set(MorePopupAware.KEY_TOOLWINDOW_TITLE, o);
@@ -728,7 +730,9 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
     tabActionGroup.removeAll();
     tabActionGroup.addSeparator();
     tabActionGroup.addAll(actions);
-    tabToolbar.updateActionsImmediately();
+    if (tabComponent.isShowing()) {
+      tabToolbar.updateActionsAsync();
+    }
   }
 
   private @NotNull CloseAction.CloseTarget computeCloseTarget() {

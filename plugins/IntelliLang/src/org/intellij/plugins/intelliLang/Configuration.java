@@ -28,6 +28,7 @@ import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -54,10 +55,7 @@ import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -74,11 +72,15 @@ import java.util.*;
  */
 public class Configuration extends SimpleModificationTracker implements PersistentStateComponent<Element>, ModificationTracker {
   static final Logger LOG = Logger.getInstance(Configuration.class.getName());
+
+  private static final ExtensionPointName<LanguageInjectionConfigBean>
+    CONFIG_EP_NAME = ExtensionPointName.create("org.intellij.intelliLang.injectionConfig");
+
   private static final Condition<BaseInjection> LANGUAGE_INJECTION_CONDITION =
     o -> Language.findLanguageByID(o.getInjectedLanguageId()) != null;
 
   {
-    LanguageInjectionSupport.CONFIG_EP_NAME.addChangeListener(this::reloadInjections, null);
+    CONFIG_EP_NAME.addChangeListener(this::reloadInjections, null);
     LanguageInjectionSupport.EP_NAME.addChangeListener(this::reloadInjections, null);
   }
 
@@ -157,7 +159,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     }
 
     @Override
-    public void loadState(@NotNull final Element element) {
+    public void loadState(final @NotNull Element element) {
       myAdvancedConfiguration.loadState(element);
       super.loadState(element);
     }
@@ -196,9 +198,8 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       return injections;
     }
 
-    @NotNull
     @Override
-    public List<BaseInjection> getInjections(final String injectorId) {
+    public @NotNull @Unmodifiable List<BaseInjection> getInjections(final String injectorId) {
       return ContainerUtil.concat(myParentConfiguration.getInjections(injectorId), getOwnInjections(injectorId));
     }
 
@@ -216,7 +217,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       super.invokeAfterReload(runnable);
     }
 
-    public List<BaseInjection> getOwnInjections(final String injectorId) {
+    public @Unmodifiable List<BaseInjection> getOwnInjections(final String injectorId) {
       return super.getInjections(injectorId);
     }
 
@@ -247,18 +248,18 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     OFF, RESOLVE, ASSIGNMENTS, DFA
   }
 
-  @NonNls public static final String COMPONENT_NAME = "LanguageInjectionConfiguration";
+  public static final @NonNls String COMPONENT_NAME = "LanguageInjectionConfiguration";
 
   // element names
-  @NonNls private static final String INSTRUMENTATION_TYPE_NAME = "INSTRUMENTATION";
-  @NonNls private static final String LANGUAGE_ANNOTATION_NAME = "LANGUAGE_ANNOTATION";
-  @NonNls private static final String PATTERN_ANNOTATION_NAME = "PATTERN_ANNOTATION";
-  @NonNls private static final String SUBST_ANNOTATION_NAME = "SUBST_ANNOTATION";
-  @NonNls private static final String RESOLVE_REFERENCES = "RESOLVE_REFERENCES";
-  @NonNls private static final String LOOK_FOR_VAR_ASSIGNMENTS = "LOOK_FOR_VAR_ASSIGNMENTS";
-  @NonNls private static final String USE_DFA_IF_AVAILABLE = "USE_DFA_IF_AVAILABLE";
-  @NonNls private static final String INCLUDE_UNCOMPUTABLES_AS_LITERALS = "INCLUDE_UNCOMPUTABLES_AS_LITERALS";
-  @NonNls private static final String SOURCE_MODIFICATION_ALLOWED = "SOURCE_MODIFICATION_ALLOWED";
+  private static final @NonNls String INSTRUMENTATION_TYPE_NAME = "INSTRUMENTATION";
+  private static final @NonNls String LANGUAGE_ANNOTATION_NAME = "LANGUAGE_ANNOTATION";
+  private static final @NonNls String PATTERN_ANNOTATION_NAME = "PATTERN_ANNOTATION";
+  private static final @NonNls String SUBST_ANNOTATION_NAME = "SUBST_ANNOTATION";
+  private static final @NonNls String RESOLVE_REFERENCES = "RESOLVE_REFERENCES";
+  private static final @NonNls String LOOK_FOR_VAR_ASSIGNMENTS = "LOOK_FOR_VAR_ASSIGNMENTS";
+  private static final @NonNls String USE_DFA_IF_AVAILABLE = "USE_DFA_IF_AVAILABLE";
+  private static final @NonNls String INCLUDE_UNCOMPUTABLES_AS_LITERALS = "INCLUDE_UNCOMPUTABLES_AS_LITERALS";
+  private static final @NonNls String SOURCE_MODIFICATION_ALLOWED = "SOURCE_MODIFICATION_ALLOWED";
 
   private final Map<String, List<BaseInjection>> myInjections =
     ConcurrentFactoryMap.createMap(key -> ContainerUtil.createLockFreeCopyOnWriteList());
@@ -287,7 +288,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   }
 
   @Override
-  public void loadState(@NotNull final Element element) {
+  public void loadState(final @NotNull Element element) {
     myInjections.clear();
 
     List<Element> injectionElements = element.getChildren("injection");
@@ -331,7 +332,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   private static List<BaseInjection> loadDefaultInjections() {
     final List<Configuration> cfgList = new ArrayList<>();
     final Set<Object> visited = new HashSet<>();
-    LanguageInjectionSupport.CONFIG_EP_NAME.processWithPluginDescriptor((configBean, pluginDescriptor) -> {
+    CONFIG_EP_NAME.processWithPluginDescriptor((configBean, pluginDescriptor) -> {
       final ClassLoader loader = pluginDescriptor.getClassLoader();
       try {
         final Enumeration<URL> enumeration = loader.getResources(configBean.getConfigUrl());
@@ -417,8 +418,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     return myInjectionsById.getValue().get(languageId);
   }
 
-  @Nullable
-  public static Configuration load(final InputStream is) throws IOException, JDOMException {
+  public static @Nullable Configuration load(final InputStream is) throws IOException, JDOMException {
     final List<Element> elements = new ArrayList<>();
     final Element rootElement = JDOMUtil.load(is);
     final Element state;
@@ -493,8 +493,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     incModificationCount();
   }
 
-  @Nullable
-  public BaseInjection findExistingInjection(@NotNull final BaseInjection injection) {
+  public @Nullable BaseInjection findExistingInjection(final @NotNull BaseInjection injection) {
     final List<BaseInjection> list = getInjections(injection.getSupportId());
     for (BaseInjection cur : list) {
       if (cur.intersectsWith(injection)) return cur;
@@ -542,8 +541,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   /**
    * @param injectorId see {@link LanguageInjectionSupport#getId()}
    */
-  @NotNull
-  public List<BaseInjection> getInjections(final String injectorId) {
+  public @NotNull @Unmodifiable List<BaseInjection> getInjections(final String injectorId) {
     return Collections.unmodifiableList(myInjections.get(injectorId));
   }
 
@@ -642,12 +640,12 @@ public class Configuration extends SimpleModificationTracker implements Persiste
 
   public static class AdvancedConfiguration {
     // runtime pattern validation instrumentation
-    @NotNull private InstrumentationType myInstrumentationType = InstrumentationType.ASSERT;
+    private @NotNull InstrumentationType myInstrumentationType = InstrumentationType.ASSERT;
 
     // annotation class names
-    @NotNull private String myLanguageAnnotation;
-    @NotNull private String myPatternAnnotation;
-    @NotNull private String mySubstAnnotation;
+    private @NotNull String myLanguageAnnotation;
+    private @NotNull String myPatternAnnotation;
+    private @NotNull String mySubstAnnotation;
 
     private boolean myIncludeUncomputablesAsLiterals;
     private DfaOption myDfaOption = DfaOption.RESOLVE;
@@ -725,12 +723,11 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       myIncludeUncomputablesAsLiterals = flag;
     }
 
-    @NotNull
-    public DfaOption getDfaOption() {
+    public @NotNull DfaOption getDfaOption() {
       return myDfaOption;
     }
 
-    public void setDfaOption(@NotNull final DfaOption dfaOption) {
+    public void setDfaOption(final @NotNull DfaOption dfaOption) {
       myDfaOption = dfaOption;
     }
 

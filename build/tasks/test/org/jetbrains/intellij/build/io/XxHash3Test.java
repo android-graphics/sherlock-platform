@@ -15,18 +15,19 @@
  */
 package org.jetbrains.intellij.build.io;
 
-import com.intellij.util.lang.Xx3UnencodedString;
+import com.dynatrace.hash4j.hashing.Hashing;
+import com.intellij.util.lang.CharSequenceAccess;
 import com.intellij.util.lang.Xxh3;
-import org.assertj.core.api.AssertionsForClassTypes;
+import com.intellij.util.lang.Xxh3Impl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.MethodSource;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
@@ -40,28 +41,6 @@ public class XxHash3Test {
     }
   }
 
-  @ParameterizedTest
-  @ValueSource(ints = {1, 2, 3, 10, 20, 2048, 10_000})
-  public void longs(int size) {
-    Random random = new Random(42);
-    long[] data = new long[size];
-    for (int i = 0; i < size; i++) {
-      data[i] = random.nextLong();
-    }
-
-    long expected = switch (size) {
-      case 1 -> 6383185674071107836L;
-      case 2 -> -8849141235685524932L;
-      case 3 -> -7554874527885947435L;
-      case 10 -> 8740875949817914742L;
-      case 20 -> -8306236459388834883L;
-      case 2048 -> -4387089420526726675L;
-      case 10_000 -> -4959357597963000776L;
-      default -> throw new UnsupportedOperationException("Unknown size");
-    };
-    AssertionsForClassTypes.assertThat(Xxh3.hashLongs(data)).isEqualTo(expected);
-  }
-
   @Test
   public void string() {
     testString("com/intellij/profiler/async/windows/WinAsyncProfilerLocator", 2833214887294487028L);
@@ -70,7 +49,6 @@ public class XxHash3Test {
   }
 
   private static void testString(String s, long expected) {
-    assertThat(Xxh3.hash(s)).describedAs("Hash as string of: " + s).isEqualTo(expected);
     assertThat(Xxh3.hash(s.getBytes(StandardCharsets.UTF_8))).describedAs("Hash as bytes of: " + s).isEqualTo(expected);
   }
 
@@ -90,27 +68,46 @@ public class XxHash3Test {
 
   @Test
   public void checkInputStreamAccessor() throws IOException {
+    var dummyText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque rutrum lacinia nibh, ac ornare dolor bibendum at. " +
+    "Nam imperdiet quam at elit bibendum, in imperdiet nisi semper. Phasellus volutpat, libero sit amet dictum molestie, " +
+    "ligula nisi efficitur leo, ac vulputate leo ex vel turpis. Nulla facilisi. Curabitur in ligula ut ligula vehicula dapibus " +
+    "nec at mi. Proin vehicula egestas nulla, nec fermentum lacus aliquet nec. Sed fermentum turpis enim, eget cursus augue varius quis. " +
+    "Quisque fermentum nec felis at bibendum. Duis quis felis eu ante facilisis accumsan vitae eget ex. Suspendisse rhoncus leo a auctor " +
+    "interdum. Proin et sagittis est. Curabitur placerat ex vel velit egestas, a convallis purus bibendum. Integer pellentesque commodo nulla, " +
+    "a dapibus dolor semper ac. Praesent elementum tortor velit, ac mollis dui molestie nec. Sed tincidunt, arcu ac condimentum ullamcorper, " +
+    "arcu lectus bibendum nulla, volutpat rutrum odio nulla id leo. In dignissim sapien orci, in consectetur risus venenatis a. Aenean congue dui nec.";
     checkHashing("com/intellij/profiler/async/windows/WinAsyncProfilerLocator".getBytes(StandardCharsets.UTF_8));
+    checkHashing(dummyText.getBytes(StandardCharsets.UTF_8));
     checkHashing("test".getBytes(StandardCharsets.UTF_8));
     checkHashing("".getBytes(StandardCharsets.UTF_8));
-    // Check hashing of array consists of one chunk
-    checkHashing(new byte[1042]);
+  }
+
+  @ParameterizedTest
+  @MethodSource("byteArraySizeRangeProvider")
+  public void checkInputStreamAccessorOnDifferentSizes(int byteArraySize) throws IOException {
+    // We need to check the corner cases when we're getting data from both buffers
+      byte[] byteArray = new byte[byteArraySize];
+      Random random = new Random();
+      random.nextBytes(byteArray);
+      checkHashing(byteArray);
+  }
+
+  private static Stream<Integer> byteArraySizeRangeProvider() {
+    return IntStream.rangeClosed(0, 10_000).boxed();
   }
 
   private static void checkPackage(String s, long expected) {
-    AssertionsForClassTypes.assertThat(Xx3UnencodedString.hashUnencodedString(s.replace('.', '/'))).describedAs("Hash as string of: " + s).isEqualTo(expected);
+    String input = s.replace('.', '/');
+    assertThat(Xxh3Impl.hash(input, CharSequenceAccess.INSTANCE, 0, input.length() * 2, 0)).describedAs("Hash as string of: " + s).isEqualTo(expected);
   }
 
   private static void testUnencodedString(String s, long expected) {
-    assertThat(Xx3UnencodedString.hashUnencodedString(s)).describedAs("Hash as string of: " + s).isEqualTo(expected);
+    assertThat(Xxh3Impl.hash(s, CharSequenceAccess.INSTANCE, 0, s.length() * 2, 0)).describedAs("Hash as string of: " + s).isEqualTo(expected);
+    assertThat(Hashing.xxh3_64().hashCharsToLong(s)).describedAs("Hash as string of: " + s).isEqualTo(expected);
   }
 
   private static void checkHashing(byte[] bytes) throws IOException {
-    long newHashValue;
-    try (InputStream inputStream = new ByteArrayInputStream(bytes)){
-      newHashValue = Xxh3.hash(inputStream, bytes.length);
-    }
-    assertThat(newHashValue).isEqualTo(Xxh3.hash(bytes));
+    assertThat(Xxh3.hash(bytes)).isEqualTo(Hashing.xxh3_64().hashBytesToLong(bytes));
   }
 
   @SuppressWarnings("SameParameterValue")

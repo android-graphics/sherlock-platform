@@ -10,6 +10,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBHtmlPane;
 import com.intellij.ui.components.JBHtmlPaneConfiguration;
+import com.intellij.ui.components.impl.JBHtmlPaneImageResolver;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.ExtendableHTMLViewFactory;
 import com.intellij.util.ui.UIUtil;
@@ -59,10 +60,10 @@ public abstract class DocumentationEditorPane extends JBHtmlPane implements Disp
     @NotNull Function<? super @NotNull String, ? extends @Nullable Icon> iconResolver
   ) {
     super(
-      getDefaultDocStyleOptions(EditorColorsManager.getInstance().getGlobalScheme(), false),
+      getDefaultDocStyleOptions(() -> EditorColorsManager.getInstance().getGlobalScheme(), false),
       JBHtmlPaneConfiguration.builder()
         .keyboardActions(keyboardActions)
-        .imageResolverFactory(component -> new DocumentationImageProvider(component, imageResolver))
+        .imageResolverFactory(component -> new JBHtmlPaneImageResolver(component, it -> imageResolver.resolveImage(it)))
         .iconResolver(name -> iconResolver.apply(name))
         .customStyleSheetProvider(bg -> getDocumentationPaneAdditionalCssRules())
         .extensions(ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_IMAGES)
@@ -134,6 +135,8 @@ public abstract class DocumentationEditorPane extends JBHtmlPane implements Disp
     return JBUIScale.scale(contentLengthPreferredSize);
   }
 
+  private FontSize myFontSize;
+
   @Internal
   public void applyFontProps(@NotNull FontSize size) {
     Document document = getDocument();
@@ -144,8 +147,15 @@ public abstract class DocumentationEditorPane extends JBHtmlPane implements Disp
                       ? EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName()
                       : getFont().getFontName();
 
+    myFontSize = size;
+
     // changing font will change the doc's CSS as myEditorPane has JEditorPane.HONOR_DISPLAY_PROPERTIES via UIUtil.getHTMLEditorKit
     setFont(UIUtil.getFontWithFallback(fontName, Font.PLAIN, JBUIScale.scale(size.getSize())));
+  }
+
+  @Override
+  public float getContentsScaleFactor() {
+    return myFontSize != null ? ((float)myFontSize.getSize()) / FontSize.SMALL.getSize() : 1f;
   }
 
   private Object myHighlightedTag;

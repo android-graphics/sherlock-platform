@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.refactoring.copy;
 
@@ -233,6 +233,11 @@ public class K2CopyTestGenerated extends AbstractK2CopyTest {
     @TestMetadata("kt18149/kt18149.test")
     public void testKt18149_Kt18149() throws Exception {
         runTest("../../idea/tests/testData/refactoring/copy/kt18149/kt18149.test");
+    }
+
+    @TestMetadata("operationReferenceToJavaDecl/operationReferenceToJavaDecl.test")
+    public void testOperationReferenceToJavaDecl_OperationReferenceToJavaDecl() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/copy/operationReferenceToJavaDecl/operationReferenceToJavaDecl.test");
     }
 
     @TestMetadata("protectedConstructorRefInSuperListEntry/protectedConstructorRefInSuperListEntry.test")

@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import training.dsl.LessonContext
 import training.learn.course.KLesson
 import training.learn.exceptons.InvalidSdkException
@@ -15,6 +16,7 @@ import training.util.OnboardingFeedbackData
 import java.io.File
 import java.io.FileFilter
 import java.nio.file.Path
+import java.util.Locale
 
 interface LangSupport {
   /** It should be a language ID */
@@ -39,7 +41,7 @@ interface LangSupport {
 
   /** Relative path inside plugin resources */
   val projectResourcePath: String
-    get() = "learnProjects/${primaryLanguage.toLowerCase()}/$contentRootDirectoryName"
+    get() = "learnProjects/${primaryLanguage.lowercase(Locale.getDefault())}/$contentRootDirectoryName"
 
   /** Language can specify default sandbox-like file to be used for lessons with modifications but also with project support */
   val sampleFilePath: String?
@@ -113,4 +115,13 @@ interface LangSupport {
   fun getContentRootPath(projectPath: Path): Path {
     return projectPath
   }
+
+  /**
+   * When a project dir is cleared using [training.project.ProjectUtils.restoreProject],
+   * these paths along with their descenders are protected.
+   *
+   * For example: `.venv` in Python shouldn't be deleted as it has SDK.
+   */
+  @RequiresReadLock
+  fun getProtectedDirs(project: Project): Set<Path> = emptySet()
 }

@@ -1,29 +1,33 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.variables
 
+import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.JavaValue
+import com.intellij.debugger.engine.evaluation.AdditionalContextProvider
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.jdi.LocalVariableProxyImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.sun.jdi.*
-import org.jetbrains.kotlin.backend.common.descriptors.synthesizedString
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.AsmUtil.getCapturedFieldName
 import org.jetbrains.kotlin.codegen.AsmUtil.getLabeledThisName
 import org.jetbrains.kotlin.codegen.coroutines.CONTINUATION_VARIABLE_NAME
 import org.jetbrains.kotlin.codegen.coroutines.SUSPEND_FUNCTION_COMPLETION_PARAMETER_NAME
-import org.jetbrains.kotlin.codegen.inline.*
+import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
+import org.jetbrains.kotlin.codegen.inline.getInlineScopeInfo
 import org.jetbrains.kotlin.idea.debugger.base.util.*
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.INLINE_TRANSFORMATION_SUFFIX
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter.Kind
-import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.DebugLabelPropertyDescriptorProvider
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.NameUtils.CONTEXT_RECEIVER_PREFIX
 import org.jetbrains.kotlin.name.SpecialNames
+import org.jetbrains.kotlin.psi.KtCodeFragment
 import kotlin.coroutines.Continuation
 import com.sun.jdi.Type as JdiType
 import org.jetbrains.org.objectweb.asm.Type as AsmType
@@ -128,7 +132,7 @@ class VariableFinder(val context: ExecutionContext) {
         }
     }
 
-    fun find(parameter: CodeFragmentParameter, asmType: AsmType): Result? {
+    fun find(parameter: CodeFragmentParameter, asmType: AsmType, codeFragment: KtCodeFragment): Result? {
         return when (parameter.kind) {
             Kind.ORDINARY -> findOrdinary(VariableKind.Ordinary(parameter.name, asmType, isDelegated = false))
             Kind.DELEGATED -> findOrdinary(VariableKind.Ordinary(parameter.name, asmType, isDelegated = true))
@@ -139,7 +143,7 @@ class VariableFinder(val context: ExecutionContext) {
             Kind.DISPATCH_RECEIVER -> findDispatchThis(VariableKind.OuterClassThis(asmType))
             Kind.COROUTINE_CONTEXT -> findCoroutineContext()
             Kind.FIELD_VAR -> findFieldVariable(VariableKind.FieldVar(parameter.name, asmType))
-            Kind.DEBUG_LABEL -> findDebugLabel(parameter.name)
+            Kind.FOREIGN_VALUE -> findForeignValue(parameter.name, codeFragment)
         }
     }
 
@@ -150,7 +154,9 @@ class VariableFinder(val context: ExecutionContext) {
         findLocalVariable(variables, kind, kind.name)?.let { return it }
 
         // Local variables - synthetic captured local variable (IR Backend)
-        findLocalVariable(variables, kind, kind.name.synthesizedString)?.let { return it }
+        // Local variable name with $ prefix,
+        // see org.jetbrains.kotlin.backend.common.descriptors.DescriptorUtilsKt.getSynthesizedString
+        findLocalVariable(variables, kind, "$${kind.name}")?.let { return it }
 
         // Recursive search in local receiver variables
         findCapturedVariableInReceiver(variables, kind)?.let { return it }
@@ -162,11 +168,11 @@ class VariableFinder(val context: ExecutionContext) {
     private fun findFieldVariable(kind: VariableKind.FieldVar): Result? {
         val thisObject = thisObject()
         if (thisObject != null) {
-            val field = thisObject.referenceType().fieldByName(kind.fieldName) ?: return null
+            val field = DebuggerUtils.findField(thisObject.referenceType(), kind.fieldName) ?: return null
             return Result(thisObject.getValue(field))
         } else {
             val containingType = frameProxy.safeLocation()?.declaringType() ?: return null
-            val field = containingType.fieldByName(kind.fieldName) ?: return null
+            val field = DebuggerUtils.findField(containingType, kind.fieldName) ?: return null
             return Result(containingType.getValue(field))
         }
     }
@@ -277,16 +283,11 @@ class VariableFinder(val context: ExecutionContext) {
         return null
     }
 
-    private fun findDebugLabel(name: String): Result? {
-        val markupMap = DebugLabelPropertyDescriptorProvider.getMarkupMap(context.debugProcess)
-
-        for ((value, markup) in markupMap) {
-            if (markup.text == name) {
-                return Result(value)
-            }
-        }
-
-        return null
+    private fun findForeignValue(foreignValueName: String, codeFragment: KtCodeFragment): Result? {
+        val contextElements = AdditionalContextProvider
+            .getAllAdditionalContextElements(codeFragment.project, codeFragment.context)
+        val element = contextElements.firstOrNull { it.name == foreignValueName } ?: return null
+        return Result(element.value(context.evaluationContext))
     }
 
     private fun findUnlabeledThis(kind: VariableKind.UnlabeledThis): Result? {
@@ -330,7 +331,7 @@ class VariableFinder(val context: ExecutionContext) {
         val scopeNumberToSurroundingScopeNumber = mutableMapOf<Int, Int>()
         for (variable in variables) {
             val name = variable.name()
-            if (isFakeLocalVariableForInline(name)) {
+            if (JvmAbi.isFakeLocalVariableForInline(name)) {
                 val (scope, _, surroundingScope) = name.getInlineScopeInfo() ?: continue
                 if (surroundingScope != null && scope >= 0 && surroundingScope >= 0) {
                     scopeNumberToSurroundingScopeNumber[scope] = surroundingScope
@@ -480,8 +481,7 @@ class VariableFinder(val context: ExecutionContext) {
             ?.allInterfaces()?.firstOrNull { it.name() == Continuation::class.java.name }
             ?: return null
 
-        val getContextMethod = continuationType
-            .methodsByName("getContext", "()Lkotlin/coroutines/CoroutineContext;").firstOrNull()
+        val getContextMethod = DebuggerUtils.findMethod(continuationType, "getContext", "()Lkotlin/coroutines/CoroutineContext;")
             ?: return null
 
         return context.invokeMethod(continuation, getContextMethod, emptyList()) as? ObjectReference
@@ -554,8 +554,7 @@ class VariableFinder(val context: ExecutionContext) {
         }
 
         val delegateValue = rawValue as? ObjectReference ?: return rawValue
-        val getValueMethod = delegateValue.referenceType()
-            .methodsByName("getValue", "()Ljava/lang/Object;").firstOrNull()
+        val getValueMethod = DebuggerUtils.findMethod(delegateValue.referenceType(), "getValue", "()Ljava/lang/Object;")
             ?: return rawValue
 
         return context.invokeMethod(delegateValue, getValueMethod, emptyList())
@@ -570,6 +569,12 @@ class VariableFinder(val context: ExecutionContext) {
         if (this is VariableKind.Ordinary && isDelegated) {
             // We can't figure out the actual type of the value yet.
             // No worries: it will be checked again (and more carefully) in `unwrapAndCheck()`.
+            return true
+        }
+        if (this is VariableKind.Ordinary) {
+            // It's a workaround for the problem with the JVM backend emitting an incorrect type for local variable, KT-70527, IDEA-353808.
+            // However, it seems pretty safe to check ordinary variables only by name because we were unable to craft any counter-example
+            // that would somehow break the evaluator.
             return true
         }
         return evaluatorValueConverter.typeMatches(asmType, actualType)

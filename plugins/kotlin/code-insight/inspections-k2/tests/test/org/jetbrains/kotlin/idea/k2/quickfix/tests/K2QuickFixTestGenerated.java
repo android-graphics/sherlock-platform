@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.quickfix.tests;
 
@@ -52,6 +52,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/redundantIf/comment.kt");
         }
 
+        @TestMetadata("commentLiftedUpReturn.kt")
+        public void testCommentLiftedUpReturn() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantIf/commentLiftedUpReturn.kt");
+        }
+
         @TestMetadata("expression.kt")
         public void testExpression() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/redundantIf/expression.kt");
@@ -65,6 +70,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
         @TestMetadata("labeledReturn.kt")
         public void testLabeledReturn() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/redundantIf/labeledReturn.kt");
+        }
+
+        @TestMetadata("multiLineCommentLiftedUpReturn.kt")
+        public void testMultiLineCommentLiftedUpReturn() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantIf/multiLineCommentLiftedUpReturn.kt");
         }
 
         @TestMetadata("negate.kt")
@@ -384,6 +394,16 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
         @TestMetadata("complexHierarchyTail.kt")
         public void testComplexHierarchyTail() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/changeSignature/complexHierarchyTail.kt");
+        }
+
+        @TestMetadata("disabledAddParameterForEnum.kt")
+        public void testDisabledAddParameterForEnum() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/disabledAddParameterForEnum.kt");
+        }
+
+        @TestMetadata("disabledAddParameterForReadOnlyClass.kt")
+        public void testDisabledAddParameterForReadOnlyClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/disabledAddParameterForReadOnlyClass.kt");
         }
 
         @TestMetadata("fixExtensionLambdaSignature.kt")
@@ -1363,6 +1383,255 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment")
+    public abstract static class SuspiciousCollectionReassignment extends AbstractK2QuickFixTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/changeTypeToMutable")
+        public static class ChangeTypeToMutable extends AbstractK2QuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("hasType.kt")
+            public void testHasType() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/changeTypeToMutable/hasType.kt");
+            }
+
+            @TestMetadata("hasType2.kt")
+            public void testHasType2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/changeTypeToMutable/hasType2.kt");
+            }
+
+            @TestMetadata("mutableListOf.kt")
+            public void testMutableListOf() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/changeTypeToMutable/mutableListOf.kt");
+            }
+
+            @TestMetadata("mutableMapOf.kt")
+            public void testMutableMapOf() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/changeTypeToMutable/mutableMapOf.kt");
+            }
+
+            @TestMetadata("mutableSetOf.kt")
+            public void testMutableSetOf() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/changeTypeToMutable/mutableSetOf.kt");
+            }
+
+            @TestMetadata("noInitializer.kt")
+            public void testNoInitializer() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/changeTypeToMutable/noInitializer.kt");
+            }
+
+            @TestMetadata("notLocal.kt")
+            public void testNotLocal() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/changeTypeToMutable/notLocal.kt");
+            }
+
+            @TestMetadata("toMutableList.kt")
+            public void testToMutableList() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/changeTypeToMutable/toMutableList.kt");
+            }
+
+            @TestMetadata("toMutableList2.kt")
+            public void testToMutableList2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/changeTypeToMutable/toMutableList2.kt");
+            }
+
+            @TestMetadata("toMutableMap.kt")
+            public void testToMutableMap() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/changeTypeToMutable/toMutableMap.kt");
+            }
+
+            @TestMetadata("toMutableSet.kt")
+            public void testToMutableSet() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/changeTypeToMutable/toMutableSet.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/joinWithInitializer")
+        public static class JoinWithInitializer extends AbstractK2QuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("noInitializer.kt")
+            public void testNoInitializer() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/joinWithInitializer/noInitializer.kt");
+            }
+
+            @TestMetadata("notLocal.kt")
+            public void testNotLocal() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/joinWithInitializer/notLocal.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/joinWithInitializer/simple.kt");
+            }
+
+            @TestMetadata("used.kt")
+            public void testUsed() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/joinWithInitializer/used.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/replaceWithAssignment")
+        public static class ReplaceWithAssignment extends AbstractK2QuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("differentType.kt")
+            public void testDifferentType() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/replaceWithAssignment/differentType.kt");
+            }
+
+            @TestMetadata("emptyList.kt")
+            public void testEmptyList() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/replaceWithAssignment/emptyList.kt");
+            }
+
+            @TestMetadata("emptyListOf.kt")
+            public void testEmptyListOf() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/replaceWithAssignment/emptyListOf.kt");
+            }
+
+            @TestMetadata("emptyMap.kt")
+            public void testEmptyMap() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/replaceWithAssignment/emptyMap.kt");
+            }
+
+            @TestMetadata("emptyMapOf.kt")
+            public void testEmptyMapOf() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/replaceWithAssignment/emptyMapOf.kt");
+            }
+
+            @TestMetadata("emptySet.kt")
+            public void testEmptySet() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/replaceWithAssignment/emptySet.kt");
+            }
+
+            @TestMetadata("emptySetOf.kt")
+            public void testEmptySetOf() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/replaceWithAssignment/emptySetOf.kt");
+            }
+
+            @TestMetadata("listOf.kt")
+            public void testListOf() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/replaceWithAssignment/listOf.kt");
+            }
+
+            @TestMetadata("mapOf.kt")
+            public void testMapOf() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/replaceWithAssignment/mapOf.kt");
+            }
+
+            @TestMetadata("minusEq.kt")
+            public void testMinusEq() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/replaceWithAssignment/minusEq.kt");
+            }
+
+            @TestMetadata("noInitializer.kt")
+            public void testNoInitializer() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/replaceWithAssignment/noInitializer.kt");
+            }
+
+            @TestMetadata("notEmpty.kt")
+            public void testNotEmpty() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/replaceWithAssignment/notEmpty.kt");
+            }
+
+            @TestMetadata("notLocal.kt")
+            public void testNotLocal() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/replaceWithAssignment/notLocal.kt");
+            }
+
+            @TestMetadata("setOf.kt")
+            public void testSetOf() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/replaceWithAssignment/setOf.kt");
+            }
+
+            @TestMetadata("used.kt")
+            public void testUsed() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/replaceWithAssignment/used.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/replaceWithFilter")
+        public static class ReplaceWithFilter extends AbstractK2QuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("map.kt")
+            public void testMap() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/replaceWithFilter/map.kt");
+            }
+
+            @TestMetadata("minusEq.kt")
+            public void testMinusEq() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/replaceWithFilter/minusEq.kt");
+            }
+
+            @TestMetadata("notIterable.kt")
+            public void testNotIterable() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/replaceWithFilter/notIterable.kt");
+            }
+
+            @TestMetadata("plusEq.kt")
+            public void testPlusEq() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/replaceWithFilter/plusEq.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/replaceWithOrdinaryAssignment")
+        public static class ReplaceWithOrdinaryAssignment extends AbstractK2QuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suspiciousCollectionReassignment/replaceWithOrdinaryAssignment/simple.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/removeAnnotation")
     public static class RemoveAnnotation extends AbstractK2QuickFixTest {
         @java.lang.Override
@@ -1479,11 +1748,6 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/optIn/basicFunctionNotApplicable.kt");
         }
 
-        @TestMetadata("basicFunctionNotApplicableFir.kt")
-        public void testBasicFunctionNotApplicableFir() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/optIn/basicFunctionNotApplicableFir.kt");
-        }
-
         @TestMetadata("basicModule.kt")
         public void testBasicModule() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/optIn/basicModule.kt");
@@ -1512,6 +1776,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
         @TestMetadata("forbiddenTargetsExpression2.kt")
         public void testForbiddenTargetsExpression2() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/optIn/forbiddenTargetsExpression2.kt");
+        }
+
+        @TestMetadata("forbiddenTargetsExpression3.kt")
+        public void testForbiddenTargetsExpression3() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/forbiddenTargetsExpression3.kt");
         }
 
         @TestMetadata("forbiddenTargetsInAnnotation.kt")
@@ -1634,11 +1903,6 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/optIn/override.kt");
         }
 
-        @TestMetadata("overrideFir.kt")
-        public void testOverrideFir() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/optIn/overrideFir.kt");
-        }
-
         @TestMetadata("propagateOptIn.kt")
         public void testPropagateOptIn() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/optIn/propagateOptIn.kt");
@@ -1682,6 +1946,16 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
         @TestMetadata("propagateOptIn8Fir.kt")
         public void testPropagateOptIn8Fir() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/optIn/propagateOptIn8Fir.kt");
+        }
+
+        @TestMetadata("propagateSubclassOptInMultipleMarkers1.kt")
+        public void testPropagateSubclassOptInMultipleMarkers1() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/propagateSubclassOptInMultipleMarkers1.kt");
+        }
+
+        @TestMetadata("propagateSubclassOptInMultipleMarkers2.kt")
+        public void testPropagateSubclassOptInMultipleMarkers2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/propagateSubclassOptInMultipleMarkers2.kt");
         }
 
         @TestMetadata("propagateSubclassOptInRequired.kt")
@@ -2072,6 +2346,209 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
         @TestMetadata("toSet.kt")
         public void testToSet() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/wrapWithCollectionLiteral/toSet.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/redundantInterpolationPrefix")
+    public static class RedundantInterpolationPrefix extends AbstractK2QuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("prefix1.kt")
+        public void testPrefix1() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantInterpolationPrefix/prefix1.kt");
+        }
+
+        @TestMetadata("prefix1Interpolation.kt")
+        public void testPrefix1Interpolation() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantInterpolationPrefix/prefix1Interpolation.kt");
+        }
+
+        @TestMetadata("prefix2.kt")
+        public void testPrefix2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantInterpolationPrefix/prefix2.kt");
+        }
+
+        @TestMetadata("prefix2Interpolation.kt")
+        public void testPrefix2Interpolation() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantInterpolationPrefix/prefix2Interpolation.kt");
+        }
+
+        @TestMetadata("prefix2InterpolationUnresolvedReference.kt")
+        public void testPrefix2InterpolationUnresolvedReference() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantInterpolationPrefix/prefix2InterpolationUnresolvedReference.kt");
+        }
+
+        @TestMetadata("prefix2NonInterpolationDollars1.kt")
+        public void testPrefix2NonInterpolationDollars1() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantInterpolationPrefix/prefix2NonInterpolationDollars1.kt");
+        }
+
+        @TestMetadata("prefix2NonInterpolationDollars2.kt")
+        public void testPrefix2NonInterpolationDollars2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantInterpolationPrefix/prefix2NonInterpolationDollars2.kt");
+        }
+
+        @TestMetadata("prefix8.kt")
+        public void testPrefix8() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantInterpolationPrefix/prefix8.kt");
+        }
+
+        @TestMetadata("prefix8Interpolation.kt")
+        public void testPrefix8Interpolation() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantInterpolationPrefix/prefix8Interpolation.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary")
+    public static class ConvertSecondaryConstructorToPrimary extends AbstractK2QuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("assignmentToGlobalVariable.kt")
+        public void testAssignmentToGlobalVariable() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/assignmentToGlobalVariable.kt");
+        }
+
+        @TestMetadata("defaultValueChain.kt")
+        public void testDefaultValueChain() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/defaultValueChain.kt");
+        }
+
+        @TestMetadata("init.kt")
+        public void testInit() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/init.kt");
+        }
+
+        @TestMetadata("initAndParams.kt")
+        public void testInitAndParams() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/initAndParams.kt");
+        }
+
+        @TestMetadata("nonReachable.kt")
+        public void testNonReachable() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/nonReachable.kt");
+        }
+
+        @TestMetadata("nonReachableLoop.kt")
+        public void testNonReachableLoop() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/nonReachableLoop.kt");
+        }
+
+        @TestMetadata("propertyWithGetter.kt")
+        public void testPropertyWithGetter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/propertyWithGetter.kt");
+        }
+
+        @TestMetadata("propertyWithSetter.kt")
+        public void testPropertyWithSetter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/propertyWithSetter.kt");
+        }
+
+        @TestMetadata("protectedConstructor.kt")
+        public void testProtectedConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/protectedConstructor.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/simple.kt");
+        }
+
+        @TestMetadata("useParam.kt")
+        public void testUseParam() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/useParam.kt");
+        }
+
+        @TestMetadata("varArg.kt")
+        public void testVarArg() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/varArg.kt");
+        }
+
+        @TestMetadata("varargVal.kt")
+        public void testVarargVal() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/varargVal.kt");
+        }
+
+        @TestMetadata("withBaseAliasImplicit.kt")
+        public void testWithBaseAliasImplicit() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withBaseAliasImplicit.kt");
+        }
+
+        @TestMetadata("withBaseClass.kt")
+        public void testWithBaseClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withBaseClass.kt");
+        }
+
+        @TestMetadata("withBaseClassImplicit.kt")
+        public void testWithBaseClassImplicit() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withBaseClassImplicit.kt");
+        }
+
+        @TestMetadata("withBaseClassNoArgs.kt")
+        public void testWithBaseClassNoArgs() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withBaseClassNoArgs.kt");
+        }
+
+        @TestMetadata("withComments.kt")
+        public void testWithComments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withComments.kt");
+        }
+
+        @TestMetadata("withComposedModifiers.kt")
+        public void testWithComposedModifiers() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withComposedModifiers.kt");
+        }
+
+        @TestMetadata("withDelegation.kt")
+        public void testWithDelegation() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withDelegation.kt");
+        }
+
+        @TestMetadata("withDifferentTypeProperty.kt")
+        public void testWithDifferentTypeProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withDifferentTypeProperty.kt");
+        }
+
+        @TestMetadata("withInterfaceAlias.kt")
+        public void testWithInterfaceAlias() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withInterfaceAlias.kt");
+        }
+
+        @TestMetadata("withModifiers.kt")
+        public void testWithModifiers() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withModifiers.kt");
+        }
+
+        @TestMetadata("withParameters.kt")
+        public void testWithParameters() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withParameters.kt");
+        }
+
+        @TestMetadata("withPrimary.kt")
+        public void testWithPrimary() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withPrimary.kt");
+        }
+
+        @TestMetadata("withProperties.kt")
+        public void testWithProperties() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withProperties.kt");
         }
     }
 }

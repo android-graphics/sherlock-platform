@@ -83,9 +83,11 @@
       <option name="BLOCK_TERMINAL_BLOCK_BACKGROUND_END" value="FAFAFA"/>
       <option name="BLOCK_TERMINAL_SELECTED_BLOCK_BACKGROUND" value="EDF3FF"/>
       <option name="BLOCK_TERMINAL_SELECTED_BLOCK_STROKE_COLOR" value="4682FA"/>
+      <option name="BLOCK_TERMINAL_HOVERED_BLOCK_BACKGROUND_START" value="0000000A"/>
+      <option name="BLOCK_TERMINAL_HOVERED_BLOCK_BACKGROUND_END" value="00000003"/>
       <option name="BLOCK_TERMINAL_INACTIVE_SELECTED_BLOCK_BACKGROUND" value="EBECF0"/>
       <option name="BLOCK_TERMINAL_INACTIVE_SELECTED_BLOCK_STROKE_COLOR" value="C9CCD6"/>
-      <option name="BLOCK_TERMINAL_ERROR_BLOCK_STROKE_COLOR" value="ED99A1"/>
+      <option name="BLOCK_TERMINAL_ERROR_BLOCK_STROKE_COLOR" value="DB3B4B"/>
       <option name="BLOCK_TERMINAL_PROMPT_SEPARATOR_COLOR" value="EBECF0"/>
       <option name="BLOCK_TERMINAL_GENERATE_COMMAND_PLACEHOLDER_FOREGROUND" value="BFA1F8"/>
       <option name="BLOCK_TERMINAL_GENERATE_COMMAND_CARET_COLOR" value="834DF0"/>
@@ -542,6 +544,7 @@
           <option name="FOREGROUND" value="808080"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
+          <option name="ERROR_STRIPE_COLOR" value="ebc700" deuteranopia="ffd400" protanopia="ffd400"/>
         </value>
       </option>
 
@@ -1290,7 +1293,7 @@
         </option>
         <option name="BLOCK_TERMINAL_WHITE">
           <value>
-            <option name="FOREGROUND" value="DCDEE3" />
+            <option name="FOREGROUND" value="BEC0C5" />
             <option name="BACKGROUND" value="DCDEE3" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
@@ -1370,7 +1373,7 @@
         </option>
         <option name="BLOCK_TERMINAL_WHITE_BRIGHT">
           <value>
-            <option name="FOREGROUND" value="FFFFFF" />
+            <option name="FOREGROUND" value="D2D4D9" />
             <option name="BACKGROUND" value="FFFFFF" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
@@ -1468,6 +1471,21 @@
             <option name="EFFECT_TYPE" value="0"/>
           </value>
         </option>
+        <option name="INLINE_PROMPT">
+          <value>
+            <option name="FOREGROUND" value="7444D4"/>
+          </value>
+        </option>
+      <option name="INLINE_PROMPT_PROGRESS_DARK">
+        <value>
+          <option name="FOREGROUND" value="834DF0"/>
+        </value>
+      </option>
+      <option name="INLINE_PROMPT_PROGRESS_LIGHT">
+        <value>
+          <option name="FOREGROUND" value="DCCBFB"/>
+        </value>
+      </option>
       <option name="XPATH.KEYWORD">
         <value>
           <option name="FOREGROUND" value="0000FF" />
@@ -1484,6 +1502,17 @@
         <value>
           <option name="FOREGROUND" value="0000FF" />
           <option name="FONT_TYPE" value="1"/>
+        </value>
+      </option>
+      <option name="BEAN.ACTIVE">
+        <value>
+          <option name="FONT_TYPE" value="0"/>
+        </value>
+      </option>
+      <option name="BEAN.INACTIVE">
+        <value>
+          <option name="EFFECT_TYPE" value="6"/>
+          <option name="EFFECT_COLOR" value="616161"/>
         </value>
       </option>
     </attributes>
@@ -1568,9 +1597,11 @@
       <option name="BLOCK_TERMINAL_BLOCK_BACKGROUND_END" value="212329"/>
       <option name="BLOCK_TERMINAL_SELECTED_BLOCK_BACKGROUND" value="25324D"/>
       <option name="BLOCK_TERMINAL_SELECTED_BLOCK_STROKE_COLOR" value="3574F0"/>
+      <option name="BLOCK_TERMINAL_HOVERED_BLOCK_BACKGROUND_START" value="FFFFFF0A"/>
+      <option name="BLOCK_TERMINAL_HOVERED_BLOCK_BACKGROUND_END" value="FFFFFF03"/>
       <option name="BLOCK_TERMINAL_INACTIVE_SELECTED_BLOCK_BACKGROUND" value="393B40"/>
       <option name="BLOCK_TERMINAL_INACTIVE_SELECTED_BLOCK_STROKE_COLOR" value="5A5D63"/>
-      <option name="BLOCK_TERMINAL_ERROR_BLOCK_STROKE_COLOR" value="9C4E4E"/>
+      <option name="BLOCK_TERMINAL_ERROR_BLOCK_STROKE_COLOR" value="DB5C5C"/>
       <option name="BLOCK_TERMINAL_PROMPT_SEPARATOR_COLOR" value="393B40"/>
       <option name="BLOCK_TERMINAL_GENERATE_COMMAND_PLACEHOLDER_FOREGROUND" value="6C469C"/>
       <option name="BLOCK_TERMINAL_GENERATE_COMMAND_CARET_COLOR" value="955AE0"/>
@@ -2504,6 +2535,7 @@
       <option name="NOT_USED_ELEMENT_ATTRIBUTES">
         <value>
           <option name="FOREGROUND" value="72737A" />
+          <option name="ERROR_STRIPE_COLOR" value="be9117" deuteranopia="806a00" protanopia="806a00"/>
         </value>
       </option>
       <option name="PROPERTIES.INVALID_STRING_ESCAPE">
@@ -2909,6 +2941,32 @@
         <value>
           <option name="EFFECT_COLOR" value="999999"/>
           <option name="EFFECT_TYPE" value="0"/>
+        </value>
+      </option>
+      <option name="INLINE_PROMPT">
+        <value>
+          <option name="FOREGROUND" value="B589EC"/>
+        </value>
+      </option>
+      <option name="INLINE_PROMPT_PROGRESS_DARK">
+        <value>
+          <option name="FOREGROUND" value="955AE0"/>
+        </value>
+      </option>
+      <option name="INLINE_PROMPT_PROGRESS_LIGHT">
+        <value>
+          <option name="FOREGROUND" value="D4B8F9"/>
+        </value>
+      </option>
+      <option name="BEAN.ACTIVE">
+        <value>
+          <option name="FONT_TYPE" value="0"/>
+        </value>
+      </option>
+      <option name="BEAN.INACTIVE">
+        <value>
+          <option name="EFFECT_TYPE" value="6"/>
+          <option name="EFFECT_COLOR" value="6c6c6c"/>
         </value>
       </option>
     </attributes>

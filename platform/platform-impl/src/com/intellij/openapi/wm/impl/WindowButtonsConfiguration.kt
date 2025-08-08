@@ -1,10 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Internal
-
 package com.intellij.openapi.wm.impl
 
+import com.intellij.diagnostic.LoadingState
+import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,8 +17,7 @@ import org.jetbrains.annotations.ApiStatus
  * Cache state for quick application start-up
  */
 @State(name = "WindowButtonsConfiguration", storages = [Storage(StoragePathMacros.CACHE_FILE)])
-internal class WindowButtonsConfiguration(private val scope: CoroutineScope) : PersistentStateComponent<WindowButtonsConfiguration.State?> {
-
+class WindowButtonsConfiguration(private val scope: CoroutineScope) : PersistentStateComponent<WindowButtonsConfiguration.State?> {
   enum class WindowButton {
     MINIMIZE,
     MAXIMIZE,
@@ -27,7 +28,7 @@ internal class WindowButtonsConfiguration(private val scope: CoroutineScope) : P
     fun getInstance(): WindowButtonsConfiguration? = if (isSupported()) service<WindowButtonsConfiguration>() else null
 
     private fun isSupported(): Boolean {
-      return SystemInfoRt.isLinux && X11UiUtil.isInitialized()
+      return SystemInfoRt.isLinux
     }
   }
 
@@ -40,22 +41,25 @@ internal class WindowButtonsConfiguration(private val scope: CoroutineScope) : P
 
   override fun loadState(state: State) {
     mutableStateFlow.value = state
-
-    scope.launch {
-      loadStateFromOs()
-    }
+    scheduleUpdateFromOs()
   }
 
   override fun noStateLoaded() {
-    // Load state and wait the result
-    loadStateFromOs()
+    scheduleUpdateFromOs()
+  }
+
+  fun scheduleUpdateFromOs() {
+    scope.launch {
+      loadStateFromOs()
+    }
   }
 
   private fun loadStateFromOs() {
     var windowButtonsState: State? = null
 
     if (isSupported()) {
-      val config = X11UiUtil.getWindowButtonsConfig()
+      val customConfig = if (LoadingState.COMPONENTS_LOADED.isOccurred) Registry.stringValue("ide.linux.window.buttons.config") else ""
+      val config = customConfig.ifBlank { X11UiUtil.getWindowButtonsConfig() }
       if (config != null) {
         windowButtonsState = parseFromString(config)
       }
@@ -103,5 +107,12 @@ private fun stringsToWindowButtons(strings: List<String>): List<WindowButtonsCon
       "close" -> WindowButtonsConfiguration.WindowButton.CLOSE
       else -> null
     }
+  }
+}
+
+internal class WindowButtonsAppLifecycleListener : AppLifecycleListener {
+
+  override fun appStarted() {
+    WindowButtonsConfiguration.getInstance()?.scheduleUpdateFromOs()
   }
 }

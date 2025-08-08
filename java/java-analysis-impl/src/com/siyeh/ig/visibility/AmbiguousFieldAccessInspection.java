@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.visibility;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -11,20 +11,19 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class AmbiguousFieldAccessInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final PsiClass fieldClass = (PsiClass)infos[0];
     final PsiVariable variable = (PsiVariable)infos[1];
     if (variable instanceof PsiLocalVariable) {
@@ -62,7 +61,7 @@ public final class AmbiguousFieldAccessInspection extends BaseInspection impleme
       if (fieldClass == null) {
         return;
       }
-      PsiClass containingClass = ClassUtils.getContainingClass(expression);
+      PsiClass containingClass = PsiUtil.getContainingClass(expression);
       if (containingClass == null) {
         return;
       }
@@ -107,8 +106,7 @@ public final class AmbiguousFieldAccessInspection extends BaseInspection impleme
   private static class AmbiguousFieldAccessFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("ambiguous.field.access.quickfix");
     }
 
@@ -151,7 +149,7 @@ public final class AmbiguousFieldAccessInspection extends BaseInspection impleme
     }
 
     private static @Nullable PsiVariable getApparentlyAccessedVariable(Project project, PsiElement element) {
-      PsiClass containingClass = ClassUtils.getContainingClass(element);
+      PsiClass containingClass = PsiUtil.getContainingClass(element);
       if (containingClass == null) return null;
       final PsiElement parent = containingClass.getParent();
       final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();

@@ -3,12 +3,13 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.testFramework.runInEdtAndWait
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.fir.K2DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 abstract class AbstractHighLevelQuickFixTest : AbstractQuickFixTest() {
@@ -21,37 +22,35 @@ abstract class AbstractHighLevelQuickFixTest : AbstractQuickFixTest() {
             { runInEdtAndWait { project.invalidateCaches() } },
             { super.tearDown() },
         )
-
     }
-
-    override val disableTestDirective: String get() = IgnoreTests.DIRECTIVES.IGNORE_K2_MULTILINE_COMMENT
 
     override fun doTest(beforeFileName: String) {
-        val firBeforeFileName = getFirBeforeFileName(beforeFileName)
-        super.doTest(firBeforeFileName)
+        val effectiveBeforeFileName = getK2BeforeFileName(beforeFileName)
+        super.doTest(effectiveBeforeFileName)
     }
 
-    private fun getFirBeforeFileName(beforeFileName: String): String {
-        val firBeforeFilename = beforeFileName.replace(".kt", ".fir.kt")
-        val firBeforeFile = File(firBeforeFilename)
-        return if (firBeforeFile.exists()) {
-            firBeforeFile.canonicalPath
+    private fun getK2BeforeFileName(beforeFileName: String): String {
+        val beforeFilename = beforeFileName.replace(".kt", ".k2.kt")
+        val beforeFile = File(beforeFilename)
+        return if (beforeFile.exists()) {
+            beforeFile.canonicalPath
         } else {
             beforeFileName
         }
     }
 
     override fun getAfterFileName(beforeFileName: String): String {
-        val firAfterFile = File(dataFilePath(beforeFileName.replace(".kt", ".fir.kt.after")))
-        return if (firAfterFile.exists()) {
-            firAfterFile.name
+        val afterFile = File(dataFilePath(beforeFileName.replace(".kt", ".k2.kt.after")))
+        return if (afterFile.exists()) {
+            afterFile.name
         } else {
             super.getAfterFileName(beforeFileName)
         }
     }
 
-    // TODO: Enable these as more actions/inspections are enabled, and/or add more FIR-specific directives
-    override fun checkForUnexpectedErrors() {}
+    override fun checkUnexpectedErrors(mainFile: File, ktFile: KtFile, fileText: String) {
+        K2DirectiveBasedActionUtils.checkForErrorsAfter(mainFile, ktFile, fileText)
+    }
 
     override val inspectionFileName: String
         get() = ".k2Inspection"

@@ -15,10 +15,12 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public class ToggleBreakpointEnabledAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -38,8 +40,7 @@ public class ToggleBreakpointEnabledAction extends DumbAwareAction {
     return ActionUpdateThread.EDT;
   }
 
-  @NotNull
-  private static Set<XLineBreakpoint> findLineBreakpoints(AnActionEvent e) {
+  private static @NotNull Set<XLineBreakpoint> findLineBreakpoints(AnActionEvent e) {
     Project project = e.getProject();
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (project == null || editor == null) return Collections.emptySet();

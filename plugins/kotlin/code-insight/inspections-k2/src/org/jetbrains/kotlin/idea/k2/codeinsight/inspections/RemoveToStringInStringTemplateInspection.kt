@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -51,10 +52,9 @@ internal class RemoveToStringInStringTemplateInspection : KotlinApplicableInspec
         return referenceExpression.getReferencedNameAsName() == OperatorNameConventions.TO_STRING && callExpression.valueArguments.isEmpty()
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtDotQualifiedExpression): Unit? {
+    override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Unit? {
         val call = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-        val allOverriddenSymbols = listOf(call.symbol) + call.symbol.allOverriddenSymbols
+        val allOverriddenSymbols = call.symbol.allOverriddenSymbolsWithSelf
         return allOverriddenSymbols.any { it.callableId == TO_STRING_CALLABLE_ID }
             .asUnit
     }
@@ -62,7 +62,7 @@ internal class RemoveToStringInStringTemplateInspection : KotlinApplicableInspec
     override fun createQuickFix(
         element: KtDotQualifiedExpression,
         context: Unit,
-    ) = object : KotlinModCommandQuickFix<KtDotQualifiedExpression>() {
+    ): KotlinModCommandQuickFix<KtDotQualifiedExpression> = object : KotlinModCommandQuickFix<KtDotQualifiedExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("remove.to.string.fix.text")

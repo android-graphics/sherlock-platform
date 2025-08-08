@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.concurrency.JobScheduler;
@@ -26,10 +26,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.vcs.ProgressManagerQueue;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -67,8 +64,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     return project.getService(CommittedChangesCache.class);
   }
 
-  @Nullable
-  public static CommittedChangesCache getInstanceIfCreated(Project project) {
+  public static @Nullable CommittedChangesCache getInstanceIfCreated(Project project) {
     return project.getServiceIfCreated(CommittedChangesCache.class);
   }
 
@@ -116,6 +112,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     myExternallyLoadedChangeLists = new ConcurrentHashMap<>();
   }
 
+  @ApiStatus.Internal
   @Override
   public void loadState(@NotNull CommittedChangesCacheState state) {
     super.loadState(state);
@@ -202,7 +199,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
         if (myProject.isDisposed()) {
           return;
         }
-        if (myExceptions.size() > 0) {
+        if (!myExceptions.isEmpty()) {
           myErrorConsumer.consume(myExceptions);
         }
         else if (!myDisposed) {
@@ -400,7 +397,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     if (maxCount > 0 && changes.size() < getState().getInitialCount()) {
       cacheFile.setHaveCompleteHistory(true);
     }
-    if (changes.size() > 0) {
+    if (!changes.isEmpty()) {
       fireChangesLoaded(location, changes);
     }
     return changes;
@@ -464,12 +461,13 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
   private List<CommittedChangeList> appendLoadedChanges(@NotNull ChangesCacheFile cacheFile,
                                                         @NotNull List<? extends CommittedChangeList> newChanges) throws IOException {
     final List<CommittedChangeList> savedChanges = writeChangesInReadAction(cacheFile, newChanges);
-    if (savedChanges.size() > 0) {
+    if (!savedChanges.isEmpty()) {
       fireChangesLoaded(cacheFile.getLocation(), savedChanges);
     }
     return savedChanges;
   }
 
+  @Contract(mutates = "param1,param2")
   private static List<CommittedChangeList> writeChangesInReadAction(final ChangesCacheFile cacheFile,
                                                                     @NotNull List<? extends CommittedChangeList> newChanges)
     throws IOException {
@@ -694,7 +692,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
         try {
           debug("Processing updated files after refresh in " + cache.getLocation());
           boolean result = true;
-          if (committedChangeLists.size() > 0) {
+          if (!committedChangeLists.isEmpty()) {
             // received some new changelists, try to process updated files again
             result = cache.processUpdatedFiles(updatedFiles, myNewIncomingChanges);
           }
@@ -931,6 +929,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     }
   }
 
+  @ApiStatus.Internal
   public CachesHolder getCachesHolder() {
     return myCachesHolder;
   }

@@ -763,20 +763,29 @@ public final class GenerateMembersUtil {
   }
 
   public static @NotNull PsiMethod generateSetterPrototype(@NotNull PsiField field, PsiClass aClass) {
-    return generatePrototype(field, aClass, true, SetterTemplatesManager.getInstance());
+    return generatePrototype(field, aClass, true, GetterSetterGenerationOptions.empty(), SetterTemplatesManager.getInstance());
   }
 
   static @NotNull PsiMethod generateGetterPrototype(@NotNull PsiField field, boolean ignoreInvalidTemplate) {
-    return generatePrototype(field, field.getContainingClass(), ignoreInvalidTemplate, GetterTemplatesManager.getInstance());
+    return generateGetterPrototype(field, ignoreInvalidTemplate, GetterSetterGenerationOptions.empty());
   }
 
   static @NotNull PsiMethod generateSetterPrototype(@NotNull PsiField field, boolean ignoreInvalidTemplate) {
-    return generatePrototype(field, field.getContainingClass(), ignoreInvalidTemplate, SetterTemplatesManager.getInstance());
+    return generateSetterPrototype(field, ignoreInvalidTemplate, GetterSetterGenerationOptions.empty());
+  }
+
+  static @NotNull PsiMethod generateGetterPrototype(@NotNull PsiField field, boolean ignoreInvalidTemplate, @NotNull GetterSetterGenerationOptions options) {
+    return generatePrototype(field, field.getContainingClass(), ignoreInvalidTemplate, options, GetterTemplatesManager.getInstance());
+  }
+
+  static @NotNull PsiMethod generateSetterPrototype(@NotNull PsiField field, boolean ignoreInvalidTemplate, @NotNull GetterSetterGenerationOptions options) {
+    return generatePrototype(field, field.getContainingClass(), ignoreInvalidTemplate, options, SetterTemplatesManager.getInstance());
   }
 
   private static @NotNull PsiMethod generatePrototype(@NotNull PsiField field,
                                                       PsiClass psiClass,
                                                       boolean ignoreInvalidTemplate,
+                                                      @NotNull GetterSetterGenerationOptions options,
                                                       @NotNull TemplatesManager templatesManager) {
     Project project = field.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
@@ -823,10 +832,72 @@ public final class GenerateMembersUtil {
       annotationTarget = parameters.length == 1 ? parameters[0] : null;
     }
     if (annotationTarget != null) {
-      NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, annotationTarget);
+      PsiType fieldType = field.getType();
+      String type = options.copyAllAnnotations() ? fieldType.getCanonicalText(true) : getTypeWithNullableAnnotations(factory, field);
+      if (annotationTarget instanceof PsiParameter psiParameter && psiParameter.getTypeElement() != null &&
+          psiParameter.getType().getCanonicalText(false).equals(fieldType.getCanonicalText(false))) {
+        PsiTypeElement typeElementFromText = factory.createTypeElementFromText(type, psiParameter);
+        typeElementFromText = (PsiTypeElement)CodeStyleManager.getInstance(project).reformat(typeElementFromText);
+        psiParameter.getTypeElement().replace(typeElementFromText);
+        NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, annotationTarget);
+      }
+      else {
+        PsiMethod psiMethod = (PsiMethod)annotationTarget;
+        PsiTypeElement returnTypeElement = psiMethod.getReturnTypeElement();
+        if (returnTypeElement != null && returnTypeElement.getType().getCanonicalText(false).equals(fieldType.getCanonicalText(false))) {
+          PsiTypeElement typeElementFromText = factory.createTypeElementFromText(type, psiMethod);
+          typeElementFromText = (PsiTypeElement)CodeStyleManager.getInstance(project).reformat(typeElementFromText);
+          returnTypeElement.replace(typeElementFromText);
+          NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, annotationTarget);
+        }
+      }
     }
 
-    return generatePrototype(field, result);
+    PsiMethod method = generatePrototype(field, result);
+    PsiModifierList modifierList = method.getModifierList();
+    PsiModifierList newList = ModifierListUtil.createSortedModifierList(modifierList, null, true);
+    if (newList != null) {
+      new CommentTracker().replace(modifierList, newList);
+    }
+    return method;
+  }
+
+  /**
+   * Let's keep only nullable annotations, otherwise it can bother users who use frameworks, especially Hibernate
+   */
+  private static @NotNull String getTypeWithNullableAnnotations(@NotNull PsiElementFactory factory, @NotNull PsiField field) {
+    PsiTypeElement typeElement = field.getTypeElement();
+    PsiType psiType = field.getType();
+    if(typeElement == null) return psiType.getCanonicalText(false);
+    List<PsiElement> stack = new ArrayList<>();
+    stack.add(typeElement);
+    StringBuilder builder = new StringBuilder();
+    while (!stack.isEmpty()) {
+      PsiElement current = stack.remove(stack.size() - 1);
+      if (current instanceof PsiAnnotation annotation) {
+        if (!NullableNotNullManager.isNullabilityAnnotation(annotation)) {
+          continue;
+        }
+      }
+      PsiElement[] children = current.getChildren();
+      if(children.length > 0) {
+        for (int i = children.length-1; i >= 0; i--) {
+          stack.add(children[i]);
+        }
+        continue;
+      }
+      builder.append(current.getText());
+    }
+    PsiAnnotation[] annotations = field.getAnnotations();
+    for (int i = annotations.length - 1; i >= 0; i--) {
+      PsiAnnotation annotation = annotations[i];
+      if (AnnotationTargetUtil.isTypeAnnotation(annotation) &&
+          AnnotationTargetUtil.findAnnotationTarget(annotation, PsiAnnotation.TargetType.FIELD) == null &&
+          NullableNotNullManager.isNullabilityAnnotation(annotation)) {
+        builder.insert(0, annotation.getText() + " ");
+      }
+    }
+    return builder.toString();
   }
 
   private static @NotNull PsiMethod generatePrototype(@NotNull PsiField field, @NotNull PsiMethod result) {

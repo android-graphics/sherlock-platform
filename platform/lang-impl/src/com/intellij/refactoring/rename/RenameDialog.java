@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.find.FindBundle;
@@ -14,7 +14,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
@@ -63,7 +62,6 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
   private final Editor myEditor;
   private NameSuggestionsField.DataChanged myNameChangedListener;
   private final Map<AutomaticRenamerFactory, JCheckBox> myAutoRenamerFactories = new HashMap<>();
-  private String myOldName;
 
   private ScopeChooserCombo myScopeCombo;
   private final LinkedHashSet<String> myPredefinedSuggestedNames = new LinkedHashSet<>();
@@ -105,13 +103,11 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
     }
   }
 
-  @NotNull
-  protected @NlsContexts.Label String getLabelText() {
+  protected @NotNull @NlsContexts.Label String getLabelText() {
     return RefactoringBundle.message("rename.0.and.its.usages.to", getFullName());
   }
 
-  @NotNull
-  public PsiElement getPsiElement() {
+  public @NotNull PsiElement getPsiElement() {
     return myPsiElement;
   }
 
@@ -142,7 +138,6 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
 
   protected void createNewNameComponent() {
     String[] suggestedNames = getSuggestedNames();
-    myOldName = UsageViewUtil.getShortName(myPsiElement);
     myNameSuggestionsField = new NameSuggestionsField(suggestedNames, myProject, FileTypes.PLAIN_TEXT, myEditor) {
       @Override
       protected boolean forceCombobox() {
@@ -187,17 +182,16 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
     }
     result.addAll(myPredefinedSuggestedNames);
     result.add(UsageViewUtil.getShortName(myPsiElement));
-    mySuggestedNameInfo = NameSuggestionProvider.suggestNames(myPsiElement, myNameSuggestionContext, result);
+    mySuggestedNameInfo = ActionUtil.underModalProgress(myProject, RefactoringBundle.message("progress.title.collecting.suggested.names"),
+                                                        () -> NameSuggestionProvider.suggestNames(myPsiElement, myNameSuggestionContext, result));
     return ArrayUtilRt.toStringArray(result);
   }
 
-  @NotNull
-  public String getNewName() {
+  public @NotNull String getNewName() {
     return myNameSuggestionsField.getEnteredName().trim();
   }
 
-  @NotNull
-  public SearchScope getRefactoringScope() {
+  public @NotNull SearchScope getRefactoringScope() {
     SearchScope scope = myScopeCombo.getSelectedScope();
     return scope != null ? scope : GlobalSearchScope.projectScope(myProject);
   }
@@ -316,8 +310,7 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
     }
   }
 
-  @Nullable
-  protected JComponent createSearchScopePanel() {
+  protected @Nullable JComponent createSearchScopePanel() {
     var scopeService = RenameScopeService.getInstance(myProject);
     var preselectedScopeName = scopeService.load();
     myScopeCombo = new ScopeChooserCombo();
@@ -353,7 +346,13 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
   protected void doAction() {
     PsiUtilCore.ensureValid(myPsiElement);
     String newName = getNewName();
-    performRename(newName);
+    String oldName = UsageViewUtil.getShortName(myPsiElement);
+    if (oldName.equals(newName)) {
+      close(OK_EXIT_CODE);
+    }
+    else {
+      performRename(newName);
+    }
   }
 
   @Override
@@ -393,7 +392,6 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
 
   @Override
   protected void canRun() throws ConfigurationException {
-    if (Comparing.strEqual(getNewName(), myOldName)) throw new ConfigurationException(null);
     if (!areButtonsValid()) {
       throw new ConfigurationException(LangBundle.message("dialog.message.valid.identifier", getNewName()));
     }

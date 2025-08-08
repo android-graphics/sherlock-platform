@@ -374,6 +374,10 @@ def array_to_thrift_struct(array, name, roffset, coffset, rows, cols, format):
     rows = min(rows, MAXIMUM_ARRAY_SIZE)
     cols = min(cols, MAXIMUM_ARRAY_SIZE)
 
+    if rows == 0 and cols == 0:
+        array_chunk.data = array_data_to_thrift_struct(rows, cols, lambda r: (get_value(r, c) for c in range(cols)), format)
+        return array_chunk
+
     # there is no obvious rule for slicing (at least 5 choices)
     if len(array) == 1 and (rows > 1 or cols > 1):
         array = array[0]
@@ -451,25 +455,19 @@ def array_to_meta_thrift_struct(array, name, format):
     reslice = ""
     if l > 2:
         raise ExceedingArrayDimensionsException
+    elif l == 0:
+        rows = 0
+        cols = 0
     elif l == 1:
         # special case with 1D arrays arr[i, :] - row, but arr[:, i] - column with equal shape and ndim
         # http://stackoverflow.com/questions/16837946/numpy-a-2-rows-1-column-file-loadtxt-returns-1row-2-columns
         # explanation: http://stackoverflow.com/questions/15165170/how-do-i-maintain-row-column-orientation-of-vectors-in-numpy?rq=1
         # we use kind of a hack - get information about memory from C_CONTIGUOUS
-        is_row = array.flags['C_CONTIGUOUS']
-
-        if is_row:
-            rows = 1
-            cols = len(array)
-            if cols < len(array):
-                reslice = '[0:%s]' % (cols)
-            array = array[0:cols]
-        else:
-            cols = 1
-            rows = len(array)
-            if rows < len(array):
-                reslice = '[0:%s]' % (rows)
-            array = array[0:rows]
+        cols = 1
+        rows = len(array)
+        if rows < len(array):
+            reslice = '[0:%s]' % (rows)
+        array = array[0:rows]
     elif l == 2:
         rows = array.shape[-2]
         cols = array.shape[-1]
@@ -541,7 +539,8 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
         r = min(num_rows, DATAFRAME_HEADER_LOAD_MAX_SIZE)
         c = min(num_cols, DATAFRAME_HEADER_LOAD_MAX_SIZE)
         array_chunk.headers = header_data_to_thrift_struct(r, c, [""] * num_cols, [(0, 0)] * num_cols, lambda x: DEFAULT_DF_FORMAT, original_df, dim)
-        array_chunk.data = array_data_to_thrift_struct(rows, cols, None, format)
+
+        array_chunk.data = array_data_to_thrift_struct(rows, cols, None, '%' + format)
         return array_chunk
 
     rows = min(rows, MAXIMUM_ARRAY_SIZE)
@@ -573,7 +572,7 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
     elif dim == -1:
         df = df[roffset: roffset + rows]
     else:
-        df.iloc[roffset: roffset + rows]
+        df = df.iloc[roffset: roffset + rows]
 
     rows = df.shape[0]
     cols = df.shape[1] if dim > 1 else 1
@@ -592,7 +591,8 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
         return get_formatted_row_elements(row, iat, dim, cols, format, dtypes)
 
     array_chunk.headers = header_data_to_thrift_struct(rows, cols, dtypes, col_bounds, col_to_format, df, dim)
-    array_chunk.data = array_data_to_thrift_struct(rows, cols, formatted_row_elements, format)
+    # we already have here formatted_row_elements, so we pass here %s as a default format
+    array_chunk.data = array_data_to_thrift_struct(rows, cols, formatted_row_elements, format='%s')
     return array_chunk
 
 
@@ -637,6 +637,7 @@ def header_data_to_thrift_struct(rows, cols, dtypes, col_bounds, col_to_format, 
 
 TYPE_TO_THRIFT_STRUCT_CONVERTERS = {
     "ndarray": array_to_thrift_struct,
+    "recarray": array_to_thrift_struct,
     "EagerTensor": tensor_to_thrift_struct,
     "ResourceVariable": tensor_to_thrift_struct,
     "SparseTensor": sparse_tensor_to_thrift_struct,

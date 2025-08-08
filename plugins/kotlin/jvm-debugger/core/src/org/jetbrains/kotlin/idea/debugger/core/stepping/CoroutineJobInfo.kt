@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor
 
 interface CoroutineFilter {
     fun canRunTo(nextCoroutineFilter: CoroutineFilter): Boolean
+    val coroutineFilterName: String
 }
 
 data class CoroutineJobInfo(private val coroutineFilter: CoroutineFilter) : LightOrRealThreadInfo {
@@ -22,10 +23,17 @@ data class CoroutineJobInfo(private val coroutineFilter: CoroutineFilter) : Ligh
         return nextCoroutineFilter != null && coroutineFilter.canRunTo(nextCoroutineFilter)
     }
 
+    override val filterName get() = coroutineFilter.coroutineFilterName
+
     companion object {
         @JvmStatic
         private fun getCoroutineFilter(suspendContext: SuspendContextImpl): CoroutineFilter? {
-            return StackFrameInterceptor.instance?.extractCoroutineFilter(suspendContext)
+            suspendContext.lightThreadFilter?.let {
+                return it as CoroutineFilter
+            }
+            val result = StackFrameInterceptor.instance?.extractCoroutineFilter(suspendContext)
+            suspendContext.lightThreadFilter = result
+            return result
         }
 
         @JvmStatic

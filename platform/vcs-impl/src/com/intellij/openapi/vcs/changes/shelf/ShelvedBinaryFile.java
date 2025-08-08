@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.ObjectUtils;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ import java.util.Objects;
 import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList.*;
 import static com.intellij.util.ArrayUtil.EMPTY_BYTE_ARRAY;
 
+@ApiStatus.Internal
 public final class ShelvedBinaryFile {
   private static final String BEFORE_PATH_FIELD_NAME = "BEFORE_PATH";
   private static final String AFTER_PATH_FIELD_NAME = "AFTER_PATH";
@@ -33,7 +35,7 @@ public final class ShelvedBinaryFile {
 
   public final String BEFORE_PATH;
   public final String AFTER_PATH;
-  @Nullable public final String SHELVED_PATH;         // null if binary file was deleted
+  public final @Nullable String SHELVED_PATH;         // null if binary file was deleted
 
   private Change myChange;
 
@@ -44,8 +46,7 @@ public final class ShelvedBinaryFile {
     SHELVED_PATH = convertToSystemIndependent(shelvedPath);
   }
 
-  @Nullable
-  private static String convertToSystemIndependent(@Nullable String beforePath) {
+  private static @Nullable String convertToSystemIndependent(@Nullable String beforePath) {
     return beforePath != null ? FileUtil.toSystemIndependentName(beforePath) : null;
   }
 
@@ -84,8 +85,7 @@ public final class ShelvedBinaryFile {
     return FileStatus.MODIFIED;
   }
 
-  @NotNull
-  public Change createChange(@NotNull final Project project) {
+  public @NotNull Change createChange(final @NotNull Project project) {
     if (myChange == null) {
       ContentRevision before = null;
       ContentRevision after = null;
@@ -98,9 +98,8 @@ public final class ShelvedBinaryFile {
             return ObjectUtils.chooseNotNull(super.getBinaryContent(), EMPTY_BYTE_ARRAY);
           }
 
-          @NotNull
           @Override
-          public VcsRevisionNumber getRevisionNumber() {
+          public @NotNull VcsRevisionNumber getRevisionNumber() {
             return new TextRevisionNumber(VcsBundle.message("local.version.title"));
           }
         };
@@ -141,6 +140,7 @@ public final class ShelvedBinaryFile {
     return result;
   }
 
+  @Override
   public String toString() {
     return FileUtil.toSystemDependentName(BEFORE_PATH == null ? AFTER_PATH : BEFORE_PATH);
   }

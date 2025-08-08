@@ -7,13 +7,11 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
-import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleGrouper
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.project.modules
@@ -31,17 +29,20 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.DelegatingGlobalSearchScope
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.base.platforms.*
 import org.jetbrains.kotlin.idea.base.projectStructure.*
+import org.jetbrains.kotlin.idea.base.util.GRADLE_SYSTEM_ID
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
@@ -64,6 +65,7 @@ import org.jetbrains.kotlin.platform.isWasm
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.isNative
 import java.nio.file.Path
+import java.util.*
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 
@@ -104,10 +106,19 @@ const val KOTLIN_GROUP_ID = "org.jetbrains.kotlin"
 fun isRepositoryConfigured(repositoriesBlockText: String): Boolean =
     repositoriesBlockText.contains(MAVEN_CENTRAL) || repositoriesBlockText.contains(JCENTER)
 
+@Deprecated("Use 'toGradleCompileScope(Module) instead")
 fun DependencyScope.toGradleCompileScope(isAndroidModule: Boolean) = when (this) {
     DependencyScope.COMPILE -> "implementation"
     // TODO: We should add testCompile or androidTestCompile
     DependencyScope.TEST -> if (isAndroidModule) "implementation" else "testImplementation"
+    DependencyScope.RUNTIME -> "runtime"
+    DependencyScope.PROVIDED -> "implementation"
+    else -> "implementation"
+}
+
+fun DependencyScope.toGradleCompileScope(targetModule: Module? = null) = when (this) {
+    DependencyScope.COMPILE -> "implementation"
+    DependencyScope.TEST -> if (targetModule?.isMultiPlatformModule == true) "implementation" else "testImplementation"
     DependencyScope.RUNTIME -> "runtime"
     DependencyScope.PROVIDED -> "implementation"
     else -> "implementation"
@@ -138,10 +149,7 @@ fun isModuleConfigured(moduleSourceRootGroup: ModuleSourceRootGroup): Boolean {
 /**
  * Returns a list of modules which contain sources in Kotlin.
  * Note that this method is expensive and should not be called more often than strictly necessary.
- *
- * DO NOT CALL THIS ON AWT THREAD
  */
-@RequiresBackgroundThread
 suspend fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets: List<Module>? = null): Collection<Module> {
     if (!isUnitTestMode() && isDispatchThread()) {
         LOG.error("getModulesWithKotlinFiles could be a heavy operation and should not be call on AWT thread")
@@ -154,6 +162,7 @@ suspend fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets:
         FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, projectScope)
     }
     if (!anyKotlinFileInProject) {
+        LOG.debug("Did not find any Kotlin files in project")
         return emptyList()
     }
 
@@ -180,6 +189,7 @@ suspend fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets:
                 }
             }
         }
+    LOG.debug("Found ${modules.size} modules with Kotlin files")
     return modules
 }
 
@@ -194,19 +204,17 @@ fun getConfigurableModulesWithKotlinFiles(project: Project): List<ModuleSourceRo
     return ModuleSourceRootMap(project).groupByBaseModules(modules)
 }
 
-fun showConfigureKotlinNotificationIfNeeded(module: Module) {
-    val action: () -> Unit = {
+suspend fun showConfigureKotlinNotificationIfNeeded(module: Module) {
+    val project = module.project
+    val needNotify = smartReadAction(project) {
+        if (module.isDisposed) return@smartReadAction false
+
         val moduleGroup = module.toModuleGroup()
-        if (isNotConfiguredNotificationRequired(moduleGroup)) {
-            ConfigureKotlinNotificationManager.notify(module.project)
-        }
+        isNotConfiguredNotificationRequired(moduleGroup)
     }
 
-    val dumbService = DumbService.getInstance(module.project)
-    if (dumbService.isDumb) {
-        dumbService.smartInvokeLater { action() }
-    } else {
-        action()
+    if (needNotify) {
+        ConfigureKotlinNotificationManager.notify(project)
     }
 }
 
@@ -266,7 +274,11 @@ fun getCanBeConfiguredModules(project: Project, configurator: KotlinProjectConfi
 
 private fun KotlinProjectConfigurator.canConfigure(moduleSourceRootGroup: ModuleSourceRootGroup) =
     getStatus(moduleSourceRootGroup) == ConfigureKotlinStatus.CAN_BE_CONFIGURED &&
-            (allConfigurators().toList() - this).none { it.getStatus(moduleSourceRootGroup) == ConfigureKotlinStatus.CONFIGURED }
+            (allConfigurators().toList() - this).none {
+                it.isApplicable(moduleSourceRootGroup.baseModule) && it.getStatus(
+                    moduleSourceRootGroup
+                ) == ConfigureKotlinStatus.CONFIGURED
+            }
 
 fun getConfiguredModules(project: Project, configurator: KotlinProjectConfigurator): Map<String, Module> {
     val projectModules = project.modules.asList()
@@ -398,6 +410,17 @@ fun getPlatform(module: Module): String {
     }
 }
 
+fun getNonDefaultLanguageFeatures(module: Module): EnumSet<LanguageFeature> {
+    val languageVersionSettings = module.languageVersionSettings
+    val languageVersion = languageVersionSettings.languageVersion
+    val apiVersion = languageVersionSettings.apiVersion
+    val defaultSettingsForVersion = LanguageVersionSettingsImpl(languageVersion, apiVersion)
+    val nonDefaultFeatures = LanguageFeature.entries.filterTo(EnumSet.noneOf(LanguageFeature::class.java)) { feature ->
+        languageVersionSettings.supportsFeature(feature) && !defaultSettingsForVersion.supportsFeature(feature)
+    }
+    return nonDefaultFeatures
+}
+
 fun hasKotlinJvmRuntimeInScope(module: Module): Boolean {
     return syncNonBlockingReadAction(module.project) {
         val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
@@ -468,6 +491,7 @@ private const val GROUP_WITH_KOTLIN_VERSION = 2
 typealias ModulesNamesAndFirstSourceRootModules = Map<String, Module>
 typealias KotlinVersionsAndModules = Map<String, ModulesNamesAndFirstSourceRootModules>
 
+@Deprecated("Use org.jetbrains.kotlin.idea.gradleJava.kotlinGradlePluginVersion instead")
 fun Module.getGradleKotlinVersion(): String? {
     return getKotlinCompilerArguments(this)?.pluginClasspaths?.let { pluginsClasspaths ->
         pluginsClasspaths.firstOrNull { it.contains(ARTIFACT_NAME) }?.let {
@@ -562,12 +586,13 @@ fun getTargetBytecodeVersionFromModule(
 ): String? {
     val projectPath = ExternalSystemApiUtil.getExternalProjectPath(module) ?: return null
     val project = module.project
-    return ExternalSystemApiUtil.findModuleNode(project, ProjectSystemId("GRADLE"), projectPath)?.let { moduleDataNode ->
-        val javaModuleData = ExternalSystemApiUtil.find(moduleDataNode, JavaModuleData.KEY)
-        javaModuleData?.let {
-            javaModuleData.data.targetBytecodeVersion
-        }
-    } ?: getJvmTargetFromSdkOrDefault(module, kotlinVersion)
+    return ExternalSystemApiUtil.findModuleNode(project, GRADLE_SYSTEM_ID, projectPath)
+        ?.let { moduleDataNode ->
+            val javaModuleData = ExternalSystemApiUtil.find(moduleDataNode, JavaModuleData.KEY)
+            javaModuleData?.let {
+                javaModuleData.data.targetBytecodeVersion
+            }
+        } ?: getJvmTargetFromSdkOrDefault(module, kotlinVersion)
 }
 
 private fun getJvmTargetFromSdkOrDefault(

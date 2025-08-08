@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.rename;
 
@@ -85,6 +85,11 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
         runTest("testData/refactoring/rename/inplace/conflicts/classes/FunctionWithClassTypeParameters.kt");
     }
 
+    @TestMetadata("conflicts/functions/ConflictParameterLocalProperty.kt")
+    public void testConflicts_functions_ConflictParameterLocalProperty() throws Exception {
+        runTest("testData/refactoring/rename/inplace/conflicts/functions/ConflictParameterLocalProperty.kt");
+    }
+
     @TestMetadata("conflicts/functions/DefaultParameter.kt")
     public void testConflicts_functions_DefaultParameter() throws Exception {
         runTest("testData/refactoring/rename/inplace/conflicts/functions/DefaultParameter.kt");
@@ -103,6 +108,16 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
     @TestMetadata("conflicts/functions/FunctionalParameter.kt")
     public void testConflicts_functions_FunctionalParameter() throws Exception {
         runTest("testData/refactoring/rename/inplace/conflicts/functions/FunctionalParameter.kt");
+    }
+
+    @TestMetadata("conflicts/functions/NoConflictParameterFunction.kt")
+    public void testConflicts_functions_NoConflictParameterFunction() throws Exception {
+        runTest("testData/refactoring/rename/inplace/conflicts/functions/NoConflictParameterFunction.kt");
+    }
+
+    @TestMetadata("conflicts/functions/NoConflictParameterProperty.kt")
+    public void testConflicts_functions_NoConflictParameterProperty() throws Exception {
+        runTest("testData/refactoring/rename/inplace/conflicts/functions/NoConflictParameterProperty.kt");
     }
 
     @TestMetadata("conflicts/functions/SameSignature.kt")
@@ -155,6 +170,21 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
         runTest("testData/refactoring/rename/inplace/conflicts/typeParameters/TypeParameterVsTypeAlias.kt");
     }
 
+    @TestMetadata("DisableInplaceRenameOnThis.kt")
+    public void testDisableInplaceRenameOnThis() throws Exception {
+        runTest("testData/refactoring/rename/inplace/DisableInplaceRenameOnThis.kt");
+    }
+
+    @TestMetadata("DisableInplaceRenameOnThisExtension.kt")
+    public void testDisableInplaceRenameOnThisExtension() throws Exception {
+        runTest("testData/refactoring/rename/inplace/DisableInplaceRenameOnThisExtension.kt");
+    }
+
+    @TestMetadata("DisableInplaceRenameOnThisWithLabel.kt")
+    public void testDisableInplaceRenameOnThisWithLabel() throws Exception {
+        runTest("testData/refactoring/rename/inplace/DisableInplaceRenameOnThisWithLabel.kt");
+    }
+
     @TestMetadata("EnumEntries.kt")
     public void testEnumEntries() throws Exception {
         runTest("testData/refactoring/rename/inplace/EnumEntries.kt");
@@ -168,6 +198,11 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
     @TestMetadata("EraseCompanionName.kt")
     public void testEraseCompanionName() throws Exception {
         runTest("testData/refactoring/rename/inplace/EraseCompanionName.kt");
+    }
+
+    @TestMetadata("expressionsInRange.kt")
+    public void testExpressionsInRange() throws Exception {
+        runTest("testData/refactoring/rename/inplace/expressionsInRange.kt");
     }
 
     @TestMetadata("ExtensionAndNoReceiver.kt")
@@ -485,6 +520,11 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
         runTest("testData/refactoring/rename/inplace/InvokeToPlus.kt");
     }
 
+    @TestMetadata("JavaInheritor.kt")
+    public void testJavaInheritor() throws Exception {
+        runTest("testData/refactoring/rename/inplace/JavaInheritor.kt");
+    }
+
     @TestMetadata("LabelFromFunction.kt")
     public void testLabelFromFunction() throws Exception {
         runTest("testData/refactoring/rename/inplace/LabelFromFunction.kt");
@@ -570,6 +610,11 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
         runTest("testData/refactoring/rename/inplace/MultiDeclaration.kt");
     }
 
+    @TestMetadata("NamedArguments.kt")
+    public void testNamedArguments() throws Exception {
+        runTest("testData/refactoring/rename/inplace/NamedArguments.kt");
+    }
+
     @TestMetadata("NoReformat.kt")
     public void testNoReformat() throws Exception {
         runTest("testData/refactoring/rename/inplace/NoReformat.kt");
@@ -638,6 +683,11 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
     @TestMetadata("QuotedLocalVar.kt")
     public void testQuotedLocalVar() throws Exception {
         runTest("testData/refactoring/rename/inplace/QuotedLocalVar.kt");
+    }
+
+    @TestMetadata("QuotedOuterNames.kt")
+    public void testQuotedOuterNames() throws Exception {
+        runTest("testData/refactoring/rename/inplace/QuotedOuterNames.kt");
     }
 
     @TestMetadata("QuotedParameter.kt")

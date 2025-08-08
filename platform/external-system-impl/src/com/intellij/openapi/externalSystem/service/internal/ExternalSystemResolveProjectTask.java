@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.internal;
 
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.execution.ParametersListUtil;
@@ -62,6 +63,10 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     myVmOptions = importSpec.getVmOptions();
     myArguments = importSpec.getArguments();
     myResolverPolicy = importSpec instanceof ImportSpecImpl ? ((ImportSpecImpl)importSpec).getProjectResolverPolicy() : null;
+    UserDataHolderBase userData = importSpec.getUserData();
+    if (userData != null) {
+      userData.copyUserDataTo(this);
+    }
   }
 
   @Override
@@ -83,6 +88,8 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     if (StringUtil.isNotEmpty(myArguments)) {
       settings.withArguments(ParametersListUtil.parse(myArguments));
     }
+
+    putUserDataTo(settings);
 
     TargetEnvironmentConfigurationProvider environmentConfigurationProvider = null;
     for (var executionAware : ExternalSystemExecutionAware.getExtensions(projectSystemId)) {
@@ -165,8 +172,7 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
   }
 
   @Override
-  @NotNull
-  protected String wrapProgressText(@NotNull String text) {
+  protected @NotNull String wrapProgressText(@NotNull String text) {
     return ExternalSystemBundle.message("progress.update.text", getExternalSystemId().getReadableName(), text);
   }
 

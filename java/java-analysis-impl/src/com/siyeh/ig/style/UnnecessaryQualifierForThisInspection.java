@@ -17,23 +17,22 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 public final class UnnecessaryQualifierForThisInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(infos[0] instanceof PsiThisExpression
                                            ? "unnecessary.qualifier.for.this.problem.descriptor"
                                            : "unnecessary.qualifier.for.super.problem.descriptor");
@@ -52,8 +51,7 @@ public final class UnnecessaryQualifierForThisInspection extends BaseInspection 
   private static class UnnecessaryQualifierForThisFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "unnecessary.qualifier.for.this.remove.quickfix");
     }
@@ -84,7 +82,7 @@ public final class UnnecessaryQualifierForThisInspection extends BaseInspection 
       if (!(referent instanceof PsiClass)) {
         return;
       }
-      final PsiClass containingClass = ClassUtils.getContainingClass(thisExpression);
+      final PsiClass containingClass = PsiUtil.getContainingClass(thisExpression);
       if (containingClass == null || !containingClass.equals(referent)) {
         return;
       }

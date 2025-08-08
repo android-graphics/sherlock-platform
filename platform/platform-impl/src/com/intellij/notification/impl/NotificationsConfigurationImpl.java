@@ -8,7 +8,6 @@ import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -228,9 +227,11 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
     //noinspection NonPrivateFieldAccessedInSynchronizedContext
     SYSTEM_NOTIFICATIONS = !"false".equals(state.getAttributeValue(SYSTEM_NOTIFICATIONS_ATTRIBUTE));
 
-    NotificationAnnouncingMode announcingMode = NotificationAnnouncingMode.get(state.getAttributeValue(NOTIFICATION_ANNOUNCING_MODE_ATTRIBUTE));
-    if (announcingMode != null) {
-      NOTIFICATION_ANNOUNCING_MODE = announcingMode;
-    }
+    NOTIFICATION_ANNOUNCING_MODE = NotificationAnnouncingMode.get(state.getAttributeValue(NOTIFICATION_ANNOUNCING_MODE_ATTRIBUTE));
+  }
+
+  @Override
+  public synchronized void noStateLoaded() {
+    loadState(new Element("element"));
   }
 }

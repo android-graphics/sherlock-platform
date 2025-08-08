@@ -10,7 +10,6 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.DataOutput;
 import java.io.IOException;
@@ -42,7 +41,9 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
    * This object is always created by {@link #myInitializer}, hence if initializer is null -- it must also be null
    */
   private volatile ValueContainerImpl<Value> myMergedSnapshot;
-  //RC: why is it Nullable? It seems quite NPE-prone
+
+  //TODO RC: the only reason to use UpdatableValueContainer instead of plain ValueContainer (unmodifiable) is to access
+  //         .needsCompaction() method -- which is strictly speaking should be in a ValueContainer
   private final @NotNull Computable<? extends UpdatableValueContainer<Value>> myInitializer;
 
   public ChangeTrackingValueContainer(@NotNull Computable<? extends UpdatableValueContainer<Value>> initializer) {
@@ -195,8 +196,6 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
 
   public void saveDiffTo(@NotNull DataOutput out,
                          @NotNull DataExternalizer<? super Value> externalizer) throws IOException {
-    assert !needsCompacting() : "Full state must be written, instead of diff";
-
     IntSet set = myInvalidated;
     if (set != null && !set.isEmpty()) {
       for (int inputId : myInvalidated.toIntArray()) {

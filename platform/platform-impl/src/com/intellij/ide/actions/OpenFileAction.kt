@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.icons.AllIcons
@@ -13,10 +13,10 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -34,10 +34,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen
 import com.intellij.platform.PlatformProjectOpenProcessor
-import com.intellij.platform.ide.progress.ModalTaskOwner
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.projectImport.ProjectOpenProcessor.Companion.getImportProvider
+import com.intellij.util.SlowOperations
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Files
@@ -71,14 +72,12 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
   
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
-    val showFiles = project != null || PlatformProjectOpenProcessor.getInstanceIfItExists() != null
-    val descriptor: FileChooserDescriptor = if (showFiles) ProjectOrFileChooserDescriptor() else ProjectOnlyFileChooserDescriptor()
     var toSelect: VirtualFile? = null
     val defaultProjectDirectory = GeneralLocalSettings.getInstance().defaultProjectDirectory
     if (defaultProjectDirectory.isNotEmpty()) {
       toSelect = VfsUtil.findFileByIoFile(File(defaultProjectDirectory), true)
     }
-    descriptor.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, toSelect == null && showFiles)
+    val descriptor = createFileChooserDescriptor(project, toSelect)
     FileChooser.chooseFiles(descriptor, project, toSelect ?: pathToSelect) { files ->
       for (file in files) {
         if (!descriptor.isFileSelectable(file)) {
@@ -87,14 +86,25 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
           return@chooseFiles
         }
       }
-      @Suppress("DialogTitleCapitalization")
-      runWithModalProgressBlocking(owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project),
-                                   title = IdeBundle.message("title.open.project")) {
+      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
         for (file in files) {
           doOpenFile(project, file)
         }
       }
     }
+  }
+
+  protected open fun createFileChooserDescriptor(
+    project: Project?,
+    fileToSelect: VirtualFile?
+  ): FileChooserDescriptor {
+    val showFiles = project != null || PlatformProjectOpenProcessor.getInstanceIfItExists() != null
+    val descriptor =
+      if (showFiles) ProjectOrFileChooserDescriptor()
+      else OpenProjectFileChooserDescriptor(true).withTitle(IdeBundle.message("title.open.project"))
+    descriptor.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, fileToSelect == null && showFiles)
+
+    return descriptor
   }
 
   @Suppress("unused")
@@ -127,93 +137,78 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-}
 
-private class ProjectOnlyFileChooserDescriptor : OpenProjectFileChooserDescriptor(true) {
-  init {
-    title = IdeBundle.message("title.open.project")
-  }
-}
+  // vanilla `OpenProjectFileChooserDescriptor` only accepts project files; this one is overridden to accept any files
+  private class ProjectOrFileChooserDescriptor : OpenProjectFileChooserDescriptor(true) {
+    private val myStandardDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withHideIgnored(false)
 
-// vanilla OpenProjectFileChooserDescriptor only accepts project files; this one is overridden to accept any files
-private class ProjectOrFileChooserDescriptor : OpenProjectFileChooserDescriptor(true) {
-  private val myStandardDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withHideIgnored(false)
-
-  init {
-    title = IdeBundle.message("title.open.file.or.project")
-  }
-
-  override fun isFileVisible(file: VirtualFile, showHiddenFiles: Boolean): Boolean {
-    return if (file.isDirectory) super.isFileVisible(file, showHiddenFiles) else myStandardDescriptor.isFileVisible(file, showHiddenFiles)
-  }
-
-  override fun isFileSelectable(file: VirtualFile?): Boolean {
-    if (file == null) {
-      return false
+    init {
+      title = IdeBundle.message("title.open.file.or.project")
     }
-    return if (file.isDirectory) super.isFileSelectable(file) else myStandardDescriptor.isFileSelectable(file)
-  }
 
-  override fun isChooseMultiple() = true
-}
-
-private suspend fun doOpenFile(project: Project?, virtualFile: VirtualFile) {
-  val file = virtualFile.toNioPath()
-  if (Files.isDirectory(file)) {
-    @Suppress("TestOnlyProblems")
-    ProjectUtil.openExistingDir(file, project)
-    return
-  }
-
-  // try to open as a project - unless the file is an .ipr of the current one
-  if ((project == null || virtualFile != project.projectFile) && OpenProjectFileChooserDescriptor.isProjectFile(virtualFile)) {
-    val answer = shouldOpenNewProject(project, virtualFile)
-    if (answer == Messages.CANCEL) {
-      return
-    }
-    else if (answer == Messages.YES) {
-      val openedProject = ProjectUtil.openOrImportAsync(file, OpenProjectTask { projectToClose = project })
-      openedProject?.let {
-        FileChooserUtil.setLastOpenedFile(it, file)
+    override fun isFileSelectable(file: VirtualFile?): Boolean = when {
+      file == null -> false
+      file.isDirectory -> SlowOperations.knownIssue("IJPL-162827").use {
+        super.isFileSelectable(file)
       }
+      else -> myStandardDescriptor.isFileSelectable(file)
+    }
+
+    override fun isChooseMultiple() = true
+  }
+
+  protected open suspend fun doOpenFile(project: Project?, virtualFile: VirtualFile) {
+    val file = virtualFile.toNioPath()
+    if (Files.isDirectory(file)) {
+      @Suppress("TestOnlyProblems")
+      ProjectUtil.openExistingDir(file, project)
       return
     }
-  }
 
-  LightEditUtil.markUnknownFileTypeAsPlainTextIfNeeded(project, virtualFile)
-  // Sherlock: Apply 1c340ca3746573c2d85c5d6a3904657a98e33400
-  // See: https://github.com/JetBrains/intellij-community/commit/1c340ca3746573c2d85c5d6a3904657a98e33400
-  readAction { virtualFile.fileType }.takeIf { it != FileTypes.UNKNOWN }
-  ?: withContext(Dispatchers.EDT) {
-    FileTypeChooser.associateFileType(virtualFile.name)
-  }
-  ?: return
-  // Sherlock: Apply 1c340ca3746573c2d85c5d6a3904657a98e33400
+    // try to open as a project - unless the file is an .ipr of the current one
+    if ((project == null || virtualFile != project.projectFile) && OpenProjectFileChooserDescriptor.isProjectFile(virtualFile)) {
+      val answer = shouldOpenNewProject(project, virtualFile)
+      if (answer == Messages.CANCEL) {
+        return
+      }
+      else if (answer == Messages.YES) {
+        val openedProject = ProjectUtil.openOrImportAsync(file, OpenProjectTask { projectToClose = project })
+        openedProject?.let {
+          FileChooserUtil.setLastOpenedFile(it, file)
+        }
+        return
+      }
+    }
 
-  if (project == null || project.isDefault) {
-    PlatformProjectOpenProcessor.createTempProjectAndOpenFileAsync(file, OpenProjectTask { projectToClose = project })
-  }
-  else {
-    NonProjectFileWritingAccessProvider.allowWriting(listOf(virtualFile))
-    if (LightEdit.owns(project)) {
-      LightEditService.getInstance().openFile(virtualFile)
-      LightEditFeatureUsagesUtil.logFileOpen(project, LightEditFeatureUsagesUtil.OpenPlace.LightEditOpenAction)
+    LightEditUtil.markUnknownFileTypeAsPlainTextIfNeeded(project, virtualFile)
+    readAction { virtualFile.fileType }.takeIf { it != FileTypes.UNKNOWN }
+    ?: withContext(Dispatchers.EDT) {
+      FileTypeChooser.associateFileType(virtualFile.name)
+    }
+    ?: return
+
+    if (project == null || project.isDefault) {
+      PlatformProjectOpenProcessor.createTempProjectAndOpenFileAsync(file, OpenProjectTask { projectToClose = project })
     }
     else {
-      val navigatable = PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, -1)
-      withContext(Dispatchers.EDT) {
-        navigatable.navigate(true)
+      NonProjectFileWritingAccessProvider.allowWriting(listOf(virtualFile))
+      if (LightEdit.owns(project)) {
+        LightEditService.getInstance().openFile(virtualFile)
+        LightEditFeatureUsagesUtil.logFileOpen(project, LightEditFeatureUsagesUtil.OpenPlace.LightEditOpenAction)
+      }
+      else {
+        val navigatable = PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, -1)
+        withContext(Dispatchers.EDT) {
+          navigatable.navigate(true)
+        }
       }
     }
   }
-}
 
-@Messages.YesNoCancelResult
-private suspend fun shouldOpenNewProject(project: Project?, file: VirtualFile): Int {
-  if (file.fileType is ProjectFileType) {
-    return Messages.YES
+  @Messages.YesNoCancelResult
+  private suspend fun shouldOpenNewProject(project: Project?, file: VirtualFile): Int {
+    if (file.fileType is ProjectFileType) return Messages.YES
+    val provider = getImportProvider(file) ?: return Messages.CANCEL
+    return withContext(Dispatchers.EDT) { provider.askConfirmationForOpeningProject(file, project) }
   }
-
-  val provider = getImportProvider(file) ?: return Messages.CANCEL
-  return withContext(Dispatchers.EDT) { provider.askConfirmationForOpeningProject(file, project) }
 }

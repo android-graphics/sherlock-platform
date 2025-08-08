@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.CutProvider;
@@ -14,19 +14,17 @@ import com.intellij.internal.inspector.UiInspectorPreciseContextProvider;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actions.CaretStop;
 import com.intellij.openapi.editor.actions.CaretStopPolicy;
+import com.intellij.openapi.editor.actions.ChangeEditorFontSizeStrategy;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
@@ -65,7 +63,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.*;
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.UndoableEditListener;
 import javax.swing.plaf.TextUI;
 import javax.swing.text.*;
@@ -84,6 +81,8 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   private static final Logger LOG = Logger.getInstance(EditorComponentImpl.class);
 
   private final EditorImpl editor;
+
+  private @Nullable Runnable myRepaintCallback;
 
   public EditorComponentImpl(@NotNull EditorImpl editor) {
     this.editor = editor;
@@ -114,6 +113,15 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
         }
 
         float size = Math.max((float)(currentSize * scale), defaultFontSize);
+
+        var strategy = EditorComponentImpl.this.editor.getUserData(ChangeEditorFontSizeStrategy.KEY);
+        if (strategy != null) {
+          strategy.setFontSize(size);
+          var zoomPoint = strategy.preferredZoomPointRelative(EditorComponentImpl.this.editor);
+          var area = EditorComponentImpl.this.editor.getScrollingModel().getVisibleArea();
+          return new Point(area.x + zoomPoint.x, area.y + zoomPoint.y);
+        }
+
         EditorComponentImpl.this.editor.setFontSize(size);
         if (isChangePersistent) {
           EditorComponentImpl.this.editor.adjustGlobalFontSize(UISettingsUtils.scaleFontSize(size, 1 / UISettingsUtils.getInstance().getCurrentIdeScale()));
@@ -140,6 +148,10 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     setupEditorSwingCaretUpdatesCourierIfRequired();
   }
 
+  void setRepaintCallback(@Nullable Runnable repaintCallback) {
+    myRepaintCallback = repaintCallback;
+  }
+
   @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     UISettingsUtils settingsUtils = UISettingsUtils.with(uiSettings);
@@ -164,26 +176,16 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
     if (editor.isDisposed()) return;
-
-    sink.set(PlatformDataKeys.COPY_PROVIDER, editor.getCopyProvider());
-
     if (editor.isRendererMode()) return;
 
     sink.set(CommonDataKeys.EDITOR, editor);
     sink.set(CommonDataKeys.CARET, editor.getCaretModel().getCurrentCaret());
-    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, editor.getDeleteProvider());
-    sink.set(PlatformDataKeys.CUT_PROVIDER, editor.getCutProvider());
-    sink.set(PlatformDataKeys.PASTE_PROVIDER, editor.getPasteProvider());
 
     LogicalPosition location = editor.myLastMousePressedLocation;
     if (location == null) {
         location = editor.getCaretModel().getLogicalPosition();
     }
     sink.set(CommonDataKeys.EDITOR_VIRTUAL_SPACE, EditorCoreUtil.inVirtualSpace(editor, location));
-    Point point = editor.myLastMousePressedPoint;
-    if (point != null) {
-      sink.set(PlatformDataKeys.EDITOR_CLICK_OVER_TEXT, EditorUtil.isPointOverText(editor, point));
-    }
   }
 
   @DirtyUI
@@ -216,28 +218,28 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     if (EditorImpl.EVENT_LOG.isDebugEnabled()) {
       EditorImpl.EVENT_LOG.debug(e.toString());
     }
-    // Don't dispatch to super first; now that EditorComponentImpl is a JTextComponent,
-    // this would have the side effect of invoking Swing document machinery which relies
-    // on creating Document positions etc (and won't update the document in an IntelliJ
-    // safe way, such as running through all the carets etc.).
-    // First try to handle the event using the default editor logic, then dispatch to
-    // `super.processInputMethodEvent(e)`, which in turn will call the listeners and
-    // if still not consumed, handle the event by the default JTextComponent logic.
-    //    super.processInputMethodEvent(e);
+    WriteIntentReadAction.run((Runnable)() -> {
+      // Don't dispatch to super first; now that EditorComponentImpl is a JTextComponent,
+      // this would have the side effect of invoking Swing document machinery which relies
+      // on creating Document positions etc (and won't update the document in an IntelliJ
+      // safe way, such as running through all the carets etc.).
+      // First try to handle the event using the default editor logic, then dispatch to
+      // `super.processInputMethodEvent(e)`, which in turn will call the listeners and
+      // if still not consumed, handle the event by the default JTextComponent logic.
+      //    super.processInputMethodEvent(e);
 
-    // Viewer editors can handle input method events themselves by using `InputMethodListener`.
-    if (!e.isConsumed() && !editor.isViewer()) {
-      switch (e.getID()) {
-        case InputMethodEvent.INPUT_METHOD_TEXT_CHANGED:
-          editor.replaceInputMethodText(e);
-          // No breaks over here.
-
-        case InputMethodEvent.CARET_POSITION_CHANGED:
-          editor.inputMethodCaretPositionChanged(e);
-          e.consume();
-          break;
+      if (!e.isConsumed() && !editor.isDisposed()) {
+        InputMethodListener listener = editor.getInputMethodSupport().getListener();
+        switch (e.getID()) {
+          case InputMethodEvent.INPUT_METHOD_TEXT_CHANGED:
+            listener.inputMethodTextChanged(e);
+            break;
+          case InputMethodEvent.CARET_POSITION_CHANGED:
+            listener.caretPositionChanged(e);
+            break;
+        }
       }
-    }
+    });
 
     super.processInputMethodEvent(e);
   }
@@ -252,13 +254,13 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   @Override
   public ActionCallback type(String text) {
     ActionCallback result = new ActionCallback();
-    EdtInvocationManager.invokeLaterIfNeeded(() -> editor.type(text).notify(result));
+    EdtInvocationManager.invokeLaterIfNeeded(() -> WriteIntentReadAction.run((Runnable)() -> editor.type(text).notify(result)));
     return result;
   }
 
   @Override
   public @Nullable InputMethodRequests getInputMethodRequests() {
-    return IdeEventQueue.getInstance().isInputMethodEnabled() ? editor.getInputMethodRequests() : null;
+    return IdeEventQueue.getInstance().isInputMethodEnabled() ? editor.getInputMethodSupport().getInputMethodRequestsSwingWrapper() : null;
   }
 
   @DirtyUI
@@ -296,6 +298,9 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     int topOverhang = Math.max(0, editor.myView.getTopOverhang());
     int bottomOverhang = Math.max(0, editor.myView.getBottomOverhang());
     repaint(x, y - topOverhang, width, height + topOverhang + bottomOverhang);
+    if (myRepaintCallback != null && isShowing() && width > 0 && height > 0) {
+      myRepaintCallback.run();
+    }
   }
 
   //--implementation of Scrollable interface--------------------------------------
@@ -643,7 +648,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
   private void setupJTextComponentContext() {
     setDocument(new EditorAccessibilityDocument());
-    setCaret(new EditorAccessibilityCaret());
+    setCaret(new EditorAccessibilityCaret(editor));
   }
 
   /**
@@ -659,7 +664,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
   @Override
   public int getCaretPosition() {
-    return editor.getCaretModel().getOffset();
+    return ReadAction.compute(() -> editor.getCaretModel().getOffset());
   }
 
   @DirtyUI
@@ -1026,90 +1031,6 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     });
   }
 
-  /** {@linkplain DefaultCaret} does a lot of work we don't want (listening
-   * for focus events etc). This exists simply to be able to send caret events to the screen reader. */
-  private final class EditorAccessibilityCaret implements javax.swing.text.Caret {
-    @Override
-    public void install(JTextComponent jTextComponent) {
-    }
-
-    @Override
-    public void deinstall(JTextComponent jTextComponent) {
-    }
-
-    @Override
-    public void paint(Graphics graphics) {
-    }
-
-    @Override
-    public void addChangeListener(ChangeListener changeListener) {
-    }
-
-    @Override
-    public void removeChangeListener(ChangeListener changeListener) {
-    }
-
-    @Override
-    public boolean isVisible() {
-      return true;
-    }
-
-    @Override
-    public void setVisible(boolean visible) {
-    }
-
-    @Override
-    public boolean isSelectionVisible() {
-      return true;
-    }
-
-    @Override
-    public void setSelectionVisible(boolean visible) {
-    }
-
-    @Override
-    public void setMagicCaretPosition(Point point) {
-    }
-
-    @Override
-    public @Nullable Point getMagicCaretPosition() {
-      return null;
-    }
-
-    @Override
-    public void setBlinkRate(int rate) {
-    }
-
-    @Override
-    public int getBlinkRate() {
-      return 250;
-    }
-
-    @Override
-    public int getDot() {
-      return editor.getCaretModel().getOffset();
-    }
-
-    @Override
-    public int getMark() {
-      return editor.getSelectionModel().getSelectionStart();
-    }
-
-    @Override
-    public void setDot(int offset) {
-      if (!editor.isDisposed()) {
-        editor.getCaretModel().moveToOffset(offset);
-      }
-    }
-
-    @Override
-    public void moveDot(int offset) {
-      if (!editor.isDisposed()) {
-        editor.getCaretModel().moveToOffset(offset);
-      }
-    }
-  }
-
   @Override
   public @Nullable UiInspectorPreciseContextProvider.UiInspectorInfo getUiInspectorContext(@NotNull MouseEvent event) {
     Point point = event.getPoint();
@@ -1206,7 +1127,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   }
 
   private final class AccessibleEditorComponentImpl extends AccessibleJComponent
-      implements AccessibleText, AccessibleEditableText, AccessibleExtendedText,
+      implements AccessibleText, AccessibleEditableText, AccessibleExtendedText, AccessibleAction,
                  CaretListener, DocumentListener {
 
     AccessibleEditorComponentImpl() {
@@ -1366,7 +1287,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public int getCaretPosition() {
-      return editor.getCaretModel().getOffset();
+      return ReadAction.compute(() -> editor.getCaretModel().getOffset());
     }
 
     @Override
@@ -1403,12 +1324,12 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public int getSelectionStart() {
-      return editor.getSelectionModel().getSelectionStart();
+      return ReadAction.compute(() -> editor.getSelectionModel().getSelectionStart());
     }
 
     @Override
     public int getSelectionEnd() {
-      return editor.getSelectionModel().getSelectionEnd();
+      return ReadAction.compute(() -> editor.getSelectionModel().getSelectionEnd());
     }
 
     @Override
@@ -1465,8 +1386,10 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public void selectText(int startIndex, int endIndex) {
-      editor.getSelectionModel().setSelection(startIndex, endIndex);
-      editor.getCaretModel().moveToOffset(endIndex);
+      ReadAction.run(() -> {
+        editor.getSelectionModel().setSelection(startIndex, endIndex);
+        editor.getCaretModel().moveToOffset(endIndex);
+      });
     }
 
     @Override
@@ -1536,6 +1459,23 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
       rectangle.add(endPoint);
 
       return rectangle;
+    }
+
+    // ---- Implements AccessibleAction ----
+
+    @Override
+    public int getAccessibleActionCount(){
+      return 0;
+    }
+
+    @Override
+    public String getAccessibleActionDescription(int i){
+      return null;
+    }
+
+    @Override
+    public boolean doAccessibleAction(int i) {
+      return false;
     }
 
     private @Nullable String getTextAtOffset(

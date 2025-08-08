@@ -48,13 +48,17 @@ __jetbrains_intellij_get_directory_files() {
   command ls -1ap "$1"
 }
 
+__jetbrains_intellij_get_aliases() {
+  __jetbrains_intellij_escape_json "$(alias)"
+}
+
 __jetbrains_intellij_get_environment() {
   builtin local env_vars="$(__jetbrains_intellij_escape_json "$(builtin print -l -- ${(ko)parameters[(R)*export*]})")"
   builtin local keyword_names="$(__jetbrains_intellij_escape_json "$(builtin print -l -- ${(ko)reswords})")"
   builtin local builtin_names="$(__jetbrains_intellij_escape_json "$(builtin print -l -- ${(ko)builtins})")"
   builtin local function_names="$(__jetbrains_intellij_escape_json "$(builtin print -l -- ${(ko)functions})")"
   builtin local command_names="$(__jetbrains_intellij_escape_json "$(builtin print -l -- ${(ko)commands})")"
-  builtin local aliases_mapping="$(__jetbrains_intellij_escape_json "$(alias)")"
+  builtin local aliases_mapping="$(__jetbrains_intellij_get_aliases)"
 
   builtin local result="{\"envs\": \"$env_vars\", \"keywords\": \"$keyword_names\", \"builtins\": \"$builtin_names\", \"functions\": \"$function_names\", \"commands\": \"$command_names\", \"aliases\": \"$aliases_mapping\"}"
   builtin printf '%s' "$result"
@@ -88,15 +92,34 @@ __jetbrains_intellij_clear_all_and_move_cursor_to_top_left() {
 }
 
 __jetbrains_intellij_command_precmd() {
+  if [[ -z "${__jetbrains_intellij_initialized-}" ]]; then
+    # As `precmd` is executed before each prompt, for the first time it is called after
+    # all rc files have been processed and before the first prompt is displayed.
+    # So, here it finishes the initialization block, not a user command.
+    __jetbrains_intellij_initialized=1
+
+    # `HISTFILE` is already initialized at this point.
+    # Get all commands from history from the first command
+    builtin local hist="$(builtin history 1)"
+    builtin printf '\e]1341;command_history;history_string=%s\a' "$(__jetbrains_intellij_encode_large "${hist}")"
+
+    builtin local shell_info="$(__jetbrains_intellij_collect_shell_info)"
+    builtin printf '\e]1341;initialized;shell_info=%s\a' "$(__jetbrains_intellij_encode_large $shell_info)"
+    builtin print "${JETBRAINS_INTELLIJ_COMMAND_END_MARKER:-}"
+
+    __jetbrains_intellij_report_prompt_state
+
+    builtin return
+  fi
   builtin local LAST_EXIT_CODE="$?"
   if [ ! -z $__JETBRAINS_INTELLIJ_GENERATOR_COMMAND ]
   then
     unset __JETBRAINS_INTELLIJ_GENERATOR_COMMAND
     return 0
   fi
-  __jetbrains_intellij_report_prompt_state
   builtin printf '\e]1341;command_finished;exit_code=%s\a' "$LAST_EXIT_CODE"
   builtin print "${JETBRAINS_INTELLIJ_COMMAND_END_MARKER:-}"
+  __jetbrains_intellij_report_prompt_state
 }
 
 __jetbrains_intellij_report_prompt_state() {
@@ -198,14 +221,6 @@ add-zsh-hook preexec __jetbrains_intellij_command_preexec
 add-zsh-hook precmd __jetbrains_intellij_command_precmd
 add-zsh-hook zshaddhistory __jetbrains_intellij_zshaddhistory
 
-__jetbrains_intellij_report_prompt_state
-
-# `HISTFILE` is already initialized at this point.
-# Get all commands from history from the first command
-builtin local hist="$(builtin history 1)"
-builtin printf '\e]1341;command_history;history_string=%s\a' "$(__jetbrains_intellij_encode_large "${hist}")"
-
-builtin local shell_info="$(__jetbrains_intellij_collect_shell_info)"
-# This script is sourced from inside a `precmd` hook, i.e. right before the first prompt.
-builtin printf '\e]1341;initialized;shell_info=%s\a' "$(__jetbrains_intellij_encode_large $shell_info)"
-builtin print "${JETBRAINS_INTELLIJ_COMMAND_END_MARKER:-}"
+# IJPL-101617 Disable p10k Instant Prompt feature: https://github.com/romkatv/powerlevel10k#instant-prompt
+# because it breaks our command blocks integration by showing the prompt immediately before '.zshrc' is fully sourced
+builtin typeset -g POWERLEVEL9K_INSTANT_PROMPT=off

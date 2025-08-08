@@ -1,10 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
@@ -12,9 +15,9 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
@@ -29,16 +32,14 @@ class StaticInheritanceFix extends ModCommandQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     String scope =
       myReplaceInWholeProject ? InspectionGadgetsBundle.message("the.whole.project") : InspectionGadgetsBundle.message("this.class");
     return InspectionGadgetsBundle.message("static.inheritance.replace.quickfix", scope);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return InspectionGadgetsBundle.message("static.inheritance.fix.family.name");
   }
 
@@ -49,7 +50,7 @@ class StaticInheritanceFix extends ModCommandQuickFix {
     assert iface != null;
     final PsiField[] allFields = iface.getAllFields();
 
-    final PsiClass implementingClass = ClassUtils.getContainingClass(referenceElement);
+    final PsiClass implementingClass = PsiUtil.getContainingClass(referenceElement);
     assert implementingClass != null;
     final PsiFile file = implementingClass.getContainingFile();
 
@@ -78,15 +79,14 @@ class StaticInheritanceFix extends ModCommandQuickFix {
     });
   }
 
-  @NotNull
-  private Map<PsiReferenceExpression, PsiClass> findReplacements(@NotNull PsiField @NotNull [] allFields,
-                                                                 @NotNull PsiClass implementingClass,
-                                                                 @NotNull ModPsiUpdater updater) {
+  private @NotNull Map<PsiReferenceExpression, PsiClass> findReplacements(@NotNull PsiField @NotNull [] allFields,
+                                                                          @NotNull PsiClass implementingClass,
+                                                                          @NotNull ModPsiUpdater updater) {
     Map<PsiReferenceExpression, PsiClass> replacements = new LinkedHashMap<>();
     for (final PsiField field : allFields) {
       SearchScope scope = implementingClass.getUseScope();
       final Query<PsiReference> search = ReferencesSearch.search(field, scope, false);
-      for (PsiReference reference : search) {
+      for (PsiReference reference : search.asIterable()) {
         if (!(reference instanceof PsiReferenceExpression referenceExpression)) {
           continue;
         }

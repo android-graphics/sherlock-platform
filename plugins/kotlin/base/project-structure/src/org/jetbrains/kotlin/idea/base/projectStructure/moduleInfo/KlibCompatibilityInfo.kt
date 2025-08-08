@@ -6,13 +6,15 @@ package org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.asKotlinLogger
 import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.library.*
-import org.jetbrains.kotlin.library.metadata.KlibMetadataVersion
 import org.jetbrains.kotlin.library.metadata.isCInteropLibrary
 import org.jetbrains.kotlin.library.metadata.isCommonizedCInteropLibrary
-import org.jetbrains.kotlin.library.metadata.metadataVersion
+import org.jetbrains.kotlin.library.resolveSingleFileKlib
+import org.jetbrains.kotlin.library.uniqueName
+import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
 import org.jetbrains.kotlin.platform.TargetPlatform
 
 /**
@@ -23,6 +25,7 @@ sealed class KlibCompatibilityInfo(val isCompatible: Boolean) {
     class IncompatibleMetadata(val isOlder: Boolean) : KlibCompatibilityInfo(false)
 }
 
+@K1ModeProjectStructureApi
 abstract class AbstractKlibLibraryInfo internal constructor(project: Project, library: LibraryEx, val libraryRoot: String) :
     LibraryInfo(project, library) {
     val resolvedKotlinLibrary: KotlinLibrary = resolveSingleFileKlib(
@@ -33,7 +36,7 @@ abstract class AbstractKlibLibraryInfo internal constructor(project: Project, li
 
     val compatibilityInfo: KlibCompatibilityInfo by lazy { resolvedKotlinLibrary.compatibilityInfo }
 
-    final override fun getLibraryRoots() = listOf(libraryRoot)
+    final override fun getLibraryRoots(): List<String> = listOf(libraryRoot)
 
     abstract override val platform: TargetPlatform // must override
 
@@ -42,7 +45,7 @@ abstract class AbstractKlibLibraryInfo internal constructor(project: Project, li
     val isInterop: Boolean by lazy { resolvedKotlinLibrary.isCInteropLibrary() || resolvedKotlinLibrary.isCommonizedCInteropLibrary() }
 
     companion object {
-        private val LOG = Logger.getInstance(AbstractKlibLibraryInfo::class.java).asKotlinLogger()
+        private val LOG: org.jetbrains.kotlin.util.Logger = Logger.getInstance(AbstractKlibLibraryInfo::class.java).asKotlinLogger()
     }
 }
 
@@ -56,8 +59,8 @@ val KotlinLibrary.compatibilityInfo: KlibCompatibilityInfo
             }
 
             !metadataVersion.isCompatibleWithCurrentCompilerVersion() -> {
-                val isOlder = metadataVersion.isAtLeast(KlibMetadataVersion.INSTANCE)
-                KlibCompatibilityInfo.IncompatibleMetadata(!isOlder)
+                val isOlder = metadataVersion.isAtMost(MetadataVersion.INSTANCE_NEXT)
+                KlibCompatibilityInfo.IncompatibleMetadata(isOlder)
             }
 
             else -> KlibCompatibilityInfo.Compatible

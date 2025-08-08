@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
-import com.intellij.codeInsight.intention.HighPriorityAction
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithKind
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
@@ -33,8 +32,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class ImportAllMembersIntention :
-    KotlinApplicableModCommandAction<KtExpression, ImportAllMembersIntention.Context>(KtExpression::class),
-    HighPriorityAction {
+    KotlinApplicableModCommandAction<KtExpression, ImportAllMembersIntention.Context>(KtExpression::class) {
 
     data class Context(
         val fqName: FqName,
@@ -51,15 +49,15 @@ internal class ImportAllMembersIntention :
         val (fqName) = getElementContext(context, element)
             ?: return null
         return Presentation.of(KotlinBundle.message("import.members.from.0", fqName.asString()))
+            .withPriority(PriorityAction.Priority.HIGH)
     }
 
     override fun isApplicableByPsi(element: KtExpression): Boolean =
         element.isOnTheLeftOfQualificationDot && !element.isInImportDirective()
 
-    context(KaSession)
-    override fun prepareContext(element: KtExpression): Context? {
+    override fun KaSession.prepareContext(element: KtExpression): Context? {
         val actualReference = element.actualReference
-        val target = actualReference?.resolveToSymbol() as? KaNamedClassOrObjectSymbol ?: return null
+        val target = actualReference?.resolveToSymbol() as? KaNamedClassSymbol ?: return null
         val classId = target.classId ?: return null
         if (!target.origin.isJavaSourceOrLibrary() &&
             (target.classKind == KaClassKind.OBJECT ||
@@ -156,17 +154,17 @@ private fun isReferenceToObjectMemberOrUnresolved(qualifiedAccess: KtExpression)
         is KtCallExpression -> selectorExpression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.symbol
         is KtNameReferenceExpression -> selectorExpression.mainReference.resolveToSymbol()
         else -> return false
-    } as? KaSymbolWithKind ?: return true
+    } ?: return true
     if (referencedSymbol is KaConstructorSymbol) return false
     return (referencedSymbol.containingDeclaration as? KaClassSymbol)?.classKind?.isObject ?: true
 }
 
 private fun KaDeclarationSymbol.isEnum(): Boolean = safeAs<KaClassSymbol>()?.classKind == KaClassKind.ENUM_CLASS
 
-private fun KaCallableSymbol.isEnumSyntheticMethodCall(target: KaNamedClassOrObjectSymbol): Boolean =
+private fun KaCallableSymbol.isEnumSyntheticMethodCall(target: KaNamedClassSymbol): Boolean =
     target.isEnum() && origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED && callableId?.callableName in ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES
 
-private fun KtQualifiedExpression.isEnumSyntheticMethodCall(target: KaNamedClassOrObjectSymbol): Boolean =
+private fun KtQualifiedExpression.isEnumSyntheticMethodCall(target: KaNamedClassSymbol): Boolean =
     target.isEnum() && canBeReferenceToBuiltInEnumFunction()
 
 context(KaSession)

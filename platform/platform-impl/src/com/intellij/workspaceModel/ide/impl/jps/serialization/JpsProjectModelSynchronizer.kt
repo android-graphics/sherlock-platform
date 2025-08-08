@@ -1,17 +1,22 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.configurationStore.isFireStorageFileChangedEvent
 import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.StartUpMeasurer.startActivity
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.ide.impl.isTrusted
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier
@@ -19,6 +24,7 @@ import com.intellij.openapi.module.impl.ModuleManagerEx
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.getExternalConfigurationDir
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
@@ -34,14 +40,21 @@ import com.intellij.platform.backend.workspace.*
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.diagnostic.telemetry.helpers.Milliseconds
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.workspace.jps.*
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.serialization.impl.*
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntitiesLoader.createProjectSerializers
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.DummyParentEntitySource
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.jps.GlobalStorageEntitySource
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.project.stateStore
 import com.intellij.util.PlatformUtils.*
@@ -50,6 +63,7 @@ import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.*
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyCustomLibraryEntitySource
 import io.opentelemetry.api.metrics.Meter
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
@@ -58,6 +72,7 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * Manages serialization and deserialization from JPS format (*.iml and *.ipr files, .idea directory) for a workspace model in the IDE.
  */
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   companion object {
@@ -211,7 +226,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       for (i in 1..retryCount) {
         LOG.info("Attempt $i: $description")
         val calculationResult = calculateChanges()
-        val isSuccessful = writeAction { applyLoadedChanges(calculationResult) }
+        val isSuccessful = backgroundWriteAction { applyLoadedChanges(calculationResult) }
         if (isSuccessful) {
           LOG.info("Attempt $i: Changes were successfully applied")
           return true
@@ -221,10 +236,12 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     }
 
     val isSuccessful = applyChangesWithRetry(2)
-    if (isSuccessful) return
+    if (isSuccessful) {
+      return
+    }
 
     // Fallback strategy after the two unsuccessful attempts to apply the changes
-    writeAction {
+    backgroundWriteAction {
       LOG.info("Fallback strategy after the unsuccessful attempts to apply the changes from BGT")
       val calculationResult = calculateChanges()
       applyLoadedChanges(calculationResult)
@@ -338,7 +355,14 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     val orphanage = MutableEntityStorage.create()
     val unloadedEntitiesBuilder = MutableEntityStorage.create()
 
-    val loadedProjectEntities = if (!WorkspaceModelInitialTestContent.hasInitialContent) {
+    val loadedProjectEntities = if (WorkspaceModelInitialTestContent.hasInitialContent) {
+      childActivity?.end()
+      childActivity = null
+      activity?.end()
+      activity = null
+      null
+    }
+    else if (project.isTrusted()) {
       childActivity = childActivity?.endAndStart("loading entities from files")
       val unloadedModuleNamesHolder = UnloadedModulesListStorage.getInstance(project).unloadedModuleNameHolder
       val sourcesToUpdate = loadAndReportErrors {
@@ -348,22 +372,47 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       (WorkspaceModel.getInstance(project) as? WorkspaceModelImpl)?.entityTracer?.printInfoAboutTracedEntity(builder, "JPS files")
       childActivity = childActivity?.endAndStart("applying entities from global storage")
       val mutableStorage = MutableEntityStorage.create()
-      GlobalWorkspaceModel.getInstance().applyStateToProjectBuilder(project, mutableStorage)
+      GlobalWorkspaceModel.getInstance(project.getEelDescriptor()).applyStateToProjectBuilder(project, mutableStorage)
       builder.applyChangesFrom(mutableStorage)
       childActivity = childActivity?.endAndStart("applying loaded changes (in queue)")
       LoadedProjectEntities(builder, orphanage, unloadedEntitiesBuilder, sourcesToUpdate)
     }
     else {
-      childActivity?.end()
-      childActivity = null
-      activity?.end()
-      activity = null
-      null
+      childActivity = childActivity?.endAndStart("loading untrusted project")
+
+      NotificationGroupManager.getInstance()
+        .getNotificationGroup("Project Loading Error")
+        .createNotification(ProjectBundle.message("notification.title.error.loading.project"),
+                            IdeBundle.message("untrusted.jps.project.not.loaded.notification"),
+                            NotificationType.WARNING)
+        .notify(project)
+
+      // this should be not a "base path", but a folder that user selected in the file chooser.
+      // this works (at the moment) because: if user selected a folder with .idea or .ipr inside, then basePath is pointing
+      // to the directory selected by the user. If there is no .idea nor .ipr in selected directory, then we should not get here.
+      val basePath = project.basePath
+      if (basePath != null) {
+        createProjectFromFolder(builder, "untrusted", virtualFileManager.getOrCreateFromUrl("file://$basePath"))
+      }
+      LoadedProjectEntities(builder, orphanage, unloadedEntitiesBuilder, emptyList())
     }
 
     jpsLoadProjectToEmptyStorageTimeMs.addElapsedTime(start)
     WorkspaceModelFusLogger.logLoadingJpsFromIml(Milliseconds.now().minus(start).value)
     return loadedProjectEntities
+  }
+
+  private fun createProjectFromFolder(builder: MutableEntityStorage, name: String, basePath: VirtualFileUrl) {
+    // DummyParentEntitySource, because otherwise the module will be thrown away in [applyLoadedStorage]
+    class UntrustedProjectEntitySource : DummyParentEntitySource
+
+    val entitySource = UntrustedProjectEntitySource()
+    val module = ModuleEntity(name, emptyList(), entitySource)
+    // add everything (*) to excludes to avoid indexing (at the moment - minimize, not fully avoid)
+    ContentRootEntity(url = basePath, excludedPatterns = listOf("*"), entitySource = entitySource) {
+      this.module = module
+    }
+    builder.addEntity(module)
   }
 
   suspend fun applyLoadedStorage(projectEntities: LoadedProjectEntities?) = applyLoadedStorageTimeMs.addMeasuredTime {
@@ -388,10 +437,6 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
     activity?.end()
     activity = null
-  }
-
-  suspend fun loadProject(project: Project) {
-    applyLoadedStorage(loadProjectToEmptyStorage(project))
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
@@ -424,10 +469,14 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     val configLocation: JpsProjectConfigLocation = getJpsProjectConfigLocation(project)!!
     fileContentReader = (project.stateStore as ProjectStoreWithJpsContentReader).createContentReader()
     val externalStoragePath = project.getExternalConfigurationDir()
-    val externalStorageConfigurationManager = ExternalStorageConfigurationManager.getInstance(project)
+    val externalStorageConfigurationManager = project.serviceOrNull<ExternalStorageConfigurationManager>()
     val fileInDirectorySourceNames = FileInDirectorySourceNames.from(WorkspaceModel.getInstance(project).currentSnapshot)
-    val context = IdeSerializationContext(virtualFileManager, fileContentReader, fileInDirectorySourceNames,
-                                          externalStorageConfigurationManager)
+    val context = IdeSerializationContext(
+      virtualFileUrlManager = virtualFileManager,
+      fileContentReader = fileContentReader,
+      fileInDirectorySourceNames = fileInDirectorySourceNames,
+      externalStorageConfigurationManager = externalStorageConfigurationManager,
+    )
     return createProjectSerializers(configLocation, externalStoragePath, context)
   }
 
@@ -519,6 +568,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   fun getSerializers(): JpsProjectSerializersImpl = serializers.get() as JpsProjectSerializersImpl
 }
 
+@ApiStatus.Internal
 class LoadedProjectEntities(
   val builder: MutableEntityStorage,
   val orphanageBuilder: MutableEntityStorage,

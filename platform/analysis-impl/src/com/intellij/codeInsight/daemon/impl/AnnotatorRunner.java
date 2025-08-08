@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.AnnotatorStatisticsCollector;
@@ -15,25 +15,27 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
-import com.intellij.util.PairProcessor;
+import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.TriConsumer;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.function.BooleanSupplier;
 
+@ApiStatus.Internal
 final class AnnotatorRunner {
   private static final Logger LOG = Logger.getInstance(AnnotatorRunner.class);
   private final Project myProject;
@@ -44,43 +46,34 @@ final class AnnotatorRunner {
   private final AnnotatorStatisticsCollector myAnnotatorStatisticsCollector = new AnnotatorStatisticsCollector();
   private final List<HighlightInfo> results = Collections.synchronizedList(new ArrayList<>());
 
-  AnnotatorRunner(@NotNull PsiFile psiFile,
-                  boolean batchMode,
-                  @NotNull AnnotationSession annotationSession) {
-    myProject = psiFile.getProject();
-    myPsiFile = psiFile;
+  AnnotatorRunner(@NotNull AnnotationSession annotationSession, boolean batchMode) {
+    myProject = annotationSession.getFile().getProject();
+    myPsiFile = annotationSession.getFile();
     myAnnotationSession = annotationSession;
     myDumbService = DumbService.getInstance(myProject);
     myBatchMode = batchMode;
   }
 
-  boolean runAnnotatorsAsync(@NotNull List<? extends PsiElement> inside, @NotNull List<? extends PsiElement> outside, @NotNull BooleanSupplier runnable,
-                             @NotNull TriConsumer<Object, ? super PsiElement, ? super List<? extends HighlightInfo>> resultSink) {
+  // run annotators on PSI elements inside/outside while running `runnable` in parallel
+  @ApiStatus.Internal
+  boolean runAnnotatorsAsync(@NotNull List<? extends PsiElement> inside,
+                             @NotNull List<? extends PsiElement> outside,
+                             @NotNull Runnable runnable,
+                             @NotNull ResultSink resultSink) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     DaemonProgressIndicator indicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
 
     // TODO move inside Divider to calc only once
     List<PsiElement> insideThenOutside = ContainerUtil.concat(inside, outside);
     Map<Annotator, Set<Language>> supportedLanguages = calcSupportedLanguages(insideThenOutside);
-    PairProcessor<Annotator, JobLauncher.QueueController<? super Annotator>> processor = (annotator, __) ->
+    Processor<? super Annotator> processor = annotator ->
       ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> runAnnotator(annotator, insideThenOutside, supportedLanguages, resultSink));
-    boolean result = JobLauncher.getInstance().procInOrderAsync(indicator, supportedLanguages.size(), processor, addToQueue -> {
-      try {
-        for (Annotator annotator : supportedLanguages.keySet()) {
-          addToQueue.enqueue(annotator);
-        }
-      }
-      finally {
-        addToQueue.finish();
-      }
-      return runnable.getAsBoolean();
-    });
+    boolean result = JobLauncher.getInstance().processConcurrentlyAsync(indicator, new ArrayList<>(supportedLanguages.keySet()), processor, runnable);
     myAnnotatorStatisticsCollector.reportAnalysisFinished(myProject, myAnnotationSession, myPsiFile);
     return result;
   }
 
-  @NotNull
-  private static Map<Annotator, Set<Language>> calcSupportedLanguages(@NotNull List<? extends PsiElement> elements) {
+  private static @NotNull Map<Annotator, Set<Language>> calcSupportedLanguages(@NotNull List<? extends PsiElement> elements) {
     Map<Annotator, Set<Language>> map = CollectionFactory.createCustomHashingStrategyMap(new HashingStrategy<>() {
       @Override
       public int hashCode(Annotator object) {
@@ -120,7 +113,7 @@ final class AnnotatorRunner {
   private void runAnnotator(@NotNull Annotator annotator,
                             @NotNull List<? extends PsiElement> insideThenOutside,
                             @NotNull Map<Annotator, Set<Language>> supportedLanguages,
-                            @NotNull TriConsumer<Object, ? super PsiElement, ? super List<? extends HighlightInfo>> result) {
+                            @NotNull ResultSink result) {
     Set<Language> supported = supportedLanguages.get(annotator);
     if (supported.isEmpty()) {
       return;
@@ -147,8 +140,8 @@ final class AnnotatorRunner {
           newInfos = new ArrayList<>(sizeAfter - sizeBefore);
           for (int i = sizeBefore; i < sizeAfter; i++) {
             Annotation annotation = annotationHolder.get(i);
-            HighlightInfo info = HighlightInfo.fromAnnotation(annotator.getClass(), annotation, myBatchMode);
-            info.setGroup(-1); // prevent DefaultHighlightProcessor from removing this info, we want to control it ourselves via `psiElementVisited` below
+            Document document = PsiDocumentManager.getInstance(myProject).getDocument(InjectedLanguageManager.getInstance(myProject).getTopLevelFile(myPsiFile));
+            HighlightInfo info = HighlightInfo.fromAnnotation(annotator.getClass(), annotation, myBatchMode, document);
             if (myPsiFile.getViewProvider() instanceof InjectedFileViewProvider) {
               info.markFromInjection();
             }
@@ -190,20 +183,23 @@ final class AnnotatorRunner {
       }
 
       // create manually to avoid extra call to HighlightInfoFilter.accept() in HighlightInfo.Builder.create()
+      //noinspection deprecation
       HighlightInfo patched = new HighlightInfo(injectedInfo.forcedTextAttributes, injectedInfo.forcedTextAttributesKey, injectedInfo.type,
-                          hostRange.getStartOffset(), hostRange.getEndOffset(),
-                          injectedInfo.getDescription(), injectedInfo.getToolTip(), injectedInfo.getSeverity(), isAfterEndOfLine, null,
-                          false, 0, injectedInfo.getProblemGroup(), injectedInfo.toolId, injectedInfo.getGutterIconRenderer(), injectedInfo.getGroup(), injectedInfo.unresolvedReference);
-      patched.setHint(injectedInfo.hasHint());
+                                                hostRange.getStartOffset(), hostRange.getEndOffset(),
+                                                injectedInfo.getDescription(), injectedInfo.getToolTip(), injectedInfo.getSeverity(), isAfterEndOfLine, null,
+                                                false, 0, injectedInfo.getProblemGroup(), injectedInfo.toolId, injectedInfo.getGutterIconRenderer(), HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP,
+                                                injectedInfo.hasHint(), injectedInfo.getLazyQuickFixes());
 
+      List<HighlightInfo.IntentionActionDescriptor> quickFixes = new ArrayList<>();
       injectedInfo.findRegisteredQuickFix((descriptor, quickfixTextRange) -> {
         List<TextRange> editableQF = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, quickfixTextRange);
         for (TextRange editableRange : editableQF) {
           TextRange hostEditableRange = documentWindow.injectedToHost(editableRange);
-          patched.registerFix(descriptor.getAction(), descriptor.myOptions, descriptor.getDisplayName(), hostEditableRange, descriptor.myKey);
+          quickFixes.add(descriptor.withFixRange(hostEditableRange));
         }
         return null;
       });
+      patched.registerFixes(quickFixes, documentWindow.getDelegate());
       patched.markFromInjection();
       outHostInfos.add(patched);
     }

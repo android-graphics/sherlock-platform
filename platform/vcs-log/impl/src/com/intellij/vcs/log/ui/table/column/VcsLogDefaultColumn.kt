@@ -24,8 +24,8 @@ import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
 import com.intellij.vcs.log.ui.render.GraphCommitCell
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer
 import com.intellij.vcs.log.ui.table.*
+import com.intellij.vcs.log.ui.table.links.CommitLinksResolveListener
 import com.intellij.vcs.log.util.VcsLogUtil
-import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -44,7 +44,7 @@ internal sealed class VcsLogDefaultColumn<T>(
    * @return stable name (to identify column in statistics)
    */
   val stableName: String
-    get() = id.toLowerCase(Locale.ROOT)
+    get() = id.lowercase(Locale.ROOT)
 }
 
 internal data object Root : VcsLogDefaultColumn<FilePath>("Default.Root", "", false) {
@@ -53,12 +53,13 @@ internal data object Root : VcsLogDefaultColumn<FilePath>("Default.Root", "", fa
   override fun getValue(model: GraphTableModel, row: Int): FilePath? {
     val visiblePack = model.visiblePack
     if (visiblePack.hasPathsInformation()) {
-      val path = visiblePack.filePathOrDefault(visiblePack.visibleGraph.getRowInfo(row).commit)
+      val commit = model.getId(row) ?: return null
+      val path = visiblePack.filePathOrDefault(commit)
       if (path != null) {
         return path
       }
     }
-    return visiblePack.getRoot(row)?.let(VcsUtil::getFilePath)
+    return model.getRootAtRow(row)?.let(VcsUtil::getFilePath)
   }
 
   override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer {
@@ -77,16 +78,17 @@ internal data object Root : VcsLogDefaultColumn<FilePath>("Default.Root", "", fa
 
 internal object Commit : VcsLogDefaultColumn<GraphCommitCell>("Default.Subject", VcsLogBundle.message("vcs.log.column.subject"), false),
                          VcsLogMetadataColumn {
-  override fun getValue(model: GraphTableModel, row: Int): GraphCommitCell {
-    val printElements = if (VisiblePack.NO_GRAPH_INFORMATION.get(model.visiblePack, false)) emptyList()
-    else model.visiblePack.visibleGraph.getRowInfo(row).printElements
-
-    val metadata = model.getCommitMetadata(row, true)
+  override fun getValue(model: GraphTableModel, row: Int): GraphCommitCell? {
+    val printElements = model.getPrintElements(row)
+    val metadata = model.getCommitMetadata(row, true) ?: return null
+    val commitId = metadata.getKnownCommitId()
     return GraphCommitCell(
+      commitId,
       getValue(model, metadata),
       model.getRefsAtRow(row),
       if (metadata !is LoadingDetails) getBookmarkRefs(model.logData.project, metadata.id, metadata.root) else emptyList(),
-      printElements
+      printElements,
+      metadata is LoadingDetails
     )
   }
 
@@ -124,17 +126,24 @@ internal object Commit : VcsLogDefaultColumn<GraphCommitCell>("Default.Subject",
       }
     })
 
+    table.logData.project.messageBus.connect(table).subscribe(CommitLinksResolveListener.TOPIC, CommitLinksResolveListener { logId->
+      if (logId == table.id) {
+        table.repaint()
+      }
+    })
     return commitCellRenderer
   }
 
-  override fun getStubValue(model: GraphTableModel): GraphCommitCell = GraphCommitCell("", emptyList(), emptyList(), emptyList())
+  override fun getStubValue(model: GraphTableModel): GraphCommitCell {
+    return GraphCommitCell(null, "", emptyList(), emptyList(), emptyList(), true)
+  }
 
 }
 
 internal object Author : VcsLogDefaultColumn<String>("Default.Author", VcsLogBundle.message("vcs.log.column.author")),
                          VcsLogMetadataColumn {
-  override fun getValue(model: GraphTableModel, row: Int) = getValue(model, model.getCommitMetadata(row, true))
-  override fun getValue(model: GraphTableModel, commit: VcsCommitMetadata) = CommitPresentationUtil.getAuthorPresentation(commit)
+  override fun getValue(model: GraphTableModel, row: Int): String? = model.getCommitMetadata(row, true)?.let { getValue(model, it) }
+  override fun getValue(model: GraphTableModel, commit: VcsCommitMetadata): String = CommitPresentationUtil.getAuthorPresentation(commit)
 
   override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer {
     updateTableOnCommitDetailsLoaded(this, table)
@@ -145,8 +154,8 @@ internal object Author : VcsLogDefaultColumn<String>("Default.Author", VcsLogBun
 }
 
 internal object Date : VcsLogDefaultColumn<String>("Default.Date", VcsLogBundle.message("vcs.log.column.date")), VcsLogMetadataColumn {
-  override fun getValue(model: GraphTableModel, row: Int): String {
-    return getValue(model, model.getCommitMetadata(row, true))
+  override fun getValue(model: GraphTableModel, row: Int): String? {
+    return model.getCommitMetadata(row, true)?.let { getValue(model, it) }
   }
 
   override fun getValue(model: GraphTableModel, commit: VcsCommitMetadata): String {
@@ -180,7 +189,7 @@ internal object Date : VcsLogDefaultColumn<String>("Default.Date", VcsLogBundle.
 }
 
 internal object Hash : VcsLogDefaultColumn<String>("Default.Hash", VcsLogBundle.message("vcs.log.column.hash")), VcsLogMetadataColumn {
-  override fun getValue(model: GraphTableModel, row: Int): String = getValue(model, model.getCommitMetadata(row, true))
+  override fun getValue(model: GraphTableModel, row: Int): String? = model.getCommitMetadata(row, true)?.let { getValue(model, it) }
   override fun getValue(model: GraphTableModel, commit: VcsCommitMetadata) = commit.id.toShortString()
 
   override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
@@ -83,18 +83,21 @@ class VcsLogFullDetailsIndex<T, D> implements Disposable {
   }
 
   private void iterateCommitIds(int key, @NotNull IntConsumer consumer) throws StorageException {
-    ValueContainer<T> data = myMapReduceIndex.getData(key);
-    data.forEach((id, value) -> {
-      consumer.accept(id);
-      return true;
-    });
+    myMapReduceIndex.withData(key, container ->
+      container.forEach((id, value) -> {
+        consumer.accept(id);
+        return true;
+      })
+    );
   }
 
   protected void iterateCommitIdsAndValues(int key, @NotNull ObjIntConsumer<? super T> consumer) throws StorageException {
-    myMapReduceIndex.getData(key).forEach((id, value) -> {
-      consumer.accept(value, id);
-      return true;
-    });
+    myMapReduceIndex.withData(key, container ->
+      container.forEach((id, value) -> {
+        consumer.accept(value, id);
+        return true;
+      })
+    );
   }
 
   protected @Nullable Collection<Integer> getKeysForCommit(int commit) throws IOException {
@@ -107,7 +110,7 @@ class VcsLogFullDetailsIndex<T, D> implements Disposable {
 
   public void update(int commitId, @NotNull D details) {
     checkDisposed();
-    myMapReduceIndex.mapInputAndPrepareUpdate(commitId, details).compute();
+    myMapReduceIndex.mapInputAndPrepareUpdate(commitId, details).update();
   }
 
   public void clearCaches() {

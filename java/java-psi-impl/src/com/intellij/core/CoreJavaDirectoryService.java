@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +23,8 @@ public class CoreJavaDirectoryService extends JavaDirectoryService {
 
   @Override
   public PsiPackage getPackage(@NotNull PsiDirectory dir) {
+    // TODO IDEA-356815
+    //noinspection IncorrectServiceRetrieving
     return dir.getProject().getService(CoreJavaFileManager.class).getPackage(dir);
   }
 
@@ -36,6 +39,12 @@ public class CoreJavaDirectoryService extends JavaDirectoryService {
     return getPsiClasses(dir, dir.getFiles());
   }
 
+  @Override
+  public PsiClass @NotNull [] getClasses(@NotNull PsiDirectory dir, @NotNull GlobalSearchScope scope) {
+    LOG.assertTrue(dir.isValid());
+    return getPsiClasses(dir, dir.getFiles(scope));
+  }
+
   public static PsiClass @NotNull [] getPsiClasses(@NotNull PsiDirectory dir, PsiFile[] psiFiles) {
     FileIndexFacade index = FileIndexFacade.getInstance(dir.getProject());
     VirtualFile virtualDir = dir.getVirtualFile();
@@ -46,7 +55,13 @@ public class CoreJavaDirectoryService extends JavaDirectoryService {
       if (onlyCompiled && !(file instanceof ClsFileImpl)) {
         continue;
       }
-      if (file instanceof PsiClassOwner && file.getViewProvider().getLanguages().size() == 1) {
+      if (!(file instanceof PsiClassOwner)) {
+        continue;
+      }
+      if (index.isExcludedFile(file.getVirtualFile())) {
+        continue;
+      }
+      if (file.getViewProvider().getLanguages().size() == 1) {
         PsiClass[] psiClasses = ((PsiClassOwner)file).getClasses();
         if (psiClasses.length == 0) continue;
         if (classes == null) classes = new ArrayList<>();

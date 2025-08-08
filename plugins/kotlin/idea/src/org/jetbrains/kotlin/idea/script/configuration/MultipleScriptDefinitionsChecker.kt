@@ -15,11 +15,9 @@ import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.createComponentActionLabel
-import org.jetbrains.kotlin.idea.core.script.BundledIdeScriptDefinition
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
-import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.KotlinScriptDefinitionFromAnnotatedTemplate
@@ -37,28 +35,20 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
 
         if (KotlinScriptingSettings.getInstance(project).suppressDefinitionsCheck) return null
 
-      val allApplicableDefinitions = ScriptDefinitionsManager.getInstance(project)
-        .allDefinitions
-        .filter {
-          it.asLegacyOrNull<BundledIdeScriptDefinition>() == null && it.isScript(KtFileScriptSource(ktFile)) &&
-          KotlinScriptingSettings.getInstance(project).isScriptDefinitionEnabled(it)
-        }
-        .toList()
-        if (allApplicableDefinitions.size < 2 || areDefinitionsForGradleKts(allApplicableDefinitions)) return null
+        val applicableDefinitions = ScriptDefinitionsManager.getInstance(project).allDefinitions.filter {
+                !it.isDefault && it.isScript(KtFileScriptSource(ktFile)) && KotlinScriptingSettings.getInstance(project)
+                    .isScriptDefinitionEnabled(it)
+            }.toList()
+        if (applicableDefinitions.size < 2 || applicableDefinitions.all { it.isGradleDefinition() }) return null
 
         return Function { fileEditor: FileEditor ->
-            createNotification(fileEditor, project, allApplicableDefinitions)
+            createNotification(fileEditor, project, applicableDefinitions)
         }
     }
 
-    private fun areDefinitionsForGradleKts(allApplicableDefinitions: List<ScriptDefinition>): Boolean {
-        return allApplicableDefinitions.all { definition ->
-            definition.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>()?.let {
-                val pattern = it.scriptFilePattern.pattern
-                return@all pattern.endsWith("\\.gradle\\.kts") || pattern.endsWith("\\.gradle\\.kts$")
-            }
-            definition.fileExtension.endsWith("gradle.kts")
-        }
+    private fun ScriptDefinition.isGradleDefinition(): Boolean {
+        val pattern = safeAs<ScriptDefinition.FromConfigurationsBase>()?.fileNamePattern ?: return false
+        return pattern.endsWith("\\.gradle\\.kts") || pattern.endsWith("\\.gradle\\.kts$") || fileExtension.endsWith("gradle.kts")
     }
 
     private fun createNotification(fileEditor: FileEditor, project: Project, defs: List<ScriptDefinition>): EditorNotificationPanel =
@@ -73,8 +63,6 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
                             @NlsSafe
                             val text = value.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>()?.let {
                                 it.name + " (${it.scriptFilePattern})"
-                            } ?: value.asLegacyOrNull<BundledIdeScriptDefinition>()?.let {
-                                it.name + " (${KotlinParserDefinition.STD_SCRIPT_EXT})"
                             } ?: (value.name + " (${value.fileExtension})")
                             return text
                         }

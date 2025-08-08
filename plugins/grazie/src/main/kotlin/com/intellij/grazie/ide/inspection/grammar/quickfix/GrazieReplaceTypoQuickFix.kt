@@ -17,7 +17,6 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.detection.LangDetector
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
-import com.intellij.grazie.ide.notification.advertiseGrazieProfessional
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.text.Rule
 import com.intellij.grazie.text.TextContent
@@ -26,6 +25,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Segment
@@ -39,7 +39,7 @@ import kotlin.math.min
 
 object GrazieReplaceTypoQuickFix {
   private class ReplaceTypoTitleAction(@IntentionFamilyName family: String, @IntentionName title: String) : ChoiceTitleIntentionAction(family, title),
-    HighPriorityAction {
+    HighPriorityAction, DumbAware {
     override fun compareTo(other: IntentionAction): Int {
       if (other is GrazieCustomFixWrapper) return -1
       return super.compareTo(other)
@@ -57,7 +57,7 @@ object GrazieReplaceTypoQuickFix {
     private val detectedLanguage: Language?,
     private val batchId: String?
   )
-    : ChoiceVariantIntentionAction(), HighPriorityAction, IntentionActionWithFixAllOption {
+    : ChoiceVariantIntentionAction(), HighPriorityAction, IntentionActionWithFixAllOption, DumbAware {
     override fun getName(): String {
       if (suggestion.isEmpty()) return msg("grazie.grammar.quickfix.remove.typo.tooltip")
       if (suggestion[0].isWhitespace() || suggestion.last().isWhitespace()) return "'$suggestion'"
@@ -99,13 +99,10 @@ object GrazieReplaceTypoQuickFix {
     }
 
     override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {
-      if (detectedLanguage == Language.ENGLISH) {
-        advertiseGrazieProfessional(project)
-      }
-      performFix(project, file, editor)
+      performFix(project, file)
     }
 
-    protected fun performFix(project: Project, file: PsiFile, editor: Editor?) {
+    protected fun performFix(project: Project, file: PsiFile) {
       GrazieFUSCounter.quickFixInvoked(rule, project, "accept.suggestion")
       val document = file.viewProvider.document ?: return
       underlineRanges.forEach { underline ->
@@ -140,7 +137,7 @@ object GrazieReplaceTypoQuickFix {
       detectedLanguage: Language?
     ): ChangeToVariantAction(rule, index, family, suggestion, replacements, underlineRanges, toHighlight, detectedLanguage, null) {
       override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {
-        performFix(project, file, editor)
+        performFix(project, file)
       }
     }
   }
@@ -234,6 +231,7 @@ object GrazieReplaceTypoQuickFix {
   }
 
   private fun charsMatch(c1: Char, c2: Char) = c1 == c2 || c1 == ' ' && c2 == '\n'
+
   /**
    * Remove all highlighters with exactly the given range from [DocumentMarkupModel].
    * This might be useful in quick fixes and intention actions to provide immediate feedback.

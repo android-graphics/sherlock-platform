@@ -8,8 +8,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider
 import com.intellij.testFramework.EditorTestUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.formatter.KotlinLineIndentProvider
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.formatter.KotlinLineIndentProvider
 import org.jetbrains.kotlin.idea.test.KotlinLightPlatformCodeInsightTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
@@ -136,6 +136,7 @@ abstract class AbstractEnterHandlerTest : KotlinLightPlatformCodeInsightTestCase
         )
     }
 
+
     private fun typeAndCheck(
         beforeFilePath: String,
         afterFilePath: String,
@@ -147,13 +148,17 @@ abstract class AbstractEnterHandlerTest : KotlinLightPlatformCodeInsightTestCase
         configureByFile(beforeFilePath)
         executeAction(IdeActions.ACTION_EDITOR_ENTER)
         val editor = editor.safeAs<EditorWindow>()?.delegate ?: editor
-        val actualTextWithCaret = StringBuilder(editor.document.text).insert(
-            editor.caretModel.offset,
-            EditorTestUtil.CARET_TAG
-        ).toString()
+        var actualTextWithCaret = StringBuilder(editor.document.text)
+        for (caret in editor.caretModel.allCarets.asReversed()) {
+            actualTextWithCaret = actualTextWithCaret.insert(
+                caret.offset,
+                EditorTestUtil.CARET_TAG
+            )
+        }
+
 
         val result = kotlin.runCatching {
-            KotlinTestUtils.assertEqualsToFile(errorMessage, File(afterFilePath), actualTextWithCaret)
+            KotlinTestUtils.assertEqualsToFile(errorMessage, File(afterFilePath), actualTextWithCaret.toString())
         }
 
         when {

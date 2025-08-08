@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions;
 
 import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
@@ -24,11 +24,12 @@ import com.intellij.usages.impl.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,9 +43,9 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
-public final class ShowUsagesTable extends JBTable implements DataProvider {
+@ApiStatus.Internal
+public final class ShowUsagesTable extends JBTable implements UiDataProvider {
   final Usage MORE_USAGES_SEPARATOR = new UsageAdapter();
   final Usage USAGES_OUTSIDE_SCOPE_SEPARATOR = new UsageAdapter();
   final Usage USAGES_FILTERED_OUT_SEPARATOR = new UsageAdapter();
@@ -53,9 +54,9 @@ public final class ShowUsagesTable extends JBTable implements DataProvider {
   static final int MIN_COLUMN_WIDTH = 200;
 
   private final ShowUsagesTableCellRenderer myRenderer;
-  private final UsageView myUsageView;
+  private final UsageViewImpl myUsageView;
 
-  ShowUsagesTable(@NotNull ShowUsagesTableCellRenderer renderer, UsageView usageView) {
+  ShowUsagesTable(@NotNull ShowUsagesTableCellRenderer renderer, UsageViewImpl usageView) {
     myRenderer = renderer;
     myUsageView = usageView;
     ScrollingUtil.installActions(this);
@@ -68,28 +69,16 @@ public final class ShowUsagesTable extends JBTable implements DataProvider {
   }
 
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
-      return PopupUtil.getPopupContainerFor(this);
-    }
-    if (UsageView.USAGE_VIEW_KEY.is(dataId)) {
-      return myUsageView;
-    }
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      List<Object> selection = Arrays.stream(getSelectedRows())
-        .mapToObj(o -> getValueAt(o, 0))
-        .collect(Collectors.toList());
-      return (DataProvider)slowId -> getSlowData(slowId, selection);
-    }
-    return null;
-  }
-
-  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull List<Object> selection) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(LangDataKeys.POSITION_ADJUSTER_POPUP, PopupUtil.getPopupContainerFor(this));
+    sink.set(UsageView.USAGE_VIEW_KEY, myUsageView);
+    List<Object> selection = Arrays.stream(getSelectedRows())
+      .mapToObj(o -> getValueAt(o, 0))
+      .toList();
+    sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
       Object single = ContainerUtil.getOnlyItem(selection);
       return single == null ? null : getPsiElementForHint(single);
-    }
-    return null;
+    });
   }
 
   @Override
@@ -126,6 +115,7 @@ public final class ShowUsagesTable extends JBTable implements DataProvider {
       moreUsagesSelected.set(false);
       filteredOutUsagesSelected.set(null);
       java.util.List<Object> usages = null;
+      var nonDisposableUsageInfos = new SmartHashSet<UsageInfo>();
       //todo List<Usage>
       for (int i : getSelectedRows()) {
         Object value = getValueAt(i, 0);
@@ -147,11 +137,25 @@ public final class ShowUsagesTable extends JBTable implements DataProvider {
             break;
           }
           if (usages == null) usages = new ArrayList<>();
-          usages.add(usage instanceof UsageInfo2UsageAdapter ? ((UsageInfo2UsageAdapter)usage).getUsageInfo() : usage);
+          if (usage instanceof UsageInfo2UsageAdapter adapter) {
+            var usageInfo = adapter.getUsageInfo();
+            usages.add(usageInfo);
+            nonDisposableUsageInfos.add(usageInfo);
+          }
+          else {
+            usages.add(usage);
+          }
         }
       }
 
       selectedUsages.set(usages);
+      // The callback below is called after the popup is disposed,
+      // and when it happens, it disposes all smart pointers.
+      // This prevents some functionality in navigateTo.
+      // Therefore, we need to preserve the selected usages smart pointers.
+      // According to com.intellij.psi.SmartPointerManager.removePointer,
+      // disposing isn't mandatory so there should be no leaks here.
+      myUsageView.setNonDisposableUsageInfos(nonDisposableUsageInfos);
     });
 
     return () -> {
@@ -205,8 +209,7 @@ public final class ShowUsagesTable extends JBTable implements DataProvider {
            || usage == USAGES_FILTERED_OUT_SEPARATOR;
   }
 
-  @Nullable
-  private static PsiElement getPsiElementForHint(Object selectedValue) {
+  private static @Nullable PsiElement getPsiElementForHint(Object selectedValue) {
     if (selectedValue instanceof UsageNode) {
       final Usage usage = ((UsageNode)selectedValue).getUsage();
       if (usage instanceof UsageInfo2UsageAdapter) {
@@ -225,7 +228,7 @@ public final class ShowUsagesTable extends JBTable implements DataProvider {
   }
 
   @NotNull
-  MyModel setTableModel(@NotNull final List<UsageNode> data) {
+  MyModel setTableModel(final @NotNull List<UsageNode> data) {
     ThreadingAssertions.assertEventDispatchThread();
     final int columnCount = calcColumnCount(data);
     MyModel model = getModel() instanceof MyModel ? (MyModel)getModel() : null;
@@ -306,9 +309,8 @@ public final class ShowUsagesTable extends JBTable implements DataProvider {
 
     private static ColumnInfo<UsageNode, UsageNode> @NotNull [] cols(int cols) {
       ColumnInfo<UsageNode, UsageNode> o = new ColumnInfo<>("") {
-        @Nullable
         @Override
-        public UsageNode valueOf(UsageNode node) {
+        public @Nullable UsageNode valueOf(UsageNode node) {
           return node;
         }
       };

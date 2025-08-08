@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -35,7 +35,7 @@ public final class Restarter {
     return ourRestartSupported.get();
   }
 
-  private static final NullableLazyValue<Path> ourStarter = lazyNullable(() -> {
+  private static final NullableLazyValue<Path> ourStarterWithoutRemoteDevOverride = lazyNullable(() -> {
     if (SystemInfo.isWindows) {
       var name = ApplicationNamesInfo.getInstance().getScriptName() + (Boolean.getBoolean("ide.native.launcher") ? "64.exe" : ".bat");
       var starter = Path.of(PathManager.getBinPath(), name);
@@ -58,6 +58,19 @@ public final class Restarter {
     }
 
     return null;
+  });
+
+  private static final NullableLazyValue<Path> ourStarter = lazyNullable(() -> {
+    if (Boolean.getBoolean("ide.started.from.remote.dev.launcher")) {
+      var starter = Path.of(PathManager.getBinPath(), "remote-dev-server" + (SystemInfo.isWindows ? ".exe" : ""));
+      if (Files.exists(starter)) {
+        return starter;
+      } else {
+        Logger.getInstance(Restarter.class).error("RemDev starter property is set, but launcher file at " + starter + " was not found? Will restart using default entry point");
+      }
+    }
+
+    return ourStarterWithoutRemoteDevOverride.getValue();
   });
 
   private static final Supplier<Boolean> ourRestartSupported = new SynchronizedClearableLazy<>(() -> {
@@ -149,7 +162,8 @@ public final class Restarter {
   }
 
   public static @Nullable Path getIdeStarter() {
-    return ourStarter.getValue();
+    // The RemDev starter binary is an implementation detail that should not be exposed externally
+    return ourStarterWithoutRemoteDevOverride.getValue();
   }
 
   private static void restartOnWindows(boolean elevate, List<String> beforeRestart, List<String> args) throws IOException {
@@ -234,12 +248,14 @@ public final class Restarter {
     Logger.getInstance(Restarter.class).info("run restarter: " + command);
 
     var processBuilder = new ProcessBuilder(command);
-    processBuilder.directory(Path.of(SystemProperties.getUserHome()).toFile());
+    processBuilder.directory(Path.of(SystemProperties.getUserHome()).toFile())
+      .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+      .redirectError(ProcessBuilder.Redirect.DISCARD);
     processBuilder.environment().put("IJ_RESTARTER_LOG", PathManager.getLogDir().resolve("restarter.log").toString());
 
     if (SystemInfo.isUnix && !SystemInfo.isMac) setDesktopStartupId(processBuilder);
 
-    if (SystemInfo.isWindows) processBuilder.environment().remove("IJ_LAUNCHER_DEBUG");
+    processBuilder.environment().remove("IJ_LAUNCHER_DEBUG");
 
     processBuilder.start();
   }

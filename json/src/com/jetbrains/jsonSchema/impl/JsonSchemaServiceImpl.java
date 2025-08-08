@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -7,7 +7,9 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -35,6 +37,7 @@ import com.jetbrains.jsonSchema.remote.JsonSchemaCatalogExclusion;
 import com.jetbrains.jsonSchema.remote.JsonSchemaCatalogManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -46,7 +49,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
 
   private final @NotNull Project myProject;
   private final @NotNull MyState myState;
-  private final @NotNull ClearableLazyValue<Set<String>> myBuiltInSchemaIds;
+  private final @NotNull ClearableLazyValue<@Unmodifiable Set<String>> myBuiltInSchemaIds;
   private final @NotNull Set<String> myRefs = ConcurrentCollectionFactory.createConcurrentSet();
   private final AtomicLong myAnyChangeCount = new AtomicLong(0);
 
@@ -324,7 +327,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
   @Override
   public @Nullable JsonSchemaObject getSchemaObject(final @NotNull VirtualFile file) {
     Collection<VirtualFile> schemas = getSchemasForFile(file, true, false);
-    if (schemas.size() == 0) return null;
+    if (schemas.isEmpty()) return null;
     assert schemas.size() == 1;
     VirtualFile schemaFile = schemas.iterator().next();
     return JsonCachedValues.getSchemaObject(replaceHttpFileWithBuiltinIfNeeded(schemaFile), myProject);
@@ -446,7 +449,16 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
   }
 
   private @Nullable VirtualFile resolveSchemaFromOtherSources(@NotNull VirtualFile file) {
-    return myCatalogManager.getSchemaFileForFile(file);
+    try {
+      return myCatalogManager.getSchemaFileForFile(file);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      throw new RuntimeExceptionWithAttachments("Unable to resolve JSON schema from file " + file.getName(), e,
+                                                new Attachment("Schema URL", file.getUrl()));
+    }
   }
 
   @Override

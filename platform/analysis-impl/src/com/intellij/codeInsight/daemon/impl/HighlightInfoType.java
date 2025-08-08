@@ -97,6 +97,10 @@ public interface HighlightInfoType {
   @NotNull
   TextAttributesKey getAttributesKey();
 
+  default boolean isInspectionHighlightInfoType() {
+    return false;
+  }
+
   class HighlightInfoTypeImpl implements HighlightInfoType, HighlightInfoType.UpdateOnTypingSuppressible {
     private final HighlightSeverity mySeverity;
     private final TextAttributesKey attributeKey;
@@ -136,7 +140,7 @@ public interface HighlightInfoType {
 
     @Override
     public String toString() {
-      return "HighlightInfoTypeImpl[severity=" + mySeverity + ", key=" + attributeKey + "]";
+      return "HighlightInfoTypeImpl[severity=" + mySeverity.getName() + ", key=" + attributeKey + "]";
     }
 
     public void writeExternal(Element element) {

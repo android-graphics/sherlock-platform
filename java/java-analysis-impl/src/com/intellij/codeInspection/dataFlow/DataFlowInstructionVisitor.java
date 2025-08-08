@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
@@ -71,7 +71,8 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_FLOAT, "min", "max").parameterCount(2),
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_DOUBLE, "min", "max").parameterCount(2),
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "replace").parameterCount(2),
-    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OBJECTS, "requireNonNullElse").parameterTypes("T", "T")
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OBJECTS, "requireNonNullElse").parameterTypes("T", "T"),
+    CallMatcher.instanceCall("java.util.concurrent.TimeUnit", "convert").parameterTypes("long", "java.util.concurrent.TimeUnit")
   );
 
   DataFlowInstructionVisitor(boolean strictMode) {
@@ -245,8 +246,7 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
     }
   }
 
-  @NotNull
-  private static ThreeState fromDfType(DfType type) {
+  private static @NotNull ThreeState fromDfType(DfType type) {
     return type.equals(DfTypes.TRUE) ? ThreeState.YES :
            type.equals(DfTypes.FALSE) ? ThreeState.NO : ThreeState.UNSURE;
   }
@@ -372,8 +372,7 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
     }
   }
 
-  @Nullable
-  static List<? extends MethodContract> getContracts(@NotNull PsiExpression anchor) {
+  static @Nullable List<? extends MethodContract> getContracts(@NotNull PsiExpression anchor) {
     List<? extends MethodContract> contracts;
     if (anchor instanceof PsiCallExpression call) {
       contracts = JavaMethodContractUtil.getMethodCallContracts(call);

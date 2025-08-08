@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.*;
@@ -17,7 +18,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ExperimentalUI;
@@ -32,6 +32,7 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,6 +101,22 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     myAction = action;
     myPresentation = presentation != null && !isTemplatePresentation ?
                      presentation : action.getTemplatePresentation().clone();
+    myPresentation.addPropertyChangeListener(new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        Boolean newValue = evt.getNewValue() instanceof Boolean ? (Boolean)evt.getNewValue() : null;
+        if (Objects.equals(evt.getPropertyName(), "selected") && newValue != null) {
+          if (newValue) {
+            ActionButton.this.getAccessibleContext()
+              .firePropertyChange(AccessibleContext.ACCESSIBLE_STATE_PROPERTY, null, AccessibleState.CHECKED);
+          }
+          else {
+            ActionButton.this.getAccessibleContext()
+              .firePropertyChange(AccessibleContext.ACCESSIBLE_STATE_PROPERTY, AccessibleState.CHECKED, null);
+          }
+        }
+      }
+    });
     myPlace = place;
     // Button should be focusable if screen reader is active
     setFocusable(ScreenReader.isActive());
@@ -195,13 +212,14 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   protected void performAction(MouseEvent e) {
-    AnActionEvent event = AnActionEvent.createFromInputEvent(e, myPlace, myPresentation, getDataContext(), false, true);
+    ActionToolbar toolbar = ActionToolbar.findToolbarBy(this);
+    ActionUiKind uiKind = toolbar instanceof ActionUiKind o ? o : ActionUiKind.TOOLBAR;
+    AnActionEvent event = AnActionEvent.createEvent(getDataContext(), myPresentation, myPlace, uiKind, e);
     if (ActionUtil.lastUpdateAndCheckDumb(myAction, event, false) && isEnabled()) {
       ActionUtil.performDumbAwareWithCallbacks(myAction, event, () -> actionPerformed(event));
       if (event.getInputEvent() instanceof MouseEvent) {
         ToolbarClicksCollector.record(myAction, myPlace, e, event.getDataContext());
       }
-      ActionToolbar toolbar = ActionToolbar.findToolbarBy(this);
       if (toolbar != null) {
         toolbar.updateActionsAsync();
       }
@@ -253,8 +271,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   private @NotNull MenuItemPresentationFactory createPresentationFactory() {
     return new MenuItemPresentationFactory() {
       @Override
-      protected void processPresentation(@NotNull Presentation presentation) {
-        super.processPresentation(presentation);
+      protected void processPresentation(@NotNull AnAction action, @NotNull Presentation presentation) {
+        super.processPresentation(action, presentation);
         if (myNoIconsInPopup) {
           presentation.setIcon(null);
           presentation.setHoveredIcon(null);
@@ -295,7 +313,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       myPresentation.addPropertyChangeListener(myPresentationListener = this::presentationPropertyChanged);
     }
     if (ActionToolbar.findToolbarBy(this) == null) {
-      ActionManagerEx.doWithLazyActionManager(__ -> update());
+      ActionManagerEx.withLazyActionManager(null, __ -> { update(); return Unit.INSTANCE; });
     }
     else {
       updateToolTipText();
@@ -315,7 +333,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
           " is not allowed on EDT", null, myAction.getClass()));
       }
     }
-    AnActionEvent e = AnActionEvent.createFromInputEvent(null, myPlace, myPresentation, getDataContext(), false, true);
+    ActionToolbar toolbar = ActionToolbar.findToolbarBy(this);
+    ActionUiKind uiKind = toolbar instanceof ActionUiKind o ? o : ActionUiKind.TOOLBAR;
+    AnActionEvent e = AnActionEvent.createEvent(getDataContext(), myPresentation, myPlace, uiKind, null);
     ActionUtil.performDumbAwareUpdate(myAction, e, false);
     updateToolTipText();
     updateIcon();
@@ -323,7 +343,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   @Override
   public void setToolTipText(@NlsContexts.Tooltip String toolTipText) {
-    if (!Registry.is("ide.helptooltip.enabled")) {
+    if (!UISettings.isIdeHelpTooltipEnabled()) {
       while (StringUtil.endsWithChar(toolTipText, '.')) {
         toolTipText = toolTipText.substring(0, toolTipText.length() - 1);
       }
@@ -419,7 +439,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   protected void updateToolTipText() {
     String text = myPresentation.getText();
     String description = myPresentation.getDescription();
-    if (Registry.is("ide.helptooltip.enabled")) {
+    if (UISettings.isIdeHelpTooltipEnabled()) {
       HelpTooltip ht = myPresentation.getClientProperty(CUSTOM_HELP_TOOLTIP);
       if ((Strings.isNotEmpty(text) || Strings.isNotEmpty(description)) && ht == null) {
         ht = new HelpTooltip().setTitle(text).setShortcut(getShortcutText());
@@ -606,8 +626,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return context;
   }
 
-  protected final class AccessibleActionButton extends JComponent.AccessibleJComponent implements AccessibleAction {
-    private AccessibleActionButton() {
+  protected class AccessibleActionButton extends JComponent.AccessibleJComponent implements AccessibleAction, AccessibleValue {
+    protected AccessibleActionButton() {
     }
 
     @Override
@@ -670,7 +690,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       if (state == ActionButtonComponent.PUSHED) {
         accessibleStateSet.add(AccessibleState.PRESSED);
       }
-      if (state == ActionButtonComponent.SELECTED) {
+      if (isSelected()) {
         accessibleStateSet.add(AccessibleState.CHECKED);
       }
 
@@ -703,6 +723,48 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         return true;
       }
       return false;
+    }
+
+    // Implements AccessibleValue
+
+    @Override
+    public AccessibleValue getAccessibleValue() {
+      return this;
+    }
+
+    @Override
+    public Number getCurrentAccessibleValue() {
+      if (isSelected()) {
+        return Integer.valueOf(1);
+      }
+      else {
+        return Integer.valueOf(0);
+      }
+    }
+
+    @Override
+    public boolean setCurrentAccessibleValue(Number n) {
+      if (n == null) {
+        return false;
+      }
+      int i = n.intValue();
+      if (i == 0) {
+        Toggleable.setSelected(ActionButton.this, false);
+      }
+      else {
+        Toggleable.setSelected(ActionButton.this, true);
+      }
+      return true;
+    }
+
+    @Override
+    public Number getMinimumAccessibleValue() {
+      return Integer.valueOf(0);
+    }
+
+    @Override
+    public Number getMaximumAccessibleValue() {
+      return Integer.valueOf(1);
     }
   }
 }

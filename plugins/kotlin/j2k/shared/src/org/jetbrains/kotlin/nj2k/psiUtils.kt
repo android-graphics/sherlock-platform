@@ -17,8 +17,7 @@ import org.jetbrains.kotlin.j2k.ReferenceSearcher
 import org.jetbrains.kotlin.j2k.isNullLiteral
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.nj2k.tree.*
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
@@ -79,7 +78,7 @@ private fun String.toKotlinVisibility(psiMember: PsiMember, referenceSearcher: R
 internal fun PsiMethod.overriddenMethodVisibility(referenceSearcher: ReferenceSearcher): JKVisibilityModifierElement {
     // In some implementations (ex. compiled Java/Kotlin classes), modifierList.children() returns null.
     // However, modifierList.text still contains the modifiers as a string.
-    val modifiers = modifierList.text?.split(" ").orEmpty()
+    val modifiers = modifierList.text?.split(" ", "\n").orEmpty()
     val visibilityFromModifier = modifiers.firstNotNullOfOrNull { modifier ->
         modifier.toKotlinVisibility(psiMember = this@overriddenMethodVisibility, referenceSearcher)
     }
@@ -212,4 +211,13 @@ fun PsiElement.isInSingleLine(): Boolean {
         child = child.nextSibling
     }
     return true
+}
+
+fun PsiElement.getExplicitLabelComment(): PsiComment? {
+    val comment = prevSibling?.safeAs<PsiComment>()
+    if (comment?.text?.asExplicitLabel() != null) return comment
+    if (parent is KtValueArgument || parent is KtBinaryExpression || parent is KtContainerNode) {
+        return parent.getExplicitLabelComment()
+    }
+    return null
 }

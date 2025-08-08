@@ -1,54 +1,32 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.fixes.AbstractKotlinApplicableQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.SpecifyExplicitTypeQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.getTypeInfo
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.updateType
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtFunction
 
 object SpecifyExplicitTypeFixFactories {
-    val ambiguousAnonymousTypeInferred =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.AmbiguousAnonymousTypeInferred ->
+    val ambiguousAnonymousTypeInferred: KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.AmbiguousAnonymousTypeInferred> =
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.AmbiguousAnonymousTypeInferred ->
             createQuickFix(diagnostic.psi)
         }
 
-    val noExplicitReturnTypeInApiMode =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.NoExplicitReturnTypeInApiMode ->
+    val noExplicitReturnTypeInApiMode: KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.NoExplicitReturnTypeInApiMode> =
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NoExplicitReturnTypeInApiMode ->
             createQuickFix(diagnostic.psi)
         }
 
-    val noExplicitReturnTypeInApiModeWarning =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.NoExplicitReturnTypeInApiModeWarning ->
+    val noExplicitReturnTypeInApiModeWarning: KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.NoExplicitReturnTypeInApiModeWarning> =
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NoExplicitReturnTypeInApiModeWarning ->
             createQuickFix(diagnostic.psi)
         }
 
-    context(KaSession)
-    private fun createQuickFix(declaration: KtDeclaration) =
+    private fun KaSession.createQuickFix(declaration: KtDeclaration): List<SpecifyExplicitTypeQuickFix> =
         if (declaration is KtCallableDeclaration) listOf(SpecifyExplicitTypeQuickFix(declaration, getTypeInfo(declaration)))
         else emptyList()
-
-    private class SpecifyExplicitTypeQuickFix(
-        target: KtCallableDeclaration,
-        private val typeInfo: TypeInfo,
-    ) : AbstractKotlinApplicableQuickFix<KtCallableDeclaration>(target) {
-        override fun getFamilyName(): String = KotlinBundle.message("specify.type.explicitly")
-
-        override fun getActionName(element: KtCallableDeclaration): String = when (element) {
-            is KtFunction -> KotlinBundle.message("specify.return.type.explicitly")
-            else -> KotlinBundle.message("specify.type.explicitly")
-        }
-
-        override fun apply(element: KtCallableDeclaration, project: Project, editor: Editor?, file: KtFile) =
-            updateType(element, typeInfo, project, editor)
-    }
 }

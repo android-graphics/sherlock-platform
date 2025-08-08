@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.designSurface;
 
 import com.intellij.designer.*;
@@ -49,7 +49,6 @@ import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +68,7 @@ import java.util.Map;
  * @author Alexander Lobas
  */
 public abstract class DesignerEditorPanel extends JPanel
-  implements DesignerEditorPanelFacade, DataProvider, ModuleProvider, RadPropertyContext {
+  implements DesignerEditorPanelFacade, UiDataProvider, ModuleProvider, RadPropertyContext {
   private static final Logger LOG = Logger.getInstance(DesignerEditorPanel.class);
 
   protected static final Integer LAYER_COMPONENT = JLayeredPane.DEFAULT_LAYER;
@@ -392,7 +391,7 @@ public abstract class DesignerEditorPanel extends JPanel
   }
 
   protected void addErrorMessage(final FixableMessageInfo message, Icon icon) {
-    if (message.myLinkText.length() > 0 || message.myAfterLinkText.length() > 0) {
+    if (!message.myLinkText.isEmpty() || !message.myAfterLinkText.isEmpty()) {
       HyperlinkLabel warnLabel = new HyperlinkLabel();
       warnLabel.setOpaque(false);
       warnLabel.setHyperlinkText(message.myBeforeLinkText, message.myLinkText, message.myAfterLinkText);
@@ -417,7 +416,7 @@ public abstract class DesignerEditorPanel extends JPanel
       warnLabel.setIcon(icon);
       myErrorMessages.add(warnLabel);
     }
-    if (message.myAdditionalFixes != null && message.myAdditionalFixes.size() > 0) {
+    if (message.myAdditionalFixes != null && !message.myAdditionalFixes.isEmpty()) {
       JPanel fixesPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
       fixesPanel.setBorder(JBUI.Borders.empty(3, 0, 10, 0));
       fixesPanel.setOpaque(false);
@@ -739,8 +738,8 @@ public abstract class DesignerEditorPanel extends JPanel
   }
 
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    return myActionPanel.getData(dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    DataSink.uiDataSnapshot(sink, myActionPanel);
   }
 
   public void dispose() {
@@ -1089,8 +1088,8 @@ public abstract class DesignerEditorPanel extends JPanel
       DefaultActionGroup actionGroup = new DefaultActionGroup();
       for (final FixableMessageInfo message : myItems) {
         AnAction action;
-        if ((message.myQuickFix != null && (message.myLinkText.length() > 0 || message.myAfterLinkText.length() > 0)) ||
-            (message.myAdditionalFixes != null && message.myAdditionalFixes.size() > 0)) {
+        if ((message.myQuickFix != null && (!message.myLinkText.isEmpty() || !message.myAfterLinkText.isEmpty())) ||
+            (message.myAdditionalFixes != null && !message.myAdditionalFixes.isEmpty())) {
           final AnAction[] defaultAction = new AnAction[1];
           DefaultActionGroup popupGroup = new DefaultActionGroup() {
             @Override
@@ -1102,7 +1101,7 @@ public abstract class DesignerEditorPanel extends JPanel
           popupGroup.getTemplatePresentation().setPerformGroup(true);
           action = popupGroup;
 
-          if (message.myQuickFix != null && (message.myLinkText.length() > 0 || message.myAfterLinkText.length() > 0)) {
+          if (message.myQuickFix != null && (!message.myLinkText.isEmpty() || !message.myAfterLinkText.isEmpty())) {
             AnAction popupAction = new AnAction() {
               @Override
               public void actionPerformed(@NotNull AnActionEvent e) {
@@ -1113,7 +1112,7 @@ public abstract class DesignerEditorPanel extends JPanel
             popupGroup.add(popupAction);
             defaultAction[0] = popupAction;
           }
-          if (message.myAdditionalFixes != null && message.myAdditionalFixes.size() > 0) {
+          if (message.myAdditionalFixes != null && !message.myAdditionalFixes.isEmpty()) {
             for (final Pair<@Nls String, Runnable> pair : message.myAdditionalFixes) {
               AnAction popupAction = new AnAction() {
                 @Override

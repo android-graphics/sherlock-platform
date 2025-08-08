@@ -51,10 +51,12 @@ object Patterns {
 
     val TEST: ModelMatcher = forExtension("test")
     val KT: ModelMatcher = forExtension("kt")
+    val GROOVY: ModelMatcher = forExtension("groovy")
     val TXT: ModelMatcher = forExtension("txt")
     val KTS: ModelMatcher = forExtension("kts")
     val JAVA: ModelMatcher = forExtension("java")
     val WS_KTS: ModelMatcher = forExtension("ws.kts")
+    val MD: ModelMatcher = forExtension("md")
 
     val KT_OR_JAVA: ModelMatcher = forRegex("^(.+)\\.(kt|java)$")
     val KT_OR_KTS: ModelMatcher = forRegex("^(.+)\\.(kt|kts)$")

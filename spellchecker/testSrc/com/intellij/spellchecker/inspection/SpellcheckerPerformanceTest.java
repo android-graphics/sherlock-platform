@@ -16,15 +16,15 @@
 package com.intellij.spellchecker.inspection;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.inspections.*;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,9 +55,9 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
     runLocalInspections();
     LOG.debug("warm-up took " + (System.currentTimeMillis() - start) + " ms");
 
-    DaemonCodeAnalyzer.getInstance(getProject()).restart();
+    DaemonCodeAnalyzerEx.getInstanceEx(getProject()).restart(getTestName(false));
     int[] toIgnore = ignoreEverythingExceptInspections();
-    PerformanceTestUtil.newPerformanceTest("many typos highlighting", () -> {
+    Benchmark.newBenchmark("many typos highlighting", () -> {
       assertSize(typoCount, CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.getFile(), myFixture.getEditor(), toIgnore, false));
     }).start();
   }
@@ -79,8 +79,8 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
     assertEmpty(infos);
     LOG.debug("warm-up took " + (System.currentTimeMillis() - start) + " ms");
 
-    PerformanceTestUtil.newPerformanceTest("many whitespaces highlighting", () -> {
-      DaemonCodeAnalyzer.getInstance(getProject()).restart();
+    Benchmark.newBenchmark("many whitespaces highlighting", () -> {
+      DaemonCodeAnalyzerEx.getInstanceEx(getProject()).restart(getTestName(false));
       assertEmpty(runLocalInspections());
     }).start();
   }
@@ -123,7 +123,7 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
   }
 
   private static void doSplitterPerformanceTest(String text, Splitter splitter) {
-    PerformanceTestUtil.newPerformanceTest("long word for spelling", () -> {
+    Benchmark.newBenchmark("long word for spelling", () -> {
       try {
         splitter.split(text, TextRange.allOf(text), (textRange) -> {});
       }

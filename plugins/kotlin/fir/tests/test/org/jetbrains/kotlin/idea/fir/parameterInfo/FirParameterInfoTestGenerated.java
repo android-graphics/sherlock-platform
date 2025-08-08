@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.parameterInfo;
 
@@ -104,6 +104,25 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/parameterInfo/fromJava")
+    public static class FromJava extends AbstractFirParameterInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("Usage.java")
+        public void testUsage() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/fromJava/Usage.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/parameterInfo/functionCall")
     public static class FunctionCall extends AbstractFirParameterInfoTest {
         @java.lang.Override
@@ -119,6 +138,11 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
         @TestMetadata("Conflicting.kt")
         public void testConflicting() throws Exception {
             runTest("../../idea/tests/testData/parameterInfo/functionCall/Conflicting.kt");
+        }
+
+        @TestMetadata("ConstDefaultParameter.kt")
+        public void testConstDefaultParameter() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/functionCall/ConstDefaultParameter.kt");
         }
 
         @TestMetadata("DataClassComponentFunction.kt")
@@ -216,6 +240,11 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
             runTest("../../idea/tests/testData/parameterInfo/functionCall/InheritedWithCurrentFunctions.kt");
         }
 
+        @TestMetadata("InvalidCandidates.kt")
+        public void testInvalidCandidates() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/functionCall/InvalidCandidates.kt");
+        }
+
         @TestMetadata("Invoke.kt")
         public void testInvoke() throws Exception {
             runTest("../../idea/tests/testData/parameterInfo/functionCall/Invoke.kt");
@@ -309,6 +338,11 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
         @TestMetadata("NoCandidatesWrongReceiver.kt")
         public void testNoCandidatesWrongReceiver() throws Exception {
             runTest("../../idea/tests/testData/parameterInfo/functionCall/NoCandidatesWrongReceiver.kt");
+        }
+
+        @TestMetadata("NoDefaultValueForValParameter.kt")
+        public void testNoDefaultValueForValParameter() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/functionCall/NoDefaultValueForValParameter.kt");
         }
 
         @TestMetadata("NoShadowedDeclarations.kt")
@@ -745,6 +779,25 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
         @TestMetadata("useJavaSAMFromLib.kt")
         public void testUseJavaSAMFromLib() throws Exception {
             runTest("../../idea/tests/testData/parameterInfo/withLib3/useJavaSAMFromLib.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/parameterInfo/withLib4")
+    public static class WithLib4 extends AbstractFirParameterInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotationWithTypeUse.kt")
+        public void testAnnotationWithTypeUse() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/withLib4/annotationWithTypeUse.kt");
         }
     }
 }

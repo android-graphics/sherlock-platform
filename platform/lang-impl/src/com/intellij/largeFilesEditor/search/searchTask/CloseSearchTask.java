@@ -1,14 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.search.searchTask;
 
 import com.intellij.largeFilesEditor.search.SearchResult;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class CloseSearchTask extends SearchTaskBase {
   private static final Logger logger = Logger.getInstance(CloseSearchTask.class);
 
@@ -112,7 +114,7 @@ public final class CloseSearchTask extends SearchTaskBase {
         /* searching for result in current page */
         searcher.setFrame(curPageNumber, prefixSymbol, curPageText, tailText, postfixSymbol);
         allMatchesAtFrame = searcher.findAllMatchesAtFrame();
-        if (allMatchesAtFrame.size() > 0) {
+        if (!allMatchesAtFrame.isEmpty()) {
           myCallback.tellClosestResultFound(this, allMatchesAtFrame,
                                           options.searchForwardDirection ? 0 : allMatchesAtFrame.size() - 1);
           return;

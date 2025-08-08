@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.core
 
+
 enum class Language(val displayName: String, private val extensions: List<String>, val ideaLanguageId: String, val needSdk: Boolean = false,
                     val curlyBracket: Boolean = true) {
   JAVA("Java", listOf("java"), "JAVA", needSdk = true),
@@ -21,8 +22,12 @@ enum class Language(val displayName: String, private val extensions: List<String
   CSS("CSS", listOf("css"), "CSS"),
   LESS("Less", listOf("less"), "LESS"),
   SCSS("SCSS", listOf("scss"), "SCSS"),
+  SASS("SASS", listOf("sass"), "SASS"),
   HTML("HTML", listOf("html"), "HTML"),
   TERRAFORM("Terraform", listOf("tf", "tfvars"), "HCL-Terraform"),
+  SQL("SQL", listOf("sql"), "SQL"),
+  YAML("YAML", listOf("yaml", "yml"), "yaml"),
+  MARKDOWN("Markdown", listOf("md"), "Markdown"),
   ANOTHER("Another", listOf(), ""),
   UNSUPPORTED("Unsupported", listOf(), ""); // TODO: There are no unsupported languages
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.hierarchy;
 
@@ -550,6 +550,60 @@ public abstract class FirHierarchyTestGenerated extends AbstractFirHierarchyTest
         @TestMetadata("TypeAlias")
         public void testTypeAlias() throws Exception {
             runTest("../../idea/tests/testData/hierarchy/class/sub/TypeAlias/");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/hierarchy/overrides")
+    public static class Overrides extends AbstractFirHierarchyTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doOverrideHierarchyTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("kotlinBuiltInMemberFunction")
+        public void testKotlinBuiltInMemberFunction() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/overrides/kotlinBuiltInMemberFunction/");
+        }
+
+        @TestMetadata("kotlinFunctionInClass")
+        public void testKotlinFunctionInClass() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/overrides/kotlinFunctionInClass/");
+        }
+
+        @TestMetadata("kotlinFunctionInInterface")
+        public void testKotlinFunctionInInterface() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/overrides/kotlinFunctionInInterface/");
+        }
+
+        @TestMetadata("kotlinPropertyInClass")
+        public void testKotlinPropertyInClass() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/overrides/kotlinPropertyInClass/");
+        }
+
+        @TestMetadata("kotlinPropertyInInterface")
+        public void testKotlinPropertyInInterface() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/overrides/kotlinPropertyInInterface/");
+        }
+
+        @TestMetadata("kotlinTopLevelFunction")
+        public void testKotlinTopLevelFunction() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/overrides/kotlinTopLevelFunction/");
+        }
+
+        @TestMetadata("kotlinVarParameter")
+        public void testKotlinVarParameter() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/overrides/kotlinVarParameter/");
+        }
+
+        @TestMetadata("overriddenInAnonymousObject")
+        public void testOverriddenInAnonymousObject() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/overrides/overriddenInAnonymousObject/");
         }
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -16,8 +16,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.stubs.ObjectStubSerializer;
+import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.psi.stubs.Stub;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
@@ -25,9 +26,9 @@ import com.intellij.util.*;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.graph.InboundSemiGraph;
 import com.intellij.util.graph.OutboundSemiGraph;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -37,8 +38,7 @@ import java.util.Set;
 
 public final class DebugUtil {
   private static final Logger LOG = Logger.getInstance(DebugUtil.class);
-
-  @SuppressWarnings("StaticNonFinalField") public static boolean CHECK;
+  @SuppressWarnings("StaticNonFinalField") private static boolean CHECK;
   public static final boolean DO_EXPENSIVE_CHECKS;
 
   static {
@@ -281,9 +281,9 @@ public final class DebugUtil {
   public static void stubTreeToBuffer(@NotNull Stub node, @NotNull Appendable buffer, int indent) {
     StringUtil.repeatSymbol(buffer, ' ', indent);
     try {
-      ObjectStubSerializer<?, ?> stubType = node.getStubType();
-      if (stubType != null) {
-        buffer.append(stubType.toString()).append(':');
+      Object presentable = getPresentable(node);
+      if (presentable != null) {
+        buffer.append(presentable.toString()).append(':');
       }
       buffer.append(node.toString()).append('\n');
 
@@ -295,6 +295,19 @@ public final class DebugUtil {
     catch (IOException e) {
       LOG.error(e);
     }
+  }
+
+  private static Object getPresentable(@NotNull Stub node) {
+    if (node instanceof PsiFileStubImpl) {
+      // psi file stubs historically don't have presentable
+      return null;
+    }
+
+    if (node instanceof StubElement) {
+      return ((StubElement<?>)node).getElementType();
+    }
+
+    return node.getStubSerializer();
   }
 
   private static void doCheckTreeStructure(@Nullable ASTNode anyElement) {
@@ -518,7 +531,7 @@ public final class DebugUtil {
       ourPsiModificationDepth.set(depth);
     }
     if (depth == 0) {
-      ourPsiModificationTrace.set(null);
+      ourPsiModificationTrace.remove();
     }
   }
 
@@ -529,7 +542,7 @@ public final class DebugUtil {
    *
    * @param trace The debug trace that the invalidated elements should be identified by. May be null, then current stack trace is used.
    */
-  public static <T extends Throwable> void performPsiModification(String trace, @NotNull ThrowableRunnable<T> runnable) throws T {
+  public static <T extends Throwable> void performPsiModification(@Nullable String trace, @NotNull ThrowableRunnable<T> runnable) throws T {
     beginPsiModification(trace);
     try {
       runnable.run();
@@ -542,7 +555,7 @@ public final class DebugUtil {
   /**
    * @see #performPsiModification(String, ThrowableRunnable)
    */
-  public static <T, E extends Throwable> T performPsiModification(String trace, @NotNull ThrowableComputable<T, E> runnable) throws E {
+  public static <T, E extends Throwable> T performPsiModification(@Nullable String trace, @NotNull ThrowableComputable<T, E> runnable) throws E {
     beginPsiModification(trace);
     try {
       return runnable.compute();
@@ -642,7 +655,16 @@ public final class DebugUtil {
     int fileLength = file.getTextLength();
     int docLength = document.getTextLength();
     if (fileLength != docLength) {
-      return "file/doc text length different, " + fileDiagnostics + " file.length=" + fileLength + "; doc.length=" + docLength;
+      int maxTextLength = 100;
+      String fileText = StringUtil.trimMiddle(file.getText(), maxTextLength);
+      String docText = StringUtil.trimMiddle(document.getText(), maxTextLength);
+
+      return "file/doc text length different, " + fileDiagnostics +
+                      " file.length=" + fileLength +
+                      "; file.isPhysical=" + file.isPhysical() +
+                      "; doc.length=" + docLength +
+                      "\nfile.text:\n" + fileText +
+                      "\ndocument.text:\n" + docText;
     }
 
     return "unknown inconsistency in " + fileDiagnostics;
@@ -691,20 +713,26 @@ public final class DebugUtil {
       .replace(".lang.", ".l.");
   }
 
-  //<editor-fold desc="Deprecated stuff">
-
-  /** @deprecated use {@link #performPsiModification} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static void startPsiModification(@Nullable String trace) {
-    beginPsiModification(trace);
+  @TestOnly
+  public static void runWithCheckInternalInvariantsEnabled(@NotNull ThrowableRunnable<?> runnable) throws Throwable {
+    boolean oldDebugUtilCheck = DebugUtil.CHECK;
+    DebugUtil.CHECK = true;
+    try {
+      runnable.run();
+    }
+    finally {
+      DebugUtil.CHECK = oldDebugUtilCheck;
+    }
   }
-
-  /** @deprecated use {@link #performPsiModification} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static void finishPsiModification() {
-    endPsiModification();
+  @TestOnly
+  public static void runWithCheckInternalInvariantsDisabled(@NotNull ThrowableRunnable<?> runnable) throws Throwable {
+    boolean oldDebugUtilCheck = DebugUtil.CHECK;
+    DebugUtil.CHECK = false;
+    try {
+      runnable.run();
+    }
+    finally {
+      DebugUtil.CHECK = oldDebugUtilCheck;
+    }
   }
-  //</editor-fold>
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -10,12 +10,14 @@ import com.intellij.codeInsight.daemon.NavigateAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
+import com.intellij.lang.LangBundle;
 import com.intellij.model.Pointer;
 import com.intellij.model.psi.impl.UtilKt;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
@@ -27,6 +29,7 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtilCore;
@@ -35,6 +38,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewShortNameLocation;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +49,8 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.function.Consumer;
 
+import static com.intellij.codeInsight.multiverse.CodeInsightContextKt.isShowAllInheritorsEnabled;
+
 public class GotoImplementationHandler extends GotoTargetHandler {
   @Override
   protected String getFeatureUsedKey() {
@@ -52,8 +58,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
   }
 
   @Override
-  @Nullable
-  public GotoData getSourceAndTargetElements(@NotNull Editor editor, PsiFile file) {
+  public @Nullable GotoData getSourceAndTargetElements(@NotNull Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement source = TargetElementUtil.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);
     if (source == null) {
@@ -80,9 +85,15 @@ public class GotoImplementationHandler extends GotoTargetHandler {
       @Override
       public void onSuccess() {
         super.onSuccess();
-        @Nullable ItemWithPresentation oneElement = getTheOnlyOneElement();
-        if (oneElement != null && oneElement.getItem() instanceof SmartPsiElementPointer<?> &&
-            navigateToElement(((SmartPsiElementPointer<?>)oneElement.getItem()).getElement())) {
+        ItemWithPresentation oneElement = getTheOnlyOneElement();
+        if (oneElement == null || !(oneElement.getItem() instanceof SmartPsiElementPointer<?> o)) {
+          return;
+        }
+        boolean success;
+        try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162968")) {
+          success = navigateToElement(o.getElement());
+        }
+        if (success) {
           myPopup.cancel();
         }
       }
@@ -145,8 +156,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
   }
 
   @Override
-  @NotNull
-  protected String getChooserTitle(@NotNull PsiElement sourceElement, @Nullable String name, int length, boolean finished) {
+  protected @NotNull String getChooserTitle(@NotNull PsiElement sourceElement, @Nullable String name, int length, boolean finished) {
     ItemPresentation presentation = ((NavigationItem)sourceElement).getPresentation();
     String fullName;
     if (presentation == null) {
@@ -162,15 +172,13 @@ public class GotoImplementationHandler extends GotoTargetHandler {
                                      fullName == null ? "unnamed element" : StringUtil.escapeXmlEntities(fullName), length, finished ? "" : " so far");
   }
 
-  @NotNull
   @Override
-  protected String getFindUsagesTitle(@NotNull PsiElement sourceElement, String name, int length) {
+  protected @NotNull String getFindUsagesTitle(@NotNull PsiElement sourceElement, String name, int length) {
     return CodeInsightBundle.message("goto.implementation.findUsages.title", StringUtil.escapeXmlEntities(name), length);
   }
 
-  @NotNull
   @Override
-  protected String getNotFoundMessage(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  protected @NotNull String getNotFoundMessage(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return CodeInsightBundle.message("goto.implementation.notFound");
   }
 
@@ -217,6 +225,48 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     private final GotoData myGotoData;
     private final PsiReference myReference;
 
+    @Override
+    protected boolean addElementToMyData(@NotNull ItemWithPresentation element) {
+      if (!isShowAllInheritorsEnabled()) {
+        return super.addElementToMyData(element);
+      }
+
+      var existingElement = getElementWithPresentableTextAndContainerText(element);
+      if (existingElement == null) {
+        return myData.add(element);
+      }
+      var existingItem = existingElement.getItem();
+      if (existingElement instanceof SeveralItemsWithPresentation) {
+        ((SeveralItemsWithPresentation)existingElement).addItem(element);
+        return true;
+      }
+
+      myData.remove(existingElement);
+      var newElement = new SeveralItemsWithPresentation(existingItem, createSharedTargetPresentation(existingElement.getPresentation()));
+      newElement.addItem(element.getItem());
+      myData.add(newElement);
+      return true;
+    }
+
+    private static TargetPresentation createSharedTargetPresentation(@NotNull TargetPresentation currentPresentation) {
+      return TargetPresentation.builder(currentPresentation).locationText(LangBundle.message("shared.target.presentation.label")).presentation();
+    }
+
+    private @Nullable ItemWithPresentation getElementWithPresentableTextAndContainerText(@NotNull ItemWithPresentation element) {
+      String presentableText = element.getPresentation().getPresentableText();
+      String containerText = element.getPresentation().getContainerText();
+      for (var elem : myData) {
+        String curPresentableText = elem.getPresentation().getPresentableText();
+        String curContainerText = elem.getPresentation().getContainerText();
+        if (Objects.equals(presentableText, curPresentableText) &&
+            Objects.equals(containerText, curContainerText)) {
+          return elem;
+        }
+      }
+
+      return null;
+    }
+
     ImplementationsUpdaterTask(@NotNull GotoData gotoData, @NotNull Editor editor, int offset, final PsiReference reference) {
       super(
         gotoData.source.getProject(),
@@ -230,7 +280,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     }
 
     @Override
-    public void run(@NotNull final ProgressIndicator indicator) {
+    public void run(final @NotNull ProgressIndicator indicator) {
       super.run(indicator);
       for (ItemWithPresentation item : myGotoData.getItems()) {
         if (!updateComponent(item)) {
@@ -275,8 +325,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     return projectContentComparator.thenComparing(presentationComparator).thenComparing(positionComparator);
   }
 
-  @NotNull
-  private static Comparator<ItemWithPresentation> wrapPsiComparator(Comparator<PsiElement> result) {
+  private static @NotNull Comparator<ItemWithPresentation> wrapPsiComparator(Comparator<PsiElement> result) {
     Comparator<ItemWithPresentation> comparator = (o1, o2) -> {
       if (o1.getItem() instanceof SmartPsiElementPointer<?> && o2.getItem() instanceof SmartPsiElementPointer<?>) {
         return ReadAction.compute(() -> result.compare(((SmartPsiElementPointer<?>)o1.getItem()).getElement(), ((SmartPsiElementPointer<?>)o2.getItem()).getElement()));

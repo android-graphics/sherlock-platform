@@ -7,8 +7,10 @@ import com.intellij.ui.JBSplitter
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 class PostfixTemplatesConfigurableUi {
   lateinit var completionEnabledCheckbox: JBCheckBox
   lateinit var postfixTemplatesEnabled: JBCheckBox
@@ -17,6 +19,8 @@ class PostfixTemplatesConfigurableUi {
   val descriptionPanel: JPanel = JPanel()
 
   val panel: JPanel = panel {
+    useNewComboBoxRenderer()
+
     row {
       postfixTemplatesEnabled = checkBox(CodeInsightBundle.message("postfix.completion.option.enabled"))
         .component

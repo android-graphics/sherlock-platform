@@ -3,6 +3,7 @@ package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.NewActionGroup;
+import com.intellij.ide.actions.NewFileActionWithCategory;
 import com.intellij.ide.actions.RecentLocationsAction;
 import com.intellij.ide.scratch.ScratchImplUtil.LanguageItem;
 import com.intellij.ide.util.DeleteHandler;
@@ -13,6 +14,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.editor.Caret;
@@ -27,21 +29,17 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorState;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.openapi.vfs.*;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
@@ -52,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.io.IOException;
 import java.util.List;
 import java.util.*;
 
@@ -65,8 +64,7 @@ public final class ScratchFileActions {
     return ourCurrentBuffer;
   }
 
-
-  public static final class NewFileAction extends DumbAwareAction {
+  static final class NewFileAction extends DumbAwareAction implements NewFileActionWithCategory {
     private static final String ACTION_ID = "NewScratchFile";
 
     private final NotNullLazyValue<@Nls String> myActionText = NotNullLazyValue.lazy(() -> {
@@ -93,7 +91,7 @@ public final class ScratchFileActions {
       boolean enabled = project != null && (
         e.isFromActionToolbar() ||
         ActionPlaces.isMainMenuOrActionSearch(place) ||
-        ActionPlaces.isPopupPlace(place) && e.getData(LangDataKeys.IDE_VIEW) != null);
+        e.isFromContextMenu() && e.getData(LangDataKeys.IDE_VIEW) != null);
 
       e.getPresentation().setEnabledAndVisible(enabled);
       updatePresentationTextAndIcon(e, e.getPresentation());
@@ -172,9 +170,14 @@ public final class ScratchFileActions {
         presentation.setIcon(null);
       }
     }
+
+    @Override
+    public @NotNull String getCategory() {
+      return "Scratch";
+    }
   }
 
-  public static final class NewBufferAction extends DumbAwareAction {
+  static final class NewBufferAction extends DumbAwareAction {
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -224,7 +227,17 @@ public final class ScratchFileActions {
     return context;
   }
 
-  static @Nullable PsiFile doCreateNewScratch(@NotNull Project project, @NotNull ScratchFileCreationHelper.Context context) {
+  @IntellijInternalApi
+  public static @Nullable PsiFile doCreateNewScratch(@NotNull Project project, @NotNull ScratchFileCreationHelper.Context context) {
+    return doCreateNewScratch(project, context, DataContext.EMPTY_CONTEXT);
+  }
+
+  @IntellijInternalApi
+  public static @Nullable PsiFile doCreateNewScratch(
+    @NotNull Project project,
+    @NotNull ScratchFileCreationHelper.Context context,
+    @NotNull DataContext dataContext
+  ) {
     if (context.fileExtension == null && context.language != null) {
       LanguageFileType fileType = context.language.getAssociatedFileType();
       if (fileType != null) {
@@ -234,22 +247,23 @@ public final class ScratchFileActions {
     if (context.language != null) {
       ScratchFileCreationHelper helper = ScratchFileCreationHelper.EXTENSION.forLanguage(context.language);
       if (StringUtil.isEmpty(context.text)) {
-        helper.prepareText(project, context, DataContext.EMPTY_CONTEXT);
+        helper.prepareText(project, context, dataContext);
       }
       helper.beforeCreate(project, context);
     }
 
     VirtualFile dir = context.ideView != null ? PsiUtilCore.getVirtualFile(ArrayUtil.getFirstElement(context.ideView.getDirectories())) : null;
     RootType rootType = dir == null ? null : ScratchFileService.findRootType(dir);
-    String relativePath = rootType != ScratchRootType.getInstance() ? "" :
+    String relativePath = rootType != context.defaultRootType ? "" :
                           FileUtil.getRelativePath(ScratchFileService.getInstance().getRootPath(rootType), dir.getPath(), '/');
 
     String fileName = (StringUtil.isEmpty(relativePath) ? "" : relativePath + "/") +
                       PathUtil.makeFileName(ObjectUtils.notNull(context.filePrefix, "scratch") +
                                             (context.fileCounter != null ? context.fileCounter.create() : ""),
                                             context.fileExtension);
-    VirtualFile file = ScratchRootType.getInstance().createScratchFile(
-      project, fileName, context.language, context.text, context.createOption);
+    VirtualFile file = createScratchFile(
+      project, fileName, context.language, context.text, context.createOption, context.defaultRootType
+    );
     if (file == null) return null;
 
     Navigatable navigatable = PsiNavigationSupport.getInstance().createNavigatable(project, file, context.caretOffset);
@@ -259,6 +273,36 @@ public final class ScratchFileActions {
       context.ideView.selectElement(psiFile);
     }
     return psiFile;
+  }
+
+  static @Nullable VirtualFile createScratchFile(@Nullable Project project,
+                                                 @NotNull String fileName,
+                                                 @Nullable Language language,
+                                                 @NotNull String text,
+                                                 @NotNull ScratchFileService.Option option,
+                                                 @NotNull RootType rootType) {
+    try {
+      return
+        WriteCommandAction.writeCommandAction(project).withName(UIBundle.message("file.chooser.create.new.scratch.file.command.name"))
+          .withGlobalUndo().shouldRecordActionForActiveDocument(false)
+          .withUndoConfirmationPolicy(UndoConfirmationPolicy.REQUEST_CONFIRMATION).compute(() -> {
+            ScratchFileService fileService = ScratchFileService.getInstance();
+            VirtualFile file = fileService.findFile(rootType, fileName, option);
+            // save text should go before any other manipulations that load document,
+            // otherwise undo will be broken
+            VfsUtil.saveText(file, text);
+            if (language != null) {
+              Language fileLanguage = LanguageUtil.getFileLanguage(file);
+              fileService.getScratchesMapping().setMapping(file, fileLanguage == null || language == fileLanguage ? null : language);
+            }
+            return file;
+          });
+    }
+    catch (IOException e) {
+      Messages.showMessageDialog(UIBundle.message("create.new.file.could.not.create.file.error.message", fileName),
+                                 UIBundle.message("error.dialog.title"), Messages.getErrorIcon());
+      return null;
+    }
   }
 
   private static void checkLanguageAndTryToFixText(@NotNull Project project,
@@ -390,7 +434,7 @@ public final class ScratchFileActions {
     }
   }
 
-  public static final class ShowFilesPopupAction extends DumbAwareAction {
+  static final class ShowFilesPopupAction extends DumbAwareAction {
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.BGT;
@@ -449,7 +493,7 @@ public final class ScratchFileActions {
     }
   }
 
-  public static final class ExportToScratchAction extends DumbAwareAction {
+  static final class ExportToScratchAction extends DumbAwareAction {
     {
       setEnabledInModalContext(true);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.execution.ExecutionException;
@@ -12,10 +12,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.PathUtil;
 import com.intellij.util.io.SuperUserStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.junit.AssumptionViolatedException;
 
 import java.io.*;
@@ -24,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.Normalizer;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -44,10 +45,14 @@ public final class IoTestUtil {
   private IoTestUtil() { }
 
   @SuppressWarnings({"SpellCheckingInspection", "NonAsciiCharacters"})
-  private static final String[] UNICODE_PARTS = {"Юникоде", "Úñíçødê"};
+  private static final String[] UNICODE_PARTS = {
+    "Юникоде",
+    Normalizer.normalize("Úñíçødê", Normalizer.Form.NFC),
+    Normalizer.normalize("Úñíçødê", Normalizer.Form.NFD)
+  };
 
   public static @Nullable String getUnicodeName() {
-    return filterParts(PathUtil::isValidFileName);
+    return filterParts(fileName -> NioFiles.toPath(fileName) != null);
   }
 
   public static @Nullable String getUnicodeName(String forEncoding) {
@@ -348,7 +353,7 @@ public final class IoTestUtil {
     return "\\\\127.0.0.1\\" + localPath.charAt(0) + '$' + localPath.substring(2);
   }
 
-  public static @NotNull List<@NotNull String> enumerateWslDistributions() {
+  public static @Unmodifiable @NotNull List<@NotNull String> enumerateWslDistributions() {
     assertTrue(SystemInfo.isWin10OrNewer);
     try {
       GeneralCommandLine cmd = new GeneralCommandLine("wsl", "-l", "-q").withRedirectErrorStream(true).withCharset(StandardCharsets.UTF_16LE);

@@ -44,8 +44,9 @@ internal fun isEnterKeyStroke(keyStroke: KeyStroke): Boolean {
 }
 
 class ActionMenuItem internal constructor(action: AnAction,
-                                          @JvmField val place: String,
                                           private val context: DataContext,
+                                          @JvmField val place: String,
+                                          private val uiKind: ActionUiKind.Popup,
                                           private val enableMnemonics: Boolean,
                                           private val insideCheckedGroup: Boolean,
                                           private val useDarkIcons: Boolean) : JBCheckBoxMenuItem() {
@@ -185,7 +186,7 @@ class ActionMenuItem internal constructor(action: AnAction,
   private var firstShortcutTextFromPresentation: @NlsSafe String? = null
 
   private val defaultFirstShortcutText: @NlsSafe String
-    get() = KeymapUtil.getFirstKeyboardShortcutText(actionRef.getAction())
+    get() = KeymapUtil.getShortcutText(actionRef.getAction().shortcutSet)
 
   val firstShortcutText: @NlsSafe String
     get() = firstShortcutTextFromPresentation ?: defaultFirstShortcutText
@@ -265,10 +266,9 @@ class ActionMenuItem internal constructor(action: AnAction,
       val action = actionRef.getAction()
       val currentEvent = IdeEventQueue.getInstance().trueCurrentEvent
       val event = AnActionEvent(
-        currentEvent as? InputEvent, context, place,
-        presentation.clone(),
-        ActionManager.getInstance(),
-        modifiers, true, false)
+        context, presentation.clone(), place, uiKind,
+        currentEvent as? InputEvent, modifiers,
+        ActionManager.getInstance())
       if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
         ActionUtil.performActionDumbAwareWithCallbacks(action, event)
       }

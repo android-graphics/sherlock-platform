@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.project.Project;
@@ -11,10 +11,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Set;
 
 public abstract class DefaultVcsRootPolicy {
-  @NotNull protected final Project myProject;
+  protected final @NotNull Project myProject;
 
   protected DefaultVcsRootPolicy(@NotNull Project project) {
     myProject = project;
@@ -24,15 +23,17 @@ public abstract class DefaultVcsRootPolicy {
     return project.getService(DefaultVcsRootPolicy.class);
   }
 
+  public final @NotNull Collection<VirtualFile> getDefaultVcsRoots() {
+    return getDefaultVcsRootsCandidates();
+  }
+
   /**
    * Return roots that belong to the project (ex: all content roots).
    * If 'Project' mapping is configured, all vcs roots for these roots will be put to the mappings.
    */
-  @NotNull
-  public abstract Collection<VirtualFile> getDefaultVcsRoots();
+  protected abstract @NotNull Collection<VirtualFile> getDefaultVcsRootsCandidates();
 
-  @Nls
-  public String getProjectConfigurationMessage() {
+  public @Nls String getProjectConfigurationMessage() {
     boolean isDirectoryBased = ProjectKt.isDirectoryBased(myProject);
     if (isDirectoryBased) {
       String fileName = ProjectKt.getStateStore(myProject).getDirectoryStorePath().getFileName().toString();

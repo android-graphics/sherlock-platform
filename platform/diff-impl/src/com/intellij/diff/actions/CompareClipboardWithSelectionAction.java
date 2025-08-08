@@ -35,8 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
-  @Nullable
-  private static Editor getEditor(@NotNull AnActionEvent e) {
+  private static @Nullable Editor getEditor(@NotNull AnActionEvent e) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor != null) return editor;
 
@@ -45,8 +44,7 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
     return FileEditorManager.getInstance(project).getSelectedTextEditor();
   }
 
-  @Nullable
-  private static FileType getEditorFileType(@NotNull AnActionEvent e) {
+  private static @Nullable FileType getEditorFileType(@NotNull AnActionEvent e) {
     DiffContent content = e.getData(DiffDataKeys.CURRENT_CONTENT);
     if (content != null && content.getContentType() != null) return content.getContentType();
 
@@ -72,9 +70,8 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
     return ActionUpdateThread.EDT;
   }
 
-  @Nullable
   @Override
-  protected DiffRequestChain getDiffRequestChain(@NotNull AnActionEvent e) {
+  protected @Nullable DiffRequestChain getDiffRequestChain(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     Editor editor = getEditor(e);
     FileType editorFileType = getEditorFileType(e);
@@ -87,13 +84,13 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
 
     VirtualFile editorFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
     String editorContentTitle = editorFile != null
-                                ? DiffRequestFactory.getInstance().getContentTitle(editorFile)
+                                ? DiffRequestFactory.getInstance().getTitle(editorFile)
                                 : DiffBundle.message("diff.content.editor.content.title");
     if (editor.getSelectionModel().hasSelection()) {
       editorContentTitle = DiffBundle.message("diff.content.selection.from.file.content.title", editorContentTitle);
     }
 
-    MutableDiffRequestChain chain = BlankDiffWindowUtil.createBlankDiffRequestChain(content1, content2, null);
+    MutableDiffRequestChain chain = BlankDiffWindowUtil.createBlankDiffRequestChain(content1, content2, null, project);
     String windowTitle = editorFile != null ? DiffBundle.message("diff.clipboard.vs.editor.dialog.title.with.filename",
                                                                  editorFile.getName())
                                             : DiffBundle.message("diff.clipboard.vs.editor.dialog.title");
@@ -107,12 +104,11 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
     return chain;
   }
 
-  @NotNull
-  private static DocumentContent createContent(@Nullable Project project,
-                                               @NotNull Editor editor,
-                                               @Nullable FileType type,
-                                               @Nullable DiffContent selectedContent,
-                                               @NotNull AnActionEvent e) {
+  private static @NotNull DocumentContent createContent(@Nullable Project project,
+                                                        @NotNull Editor editor,
+                                                        @Nullable FileType type,
+                                                        @Nullable DiffContent selectedContent,
+                                                        @NotNull AnActionEvent e) {
     DocumentContent content = null;
     if (selectedContent instanceof DocumentContent) {
       Document contentDocument = ((DocumentContent)selectedContent).getDocument();

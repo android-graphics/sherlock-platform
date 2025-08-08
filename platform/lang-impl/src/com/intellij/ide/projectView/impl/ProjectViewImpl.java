@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.application.options.OptionsApplicabilityFilter;
@@ -22,7 +22,6 @@ import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
@@ -81,6 +80,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
@@ -90,8 +90,8 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.FocusEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
@@ -165,7 +165,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       getDefaultState().setAutoscrollFromSource(selected);
       getGlobalOptions().setAutoscrollFromSource(selected);
       if (selected && !autoScrollFromSourceHandler.isCurrentProjectViewPaneFocused()) {
-        SelectInProjectViewImplKt.getLOG().debug("Invoking scroll from source because Always Select Opened File has been turned on");
+        LOG.debug("Invoking scroll from source because Always Select Opened File has been turned on");
         autoScrollFromSourceHandler.scrollFromSource();
       }
     }
@@ -541,7 +541,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private static final String ATTRIBUTE_ID = "id";
   private JPanel viewContentPanel;
   private static final Comparator<AbstractProjectViewPane> PANE_WEIGHT_COMPARATOR = Comparator.comparingInt(AbstractProjectViewPane::getWeight);
-  private final MyPanel myDataProvider;
+  private final JComponent myDataProvider;
   private final SplitterProportionsData splitterProportions = new SplitterProportionsDataImpl();
   private final Map<String, Element> myUninitializedPaneState = new HashMap<>();
   private final Map<String, MySelectInTarget> mySelectInTargets = new ConcurrentHashMap<>();
@@ -558,8 +558,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     autoScrollFromSourceHandler = new MyAutoScrollFromSourceHandler();
 
-    myDataProvider = new MyPanel();
-    myDataProvider.add(panel, BorderLayout.CENTER);
+    myDataProvider = UiDataProvider.wrapComponent(panel, sink -> uiDataSnapshot(sink));
+    ClientProperty.put(myDataProvider, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, buildNotInHierarchyIterable());
+
     copyPasteDelegator = new CopyPasteDelegator(this.project, panel);
     myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
       @Override
@@ -573,7 +574,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
 
       @Override
-      protected boolean isAutoScrollEnabledFor(@NotNull VirtualFile file) {
+      public boolean isAutoScrollEnabledFor(@NotNull VirtualFile file) {
         if (!super.isAutoScrollEnabledFor(file)) return false;
         AbstractProjectViewPane pane = getCurrentProjectViewPane();
         return pane == null || pane.isAutoScrollEnabledFor(file);
@@ -634,12 +635,17 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         JTree tree = pane.getTree();
         if (tree != null && projectView instanceof ProjectViewImpl impl && impl.firstShow) {
           impl.firstShow = false;
-          TreeUtil.promiseSelectFirst(tree).onSuccess(tree::expandPath);
+          if (pane.myNonEmptyTreeStateRestored) {
+            TreeUtil.promiseSelectFirst(tree);
+          }
+          else {
+            TreeUtil.promiseSelectFirst(tree).onSuccess(tree::expandPath);
+          }
         }
       }
 
       if (projectView.isAutoscrollFromSource(pane.getId())) {
-        SelectInProjectViewImplKt.getLOG().debug("Invoking scroll from source because the project view is shown");
+        LOG.debug("Invoking scroll from source because the project view is shown");
 
         if (projectView instanceof ProjectViewImpl impl) {
           impl.autoScrollFromSourceHandler.scrollFromSource();
@@ -688,22 +694,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     List<AnAction> result = new ArrayList<>();
     result.add(views);
     result.add(Separator.getInstance());
-
-    if (actionGroup != null) {
-      List<AnAction> secondary = new ArrayList<>();
-      for (AnAction each : actionGroup.getChildren(ActionManager.getInstance())) {
-        if (actionGroup.isPrimary(each)) {
-          result.add(each);
-        }
-        else {
-          secondary.add(each);
-        }
-      }
-
-      result.add(Separator.getInstance());
-      result.addAll(secondary);
-    }
-
+    result.add(actionGroup);
     return result;
   }
 
@@ -919,8 +910,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     newPane.restoreExpandedPaths();
     if (selectedUserObject != null && newSubId != null) {
-      if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-        SelectInProjectViewImplKt.getLOG().debug("Re-selecting " + selectedUserObject + " after switching to " + currentViewId);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Re-selecting " + selectedUserObject + " after switching to " + currentViewId);
       }
       project.getService(SelectInProjectViewImpl.class).ensureSelected(
         currentViewId,
@@ -963,12 +954,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   // public for tests
-  public synchronized void setupImpl(@NotNull ToolWindow toolWindow, final boolean loadPaneExtensions) {
+  public synchronized void setupImpl(@NotNull ToolWindow toolWindow, boolean loadPaneExtensions) {
     ThreadingAssertions.assertEventDispatchThread();
     if (isInitialized) return;
 
-    var loadStatisticsReporter = new ProjectViewInitReporter();
-    project.getMessageBus().connect(loadStatisticsReporter).subscribe(ProjectViewListener.TOPIC, loadStatisticsReporter);
+    MessageBusConnection connection = project.getMessageBus().connect();
+    var loadStatisticsReporter = new ProjectViewInitReporter(connection);
+    connection.subscribe(ProjectViewListener.TOPIC, loadStatisticsReporter);
     project.getService(ProjectViewInitNotifier.class).initStarted();
 
     actionGroup = new DefaultActionGroup();
@@ -1020,7 +1012,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
               // ensure that it is still enabled after a while
               if (isAutoscrollFromSource(getCurrentViewId())) {
                 if (findFileEditor(editor) != null) {
-                  SelectInProjectViewImplKt.getLOG().debug("Invoking scroll from source because the editor has gained focus");
+                  LOG.debug("Invoking scroll from source because the editor has gained focus");
                   autoScrollFromSourceHandler.scrollFromSource();
                 }
               }
@@ -1122,7 +1114,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       target.setSubId(subId);
     }
     if (isAutoscrollFromSource(id)) {
-      SelectInProjectViewImplKt.getLOG().debug("Invoking scroll from source because the project view has changed panes");
+      LOG.debug("Invoking scroll from source because the project view has changed panes");
       autoScrollFromSourceHandler.scrollFromSource();
     }
   }
@@ -1201,14 +1193,14 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @Override
   public void select(final Object element, VirtualFile file, boolean requestFocus) {
-    if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-      SelectInProjectViewImplKt.getLOG().debug("select: element=" + element + ", file=" + file + ", requestFocus=" + requestFocus);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("select: element=" + element + ", file=" + file + ", requestFocus=" + requestFocus);
     }
     final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
     if (viewPane != null) {
       myAutoScrollOnFocusEditor.set(!requestFocus);
-      if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-        SelectInProjectViewImplKt.getLOG().debug("Delegating to AbstractProjectViewPane, auto scroll enabled="
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Delegating to AbstractProjectViewPane, auto scroll enabled="
                                                  + myAutoScrollOnFocusEditor.get());
       }
       viewPane.select(element, file, requestFocus);
@@ -1221,8 +1213,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     boolean requestFocus,
     @Nullable ActionCallback result
   ) {
-    if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-      SelectInProjectViewImplKt.getLOG().debug(
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(
         "ProjectViewImpl.select: " +
         "elementSupplier=" + elementSupplier +
         ", file=" + virtualFile +
@@ -1230,14 +1222,14 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         ", result=" + result
       );
     }
-    SelectInProjectViewImplKt.getLOG().debug("Starting a read action in background to retrieve the element from the supplier");
+    LOG.debug("Starting a read action in background to retrieve the element from the supplier");
     ReadAction
       .nonBlocking(elementSupplier::get)
       .finishOnUiThread(
         ModalityState.defaultModalityState(),
         element -> {
-          if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-            SelectInProjectViewImplKt.getLOG().debug("Retrieved the element from the supplier: " + element);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Retrieved the element from the supplier: " + element);
           }
           var callback = selectCB(element, virtualFile, requestFocus);
           if (result != null) {
@@ -1250,17 +1242,17 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @Override
   public @NotNull ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus) {
-    if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-      SelectInProjectViewImplKt.getLOG().debug("ProjectViewImpl.selectCB: element=" + element + ", file=" + file + ", requestFocus=" + requestFocus);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("ProjectViewImpl.selectCB: element=" + element + ", file=" + file + ", requestFocus=" + requestFocus);
     }
     final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-    if (viewPane instanceof AbstractProjectViewPaneWithAsyncSupport) {
+    if (viewPane instanceof AbstractProjectViewPane.ProjectViewPaneWithAsyncSelect asyncPane) {
       myAutoScrollOnFocusEditor.set(!requestFocus);
-      if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-        SelectInProjectViewImplKt.getLOG().debug("Delegating to AbstractProjectViewPaneWithAsyncSupport, auto scroll enabled="
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Delegating to ProjectViewPaneWithAsyncSelect, auto scroll enabled="
                                                  + myAutoScrollOnFocusEditor.get());
       }
-      return ((AbstractProjectViewPaneWithAsyncSupport)viewPane).selectCB(element, file, requestFocus);
+      return asyncPane.selectCB(element, file, requestFocus);
     }
     select(element, file, requestFocus);
     return ActionCallback.DONE;
@@ -1377,36 +1369,30 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return ActionCallback.REJECTED;
   }
 
-  private final class MyPanel extends JPanel implements UiDataProvider {
-    MyPanel() {
-      super(new BorderLayout());
-      Collection<AbstractProjectViewPane> snapshot = new ArrayList<>(idToPane.values());
-      ComponentUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS,
-                                      (Iterable<? extends Component>)(Iterable<JComponent>)() -> JBIterable.from(snapshot)
-                                        .map(pane -> {
-                                          JComponent last = null;
-                                          for (Component c : UIUtil.uiParents(pane.getComponentToFocus(), false)) {
-                                            if (c == this || !(c instanceof JComponent)) return null;
-                                            last = (JComponent)c;
-                                          }
-                                          return last;
-                                        })
-                                        .filter(Conditions.notNull())
-                                        .iterator());
-    }
+  private @NotNull Iterable<? extends Component> buildNotInHierarchyIterable() {
+    return () -> JBIterable.from(new ArrayList<>(idToPane.values()))
+      .map(pane -> {
+        JComponent last = null;
+        for (Component c : UIUtil.uiParents(pane.getComponentToFocus(), false)) {
+          if (c == myDataProvider || !(c instanceof JComponent)) return null;
+          last = (JComponent)c;
+        }
+        return last;
+      })
+      .filter(Component.class)
+      .iterator();
+  }
 
-    @Override
-    public void uiDataSnapshot(@NotNull DataSink sink) {
-      sink.set(PlatformDataKeys.CUT_PROVIDER, copyPasteDelegator.getCutProvider());
-      sink.set(PlatformDataKeys.COPY_PROVIDER, copyPasteDelegator.getCopyProvider());
-      sink.set(PlatformDataKeys.PASTE_PROVIDER, copyPasteDelegator.getPasteProvider());
-      sink.set(LangDataKeys.IDE_VIEW, myIdeView);
-      sink.set(PlatformCoreDataKeys.HELP_ID, HelpID.PROJECT_VIEWS);
-      sink.set(QuickActionProvider.KEY, ProjectViewImpl.this);
-      AbstractProjectViewPane selectedPane = getCurrentProjectViewPane();
-      if (selectedPane != null) {
-        DataSink.uiDataSnapshot(sink, selectedPane);
-      }
+  private void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformDataKeys.CUT_PROVIDER, copyPasteDelegator.getCutProvider());
+    sink.set(PlatformDataKeys.COPY_PROVIDER, copyPasteDelegator.getCopyProvider());
+    sink.set(PlatformDataKeys.PASTE_PROVIDER, copyPasteDelegator.getPasteProvider());
+    sink.set(LangDataKeys.IDE_VIEW, myIdeView);
+    sink.set(PlatformCoreDataKeys.HELP_ID, HelpID.PROJECT_VIEWS);
+    sink.set(QuickActionProvider.KEY, ProjectViewImpl.this);
+    AbstractProjectViewPane selectedPane = getCurrentProjectViewPane();
+    if (selectedPane != null) {
+      DataSink.uiDataSnapshot(sink, selectedPane);
     }
   }
 
@@ -1774,7 +1760,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     protected void selectElementFromEditor(@NotNull FileEditor fileEditor) {
       if (myProject.isDisposed() || !viewContentPanel.isShowing()) return;
       if (isAutoscrollFromSource(getCurrentViewId()) && !isCurrentProjectViewPaneFocused()) {
-        SelectInProjectViewImplKt.getLOG().debug("Invoking scroll from source because the selected editor tab has been changed");
+        LOG.debug("Invoking scroll from source because the selected editor tab has been changed");
         scrollFromSource(fileEditor, false);
       }
     }
@@ -1865,7 +1851,15 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   void selectOpenedFileUsingLastFocusedEditor() {
-    selectOpenedFile(getLastFocusedEditor());
+    // invokeLater is needed here to give FileEditorManagerImpl time to figure out which editor is the last focused one.
+    // If the IDE frame has just became active because the Select Opened File button was clicked,
+    // then the editor may temporarily get focus before the Project View is focused.
+    // This needs to be undone before we can select the right file.
+    // And no, there's no way to prevent that temporary focus.
+    // See com.intellij.openapi.fileEditor.impl.EditorsSplitters.MyFocusWatcher for the gore details.
+    SwingUtilities.invokeLater(() -> {
+      selectOpenedFile(getLastFocusedEditor());
+    });
   }
 
   void selectOpenedFile() {
@@ -1873,7 +1867,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private void selectOpenedFile(@Nullable FileEditor editor) {
-    SelectInProjectViewImplKt.getLOG().debug("Invoking scroll from source because Select Opened File was performed manually");
+    LOG.debug("Invoking scroll from source because Select Opened File was performed manually");
     autoScrollFromSourceHandler.scrollFromSource(editor, true);
   }
 
@@ -1884,8 +1878,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       result = fileEditorManagerImpl.getLastFocusedEditor();
     }
     if (result != null) {
-      if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-        SelectInProjectViewImplKt.getLOG().debug(
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(
           "Forcing use of the last focused editor to select opened file: " + result
         );
       }
@@ -2106,7 +2100,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         super.update(e);
         var presentation = e.getPresentation();
         presentation.setEnabledAndVisible(ApplicationManager.getApplication().isUnitTestMode());
-        if (ActionPlaces.isPopupPlace(e.getPlace())) {
+        if (e.isFromContextMenu()) {
           presentation.setIcon(null);
         }
         var pane = getCurrentProjectViewPane(e);
@@ -2171,9 +2165,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
-  private static final class ProjectViewInitReporter implements Disposable, ProjectViewListener {
-
+  private static final class ProjectViewInitReporter implements ProjectViewListener {
+    private final MessageBusConnection connection;
     private long initStarted;
+
+    ProjectViewInitReporter(@NotNull MessageBusConnection connection) {
+      this.connection = connection;
+    }
 
     @Override
     public void initStarted() {
@@ -2191,15 +2189,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     @Override
     public void initCompleted() {
+      connection.disconnect();
       if (initStarted == 0L) {
         LOG.warn(new Throwable("Project view initialized, but init hasn't even started yet"));
-        return;
       }
-      ProjectViewPerformanceCollector.logFullStateLoadDuration(System.currentTimeMillis() - initStarted);
-      Disposer.dispose(this);
+      else {
+        ProjectViewPerformanceCollector.logFullStateLoadDuration(System.currentTimeMillis() - initStarted);
+      }
     }
-
-    @Override
-    public void dispose() { }
   }
 }

@@ -53,6 +53,7 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
@@ -62,9 +63,9 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.ex.Range;
 import com.intellij.openapi.vcs.ex.*;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.vcs.ex.Range;
+import com.intellij.psi.*;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
@@ -73,21 +74,20 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -97,22 +97,23 @@ import static com.intellij.util.containers.ContainerUtil.ar;
 
 @ApiStatus.Internal
 public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
-  @NotNull protected final MergeModelBase<TextMergeChange.State> myModel;
+  protected final @NotNull MergeModelBase<TextMergeChange.State> myModel;
 
-  @NotNull protected final ModifierProvider myModifierProvider;
-  @NotNull protected final MyInnerDiffWorker myInnerDiffWorker;
-  @NotNull protected final SimpleLineStatusTracker myLineStatusTracker;
+  protected final @NotNull ModifierProvider myModifierProvider;
+  protected final @NotNull MyInnerDiffWorker myInnerDiffWorker;
+  protected final @NotNull SimpleLineStatusTracker myLineStatusTracker;
 
-  @NotNull protected final TextDiffProviderBase myTextDiffProvider;
+  protected final @NotNull TextDiffProviderBase myTextDiffProvider;
 
   // all changes - both applied and unapplied ones
-  @NotNull protected final List<TextMergeChange> myAllMergeChanges = new ArrayList<>();
-  @NotNull protected IgnorePolicy myCurrentIgnorePolicy;
+  protected final @NotNull List<TextMergeChange> myAllMergeChanges = new ArrayList<>();
+  protected @NotNull IgnorePolicy myCurrentIgnorePolicy;
 
   protected boolean myInitialRediffStarted;
   protected boolean myInitialRediffFinished;
   protected boolean myContentModified;
   protected boolean myResolveImportConflicts;
+  protected boolean myResolveImportsPossible;
 
   private List<PsiFile> myPsiFiles = new ArrayList<>();
 
@@ -123,9 +124,9 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   private MergeStatisticsAggregator myAggregator;
   private ChangeReferenceProcessor myChangeReferenceProcessor;
 
-  @NotNull protected final MergeContext myMergeContext;
-  @NotNull protected final TextMergeRequest myMergeRequest;
-  @NotNull protected final TextMergeViewer myTextMergeViewer;
+  protected final @NotNull MergeContext myMergeContext;
+  protected final @NotNull TextMergeRequest myMergeRequest;
+  protected final @NotNull TextMergeViewer myTextMergeViewer;
 
   public MergeThreesideViewer(@NotNull DiffContext context,
                               @NotNull ContentDiffRequest request,
@@ -200,9 +201,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   }
 
 
-  @NotNull
   @Override
-  protected List<AnAction> createToolbarActions() {
+  protected @NotNull List<AnAction> createToolbarActions() {
     List<AnAction> group = new ArrayList<>();
 
     DefaultActionGroup diffGroup = DefaultActionGroup.createPopupGroup(() -> ActionsBundle.message("group.compare.contents.text"));
@@ -236,9 +236,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     return group;
   }
 
-  @NotNull
   @Override
-  protected List<AnAction> createEditorPopupActions() {
+  protected @NotNull List<AnAction> createEditorPopupActions() {
     List<AnAction> group = new ArrayList<>();
 
     group.add(new ApplySelectedChangesAction(Side.LEFT));
@@ -259,9 +258,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     return group;
   }
 
-  @Nullable
   @Override
-  protected List<AnAction> createPopupActions() {
+  protected @Nullable List<AnAction> createPopupActions() {
     List<AnAction> group = new ArrayList<>(myTextDiffProvider.getPopupActions());
     group.add(Separator.getInstance());
     group.add(new MyToggleAutoScrollAction());
@@ -269,8 +267,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     return group;
   }
 
-  @Nullable
-  public Action getResolveAction(@NotNull final MergeResult result) {
+  public @Nullable Action getResolveAction(final @NotNull MergeResult result) {
     String caption = MergeUtil.getResolveActionTitle(result, myMergeRequest, myMergeContext);
     return new AbstractAction(caption) {
       @Override
@@ -301,7 +298,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     };
   }
 
-  protected void doFinishMerge(@NotNull final MergeResult result, @NotNull MergeResultSource source) {
+  protected void doFinishMerge(final @NotNull MergeResult result, @NotNull MergeResultSource source) {
     logMergeResult(result, source);
     destroyChangedBlocks();
     myMergeContext.finishMerge(result);
@@ -364,9 +361,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     doRediff();
   }
 
-  @NotNull
   @Override
-  protected Runnable performRediff(@NotNull ProgressIndicator indicator) {
+  protected @NotNull Runnable performRediff(@NotNull ProgressIndicator indicator) {
     throw new UnsupportedOperationException();
   }
 
@@ -396,8 +392,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
                                          ApplicationManager.getApplication().isUnitTestMode());
   }
 
-  @NotNull
-  protected Runnable doPerformRediff(@NotNull ProgressIndicator indicator) {
+  protected @NotNull Runnable doPerformRediff(@NotNull ProgressIndicator indicator) {
     try {
       List<CharSequence> sequences = new ArrayList<>();
 
@@ -409,10 +404,15 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
         sequences.addAll(ContainerUtil.map(contents, content -> content.getDocument().getImmutableCharSequence()));
         if (getTextSettings().isAutoResolveImportConflicts()) {
           initPsiFiles();
-          return MergeImportUtil.getImportMergeRange(myProject, myPsiFiles);
+          boolean canImportsBeProcessedAutomatically = canImportsBeProcessedAutomatically();
+          myResolveImportsPossible = canImportsBeProcessedAutomatically;
+          if (canImportsBeProcessedAutomatically) {
+            return MergeImportUtil.getImportMergeRange(myProject, myPsiFiles);
+          }
         }
         return null;
       });
+
       MergeLineFragmentsWithImportMetadata lineFragments = getLineFragments(indicator, sequences, importRange, ignorePolicy);
       List<LineOffsets> lineOffsets = ContainerUtil.map(sequences, LineOffsetsUtil::create);
       List<MergeConflictType> conflictTypes = ContainerUtil.map(lineFragments.getFragments(), fragment -> {
@@ -439,9 +439,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     }
   }
 
-  @NotNull
   @ApiStatus.Internal
-  public TextMergeRequest getMergeRequest() {
+  public @NotNull TextMergeRequest getMergeRequest() {
     return myMergeRequest;
   }
 
@@ -551,6 +550,34 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     }
   }
 
+  private boolean canImportsBeProcessedAutomatically() {
+    try {
+      return canSideBeProcessed(ThreeSide.LEFT) && canSideBeProcessed(ThreeSide.RIGHT);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+    return false;
+  }
+
+  private boolean canSideBeProcessed(ThreeSide side) {
+    if (DumbService.isDumb(myProject)) return false;
+    AtomicReference<Boolean> atLeastOnReferenceFound = new AtomicReference<>(false);
+    return SyntaxTraverser.psiTraverser(side.select(myPsiFiles))
+             .traverse(TreeTraversal.PLAIN_BFS)
+             .processEach(element -> {
+               PsiReference reference = element.getReference();
+               if (reference == null) return true;
+               atLeastOnReferenceFound.set(true);
+               if (reference.isSoft()) return true;
+               if (reference instanceof PsiPolyVariantReference multiReference) {
+                 return multiReference.multiResolve(false).length > 0;
+               }
+               PsiElement resolved = reference.resolve();
+               return resolved != null;
+             }) && atLeastOnReferenceFound.get();
+  }
+
   @Override
   @RequiresEdt
   protected void destroyChangedBlocks() {
@@ -583,10 +610,10 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   //
 
   protected class MyInnerDiffWorker {
-    @NotNull private final Set<TextMergeChange> myScheduled = new HashSet<>();
+    private final @NotNull Set<TextMergeChange> myScheduled = new HashSet<>();
 
-    @NotNull private final Alarm myAlarm = new Alarm(MergeThreesideViewer.this);
-    @Nullable private ProgressIndicator myProgress;
+    private final @NotNull Alarm myAlarm = new Alarm(MergeThreesideViewer.this);
+    private @Nullable ProgressIndicator myProgress;
 
     private boolean myEnabled = false;
 
@@ -686,11 +713,10 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       }
     }
 
-    @NotNull
     @RequiresBackgroundThread
-    private Runnable performRediff(@NotNull final List<? extends TextMergeChange> scheduled,
-                                   @NotNull final List<? extends InnerChunkData> data,
-                                   @NotNull final ProgressIndicator indicator) {
+    private @NotNull Runnable performRediff(final @NotNull List<? extends TextMergeChange> scheduled,
+                                            final @NotNull List<? extends InnerChunkData> data,
+                                            final @NotNull ProgressIndicator indicator) {
       ComparisonPolicy comparisonPolicy = myTextDiffProvider.getIgnorePolicy().getComparisonPolicy();
       final List<MergeInnerDifferences> result = new ArrayList<>(data.size());
       for (InnerChunkData chunkData : data) {
@@ -759,36 +785,30 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   // Getters
   //
 
-  @NotNull
-  public MergeModelBase getModel() {
+  public @NotNull MergeModelBase getModel() {
     return myModel;
   }
 
-  @NotNull
   @Override
-  public List<TextMergeChange> getAllChanges() {
+  public @NotNull List<TextMergeChange> getAllChanges() {
     return myAllMergeChanges;
   }
 
-  @NotNull
   @Override
-  public List<TextMergeChange> getChanges() {
+  public @NotNull @Unmodifiable List<TextMergeChange> getChanges() {
     return ContainerUtil.filter(myAllMergeChanges, mergeChange -> !mergeChange.isResolved());
   }
 
-  @NotNull
   @Override
-  protected DiffDividerDrawUtil.DividerPaintable getDividerPaintable(@NotNull Side side) {
+  protected @NotNull DiffDividerDrawUtil.DividerPaintable getDividerPaintable(@NotNull Side side) {
     return new MyDividerPaintable(side);
   }
 
-  @NotNull
-  public KeyboardModifierListener getModifierProvider() {
+  public @NotNull KeyboardModifierListener getModifierProvider() {
     return myModifierProvider;
   }
 
-  @NotNull
-  public EditorEx getEditor() {
+  public @NotNull EditorEx getEditor() {
     return getEditor(ThreeSide.BASE);
   }
 
@@ -954,9 +974,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       myInnerDiffWorker.scheduleRediff(change);
     }
 
-    @NotNull
     @Override
-    protected TextMergeChange.State storeChangeState(int index) {
+    protected @NotNull TextMergeChange.State storeChangeState(int index) {
       TextMergeChange change = myAllMergeChanges.get(index);
       return change.storeState();
     }
@@ -974,9 +993,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       if (wasResolved != change.isResolved()) onChangeResolved(change);
     }
 
-    @Nullable
     @Override
-    protected TextMergeChange.State processDocumentChange(int index, int oldLine1, int oldLine2, int shift) {
+    protected @Nullable TextMergeChange.State processDocumentChange(int index, int oldLine1, int oldLine2, int shift) {
       TextMergeChange.State state = super.processDocumentChange(index, oldLine1, oldLine2, shift);
 
       TextMergeChange mergeChange = myAllMergeChanges.get(index);
@@ -1237,7 +1255,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(final @NotNull AnActionEvent e) {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
       final ThreeSide side = getEditorSide(editor);
       if (editor == null || side == null) return;
@@ -1258,9 +1276,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
                                           lines -> ContainerUtil.exists(getAllChanges(), change -> isChangeSelected(change, lines, side)));
     }
 
-    @NotNull
     @RequiresEdt
-    protected List<TextMergeChange> getSelectedChanges(@NotNull ThreeSide side) {
+    protected @NotNull @Unmodifiable List<TextMergeChange> getSelectedChanges(@NotNull ThreeSide side) {
       EditorEx editor = getEditor(side);
       BitSet lines = DiffUtil.getSelectedLines(editor);
       return ContainerUtil.filter(getChanges(), change -> isChangeSelected(change, lines, side));
@@ -1273,8 +1290,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       return DiffUtil.isSelectedByLine(lines, line1, line2);
     }
 
-    @Nls
-    protected abstract String getText(@NotNull ThreeSide side);
+    protected abstract @Nls String getText(@NotNull ThreeSide side);
 
     protected abstract boolean isVisible(@NotNull ThreeSide side);
 
@@ -1298,7 +1314,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   }
 
   private class IgnoreSelectedChangesSideAction extends ApplySelectedChangesActionBase {
-    @NotNull private final Side mySide;
+    private final @NotNull Side mySide;
 
     IgnoreSelectedChangesSideAction(@NotNull Side side) {
       mySide = side;
@@ -1369,15 +1385,14 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     }
 
     @Override
-    protected @NotNull List<TextMergeChange> getSelectedChanges(@NotNull ThreeSide side) {
+    protected @Unmodifiable @NotNull List<TextMergeChange> getSelectedChanges(@NotNull ThreeSide side) {
       EditorEx editor = getEditor(side);
       BitSet lines = DiffUtil.getSelectedLines(editor);
       return ContainerUtil.filter(getAllChanges(), change -> isChangeSelected(change, lines, side));
     }
 
-    @Nls
     @Override
-    protected String getText(@NotNull ThreeSide side) {
+    protected @Nls String getText(@NotNull ThreeSide side) {
       return DiffBundle.message("action.presentation.diff.revert.text");
     }
 
@@ -1393,7 +1408,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   }
 
   private class ApplySelectedChangesAction extends ApplySelectedChangesActionBase {
-    @NotNull private final Side mySide;
+    private final @NotNull Side mySide;
 
     ApplySelectedChangesAction(@NotNull Side side) {
       mySide = side;
@@ -1423,7 +1438,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   }
 
   private class ResolveSelectedChangesAction extends ApplySelectedChangesActionBase {
-    @NotNull private final Side mySide;
+    private final @NotNull Side mySide;
 
     ResolveSelectedChangesAction(@NotNull Side side) {
       mySide = side;
@@ -1478,7 +1493,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   }
 
   public class ApplyNonConflictsAction extends DumbAwareAction {
-    @NotNull private final ThreeSide mySide;
+    private final @NotNull ThreeSide mySide;
 
     public ApplyNonConflictsAction(@NotNull ThreeSide side, @NotNull @Nls String text) {
       String id = side.select("Diff.ApplyNonConflicts.Left", "Diff.ApplyNonConflicts", "Diff.ApplyNonConflicts.Right");
@@ -1535,7 +1550,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   }
 
   private class ShowDiffWithBaseAction extends DumbAwareAction {
-    @NotNull private final ThreeSide mySide;
+    private final @NotNull ThreeSide mySide;
 
     ShowDiffWithBaseAction(@NotNull ThreeSide side) {
       mySide = side;
@@ -1578,7 +1593,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   //
 
   private class MyDividerPaintable implements DiffDividerDrawUtil.DividerPaintable {
-    @NotNull private final Side mySide;
+    private final @NotNull Side mySide;
 
     MyDividerPaintable(@NotNull Side side) {
       mySide = side;
@@ -1641,11 +1656,10 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       showAfterScroll(editor, range);
     }
 
-    @NotNull
     @Override
-    protected List<AnAction> createToolbarActions(@NotNull Editor editor,
-                                                  @NotNull com.intellij.openapi.vcs.ex.Range range,
-                                                  @Nullable Point mousePosition) {
+    protected @NotNull List<AnAction> createToolbarActions(@NotNull Editor editor,
+                                                           @NotNull com.intellij.openapi.vcs.ex.Range range,
+                                                           @Nullable Point mousePosition) {
       List<AnAction> actions = new ArrayList<>();
       actions.add(new LineStatusMarkerPopupActions.ShowPrevChangeMarkerAction(editor, myTracker, range, this));
       actions.add(new LineStatusMarkerPopupActions.ShowNextChangeMarkerAction(editor, myTracker, range, this));
@@ -1717,15 +1731,14 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   }
 
   private static class InnerChunkData {
-    @NotNull public final List<CharSequence> text;
+    public final @NotNull List<CharSequence> text;
 
     InnerChunkData(@NotNull TextMergeChange change, @NotNull List<? extends Document> documents) {
       text = getChunks(change, documents);
     }
 
-    @NotNull
-    private static List<CharSequence> getChunks(@NotNull TextMergeChange change,
-                                                @NotNull List<? extends Document> documents) {
+    private static @NotNull List<CharSequence> getChunks(@NotNull TextMergeChange change,
+                                                         @NotNull List<? extends Document> documents) {
       return ThreeSide.map(side -> {
         if (!change.isChange(side) || change.isResolved(side)) return null;
 

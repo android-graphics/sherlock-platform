@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
@@ -24,7 +24,6 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileAttributes;
@@ -33,7 +32,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
@@ -62,6 +60,7 @@ import org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
@@ -126,7 +125,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   }
 
   private boolean hasIndex() {
-    File buildDir = BuildManager.getInstance().getProjectSystemDirectory(project);
+    Path buildDir = BuildManager.getInstance().getProjectSystemDir(project);
     return !CompilerReferenceIndex.versionDiffers(buildDir, myReaderFactory.expectedIndexVersion());
   }
 
@@ -166,8 +165,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     BY_OS,
     BY_ROOT;
 
-    @NotNull
-    static FsCompilerReferenceType from(@Nullable String text) {
+    static @NotNull FsCompilerReferenceType from(@Nullable String text) {
       for (FsCompilerReferenceType type : values()) {
         if (type.name().equalsIgnoreCase(text)) {
           return type;
@@ -361,13 +359,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
 
   private boolean isServiceEnabledFor(PsiElement element) {
     if (!isActive() || isInsideLibraryScope()) return false;
-    Pair<PsiFile, Boolean> result = ReadAction.compute(
-      () -> new Pair<>(element.getContainingFile(),
-                       element instanceof PsiClass psiClass && psiClass.isRecord()));
-    if (result.second) {
-      return false; //a workaround until jps-javac-extension will not be fixed
-    }
-    PsiFile file = result.getFirst();
+    PsiFile file = ReadAction.compute(() -> element.getContainingFile());
     return file != null && !InjectedLanguageManager.getInstance(project).isInjectedFragment(file);
   }
 

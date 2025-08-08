@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.copyPaste;
 
@@ -30,6 +30,11 @@ public class FirLiteralTextToKotlinCopyPasteTestGenerated extends AbstractFirLit
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("AlreadyPrefixed.txt")
+    public void testAlreadyPrefixed() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/AlreadyPrefixed.txt");
+    }
+
     @TestMetadata("BrokenEntries.txt")
     public void testBrokenEntries() throws Exception {
         runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/BrokenEntries.txt");
@@ -38,6 +43,11 @@ public class FirLiteralTextToKotlinCopyPasteTestGenerated extends AbstractFirLit
     @TestMetadata("CustomTrimIndent.txt")
     public void testCustomTrimIndent() throws Exception {
         runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/CustomTrimIndent.txt");
+    }
+
+    @TestMetadata("IsolatedDollarsToPrefixedString.txt")
+    public void testIsolatedDollarsToPrefixedString() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/IsolatedDollarsToPrefixedString.txt");
     }
 
     @TestMetadata("MultiLine.txt")
@@ -58,6 +68,11 @@ public class FirLiteralTextToKotlinCopyPasteTestGenerated extends AbstractFirLit
     @TestMetadata("NoSpecialCharsToSingleQuote.txt")
     public void testNoSpecialCharsToSingleQuote() throws Exception {
         runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/NoSpecialCharsToSingleQuote.txt");
+    }
+
+    @TestMetadata("Stacktrace.txt")
+    public void testStacktrace() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/Stacktrace.txt");
     }
 
     @TestMetadata("TrailingLines.txt")

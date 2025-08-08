@@ -15,6 +15,7 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.KeyWithDefaultValue
+import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiWhiteSpace
@@ -45,17 +46,21 @@ internal class LanguageDetectionInspection : LocalInspectionTool() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     val file = holder.file
-    if (!isOnTheFly || InjectedLanguageManager.getInstance(holder.project).isInjectedFragment(
-        file) || GrazieInspection.ignoreGrammarChecking(file))
+    if (!isOnTheFly || InjectedLanguageManager.getInstance(holder.project).isInjectedFragment(file)
+        || GrazieInspection.ignoreGrammarChecking(file)
+        || InspectionProfileManager.hasTooLowSeverity(session, this)) {
       return PsiElementVisitor.EMPTY_VISITOR
+    }
 
     val domains = GrazieInspection.checkedDomains()
     val areChecksDisabled = GrazieInspection.getDisabledChecker(file)
     return object : PsiElementVisitor() {
       override fun visitElement(element: PsiElement) {
         if (element is PsiWhiteSpace || areChecksDisabled(element)) return
-        val context = session.getUserData(key)!!
         val texts = TextExtractor.findUniqueTextsAt(element, domains)
+        if (GrazieInspection.skipCheckingTooLargeTexts(texts)) return
+
+        val context = session.getUserData(key)!!
         texts.forEach {
           ProgressManager.checkCanceled()
           LangDetector.updateContext(it, context)

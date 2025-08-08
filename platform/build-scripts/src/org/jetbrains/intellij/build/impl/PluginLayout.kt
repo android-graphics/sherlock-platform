@@ -1,6 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import io.opentelemetry.api.common.AttributeKey
@@ -9,10 +7,8 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.JvmArchitecture
-import org.jetbrains.intellij.build.OsFamily
-import org.jetbrains.intellij.build.PluginBundlingRestrictions
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
 import java.nio.file.FileSystemException
@@ -25,18 +21,20 @@ typealias ResourceGenerator = suspend (Path, BuildContext) -> Unit
 /**
  * Describes layout of a plugin in the product distribution
  */
-class PluginLayout private constructor(
-  val mainModule: String,
-  mainJarNameWithoutExtension: String,
-  @Internal @JvmField val auto: Boolean = false,
-) : BaseLayout() {
-  constructor(mainModule: String, auto: Boolean = false) : this(
-    mainModule = mainModule,
-    mainJarNameWithoutExtension = convertModuleNameToFileName(mainModule),
-    auto = auto,
-  )
-
+class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean = false) : BaseLayout() {
+  private val mainJarNameWithoutExtension: String = convertModuleNameToFileName(mainModule)
   private var mainJarName = "$mainJarNameWithoutExtension.jar"
+
+  /** module name to name of the library */
+  @JvmField
+  internal val excludedLibraries: MutableMap<String?, MutableList<String>> = HashMap()
+
+  internal fun excludeProjectLibrary(libraryName: String) {
+    excludedLibraries.computeIfAbsent(null) { ArrayList() }.add(libraryName)
+  }
+
+  @TestOnly
+  fun isLibraryExcluded(name: String): Boolean = excludedLibraries[null]?.contains(name) == true
 
   var directoryName: String = mainJarNameWithoutExtension
     private set
@@ -75,7 +73,20 @@ class PluginLayout private constructor(
   var retainProductDescriptorForBundledPlugin: Boolean = false
   var enableSymlinksAndExecutableResources: Boolean = false
 
+  /**
+   * Should be `true` if the semantic versioning is enabled for the plugin in plugins.jetbrains.com.
+   * Then the plugin version will be checked against [org.jetbrains.intellij.build.impl.SemanticVersioningScheme].
+   */
+  var semanticVersioning: Boolean = false
+    private set
+
+  @JvmField
+  internal var modulesWithExcludedModuleLibraries: Set<String> = persistentSetOf()
+
   internal var resourceGenerators: PersistentList<ResourceGenerator> = persistentListOf()
+    private set
+
+  internal var customAssets: PersistentList<CustomAssetDescriptor> = persistentListOf()
     private set
 
   internal var platformResourceGenerators: PersistentMap<SupportedDistribution, PersistentList<ResourceGenerator>> = persistentMapOf()
@@ -95,7 +106,7 @@ class PluginLayout private constructor(
      * [org.jetbrains.intellij.build.ProductModulesLayout.bundledPluginModules],
      * [org.jetbrains.intellij.build.ProductModulesLayout.pluginModulesToPublish] list.
      *
-     * Note that project-level libraries on which the plugin modules depend are automatically put to 'IDE_HOME/lib' directory
+     * Note that project-level libraries on which the plugin modules depend are automatically put in the 'IDE_HOME/lib' directory
      * for all IDEs that are compatible with the plugin.
      * If this isn't desired (e.g., a library is used in a single plugin only or isn't bundled with IDEs to reduce the distribution size),
      * you may invoke [PluginLayoutSpec.withProjectLibrary] to include such a library to the plugin distribution.
@@ -103,7 +114,7 @@ class PluginLayout private constructor(
      * @param mainModuleName name of the module containing META-INF/plugin.xml file of the plugin
      */
     @JvmStatic
-    @Deprecated("Please use pluginAuto")
+    @Deprecated("Please use `pluginAuto` or `pluginAutoWithCustomDirName`")
     fun plugin(mainModuleName: String, auto: Boolean = false, body: (PluginLayoutSpec) -> Unit): PluginLayout {
       val layout = PluginLayout(mainModuleName, auto = auto)
 
@@ -119,11 +130,19 @@ class PluginLayout private constructor(
       return layout
     }
 
-    // we cannot break compatibility / risk to change existing plugin dir name
-    fun pluginAutoWithDeprecatedCustomDirName(mainModuleName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout {
-      @Suppress("DEPRECATION")
-      return plugin(mainModuleName, auto = true, body = body)
-    }
+    // we cannot break compatibility / risk to change the existing plugin dir name
+    @Suppress("DEPRECATION")
+    fun pluginAutoWithCustomDirName(mainModuleName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout =
+      plugin(mainModuleName, auto = true, body)
+
+    // we cannot break compatibility / risk to change the existing plugin dir name
+    @Suppress("DEPRECATION")
+    fun pluginAutoWithCustomDirName(mainModuleName: String, dirName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout =
+      plugin(mainModuleName, auto = true) { spec ->
+        spec.directoryName = dirName
+        spec.mainJarName = "${dirName}.jar"
+        body(spec)
+      }
 
     fun pluginAuto(moduleName: String, body: (SimplePluginLayoutSpec) -> Unit): PluginLayout = pluginAuto(listOf(moduleName), body)
 
@@ -160,20 +179,12 @@ class PluginLayout private constructor(
     }
   }
 
-  override fun toString(): String {
-    return "Plugin '$mainModule'" +
-           if (bundlingRestrictions == PluginBundlingRestrictions.NONE) "" else ", restrictions: $bundlingRestrictions"
-  }
+  override fun toString(): String =
+    "Plugin '$mainModule'" + (if (bundlingRestrictions == PluginBundlingRestrictions.NONE) "" else ", restrictions: $bundlingRestrictions")
 
-  override fun withModule(moduleName: String) {
-    if (moduleName.endsWith(".jps") || moduleName.endsWith(".rt")) {
-      // must be in a separate JAR
-      withModule(moduleName, "${convertModuleNameToFileName(moduleName)}.jar")
-    }
-    else {
-      withModule(moduleName, mainJarName)
-    }
-  }
+  override fun getRelativeJarPath(moduleName: String): String =
+    if (moduleName.endsWith(".jps") || moduleName.endsWith(".rt")) "${convertModuleNameToFileName(moduleName)}.jar"  // must be in a separate JAR
+    else mainJarName
 
   sealed class PluginLayoutBuilder(@JvmField protected val layout: PluginLayout) : BaseLayoutSpec(layout) {
     /**
@@ -181,8 +192,16 @@ class PluginLayout private constructor(
      */
     val bundlingRestrictions: PluginBundlingRestrictions.Builder = PluginBundlingRestrictions.Builder()
 
+    fun excludeModuleLibrary(libraryName: String, moduleName: String) {
+      layout.excludedLibraries.computeIfAbsent(moduleName) { ArrayList() }.add(libraryName)
+    }
+
+    fun excludeProjectLibrary(libraryName: String) {
+      layout.excludeProjectLibrary(libraryName)
+    }
+
     /**
-     * @param resourcePath path to resource file or directory relative to the plugin's main module content root
+     * @param resourcePath path to a resource file or directory relative to the plugin's main module content root
      * @param relativeOutputPath target path relative to the plugin root directory
      */
     fun withResource(resourcePath: String, relativeOutputPath: String) {
@@ -193,14 +212,22 @@ class PluginLayout private constructor(
       layout.resourceGenerators += generator
     }
 
+    fun withCustomAsset(lazySourceSupplier: (context: BuildContext) -> LazySource?) {
+      layout.customAssets += object : CustomAssetDescriptor {
+        override suspend fun getSources(context: BuildContext): Sequence<Source>? {
+          return sequenceOf(lazySourceSupplier(context) ?: return null)
+        }
+      }
+    }
+
     fun withGeneratedPlatformResources(os: OsFamily, arch: JvmArchitecture, generator: ResourceGenerator) {
       val key = SupportedDistribution(os, arch)
-      val newValue = layout.platformResourceGenerators.get(key)?.let { it + generator } ?: persistentListOf(generator)
+      val newValue = layout.platformResourceGenerators[key]?.let { it + generator } ?: persistentListOf(generator)
       layout.platformResourceGenerators += key to newValue
     }
 
     /**
-     * @param resourcePath path to resource file or directory relative to `moduleName` module content root
+     * @param resourcePath path to a resource file or directory relative to `moduleName` module content root
      * @param relativeOutputPath target path relative to the plugin root directory
      */
     fun withResourceFromModule(moduleName: String, resourcePath: String, relativeOutputPath: String) {
@@ -230,8 +257,16 @@ class PluginLayout private constructor(
     var directoryNameSetExplicitly: Boolean = false
       private set
 
-    val mainModule
+    val mainModule: String
       get() = layout.mainModule
+
+    /**
+     * @see [PluginLayout.semanticVersioning]
+     */
+    var semanticVersioning: Boolean = false
+      set(value) {
+        layout.semanticVersioning = value
+      }
 
     var mainJarName: String
       get() = layout.mainJarName
@@ -246,7 +281,7 @@ class PluginLayout private constructor(
       }
 
     /**
-     * @param binPathRelativeToCommunity path to resource file or directory relative to the intellij-community repo root
+     * @param binPathRelativeToCommunity path to a resource file or directory relative to the intellij-community repo root
      * @param outputPath target path relative to the plugin root directory
      */
     fun withBin(binPathRelativeToCommunity: String, outputPath: String, skipIfDoesntExist: Boolean = false) {
@@ -288,7 +323,7 @@ class PluginLayout private constructor(
     }
 
     /**
-     * @param resourcePath path to resource file or directory relative to the plugin's main module content root
+     * @param resourcePath path to a resource file or directory relative to the plugin's main module content root
      * @param relativeOutputFile target path relative to the plugin root directory
      */
     fun withResourceArchive(resourcePath: String, relativeOutputFile: String) {
@@ -296,7 +331,7 @@ class PluginLayout private constructor(
     }
 
     /**
-     * @param resourcePath path to resource file or directory relative to `moduleName` module content root
+     * @param resourcePath path to a resource file or directory relative to `moduleName` module content root
      * @param relativeOutputFile target path relative to the plugin root directory
      */
     fun withResourceArchiveFromModule(moduleName: String, resourcePath: String, relativeOutputFile: String) {
@@ -320,14 +355,6 @@ class PluginLayout private constructor(
      */
     fun pluginCompatibilityExactVersion() {
       layout.pluginCompatibilityExactVersion = true
-    }
-
-    /**
-     * This plugin will be compatible with IDE versions with the same two digits of the build number.
-     * See [org.jetbrains.intellij.build.CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE]
-     */
-    fun pluginCompatibilitySameRelease() {
-      layout.pluginCompatibilitySameRelease = true
     }
 
     /**
@@ -364,7 +391,7 @@ class PluginLayout private constructor(
      * If scramble tool is not defined, scramble toot will expect to find the script stub file at "[org.jetbrains.intellij.build.BuildPaths.projectHome]/plugins/`pluginName`/build/script.zkm.stub".
      * Project home cannot be used since it is not constant (for example, for Rider).
      *
-     * @param communityRelativePath - a path to a jar file relative to community project home directory
+     * @param communityRelativePath - a path to a jar file relative to the community project home directory
      */
     fun zkmScriptStub(communityRelativePath: String) {
       layout.zkmScriptStub = communityRelativePath
@@ -377,12 +404,14 @@ class PluginLayout private constructor(
      * Multiple invocations of this method will add corresponding plugin names to a list of name to be added to scramble classpath
      *
      * @param pluginMainModuleName - a name of the dependent plugin's directory, whose jars should be added to scramble classpath
-     * @param relativePath - a directory where jars should be searched (relative to plugin home directory, "lib" by default)
      */
     fun scrambleClasspathPlugin(pluginMainModuleName: String) {
       layout.scrambleClasspathPlugins = layout.scrambleClasspathPlugins.add(ScrambleClasspathPluginEntry(pluginMainModuleName = pluginMainModuleName, relativePath = null))
     }
 
+    /**
+     * @param relativePath - a directory where jars should be searched (relative to plugin home directory, "lib" by default)
+     */
     fun scrambleClasspathPlugin(pluginId: String, relativePath: String) {
       layout.scrambleClasspathPlugins = layout.scrambleClasspathPlugins.add(ScrambleClasspathPluginEntry(pluginMainModuleName = pluginId, relativePath = relativePath))
     }
@@ -462,7 +491,7 @@ data class PluginVersionEvaluatorResult(@JvmField val pluginVersion: String, @Jv
  * Think twice before using this API.
  */
 fun interface PluginVersionEvaluator {
-  fun evaluate(pluginXmlSupplier: () -> String, ideBuildVersion: String, context: BuildContext): PluginVersionEvaluatorResult
+  suspend fun evaluate(pluginXmlSupplier: suspend () -> String, ideBuildVersion: String, context: BuildContext): PluginVersionEvaluatorResult
 }
 
 private fun convertModuleNameToFileName(moduleName: String): String = moduleName.removePrefix("intellij.").replace('.', '-')

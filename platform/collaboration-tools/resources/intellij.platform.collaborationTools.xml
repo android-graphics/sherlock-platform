@@ -2,6 +2,7 @@
   <dependencies>
     <module name="intellij.platform.vcs.dvcs.impl"/>
     <module name="intellij.platform.vcs.log.impl"/>
+    <module name="intellij.platform.vcs.dvcs.impl.shared"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <themeMetadataProvider path="/META-INF/CollaborationTools.themeMetadata.json"/>
@@ -17,7 +18,7 @@
       implementation="com.intellij.collaboration.ui.codereview.action.CodeReviewShowDiffActionProvider$Standalone"/>-->
 
     <advancedSetting id="enable.combined.diff.for.codereview"
-                     default="true"
+                     default="false"
                      bundle="messages.CollaborationToolsBundle"
                      groupKey="advanced.settings.collab.tools"/>
   </extensions>
@@ -30,6 +31,17 @@
             class="com.intellij.collaboration.ui.codereview.editor.action.CodeReviewEditorShowFileDiffAction"
             icon="AllIcons.Actions.Diff">
       <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+    </action>
+
+    <action id="Code.Review.Editor.New.Comment"
+            class="com.intellij.collaboration.ui.codereview.editor.action.CodeReviewEditorNewCommentAction">
+      <keyboard-shortcut first-keystroke="control shift X" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="control shift X" keymap="Eclipse" remove="true"/>
+      <keyboard-shortcut first-keystroke="control shift X" keymap="Eclipse (Mac OS X)" remove="true"/>
+      <keyboard-shortcut first-keystroke="meta shift X" keymap="Eclipse (Mac OS X)" remove="true"/>
+      <keyboard-shortcut first-keystroke="control shift X" keymap="Emacs" remove="true"/>
+      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+      <add-to-group group-id="Diff.EditorPopupMenu" anchor="last"/>
     </action>
   </actions>
 </idea-plugin>

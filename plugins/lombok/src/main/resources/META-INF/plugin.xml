@@ -15,9 +15,9 @@
   <li><a href="https://projectlombok.org/features/experimental/FieldNameConstants">@FieldNameConstants</a></li>
   <li><a href="https://projectlombok.org/features/ToString.html">@ToString</a></li>
   <li><a href="https://projectlombok.org/features/EqualsAndHashCode.html">@EqualsAndHashCode</a></li>
-  <li><a href="https://projectlombok.org/features/Constructor.html">@AllArgsConstructor, @RequiredArgsConstructor and
+  <li><a href="https://projectlombok.org/features/constructor">@AllArgsConstructor, @RequiredArgsConstructor and
     @NoArgsConstructor</a></li>
-  <li><a href="https://projectlombok.org/features/Log.html">@Log, @Log4j, @Log4j2, @Slf4j, @XSlf4j, @CommonsLog,
+  <li><a href="https://projectlombok.org/features/log">@Log, @Log4j, @Log4j2, @Slf4j, @XSlf4j, @CommonsLog,
     @JBossLog, @Flogger, @CustomLog</a></li>
   <li><a href="https://projectlombok.org/features/Data.html">@Data</a></li>
   <li><a href="https://projectlombok.org/features/Builder.html">@Builder</a></li>
@@ -53,6 +53,7 @@
     <lang.psiAugmentProvider implementation="de.plushnikov.intellij.plugin.provider.LombokAugmentProvider"/>
     <lang.jvm.annotationPackageSupport implementation="de.plushnikov.intellij.plugin.provider.LombokAnnotationSupport"/>
     <lang.jvm.ignoreAnnotationParamSupport implementation="de.plushnikov.intellij.plugin.provider.LombokDefaultAnnotationParamSupport"/>
+    <lang.jvm.ignoreVariableCanBeFinalSupport implementation="de.plushnikov.intellij.plugin.provider.LombokIgnoreVariableCanBeFinalSupport"/>
     <implicitUsageProvider implementation="de.plushnikov.intellij.plugin.provider.LombokImplicitUsageProvider"/>
     <projectConfigurable groupId="language"
                          key="plugin.settings.title" bundle="messages.LombokBundle"
@@ -83,7 +84,7 @@
     <fileBasedIndex implementation="de.plushnikov.intellij.plugin.lombokconfig.LombokConfigIndex"/>
 
     <custom.exception.handler implementation="de.plushnikov.intellij.plugin.handler.SneakyThrowsExceptionHandler"/>
-    <java.error.fix errorCode="unhandled.exceptions" implementationClass="de.plushnikov.intellij.plugin.handler.AddSneakyThrowsAnnotationCommandAction"/>
+    <java.error.fix errorCode="exception.unhandled" implementationClass="de.plushnikov.intellij.plugin.handler.AddSneakyThrowsAnnotationCommandAction"/>
 
     <implicit.resource.closer
       implementation="de.plushnikov.intellij.plugin.extension.LombokCleanUpImplicitResourceCloser"/>

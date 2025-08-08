@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="ktor-client-auth" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-auth-jvm:2.3.8">
+    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-auth-jvm:3.0.3">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-auth-jvm/2.3.8/ktor-client-auth-jvm-2.3.8.jar">
-          <sha256sum>84217a164f8b562f3b69cb6482d6ba0af7da3bdc0a01306d7e1293685a90fe81</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-auth-jvm/3.0.3/ktor-client-auth-jvm-3.0.3.jar">
+          <sha256sum>e78ff6ab04f5c7ddbfd64e23039a325cc244ee9b6b813ed3806147db2cd4eae5</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-auth-jvm/2.3.8/ktor-client-auth-jvm-2.3.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-auth-jvm/3.0.3/ktor-client-auth-jvm-3.0.3.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-auth-jvm/2.3.8/ktor-client-auth-jvm-2.3.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-auth-jvm/3.0.3/ktor-client-auth-jvm-3.0.3-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

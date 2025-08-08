@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.jvm.descriptors;
 
 import com.intellij.codeInspection.dataFlow.*;
@@ -29,20 +29,24 @@ import java.util.Objects;
 public final class GetterDescriptor extends PsiVarDescriptor {
   private static final CallMatcher STABLE_METHODS = CallMatcher.anyOf(
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "getClass").parameterCount(0),
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "trim", "stripLeading", "stripTrailing", "strip").parameterCount(0),
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_ENUM, "name").parameterCount(0),
     CallMatcher.instanceCall("java.lang.reflect.Member", "getName", "getModifiers", "getDeclaringClass", "isSynthetic"),
     CallMatcher.instanceCall("java.lang.reflect.Executable", "getParameterCount", "isVarArgs"),
     CallMatcher.instanceCall("java.lang.reflect.Field", "getType"),
     CallMatcher.instanceCall("java.lang.reflect.Method", "getReturnType"),
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS, "getName", "isInterface", "isArray", "isPrimitive", "isSynthetic",
                              "isAnonymousClass", "isLocalClass", "isMemberClass", "getDeclaringClass", "getEnclosingClass",
-                             "getSimpleName", "getCanonicalName")
+                             "getSimpleName", "getCanonicalName"),
+    CallMatcher.instanceCall(CommonClassNames.JAVA_IO_FILE, "getName", "getParent", "getPath", "getAbsolutePath", 
+                             "getParentFile", "getAbsoluteFile", "toPath")
   );
   private final @NotNull PsiMethod myGetter;
   private final boolean myStable;
 
   public GetterDescriptor(@NotNull PsiMethod getter) {
     myGetter = getter;
-    if (STABLE_METHODS.methodMatches(getter) || getter instanceof LightRecordMethod) {
+    if (isKnownStableMethod(getter) || getter instanceof LightRecordMethod) {
       myStable = true;
     }
     else {
@@ -51,9 +55,12 @@ public final class GetterDescriptor extends PsiVarDescriptor {
     }
   }
 
-  @NotNull
+  public static boolean isKnownStableMethod(@NotNull PsiMethod getter) {
+    return STABLE_METHODS.methodMatches(getter);
+  }
+
   @Override
-  public String toString() {
+  public @NotNull String toString() {
     return myGetter.getName();
   }
 
@@ -63,9 +70,8 @@ public final class GetterDescriptor extends PsiVarDescriptor {
     return getSubstitutor(myGetter, qualifier).substitute(myGetter.getReturnType());
   }
 
-  @NotNull
   @Override
-  public PsiMethod getPsiElement() {
+  public @NotNull PsiMethod getPsiElement() {
     return myGetter;
   }
 
@@ -79,9 +85,8 @@ public final class GetterDescriptor extends PsiVarDescriptor {
     return true;
   }
 
-  @NotNull
   @Override
-  public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
+  public @NotNull DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
     if (myGetter.hasModifierProperty(PsiModifier.STATIC)) {
       return factory.getVarFactory().createVariableValue(this);
     }

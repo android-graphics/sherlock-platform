@@ -5,7 +5,6 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -13,7 +12,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class SplitJoinIntention : PsiElementBaseIntentionAction(), LowPriorityAction {
   protected abstract fun operation(): JoinOrSplit
 
@@ -71,6 +72,7 @@ abstract class SplitJoinIntention : PsiElementBaseIntentionAction(), LowPriority
     getListSplitJoinContext(element, operation())
 }
 
+@ApiStatus.Internal
 open class SplitLineIntention : SplitJoinIntention() {
   override fun getFamilyName(): String = CodeInsightBundle.message("intention.family.name.split.values")
   override fun operation(): JoinOrSplit = JoinOrSplit.SPLIT
@@ -82,6 +84,7 @@ open class SplitLineIntention : SplitJoinIntention() {
     splitJoinContext.getReplacementsForSplitting(data)
 }
 
+@ApiStatus.Internal
 open class JoinLinesIntention : SplitJoinIntention() {
   override fun getFamilyName(): String = CodeInsightBundle.message("intention.family.name.join.values")
   override fun operation(): JoinOrSplit = JoinOrSplit.JOIN

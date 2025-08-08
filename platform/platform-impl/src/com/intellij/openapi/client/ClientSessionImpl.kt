@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.client
 
 import com.intellij.codeWithMe.ClientId
-import com.intellij.codeWithMe.asContextElement2
+import com.intellij.codeWithMe.asContextElement
 import com.intellij.ide.plugins.ContainerDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
@@ -20,6 +20,8 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.projectAndScopeMethodType
 import com.intellij.openapi.project.impl.projectMethodType
+import com.intellij.platform.kernel.util.kernelCoroutineContext
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.executeRegisterTaskForOldContent
@@ -44,8 +46,11 @@ abstract class ClientSessionImpl(
   private val sharedComponentManager: ClientAwareComponentManager
 ) : ComponentManagerImpl(
   parent = null,
-  parentScope = GlobalScope,
-  additionalContext = clientId.asContextElement2(),
+  parentScope = GlobalScope.childScope(
+    "Client[$clientId] Session scope",
+    context = sharedComponentManager.getCoroutineScope().coroutineContext.kernelCoroutineContext()
+  ),
+  additionalContext = clientId.asContextElement(),
 ), ClientSession {
   final override val isLightServiceSupported: Boolean = false
   final override val isMessageBusSupported: Boolean = false
@@ -79,7 +84,7 @@ abstract class ClientSessionImpl(
   }
 
   final override suspend fun preloadService(service: ServiceDescriptor, serviceInterface: String) {
-    return ClientId.withClientId(clientId) {
+    return withContext(clientId.asContextElement()) {
       super.preloadService(service, serviceInterface)
     }
   }
@@ -113,16 +118,17 @@ abstract class ClientSessionImpl(
   }
 
   fun <T : Any> doGetService(serviceClass: Class<T>, createIfNeeded: Boolean, fallbackToShared: Boolean): T? {
-    if (!fallbackToShared && !hasComponent(serviceClass)) return null
+    if (!fallbackToShared && !createIfNeeded && !hasComponent(serviceClass)) return null
 
-    val clientService = ClientId.withClientId(clientId) {
+    val clientService = ClientId.withExplicitClientId(clientId) {
       super.doGetService(serviceClass = serviceClass, createIfNeeded = createIfNeeded)
     }
     if (clientService != null || !fallbackToShared) {
       return clientService
     }
 
-    if (createIfNeeded && !type.isLocal) {
+    // frontend service as well as a local one should be redirected to a shared in the case when fallbackToShared == true
+    if (createIfNeeded && !type.isLocal && !type.isFrontend) {
       val sessionsManager = sharedComponentManager.getService(ClientSessionsManager::class.java)
       val localSession = sessionsManager?.getSession(ClientId.localId) as? ClientSessionImpl
 
@@ -133,8 +139,8 @@ abstract class ClientSessionImpl(
       }
     }
 
-    ClientId.withClientId(ClientId.localId) {
-      return if (createIfNeeded) {
+    return ClientId.withExplicitClientId(ClientId.localId) {
+      return@withExplicitClientId if (createIfNeeded) {
         sharedComponentManager.getService(serviceClass)
       }
       else {
@@ -159,6 +165,11 @@ abstract class ClientSessionImpl(
 
   final override fun toString(): String {
     return "${javaClass.name}(type=${type}, clientId=$clientId)"
+  }
+
+  override fun debugString(short: Boolean): String {
+    val className = if (short) javaClass.simpleName else javaClass.name
+    return "$className::$type#$clientId"
   }
 }
 

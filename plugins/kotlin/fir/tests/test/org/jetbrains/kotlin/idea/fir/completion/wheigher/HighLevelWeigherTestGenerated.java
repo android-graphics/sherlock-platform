@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.completion.wheigher;
 
@@ -578,6 +578,11 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
         @TestMetadata("LambdaSignature.kt")
         public void testLambdaSignature() throws Exception {
             runTest("../../completion/testData/weighers/basic/LambdaSignature.kt");
+        }
+
+        @TestMetadata("LocalCallableForLoop.kt")
+        public void testLocalCallableForLoop() throws Exception {
+            runTest("../../completion/testData/weighers/basic/LocalCallableForLoop.kt");
         }
 
         @TestMetadata("LocalClass.kt")

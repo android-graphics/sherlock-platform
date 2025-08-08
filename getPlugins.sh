@@ -11,7 +11,7 @@ readonly AS_BUILD_NUMBER="$(sed 's/\.SNAPSHOT$//' build.txt)"
 # When we pull a new IntelliJ platform, we must update this SNAPSHOT value.
 # This can be automated (e.g., search all git tags for this prefix), but
 # the benefit doesn't seem worth the time spent on automating it.
-readonly SNAPSHOT="142"
+readonly SNAPSHOT="121"
 
 readonly TAG="idea/${AS_BUILD_NUMBER}.${SNAPSHOT}"
 

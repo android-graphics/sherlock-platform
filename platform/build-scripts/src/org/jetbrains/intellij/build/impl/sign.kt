@@ -1,10 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.jetbrains.signatureverifier.ILogger
 import com.jetbrains.signatureverifier.InvalidDataException
 import com.jetbrains.signatureverifier.crypt.SignatureVerificationParams
@@ -22,11 +20,12 @@ import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.io.suspendAwareReadZipFile
 import org.jetbrains.intellij.build.io.transformZipUsingTempFile
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.channels.SeekableByteChannel
@@ -38,13 +37,13 @@ import java.util.concurrent.TimeUnit
 import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.name
+import kotlin.io.path.relativeTo
 
-private fun isMacLibrary(name: String): Boolean =
+internal fun isMacLibrary(name: String): Boolean =
   name.endsWith(".jnilib") ||
   name.endsWith(".dylib") ||
   name.endsWith(".so") ||
-  name.endsWith(".tbd") ||
-  name.endsWith(".node")
+  name.endsWith(".tbd")
 
 internal fun CoroutineScope.recursivelySignMacBinaries(root: Path,
                                                        context: BuildContext,
@@ -53,7 +52,7 @@ internal fun CoroutineScope.recursivelySignMacBinaries(root: Path,
   val binaries = mutableListOf<Path>()
 
   Files.walkFileTree(root, object : SimpleFileVisitor<Path>() {
-    override fun visitFile(file: Path, attrs: BasicFileAttributes?): FileVisitResult {
+    override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
       val relativePath = root.relativize(file)
       val name = file.fileName.toString()
       if (name.endsWith(".jar") || name.endsWith(".zip")) {
@@ -68,14 +67,14 @@ internal fun CoroutineScope.recursivelySignMacBinaries(root: Path,
     }
   })
 
-  launch {
+  launch(CoroutineName("signing macOS binaries")) {
     signMacBinaries(binaries.filter {
       isMacBinary(it) && !isSigned(it)
     }, context)
   }
 
   for (file in archives) {
-    launch {
+    launch(CoroutineName("signing macOS binaries in ${file.relativeTo(root)}")) {
       signAndRepackZipIfMacSignaturesAreMissing(file, context)
     }
   }
@@ -118,20 +117,20 @@ private suspend fun signAndRepackZipIfMacSignaturesAreMissing(zip: Path, context
   }
 }
 
-private fun copyZipReplacing(origin: Path, entries: Map<String, Path>, context: BuildContext) {
+private suspend fun copyZipReplacing(origin: Path, entries: Map<String, Path>, context: BuildContext) {
   spanBuilder("replacing unsigned entries in zip")
     .setAttribute("zip", origin.toString())
     .setAttribute(AttributeKey.stringArrayKey("unsigned"), entries.keys.toList())
     .use {
-      transformZipUsingTempFile(origin) { zipWriter ->
-        val packageIndexBuilder = PackageIndexBuilder()
+      val packageIndexBuilder = PackageIndexBuilder()
+      transformZipUsingTempFile(file = origin, indexWriter = packageIndexBuilder.indexWriter) { zipWriter ->
         readZipFile(origin) { name, dataSupplier ->
           packageIndexBuilder.addFile(name)
           if (entries.containsKey(name)) {
-            zipWriter.file(name, entries.getValue(name), packageIndexBuilder.indexWriter)
+            zipWriter.file(name, entries.getValue(name))
           }
           else {
-            zipWriter.uncompressedData(name, dataSupplier(), packageIndexBuilder.indexWriter)
+            zipWriter.uncompressedData(name, dataSupplier())
           }
         }
         packageIndexBuilder.writePackageIndex(zipWriter)
@@ -180,7 +179,7 @@ internal suspend fun signMacBinaries(files: List<Path>,
   span.setAttribute("contentType", "application/x-mac-app-bin")
   span.setAttribute(AttributeKey.stringArrayKey("files"), files.map { it.name })
   val options = signingOptions(contentType = "application/x-mac-app-bin", context = context).putAll(m = additionalOptions)
-  span.useWithScope {
+  span.use {
     context.proprietaryBuildTools.signTool.signFiles(files = files, context = context, options = options)
     if (!permissions.isEmpty()) {
       // SRE-1223 workaround
@@ -241,7 +240,7 @@ internal suspend fun isSigned(byteChannel: SeekableByteChannel, binaryId: String
     val signatureData = try {
       binary.GetSignatureData()
     }
-    catch (ignored: InvalidDataException) {
+    catch (_: InvalidDataException) {
       return@all false
     }
 
@@ -252,7 +251,7 @@ internal suspend fun isSigned(byteChannel: SeekableByteChannel, binaryId: String
     val signedMessage = try {
       SignedMessage.CreateInstance(signatureData)
     }
-    catch (ignored: Exception) {
+    catch (_: Exception) {
       // assuming Signature=adhoc
       return@all false
     }

@@ -15,11 +15,13 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class ImportIntoShelfAction extends DumbAwareAction {
   public ImportIntoShelfAction() {
     super(VcsBundle.messagePointer("action.ImportIntoShelfAction.text"),
@@ -41,7 +43,12 @@ public final class ImportIntoShelfAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) return;
+    importPatchesToShelf(project);
+  }
+
+  public static List<ShelvedChangeList> importPatchesToShelf(@NotNull Project project) {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, true);
+    List<ShelvedChangeList> addedLists = new ArrayList<>();
     FileChooser.chooseFiles(descriptor, project, null, files -> {
       //gatherPatchFiles
       final ProgressManager pm = ProgressManager.getInstance();
@@ -62,6 +69,7 @@ public final class ImportIntoShelfAction extends DumbAwareAction {
         final List<VcsException> exceptions = new ArrayList<>();
         final List<ShelvedChangeList> lists =
           shelveChangesManager.importChangeLists(patchTypeFiles, e1 -> exceptions.add(e1));
+        addedLists.addAll(lists);
         if (!lists.isEmpty()) {
           ShelvedChangesViewManager.getInstance(project).activateView(lists.get(lists.size() - 1));
         }
@@ -73,5 +81,6 @@ public final class ImportIntoShelfAction extends DumbAwareAction {
         }
       }, VcsBundle.message("import.patches.into.shelf"), true, project);
     });
+    return addedLists;
   }
 }

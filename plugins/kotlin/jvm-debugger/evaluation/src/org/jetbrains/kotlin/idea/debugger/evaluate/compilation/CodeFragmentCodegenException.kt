@@ -1,18 +1,21 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
+import com.intellij.debugger.engine.DebuggerUtils
+import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.readText
+import com.sun.jdi.InvocationException
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.LOG
 import org.jetbrains.kotlin.psi.KtCodeFragment
 
 class CodeFragmentCodegenException(val reason: Throwable) : Exception()
 
-internal fun reportErrorWithAttachments(
+fun reportErrorWithAttachments(
     executionContext: ExecutionContext,
     codeFragment: KtCodeFragment,
     reason: Throwable,
@@ -33,11 +36,25 @@ internal fun reportErrorWithAttachments(
         return "${location.method()} at line ${location.lineNumber()}"
     }
 
+    var e2: Throwable? = null
+    val messageFromTargetJvm = try {
+        ((reason as? EvaluateException)?.cause as? InvocationException)?.exception()?.let {
+            DebuggerUtils.tryExtractExceptionMessage(it)
+        }
+    } catch (e: Throwable) {
+        e2 = e
+        null
+    }
+
+    val message = messageFromTargetJvm?.let { "$headerMessage: Target JVM Message: $it" } ?: headerMessage
+
     val selectedFrame = executionContext.frameProxy
     val debuggerContext = """
             project: $projectName
             session: $sessionName
             location: ${frameToLocation(selectedFrame)}
+            suspend context: ${suspendContext}
+            message: $message
         """.trimIndent()
 
     val suspendStackTrace = suspendContext.thread?.frames()?.joinToString(System.lineSeparator()) { frame ->
@@ -63,8 +80,7 @@ internal fun reportErrorWithAttachments(
         }
     }
 
-    LOG.error(
-        "$headerMessage. Details in attachments.",
-        RuntimeExceptionWithAttachments(reason, *attachments.toTypedArray())
-    )
+    LOG.error(message, RuntimeExceptionWithAttachments(reason, *attachments.toTypedArray()))
+
+    e2?.let { throw it }
 }

@@ -17,13 +17,32 @@ import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.utils.Printer
 import java.io.File
 
-open class ProjectResolveModel(val modules: List<ResolveModule>) {
+open class ProjectResolveModel(
+    val mode: ProjectResolveMode,
+    val modules: List<ResolveModule>
+) {
     open class Builder {
+        var mode: ProjectResolveMode = ProjectResolveMode.MultiPlatform
         val modules: MutableList<ResolveModule.Builder> = mutableListOf()
 
-        open fun build(): ProjectResolveModel = ProjectResolveModel(modules.map { it.build() })
+        open fun build(): ProjectResolveModel = ProjectResolveModel(
+            mode = mode, modules = modules.map { it.build() }
+        )
     }
 
+}
+
+
+enum class ProjectResolveMode {
+    /**
+     * Like a simple jps or Kotlin/JVM project
+     */
+    SinglePlatform,
+
+    /**
+     * Also equal to HMPP (Hierarchical Multiplatform or MPPv3)
+     */
+    MultiPlatform
 }
 
 open class ResolveModule(
@@ -33,6 +52,7 @@ open class ResolveModule(
     val dependencies: List<ResolveDependency>,
     testRootProvider: () -> File? = { null },
     val additionalCompilerArgs: String? = null,
+    val sourceRootProvider: () -> File? = { null },
 ) {
     val root: File by lazy {
         rootProvider()
@@ -42,6 +62,10 @@ open class ResolveModule(
         testRootProvider()
     }
 
+    val sourceRoot: File? by lazy {
+        sourceRootProvider()
+    }
+
     constructor(
         name: String,
         root: File,
@@ -49,7 +73,15 @@ open class ResolveModule(
         dependencies: List<ResolveDependency>,
         testRoot: File? = null,
         additionalCompilerArgs: String? = null,
-    ) : this(name, rootProvider = { root }, platform, dependencies, testRootProvider = { testRoot }, additionalCompilerArgs)
+        sourceRoot: File? = null,
+    ) : this(
+        name,
+        rootProvider = { root },
+        platform,
+        dependencies,
+        testRootProvider = { testRoot },
+        additionalCompilerArgs,
+        sourceRootProvider = { sourceRoot })
 
     final override fun toString(): String {
         return buildString { renderDescription(Printer(this)) }
@@ -60,20 +92,17 @@ open class ResolveModule(
         printer.pushIndent()
         printer.println("platform=$platform")
         printer.println("root=${root.absolutePath}")
+        sourceRoot?.let { printer.println("sourceRoot=${it.absolutePath}") }
         testRoot?.let { testRoot -> printer.println("testRoot=${testRoot.absolutePath}") }
         printer.println("dependencies=${dependencies.joinToString { it.to.name }}")
-        if (additionalCompilerArgs != null)  printer.println("additionalCompilerArgs=$additionalCompilerArgs")
+        if (additionalCompilerArgs != null) printer.println("additionalCompilerArgs=$additionalCompilerArgs")
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as ResolveModule
-
-        if (name != other.name) return false
-
-        return true
+        return other is ResolveModule && name == other.name
     }
 
     override fun hashCode(): Int {
@@ -84,6 +113,7 @@ open class ResolveModule(
         private var state: State = State.NOT_BUILT
         private var cachedResult: ResolveModule? = null
 
+        var mode: ProjectResolveMode = ProjectResolveMode.MultiPlatform
         var name: String? = null
         var root: File? = null
         var platform: TargetPlatform? = null
@@ -98,7 +128,8 @@ open class ResolveModule(
             state = State.BUILDING
 
             val builtDependencies = dependencies.map { it.build() }
-            cachedResult = ResolveModule(name!!, root!!, platform!!, builtDependencies, testRoot, additionalCompilerArgs= additionalCompilerArgs)
+            cachedResult =
+                ResolveModule(name!!, root!!, platform!!, builtDependencies, testRoot, additionalCompilerArgs = additionalCompilerArgs)
             state = State.BUILT
 
             return cachedResult!!
@@ -117,7 +148,9 @@ sealed class ResolveLibrary(
     rootProvider: () -> File,
     platform: TargetPlatform,
     val kind: PersistentLibraryKind<*>?,
-) : ResolveModule(name, rootProvider = rootProvider, platform, emptyList()) {
+    sourceRootProvider: () -> File? = { null },
+) : ResolveModule(name, rootProvider = rootProvider, platform, dependencies = emptyList(), sourceRootProvider = sourceRootProvider) {
+
     constructor(name: String, root: File, platform: TargetPlatform, kind: PersistentLibraryKind<*>?) : this(name, { root }, platform, kind)
 
     class Builder(val target: ResolveLibrary) : ResolveModule.Builder() {
@@ -130,14 +163,17 @@ sealed class Stdlib(
     rootProvider: () -> File,
     platform: TargetPlatform,
     kind: PersistentLibraryKind<*>?,
-) : ResolveLibrary(name, rootProvider, platform, kind) {
+    sourceRootProvider: () -> File? = { null }
+) : ResolveLibrary(name, rootProvider, platform, kind, sourceRootProvider = sourceRootProvider) {
 
     object CommonStdlib : Stdlib(
         "stdlib-common",
         { TestKotlinArtifacts.kotlinStdlibCommon },
         CommonPlatforms.defaultCommonPlatform,
         KotlinCommonLibraryKind,
+        sourceRootProvider = { TestKotlinArtifacts.kotlinStdlibCommonSources }
     )
+
     object NativeStdlib : Stdlib(
         "stdlib-native-by-host",
         { TestKotlinArtifacts.kotlinStdlibNative },
@@ -150,6 +186,7 @@ sealed class Stdlib(
         { TestKotlinArtifacts.kotlinStdlib },
         JvmPlatforms.defaultJvmPlatform,
         null,
+        sourceRootProvider = { TestKotlinArtifacts.kotlinStdlibSources }
     )
 
     object JsStdlib : Stdlib(

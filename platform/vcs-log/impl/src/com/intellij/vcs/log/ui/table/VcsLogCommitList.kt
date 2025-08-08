@@ -38,13 +38,13 @@ interface VcsLogCommitListModel {
    *
    * @see com.intellij.vcs.log.VcsLogDataProvider.getCommitIndex
    */
-  fun getId(row: Int): Int
+  fun getId(row: Int): Int?
 }
 
-fun VcsLogCommitListModel.getCommitId(row: Int): CommitId? {
-  return dataProvider.getCommitId(getId(row))
+internal fun VcsLogCommitListModel.getCommitId(row: Int): CommitId? {
+  return getId(row)?.let(dataProvider::getCommitId)
 }
 
-fun VcsLogCommitListModel.getCachedCommitMetadata(row: Int): VcsCommitMetadata? {
-  return dataProvider.commitMetadataCache.getCachedData(getId(row))
+internal fun VcsLogCommitListModel.getCachedCommitMetadata(row: Int): VcsCommitMetadata? {
+  return getId(row)?.let(dataProvider.commitMetadataCache::getCachedData)
 }

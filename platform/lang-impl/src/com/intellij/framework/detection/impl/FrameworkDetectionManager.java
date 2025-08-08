@@ -26,11 +26,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.FileBasedIndex;
 import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 public final class FrameworkDetectionManager implements FrameworkDetectionIndexListener, Disposable {
   private static final Logger LOG = Logger.getInstance(FrameworkDetectionManager.class);
@@ -143,17 +145,19 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
       myDetectorsToProcess.clear();
     }
 
-    String names = StringUtil.join(frameworkNames, ", ");
-    String text = ProjectBundle.message("framework.detected.info.text", names, frameworkNames.size());
-    NotificationGroupManager.getInstance().getNotificationGroup("Framework Detection")
-      .createNotification(ProjectBundle.message("notification.title.frameworks.detected"), text, NotificationType.INFORMATION)
-      .addAction(new NotificationAction(IdeBundle.messagePointer("action.Anonymous.text.configure")) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          showSetupFrameworksDialog(notification);
-        }
-      })
-      .notify(myProject);
+    if (!frameworkNames.isEmpty()) {
+      String names = StringUtil.join(frameworkNames, ", ");
+      String text = ProjectBundle.message("framework.detected.info.text", names, frameworkNames.size());
+      NotificationGroupManager.getInstance().getNotificationGroup("Framework Detection")
+        .createNotification(ProjectBundle.message("notification.title.frameworks.detected"), text, NotificationType.INFORMATION)
+        .addAction(new NotificationAction(IdeBundle.messagePointer("action.Anonymous.text.configure")) {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+            showSetupFrameworksDialog(notification);
+          }
+        })
+        .notify(myProject);
+    }
   }
 
   private void showSetupFrameworksDialog(Notification notification) {

@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.rename
 
+import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -10,9 +11,11 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
+import org.jetbrains.kotlin.idea.k2.refactoring.getThisQualifier
 import org.jetbrains.kotlin.idea.refactoring.conflicts.filterCandidates
 import org.jetbrains.kotlin.idea.refactoring.conflicts.registerRetargetJobOnPotentialCandidates
 import org.jetbrains.kotlin.idea.refactoring.conflicts.renderDescription
@@ -70,7 +73,7 @@ fun checkClassLikeNameShadowing(declaration: KtNamedDeclaration, newName: String
             val klass = it.psi
             val newFqName = (klass as? KtClassOrObject)?.fqName ?: (klass as? PsiClass)?.qualifiedName?.let { FqName.fromSegments(it.split(".")) }
             if (newFqName != null && klass != null && processedClasses.add(klass)) {
-                for (ref in ReferencesSearch.search(klass, declaration.useScope)) {
+                for (ref in ReferencesSearch.search(klass, declaration.useScope).asIterable()) {
                     val refElement = ref.element as? KtSimpleNameExpression ?: continue //todo cross language conflicts
                     if (refElement.getStrictParentOfType<KtTypeReference>() != null) {
                         //constructor (also implicit) calls would be processed together with other callables
@@ -99,7 +102,8 @@ fun checkCallableShadowing(
         val usage = usageIterator.next()
         val refElement = usage.element as? KtSimpleNameExpression ?: continue
         if (refElement.getStrictParentOfType<KtTypeReference>() != null ||
-            refElement.getStrictParentOfType<KtImportDirective>() != null) continue
+            refElement.getStrictParentOfType<KtImportDirective>() != null ||
+            refElement.parent is KtValueArgumentName) continue
 
         val parent = refElement.parent
         val callExpression = parent as? KtCallExpression ?: parent as? KtQualifiedExpression ?: parent as? KtCallableReferenceExpression ?: refElement
@@ -114,7 +118,12 @@ fun checkCallableShadowing(
             //offsets are required because context is ignored in KtPsiFactory and codeFragment is always created with eventsEnabled on,
             //meaning that you can't change it without WA which is here not allowed, because conflict checking is under RA in progress
             val copyCallExpression =
-                PsiTreeUtil.getParentOfType(codeFragment.findElementAt(offsetInCopy.startOffset), false, callExpression.javaClass)
+                CodeInsightUtilCore.findElementInRange(codeFragment.containingFile,
+                                                       offsetInCopy.startOffset,
+                                                       offsetInCopy.endOffset + newName.length - declaration.nameAsSafeName.asString().length,
+                                                       callExpression.javaClass,
+                                                       KotlinLanguage.INSTANCE)
+
             val resolveCall = copyCallExpression?.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
             val resolvedSymbol = resolveCall?.partiallyAppliedSymbol?.symbol
             if (resolvedSymbol is KaSyntheticJavaPropertySymbol) {
@@ -260,26 +269,12 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
         val appliedSymbol = callExpression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
         val receiver = appliedSymbol?.extensionReceiver ?: appliedSymbol?.dispatchReceiver
 
-        fun getThisQualifier(receiverValue: KaImplicitReceiverValue): String {
-            val symbol = receiverValue.symbol
-            return if ((symbol as? KaClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT) {
-                //specify companion name to avoid clashes with enum entries
-                symbol.name!!.asString()
-            } else if (symbol is KaClassifierSymbol && symbol !is KaAnonymousObjectSymbol) {
-                "this@" + symbol.name!!.asString()
-            } else if (symbol is KaReceiverParameterSymbol && symbol.owningCallableSymbol is KaNamedSymbol) {
-                receiverValue.type.expandedSymbol?.name?.let { "this@$it" } ?: "this"
-            } else {
-                "this"
-            }
-        }
-
         fun getExplicitQualifier(receiverValue: KaExplicitReceiverValue): String? {
             val containingSymbol = appliedSymbol?.symbol?.containingDeclaration
             val enumClassSymbol = containingSymbol?.containingDeclaration
             //add companion qualifier to avoid clashes with enum entries
-            return if (containingSymbol is KaNamedClassOrObjectSymbol && containingSymbol.classKind == KaClassKind.COMPANION_OBJECT &&
-                enumClassSymbol is KaNamedClassOrObjectSymbol && enumClassSymbol.classKind == KaClassKind.ENUM_CLASS &&
+            return if (containingSymbol is KaNamedClassSymbol && containingSymbol.classKind == KaClassKind.COMPANION_OBJECT &&
+                enumClassSymbol is KaNamedClassSymbol && enumClassSymbol.classKind == KaClassKind.ENUM_CLASS &&
                 (receiverValue.expression as? KtNameReferenceExpression)?.mainReference?.resolve() == containingSymbol.psi
             ) {
                 containingSymbol.name.asString()
@@ -312,7 +307,7 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
                     } else if (containingSymbol == null) {
                         (symbol?.psi as? KtElement)?.containingKtFile?.packageFqName
                     } else null
-                containerFQN?.asString()?.takeIf { it.isNotEmpty() }
+                containerFQN?.quoteIfNeeded()?.asString()?.takeIf { it.isNotEmpty() }
             }
         } ?: return null
 

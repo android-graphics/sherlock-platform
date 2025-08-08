@@ -25,8 +25,9 @@ class InvokerService {
     fun getInstance(): InvokerService = ApplicationManager.getApplication().getService<InvokerService>(InvokerService::class.java)
 
     private const val BACKEND_JMX_PORT_PROPERTY = "rdct.tests.backendJmxPort"
-    private const val JMX_BACKEND_IP = "127.0.0.1"
+    private const val BACKEND_JMX_HOST_PROPERTY = "rdct.tests.backendJmxHost"
     private val jmxBackendPort = System.getProperty(BACKEND_JMX_PORT_PROPERTY)
+    private val jmxBackendHost = System.getProperty(BACKEND_JMX_HOST_PROPERTY, "127.0.0.1")
     private val log = Logger.getInstance(InvokerService::class.java)
   }
 
@@ -50,13 +51,13 @@ class InvokerService {
   @Throws(JMException::class)
   fun register(tracerSupplier: Supplier<out IJTracer?>,
                timedContextSupplier: Supplier<out Context?>,
-               screenshotAction: (String) -> String) {
+               screenshotAction: (String) -> String?) {
     val objectName = ObjectName("com.intellij.driver:type=Invoker")
     val server = ManagementFactory.getPlatformMBeanServer()
 
     val localInvoker = Invoker(rdTarget, tracerSupplier, timedContextSupplier, screenshotAction)
 
-    val remoteJmxAddress = jmxBackendPort?.let { "$JMX_BACKEND_IP:$it" }
+    val remoteJmxAddress = jmxBackendPort?.let { "$jmxBackendHost:$it" }
 
     if (PlatformUtils.isJetBrainsClient() && remoteJmxAddress != null) {
       log.info("Remote Dev Mode, $remoteJmxAddress")

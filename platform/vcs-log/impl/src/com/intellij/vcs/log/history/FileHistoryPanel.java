@@ -2,6 +2,8 @@
 package com.intellij.vcs.log.history;
 
 import com.intellij.diff.impl.DiffEditorViewer;
+import com.intellij.diff.tools.util.DiffDataKeys;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -12,7 +14,6 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
@@ -25,8 +26,6 @@ import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
-import com.intellij.util.ui.update.Activatable;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.vcs.log.UnsupportedHistoryFiltersException;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogBundle;
@@ -38,10 +37,13 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.*;
 import com.intellij.vcs.log.ui.details.CommitDetailsListPanel;
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
+import com.intellij.vcs.log.ui.frame.CommitDetailsLoader;
 import com.intellij.vcs.log.ui.frame.ComponentQuickActionProvider;
 import com.intellij.vcs.log.ui.frame.FrameDiffPreview;
 import com.intellij.vcs.log.ui.frame.VcsLogCommitSelectionListenerForDetails;
+import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
+import com.intellij.vcs.log.ui.table.VcsLogTableCommitSelectionListener;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -97,8 +99,15 @@ class FileHistoryPanel extends JPanel implements UiDataProvider, Disposable {
     myFileHistoryModel = fileHistoryModel;
     myProperties = logUi.getProperties();
 
-    myGraphTable = new VcsLogGraphTable(logUi.getId(), logData, logUi.getProperties(), colorManager,
-                                        () -> logUi.requestMore(EmptyRunnable.INSTANCE), disposable) {
+    GraphTableModel graphTableModel = new GraphTableModel(
+      logData,
+      () -> logUi.requestMore(EmptyRunnable.INSTANCE),
+      logUi.getProperties()
+    );
+    myGraphTable = new VcsLogGraphTable(logUi.getId(), graphTableModel, logUi.getProperties(), colorManager,
+                                        (commitHash) -> VcsLogNavigationUtil.jumpToHash(logUi, commitHash, false, true),
+                                        disposable) {
+
       @Override
       protected void updateEmptyText() {
         VisiblePack visiblePack = getModel().getVisiblePack();
@@ -129,8 +138,21 @@ class FileHistoryPanel extends JPanel implements UiDataProvider, Disposable {
         return Unit.INSTANCE;
       });
     });
-    VcsLogCommitSelectionListenerForDetails.install(myGraphTable, myDetailsPanel, this,
-                                                    VcsLogColorManagerFactory.create(Collections.singleton(myRoot)));
+
+    CommitDetailsLoader<VcsCommitMetadata> commitDetailsLoader = new CommitDetailsLoader<>(logData.getMiniDetailsGetter(), this,
+                                                                                           VcsLogCommitSelectionListenerForDetails.MAX_COMMITS_TO_LOAD);
+
+    VcsLogCommitSelectionListenerForDetails listenerForDetails =
+      new VcsLogCommitSelectionListenerForDetails(logData, VcsLogColorManagerFactory.create(Collections.singleton(myRoot)),
+                                                  myDetailsPanel, this);
+    commitDetailsLoader.addListener(listenerForDetails);
+    VcsLogTableCommitSelectionListener tableCommitSelectionListener = new VcsLogTableCommitSelectionListener(myGraphTable) {
+      @Override
+      protected void handleSelection(@NotNull List<@NotNull Integer> commitIds) {
+        commitDetailsLoader.loadDetails(commitIds);
+      }
+    };
+    myGraphTable.getSelectionModel().addListSelectionListener(tableCommitSelectionListener);
 
     myDetailsSplitter = new OnePixelSplitter(true, "vcs.log.history.details.splitter.proportion", 0.7f);
     JComponent tableWithProgress = VcsLogUiUtil.installScrollingAndProgress(myGraphTable, this);
@@ -153,9 +175,8 @@ class FileHistoryPanel extends JPanel implements UiDataProvider, Disposable {
     setLayout(new BorderLayout());
     myFrameDiffPreview = new FrameDiffPreview(myProperties, tablePanel, "vcs.history.diff.splitter.proportion",
                                               0.7f, this) {
-      @NotNull
       @Override
-      protected DiffEditorViewer createViewer() {
+      protected @NotNull DiffEditorViewer createViewer() {
         FileHistoryDiffProcessor processor = createDiffPreview(false);
         processor.setToolbarVerticalSizeReferent(myToolbar);
         return processor;
@@ -236,6 +257,7 @@ class FileHistoryPanel extends JPanel implements UiDataProvider, Disposable {
   @NotNull
   FileHistoryDiffProcessor createDiffPreview(boolean isInEditor) {
     FileHistoryDiffProcessor diffPreview = new FileHistoryDiffProcessor(myProject, () -> getSelectedChange(), isInEditor, this);
+
     ListSelectionListener selectionListener = e -> {
       int[] selection = myGraphTable.getSelectedRows();
       ApplicationManager.getApplication().invokeLater(() -> diffPreview.updatePreview(),
@@ -251,15 +273,10 @@ class FileHistoryPanel extends JPanel implements UiDataProvider, Disposable {
                                                         o -> Disposer.isDisposed(diffPreview));
       }
     };
-    UiNotifyConnector.installOn(diffPreview.getComponent(), new Activatable() {
-      @Override
-      public void showNotify() {
-        diffPreview.updatePreview();
-      }
-    });
-
     myGraphTable.getModel().addTableModelListener(modelListener);
     Disposer.register(diffPreview, () -> myGraphTable.getModel().removeTableModelListener(modelListener));
+
+    DiffUtil.installShowNotifyListener(diffPreview.getComponent(), () -> diffPreview.updatePreview());
 
     return diffPreview;
   }
@@ -277,7 +294,7 @@ class FileHistoryPanel extends JPanel implements UiDataProvider, Disposable {
     sink.set(VcsLogInternalDataKeys.VCS_LOG_VISIBLE_ROOTS, Collections.singleton(myRoot));
     sink.set(VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION, false);
     sink.set(VcsLogInternalDataKeys.LOG_DIFF_HANDLER, myFileHistoryModel.getDiffHandler());
-    sink.set(EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW, myEditorDiffPreview);
+    sink.set(DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW, myEditorDiffPreview);
     sink.set(VcsLogInternalDataKeys.FILE_HISTORY_MODEL, myFileHistoryModel.createSnapshot());
     sink.set(QuickActionProvider.KEY, new ComponentQuickActionProvider(this));
     sink.set(PlatformCoreDataKeys.HELP_ID, HELP_ID);

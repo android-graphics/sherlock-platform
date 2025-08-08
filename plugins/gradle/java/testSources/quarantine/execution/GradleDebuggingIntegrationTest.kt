@@ -4,14 +4,56 @@ package org.jetbrains.plugins.gradle.quarantine.execution
 import com.intellij.openapi.util.io.systemIndependentPath
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.execution.GradleDebuggingIntegrationTestCase
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isJunit5Supported
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 import java.io.File
+import java.util.*
 
 class GradleDebuggingIntegrationTest : GradleDebuggingIntegrationTestCase() {
+
+  @Test
+  //The general availability of the Gradle Configuration Cache was announced only since Gradle 8.1
+  @TargetVersions("8.1+")
+  fun `gradle configuration cache is not corrupted between run and debug`() {
+    createGradlePropertiesFile(content = "org.gradle.configuration-cache=true".trimIndent())
+
+    val message = UUID.randomUUID().toString()
+
+    importProject {
+      withMavenCentral()
+      applyPlugin("java")
+
+      addPostfix("""
+        task myTask {
+          dependsOn 'clean'
+          dependsOn 'build'
+          doFirst {
+            System.out.println("$message")
+          }
+          outputs.cacheIf { true }
+        }
+      """.trimIndent())
+    }
+
+    val runOutput = executeRunConfiguration("myTask", isDebugServerProcess = false)
+    assertThat(runOutput)
+      .contains("Configuration cache entry stored.")
+      .contains("0 problems were found storing the configuration cache.")
+      .contains("BUILD SUCCESSFUL")
+      .contains(message)
+
+    val debugOutput = executeRunConfiguration("myTask", isDebugServerProcess = true)
+    assertThat(debugOutput)
+      .contains("Configuration cache entry reused.")
+      .doesNotContain("configuration cache cannot be reused")
+      .doesNotContain("Configuration cache entry stored.")
+      .contains("BUILD SUCCESSFUL")
+      .contains(message)
+  }
 
   @Test
   fun `daemon is started with debug flags only if script debugging is enabled`() {
@@ -283,5 +325,44 @@ class GradleDebuggingIntegrationTest : GradleDebuggingIntegrationTestCase() {
     assertDebugJvmArgs(":module:printArgs", moduleArgsFile, shouldBeStarted = false)
     assertDebugJvmArgs(":composite:printArgs", compositeArgsFile, shouldBeStarted = false)
     assertDebugJvmArgs(":composite:module:printArgs", compositeModuleArgsFile)
+  }
+
+  @Test
+  fun `test tasks debugging for test task`() {
+    val jUnitTestAnnotationClass = when (isJunit5Supported(currentGradleVersion)) {
+      true -> "org.junit.jupiter.api.Test"
+      else -> "org.junit.Test"
+    }
+    createProjectSubFile("src/test/java/TestCase.java", """
+      |import java.io.BufferedWriter;
+      |import java.io.FileWriter;
+      |import java.io.IOException;
+      |import java.lang.management.ManagementFactory;
+      |import java.lang.management.RuntimeMXBean;
+      |import java.util.List;
+      |
+      |public class TestCase {
+      |
+      |  @$jUnitTestAnnotationClass
+      |  public void test() {
+      |    RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
+      |    List<String> jvmArgs = runtimeMxBean.getInputArguments();
+      |
+      |    try (BufferedWriter os = new BufferedWriter(new FileWriter("args.txt", false))) {
+      |      os.write(jvmArgs.toString());
+      |    } catch (IOException e) {
+      |      throw new RuntimeException(e);
+      |    }
+      |  }
+      |}
+    """.trimMargin())
+
+    importProject {
+      withJavaPlugin()
+      withJUnit()
+    }
+
+    executeRunConfiguration(":test")
+    assertDebugJvmArgs(":test", File(projectPath, "args.txt"))
   }
 }

@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.org.objectweb.asm.Type;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class TypeRepr {
   private static final byte PRIMITIVE_TYPE = 0x0;
   private static final byte CLASS_TYPE = 0x1;
@@ -22,7 +24,8 @@ public final class TypeRepr {
 
   }
 
-  interface AbstractType extends RW.Savable {
+  @ApiStatus.Internal
+  public interface AbstractType extends RW.Savable {
     AbstractType[] EMPTY_TYPE_ARRAY = new AbstractType[0];
 
     void updateClassUsages(DependencyContext context, int owner, Set<? super UsageRepr.Usage> s);

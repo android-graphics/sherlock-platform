@@ -6,19 +6,21 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.ContributedReferenceHost;
+import com.intellij.psi.PsiLiteralValue;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceService.Hints;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.ast.PyAstStringLiteralExpression;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
@@ -26,14 +28,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.List;
 
 public class PyStringLiteralExpressionImpl extends PyElementImpl implements PyStringLiteralExpression, PsiLiteralValue, ContributedReferenceHost {
 
-  @Nullable private volatile String myStringValue;
-  @Nullable private volatile List<TextRange> myValueTextRanges;
-  @Nullable private volatile List<Pair<TextRange, String>> myDecodedFragments;
+  private volatile @Nullable String myStringValue;
+  private volatile @Nullable List<TextRange> myValueTextRanges;
+  private volatile @Nullable List<Pair<TextRange, String>> myDecodedFragments;
 
   public PyStringLiteralExpressionImpl(ASTNode astNode) {
     super(astNode);
@@ -53,8 +54,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   @Override
-  @NotNull
-  public List<TextRange> getStringValueTextRanges() {
+  public @NotNull List<TextRange> getStringValueTextRanges() {
     List<TextRange> result = myValueTextRanges;
     if (result == null) {
       myValueTextRanges = result = PyStringLiteralExpression.super.getStringValueTextRanges();
@@ -63,19 +63,10 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   @Override
-  @NotNull
-  public List<Pair<TextRange, String>> getDecodedFragments() {
-    final int elementStart = getTextRange().getStartOffset();
+  public @NotNull List<Pair<TextRange, String>> getDecodedFragments() {
     List<Pair<TextRange, String>> result = myDecodedFragments;
     if (result == null) {
-      final List<Pair<TextRange, String>> combined = StreamEx.of(getStringElements())
-        .flatMap(node -> StreamEx.of(node.getDecodedFragments())
-          .map(pair -> {
-            final int nodeRelativeOffset = node.getTextRange().getStartOffset() - elementStart;
-            return Pair.create(pair.getFirst().shiftRight(nodeRelativeOffset), pair.getSecond());
-          }))
-        .toList();
-      myDecodedFragments = result = combined;
+      myDecodedFragments = result = PyStringLiteralExpression.super.getDecodedFragments();
     }
     return result;
   }
@@ -93,38 +84,20 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       .anyMatch(element -> !element.getFragments().isEmpty());
   }
 
-  @NotNull
   @Override
-  public String getStringValue() {
+  public @NotNull String getStringValue() {
     //ASTNode child = getNode().getFirstChildNode();
     //assert child != null;
     String result = myStringValue;
     if (result == null) {
-      final StringBuilder out = new StringBuilder();
-      for (Pair<TextRange, String> fragment : getDecodedFragments()) {
-        out.append(fragment.getSecond());
-      }
-      myStringValue = result = out.toString();
+      myStringValue = result = PyStringLiteralExpression.super.getStringValue();
     }
     return result;
   }
 
-  @Nullable
   @Override
-  public Object getValue() {
+  public @Nullable Object getValue() {
     return getStringValue();
-  }
-
-  @Override
-  public TextRange getStringValueTextRange() {
-    List<TextRange> allRanges = getStringValueTextRanges();
-    if (allRanges.size() == 1) {
-      return allRanges.get(0);
-    }
-    if (allRanges.size() > 1) {
-      return allRanges.get(0).union(allRanges.get(allRanges.size() - 1));
-    }
-    return new TextRange(0, getTextLength());
   }
 
   @Override
@@ -141,6 +114,16 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     final ASTNode firstNode = ContainerUtil.getFirstItem(getStringNodes());
     if (firstNode != null) {
       if (firstNode.getElementType() == PyElementTypes.FSTRING_NODE) {
+        String prefix = PyStringLiteralCoreUtil.getPrefix(firstNode.getText());
+        if (PyStringLiteralUtil.isTemplatePrefix(prefix)) {
+          if (languageLevel.isOlderThan(LanguageLevel.PYTHON314)) {
+            return PyBuiltinCache.getInstance(this).getStrType();
+          }
+          PyClassType templateClassType = getTemplateClassType();
+          if (templateClassType != null) {
+            return templateClassType;
+          }
+        }
         // f-strings can't have "b" prefix, so they are always unicode
         return builtinCache.getUnicodeType(languageLevel);
       }
@@ -163,6 +146,15 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return builtinCache.getStrType();
   }
 
+  private @Nullable PyClassType getTemplateClassType() {
+    PyPsiFacade facade = PyPsiFacade.getInstance(getProject());
+    PyClass templateClass = facade.createClassByQName(PyNames.TEMPLATELIB_TEMPLATE, getContainingFile());
+    if (templateClass != null) {
+      return facade.createClassType(templateClass, false);
+    }
+    return null;
+  }
+
   @Override
   public final PsiReference @NotNull [] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this, Hints.NO_HINTS);
@@ -181,9 +173,8 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
         return getStringValue();
       }
 
-      @Nullable
       @Override
-      public String getLocationString() {
+      public @Nullable String getLocationString() {
         String packageForFile = PyElementPresentation.getPackageForFile(getContainingFile());
         return packageForFile != null ? String.format("(%s)", packageForFile) : null;
       }
@@ -196,97 +187,8 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   @Override
-  @NotNull
-  public LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
-    return new StringLiteralTextEscaper(this);
-  }
-
-  private static class StringLiteralTextEscaper extends LiteralTextEscaper<PyStringLiteralExpression> {
-    private final PyStringLiteralExpressionImpl myHost;
-
-    protected StringLiteralTextEscaper(@NotNull PyStringLiteralExpressionImpl host) {
-      super(host);
-      myHost = host;
-    }
-
-    @Override
-    public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull final StringBuilder outChars) {
-      for (Pair<TextRange, String> fragment : myHost.getDecodedFragments()) {
-        final TextRange encodedTextRange = fragment.getFirst();
-        final TextRange intersection = encodedTextRange.intersection(rangeInsideHost);
-        if (intersection != null && !intersection.isEmpty()) {
-          final String value = fragment.getSecond();
-          final String intersectedValue;
-          if (value.codePointCount(0, value.length()) == 1 || value.length() == intersection.getLength()) {
-            intersectedValue = value;
-          }
-          else {
-            final int start = Math.max(0, rangeInsideHost.getStartOffset() - encodedTextRange.getStartOffset());
-            final int end = Math.min(value.length(), start + intersection.getLength());
-            intersectedValue = value.substring(start, end);
-          }
-          outChars.append(intersectedValue);
-        }
-      }
-      return true;
-    }
-
-    @Override
-    public int getOffsetInHost(final int offsetInDecoded, @NotNull final TextRange rangeInsideHost) {
-      int offset = 0; // running offset in the decoded fragment
-      int endOffset = -1;
-      for (Pair<TextRange, String> fragment : myHost.getDecodedFragments()) {
-        final TextRange encodedTextRange = fragment.getFirst();
-        final TextRange intersection = encodedTextRange.intersection(rangeInsideHost);
-        if (intersection != null && !intersection.isEmpty()) {
-          final String value = fragment.getSecond();
-          final int valueLength = value.length();
-          final int intersectionLength = intersection.getLength();
-          if (valueLength == 0) {
-            return -1;
-          }
-          // A long unicode escape of form \U01234567 can be decoded into a surrogate pair
-          else if (value.codePointCount(0, valueLength) == 1) {
-            if (offset == offsetInDecoded) {
-              return intersection.getStartOffset();
-            }
-            offset += valueLength;
-          }
-          else {
-            // Literal fragment without escapes: it's safe to use intersection length instead of value length
-            if (offset + intersectionLength >= offsetInDecoded) {
-              final int delta = offsetInDecoded - offset;
-              return intersection.getStartOffset() + delta;
-            }
-            offset += intersectionLength;
-          }
-          endOffset = intersection.getEndOffset();
-        }
-      }
-      // XXX: According to the real use of getOffsetInHost() it should return the correct host offset for the offset in decoded at the
-      // end of the range inside host, not -1
-      if (offset == offsetInDecoded) {
-        return endOffset;
-      }
-      return -1;
-    }
-
-    @Override
-    public boolean isOneLine() {
-      return true;
-    }
-
-    @NotNull
-    @Override
-    public TextRange getRelevantTextRange() {
-      return myHost.getStringValueTextRange();
-    }
-  }
-
-  @Override
   public int valueOffsetToTextOffset(int valueOffset) {
     return createLiteralTextEscaper().getOffsetInHost(valueOffset, getStringValueTextRange());
   }
-
 
 }

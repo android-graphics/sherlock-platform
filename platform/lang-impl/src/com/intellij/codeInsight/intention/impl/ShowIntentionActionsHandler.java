@@ -12,6 +12,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.IntentionSource;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewEditor;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewUnsupportedOperationException;
@@ -24,19 +25,15 @@ import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.ide.lightEdit.LightEdit;
-import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.statistic.IntentionFUSCollector;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.ModCommandExecutor;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.modcommand.ModCommandService;
+import com.intellij.modcommand.ModCommandWithContext;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -47,10 +44,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -60,7 +54,6 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
 import com.intellij.util.TripleFunction;
 import com.intellij.util.concurrency.ThreadingAssertions;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -150,7 +143,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     boolean useAlternativeResolve = dumbService.isAlternativeResolveEnabled();
     ThrowableComputable<CachedIntentions, RuntimeException> prioritizedRunnable =
       () -> ProgressManager.getInstance().computePrioritized(() -> {
-        DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
+        DaemonCodeAnalyzerImpl.waitForLazyQuickFixesUnderCaret(file, editor);
         return ReadAction.compute(() -> CachedIntentions.createAndUpdateActions(
           project, file, editor,
           ShowIntentionsPass.getActionsToShow(editor, file)));
@@ -159,7 +152,9 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       useAlternativeResolve
       ? () -> dumbService.computeWithAlternativeResolveEnabled(prioritizedRunnable)
       : prioritizedRunnable;
-    return ProgressManager.getInstance().runProcessWithProgressSynchronously(process, progressTitle, true, project);
+    return WriteIntentReadAction.compute((Computable<CachedIntentions>)() ->
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(process, progressTitle, true, project)
+    );
   }
 
   private static void letAutoImportComplete(@NotNull Editor editor, @NotNull PsiFile file, DaemonCodeAnalyzerImpl codeAnalyzer) {
@@ -286,18 +281,47 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     }
   }
 
+  /**
+   * Chooses a file and editor between host and injected files for the given intention action and invokes the action within a command.
+   */
   public static boolean chooseActionAndInvoke(@NotNull PsiFile hostFile,
                                               @Nullable Editor hostEditor,
                                               @NotNull IntentionAction action,
                                               @NotNull @NlsContexts.Command String commandName) {
-    return chooseActionAndInvoke(hostFile, hostEditor, action, commandName, -1);
+    return chooseActionAndInvoke(hostFile, hostEditor, action, commandName, -1, IntentionSource.OTHER);
   }
 
+  /**
+   * Chooses a file and editor between host and injected files for the given intention action and invokes the action within a command.
+   */
+  public static boolean chooseActionAndInvoke(@NotNull PsiFile hostFile,
+                                              @Nullable Editor hostEditor,
+                                              @NotNull IntentionAction action,
+                                              @NotNull @NlsContexts.Command String commandName,
+                                              @NotNull IntentionSource source) {
+    return chooseActionAndInvoke(hostFile, hostEditor, action, commandName, -1, source);
+  }
+
+  /**
+   * Chooses a file and editor between host and injected files for the given intention action and invokes the action within a command.
+   */
   public static boolean chooseActionAndInvoke(@NotNull PsiFile hostFile,
                                               @Nullable Editor hostEditor,
                                               @NotNull IntentionAction action,
                                               @NotNull @NlsContexts.Command String commandName,
                                               int fixOffset) {
+    return chooseActionAndInvoke(hostFile, hostEditor, action, commandName, fixOffset, IntentionSource.OTHER);
+  }
+
+  /**
+   * Chooses a file and editor between host and injected files for the given intention action and invokes the action within a command.
+   */
+  public static boolean chooseActionAndInvoke(@NotNull PsiFile hostFile,
+                                              @Nullable Editor hostEditor,
+                                              @NotNull IntentionAction action,
+                                              @NotNull @NlsContexts.Command String commandName,
+                                              int fixOffset,
+                                              @NotNull IntentionSource source) {
     Project project = hostFile.getProject();
     ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFixesStats().registerInvocation();
 
@@ -305,13 +329,13 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       ModCommandAction commandAction = action.asModCommandAction();
       if (commandAction != null) {
-        invokeCommandAction(hostFile, hostEditor, commandName, commandAction, fixOffset);
+        invokeCommandAction(hostFile, hostEditor, commandName, commandAction, fixOffset, source);
       }
       else {
         Pair<PsiFile, Editor> pair = chooseFileForAction(hostFile, hostEditor, action);
         if (pair == null) return false;
         CommandProcessor.getInstance().executeCommand(project, () ->
-          invokeIntention(action, pair.second, pair.first, fixOffset), commandName, null);
+          invokeIntention(action, pair.second, pair.first, fixOffset, source), commandName, null);
         checkPsiTextConsistency(hostFile);
       }
     }
@@ -321,54 +345,16 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   private static void invokeCommandAction(@NotNull PsiFile hostFile,
                                           @Nullable Editor hostEditor,
                                           @NotNull @NlsContexts.Command String commandName,
-                                          @NotNull ModCommandAction commandAction, int fixOffset) {
-    record ContextAndCommand(@NotNull ActionContext context, @NotNull ModCommand command) { }
-    ThrowableComputable<ContextAndCommand, RuntimeException> computable =
-      () -> ReadAction.nonBlocking(() -> {
-          ActionContext context = chooseContextForAction(hostFile, hostEditor, commandAction, fixOffset);
-          if (context == null) return null;
-          return new ContextAndCommand(context, commandAction.perform(context));
-        })
-        .expireWhen(() -> hostFile.getProject().isDisposed())
-        .executeSynchronously();
-    ContextAndCommand contextAndCommand = ProgressManager.getInstance().
-      runProcessWithProgressSynchronously(computable, commandName, true, hostFile.getProject());
+                                          @NotNull ModCommandAction commandAction, int fixOffset,
+                                          @NotNull IntentionSource source) {
+    ModCommandWithContext
+      contextAndCommand = ModCommandService.getInstance().chooseFileAndPerform(hostFile, hostEditor, commandAction, fixOffset);
     if (contextAndCommand == null) return;
+
     ActionContext context = contextAndCommand.context();
     Project project = context.project();
-    IntentionFUSCollector.record(project, commandAction, context.file().getLanguage(), hostEditor, fixOffset);
-    CommandProcessor.getInstance().executeCommand(project, () -> {
-      ModCommandExecutor.getInstance().executeInteractively(context, contextAndCommand.command(), hostEditor);
-    }, commandName, null);
-  }
-
-  @Nullable
-  @RequiresBackgroundThread
-  private static ActionContext chooseContextForAction(@NotNull PsiFile hostFile,
-                                                      @Nullable Editor hostEditor,
-                                                      @NotNull ModCommandAction commandAction, 
-                                                      int fixOffset) {
-    if (hostEditor == null) {
-      return ActionContext.from(null, hostFile);
-    }
-    int offset = fixOffset >= 0 ? fixOffset : hostEditor.getCaretModel().getOffset();
-    PsiFile injectedFile = InjectedLanguageUtilBase.findInjectedPsiNoCommit(hostFile, offset);
-    Editor injectedEditor = null;
-    if (injectedFile != null && !(hostEditor instanceof IntentionPreviewEditor)) {
-      injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, injectedFile);
-      ActionContext injectedContext = ActionContext.from(injectedEditor, injectedFile);
-      if (commandAction.getPresentation(injectedContext) != null) {
-        return injectedContext.withOffset(((DocumentWindow)injectedEditor.getDocument()).hostToInjected(offset));
-      }
-    }
-
-    if (hostEditor != injectedEditor) {
-      ActionContext hostContext = ActionContext.from(hostEditor, hostFile);
-      if (commandAction.getPresentation(hostContext) != null) {
-        return hostContext.withOffset(offset);
-      }
-    }
-    return null;
+    IntentionFUSCollector.record(project, commandAction, context.file().getLanguage(), hostEditor, fixOffset, source);
+    CommandProcessor.getInstance().executeCommand(project, () -> contextAndCommand.executeInteractively(hostEditor), commandName, null);
   }
 
   private static void checkPsiTextConsistency(@NotNull PsiFile hostFile) {
@@ -380,8 +366,12 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     }
   }
 
-  private static void invokeIntention(@NotNull IntentionAction action, @Nullable Editor editor, @NotNull PsiFile file, int fixOffset) {
-    IntentionFUSCollector.record(file.getProject(), action, file.getLanguage(), editor, fixOffset);
+  private static void invokeIntention(@NotNull IntentionAction action,
+                                      @Nullable Editor editor,
+                                      @NotNull PsiFile file,
+                                      int fixOffset,
+                                      @NotNull IntentionSource source) {
+    IntentionFUSCollector.record(file.getProject(), action, file.getLanguage(), editor, fixOffset, source);
     PsiElement elementToMakeWritable = action.getElementToMakeWritable(file);
     if (elementToMakeWritable != null && !FileModificationService.getInstance().preparePsiElementsForWrite(elementToMakeWritable)) {
       return;
@@ -407,7 +397,6 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       }
     }
   }
-
 
   public static @Nullable Pair<PsiFile, Editor> chooseFileForAction(@NotNull PsiFile hostFile,
                                                                     @Nullable Editor hostEditor,

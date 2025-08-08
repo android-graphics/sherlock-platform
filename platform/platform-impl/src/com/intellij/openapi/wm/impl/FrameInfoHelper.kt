@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.openapi.wm.impl
 
@@ -21,6 +21,7 @@ import javax.swing.JFrame
 
 internal class FrameInfoHelper {
   companion object {
+    @JvmName("isFullScreenSupportedInCurrentOs")
     internal fun isFullScreenSupportedInCurrentOs(): Boolean {
       return SystemInfoRt.isMac
              || SystemInfoRt.isWindows
@@ -88,9 +89,13 @@ internal fun updateFrameInfo(frameHelper: ProjectFrameHelper, frame: JFrame, las
   val isInFullScreen = isFullScreenSupportedInCurrentOs() && frameHelper.isInFullScreen
   val isMaximized = FrameInfoHelper.isMaximized(extendedState) || isInFullScreen
 
+  checkForNonsenseBounds("updateFrameInfo.lastNormalFrameBounds", lastNormalFrameBounds)
   val oldBounds = oldFrameInfo?.bounds
+  checkForNonsenseBounds("updateFrameInfo.oldBounds", oldBounds)
+  val frameBounds = frame.bounds
+  checkForNonsenseBounds("updateFrameInfo.frameBounds", frameBounds)
   val newBounds = convertToDeviceSpace(frame.graphicsConfiguration,
-                                       if (isMaximized && lastNormalFrameBounds != null) lastNormalFrameBounds else frame.bounds)
+                                       if (isMaximized && lastNormalFrameBounds != null) lastNormalFrameBounds else frameBounds)
 
   val usePreviousBounds = lastNormalFrameBounds == null && isMaximized &&
                           oldBounds != null &&
@@ -99,7 +104,7 @@ internal fun updateFrameInfo(frameHelper: ProjectFrameHelper, frame: JFrame, las
   if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
     IDE_FRAME_EVENT_LOG.debug(
       "Updating frame bounds: lastNormalFrameBounds = $lastNormalFrameBounds, " +
-      "frame.bounds = ${frame.bounds}, " +
+      "frame.bounds = $frameBounds, " +
       "frame screen = ${frame.graphicsConfiguration.bounds}, scale = ${JBUIScale.sysScale(frame.graphicsConfiguration)}, " +
       "isMaximized = $isMaximized, " +
       "isInFullScreen = $isInFullScreen, " +
@@ -123,4 +128,17 @@ internal fun updateFrameInfo(frameHelper: ProjectFrameHelper, frame: JFrame, las
     frameInfo.fullScreen = isInFullScreen
   }
   return frameInfo
+}
+
+internal fun checkForNonsenseBounds(name: String, bounds: Rectangle?) {
+  if (bounds == null) return
+  if (bounds.height < 100 || bounds.width < 100) {
+    IDE_FRAME_EVENT_LOG.warn(Throwable("The frame bounds '$name' are suspiciously small: $bounds"))
+  }
+}
+
+internal fun checkForNonsenseBounds(name: String, height: Int, width: Int) {
+  if (height < 100 || width < 100) {
+    IDE_FRAME_EVENT_LOG.warn(Throwable("The frame bounds '$name' are suspiciously small: ${height}x${width}"))
+  }
 }

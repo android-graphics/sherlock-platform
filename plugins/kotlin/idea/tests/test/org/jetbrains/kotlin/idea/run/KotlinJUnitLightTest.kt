@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.run
 
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
@@ -18,6 +18,7 @@ import com.intellij.execution.testframework.JavaTestLocator
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
@@ -226,7 +227,7 @@ fun main(args: Array<String>) {}
         val presentations = PresentationFactory()
         val dataContext = TestActionEvent.createTestEvent().dataContext
         val children = Utils.expandActionGroup(
-            group, presentations, dataContext, ActionPlaces.EDITOR_GUTTER_POPUP)
+            group, presentations, dataContext, ActionPlaces.EDITOR_GUTTER_POPUP, ActionUiKind.POPUP)
         val list = children.filter {
             presentations.getPresentation(it).text.run {
                 startsWith("Run '") && endsWith("'")

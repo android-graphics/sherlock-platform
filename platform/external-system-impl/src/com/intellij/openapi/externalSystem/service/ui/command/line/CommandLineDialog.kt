@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.ui.command.line
 
 import com.intellij.ide.IdeCoreBundle
@@ -26,7 +26,7 @@ import javax.swing.Icon
 import javax.swing.JTable
 import javax.swing.ListSelectionModel
 
-class CommandLineDialog(
+internal class CommandLineDialog(
   project: Project,
   private val commandLineField: CommandLineField,
   private val commandLineInfo: CommandLineInfo

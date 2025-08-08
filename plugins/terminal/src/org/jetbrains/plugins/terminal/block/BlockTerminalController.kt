@@ -14,11 +14,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.output.*
 import org.jetbrains.plugins.terminal.block.output.BlockTerminalSearchSession.Companion.isSearchInBlock
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptController
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptRenderingInfo
-import org.jetbrains.plugins.terminal.block.prompt.clearCommandAndResetUndoRedoStack
+import org.jetbrains.plugins.terminal.block.prompt.clearCommandAndResetChangesHistory
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.session.CommandFinishedEvent
 import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
@@ -30,13 +31,14 @@ import org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector
 import java.util.concurrent.CopyOnWriteArrayList
 
-internal class BlockTerminalController(
+@ApiStatus.Internal
+class BlockTerminalController(
   private val project: Project,
   private val session: BlockTerminalSession,
   private val outputController: TerminalOutputController,
   private val promptController: TerminalPromptController,
   private val selectionController: TerminalSelectionController,
-  private val focusModel: TerminalFocusModel
+  private val focusModel: TerminalFocusModel,
 ) {
   private val listeners: MutableList<BlockTerminalControllerListener> = CopyOnWriteArrayList()
 
@@ -99,12 +101,11 @@ internal class BlockTerminalController(
   @RequiresEdt
   fun startCommandExecution(command: String) {
     if (command.isBlank()) {
-      promptController.model.clearCommandAndResetUndoRedoStack()
+      promptController.model.clearCommandAndResetChangesHistory()
       outputController.insertEmptyLine()
     }
     else {
       session.commandExecutionManager.sendCommandToExecute(command) // will trigger `userCommandSent`
-      TerminalUsageLocalStorage.getInstance().recordCommandExecuted(session.shellIntegration.shellType.toString())
     }
     // report event even if it is an empty command, because it will be reported as a separate command type
     TerminalUsageTriggerCollector.triggerCommandStarted(project, command, isBlockTerminal = true)
@@ -135,7 +136,7 @@ internal class BlockTerminalController(
     session.model.isCommandRunning = false
 
     invokeLater(getDisposed(), ModalityState.any()) {
-      promptController.model.clearCommandAndResetUndoRedoStack()
+      promptController.model.clearCommandAndResetChangesHistory()
       promptController.promptIsVisible = true
     }
   }

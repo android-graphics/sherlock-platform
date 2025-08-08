@@ -30,4 +30,12 @@ public class SneakyThrowsHighlightTest extends AbstractLombokHighlightsTest {
   public void testSneakThrowsDoesntCatchExceptionFromThisConstructor() {
     doTest();
   }
+
+  public void testSneakyThrowsTryInsideLambda() {
+    doTest();
+  }
+
+  public void testSneakyThrowsTryWithResources() {
+    doTest();
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.black.configuration
 
 import com.intellij.codeInsight.AutoPopupController
@@ -12,41 +12,38 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.BoundConfigurable
-import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider
 import com.intellij.ui.dsl.builder.*
-import com.intellij.util.io.await
 import com.intellij.util.text.nullize
 import com.intellij.util.textCompletion.TextCompletionUtil
 import com.intellij.util.textCompletion.TextFieldWithCompletion
 import com.intellij.util.ui.UIUtil
-import com.intellij.webcore.packaging.PackageManagementService
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.black.BlackFormatterUtil
 import com.jetbrains.python.black.BlackFormatterVersionService
+import com.jetbrains.python.black.BlackFormatterVersionService.Companion.UNKNOWN_VERSION
 import com.jetbrains.python.black.configuration.BlackFormatterConfiguration.BlackFormatterOption.Companion.toCliOptionFlags
 import com.jetbrains.python.newProject.steps.createPythonSdkComboBox
-import com.jetbrains.python.packaging.PyPackageManagers
-import com.jetbrains.python.packaging.PyPackagesNotificationPanel
+import com.jetbrains.python.packaging.PyPackageInstallUtils
 import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.io.File
-import java.util.concurrent.CompletableFuture
 import javax.swing.JButton
 import javax.swing.JCheckBox
 import javax.swing.JLabel
 
-const val CONFIGURABLE_ID = "com.jetbrains.python.black.configuration.BlackFormatterConfigurable"
+const val CONFIGURABLE_ID: String = "com.jetbrains.python.black.configuration.BlackFormatterConfigurable"
 
 class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBundle.message("black.configurable.name")) {
   private var storedState = BlackFormatterConfiguration.getBlackConfiguration(project)
@@ -66,16 +63,12 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
   private lateinit var pathToBinaryRow: Row
   private lateinit var sdkSelectionRow: Row
   private lateinit var cliArgumentsRow: Row
+  private lateinit var formattingFragmentsNotSupportedLabel: JLabel
   private lateinit var executionModeComboBox: ComboBox<BlackFormatterConfiguration.ExecutionMode>
 
   private val blackExecutablePathField = TextFieldWithBrowseButton().apply {
-    addBrowseFolderListener(
-      @Suppress("DialogTitleCapitalization")
-      PyBundle.message("black.select.path.to.executable"),
-      null,
-      project,
-      FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor()
-    )
+    addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor()
+      .withTitle(@Suppress("DialogTitleCapitalization") PyBundle.message("black.select.path.to.executable")))
   }
 
   private val sdkSelectionComboBox = createPythonSdkComboBox(project.modules.mapNotNull { it.pythonSdk }, null)
@@ -123,30 +116,30 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
         .align(AlignX.FILL)
         .columns(COLUMNS_SHORT)
     }
+    row {
+      formattingFragmentsNotSupportedLabel = label(PyBundle.message("black.format.fragments.supported.info"))
+        .applyToComponent { icon = AllIcons.General.Warning }
+        .visible(false)
+        .component
+      bottomGap(BottomGap.SMALL)
+    }
     installPanel = panel {
       row {
         packageNotInstalledErrorLabel = label(PyBundle.message("black.not.installed.error"))
           .applyToComponent { icon = AllIcons.General.Warning }
           .component
         installButton = button(PyBundle.message("black.install.button.label")) {
-          runWithModalProgressBlocking(project, PyBundle.message("black.installing.modal.title")) {
-            withContext(Dispatchers.EDT) {
-              if (selectedSdk != null) {
-                val errorDescription = installBlackFormatter(selectedSdk!!)
-                if (errorDescription == null) {
+          runWithModalProgressBlocking(ModalTaskOwner.project(project), PyBundle.message("black.installing.modal.title")) {
+            if (selectedSdk != null) {
+              PyPackageInstallUtils.installPackage(project, selectedSdk!!, BlackFormatterUtil.PACKAGE_NAME, false).onSuccess {
+                withContext(Dispatchers.EDT) {
                   isBlackFormatterPackageInstalled = true
-                  updateUiState()
                   enableOnReformatCheckBox.isSelected = true
-                }
-                else {
-                  PyPackagesNotificationPanel
-                    .showPackageInstallationError(@Suppress("DialogTitleCapitalization")
-                                                  PyBundle.message("black.installation.error.title"),
-                                                  errorDescription)
                 }
               }
             }
           }
+          updateUiState()
         }.component
       }
     }
@@ -223,6 +216,21 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
     pathToBinaryRow.visible(isBinaryMode)
     sdkSelectionRow.visible(!isBinaryMode)
 
+    val selectedBlackVersion = runWithModalProgressBlocking(project, PyBundle.message("black.getting.black.version")) {
+      if (isBinaryMode) {
+        if (blackExecutablePathField.text.isNotEmpty() && blackExecutableValidationInfo() == null) {
+          BlackFormatterVersionService.getInstance(project).getVersionForExecutable(blackExecutablePathField.text)
+        }
+        else UNKNOWN_VERSION
+      }
+      else {
+        BlackFormatterVersionService.getInstance(project).getVersionForPackage(selectedSdk!!, project)
+      }
+    }
+
+    formattingFragmentsNotSupportedLabel.isVisible = selectedBlackVersion != UNKNOWN_VERSION
+                                                     && selectedBlackVersion < BlackFormatterUtil.MINIMAL_LINE_RANGES_COMPATIBLE_VERSION
+
     if (!isLocalSdk && selectedSdk != null) {
       remoteSdkErrorLabel.isVisible = executionModeComboBox.selectedItem == BlackFormatterConfiguration.ExecutionMode.PACKAGE
     }
@@ -235,27 +243,7 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
 
   private fun updateSdkInfo() {
     isLocalSdk = selectedSdk?.let { it.sdkType.isLocalSdk(it) } ?: false
-    isBlackFormatterPackageInstalled = BlackFormatterUtil.isBlackFormatterInstalledOnProjectSdk(selectedSdk)
-  }
-
-  private suspend fun installBlackFormatter(sdk: Sdk): PackageManagementService.ErrorDescription? {
-    val manager = PyPackageManagers.getInstance().getManagementService(project, sdk)
-    val blackPackage = manager.allPackagesCached.firstOrNull { pyPackage -> pyPackage.name == BlackFormatterUtil.PACKAGE_NAME }
-    val result = CompletableFuture<PackageManagementService.ErrorDescription>()
-    val listener = object : PackageManagementService.Listener {
-      override fun operationStarted(packageName: String?) {}
-
-      override fun operationFinished(packageName: String?, errorDescription: PackageManagementService.ErrorDescription?) {
-        if (errorDescription == null) {
-          result.complete(null)
-        }
-        else {
-          result.complete(errorDescription)
-        }
-      }
-    }
-    manager.installPackage(blackPackage, null, false, null, listener, false)
-    return result.await()
+    isBlackFormatterPackageInstalled = BlackFormatterUtil.isBlackFormatterInstalledOnProjectSdk(project, selectedSdk)
   }
 
   private fun canBeEnabled(): Boolean {
@@ -301,6 +289,7 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
   override fun apply() {
     applyToConfig(storedState)
   }
+
   override fun createPanel(): DialogPanel {
     mainPanel.registerValidators(disposable!!)
     return mainPanel
@@ -363,9 +352,10 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
       getCommentForBlack(configurable.storedState)
 
     private fun getCommentForBlack(configuration: BlackFormatterConfiguration): ActionOnSaveComment {
-      val version = runBlockingModal(project, "") {
-        BlackFormatterVersionService.getVersion(project)
+      val version = runWithModalProgressBlocking(project, PyBundle.message("black.getting.black.version")) {
+        BlackFormatterVersionService.getVersion (project)
       }
+
       return when (configuration.executionMode) {
         BlackFormatterConfiguration.ExecutionMode.BINARY -> {
           configuration.pathToExecutable?.let {
@@ -373,7 +363,7 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
           } ?: ActionOnSaveComment.warning(PyBundle.message("black.action.on.save.executable.path.not.specified"))
         }
         BlackFormatterConfiguration.ExecutionMode.PACKAGE -> {
-          if (version != BlackFormatterVersionService.UNKNOWN_VERSION) {
+          if (version != UNKNOWN_VERSION) {
             ActionOnSaveComment.info(PyBundle.message("black.action.on.save.package.info", version))
           }
           else {
@@ -395,7 +385,7 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
     override fun isApplicableAccordingToUiState(configurable: BlackFormatterConfigurable) =
       when (configurable.storedState.executionMode) {
         BlackFormatterConfiguration.ExecutionMode.PACKAGE ->
-          BlackFormatterUtil.isBlackFormatterInstalledOnProjectSdk(configurable.selectedSdk)
+          BlackFormatterUtil.isBlackFormatterInstalledOnProjectSdk(project, configurable.selectedSdk)
         BlackFormatterConfiguration.ExecutionMode.BINARY ->
           BlackFormatterUtil.isBlackExecutableDetected()
       }
@@ -404,7 +394,7 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
       val configuration = BlackFormatterConfiguration.getBlackConfiguration(project)
       return when (configuration.executionMode) {
         BlackFormatterConfiguration.ExecutionMode.PACKAGE ->
-          BlackFormatterUtil.isBlackFormatterInstalledOnProjectSdk(configuration.getSdk())
+          BlackFormatterUtil.isBlackFormatterInstalledOnProjectSdk(project, configuration.getSdk())
         BlackFormatterConfiguration.ExecutionMode.BINARY ->
           BlackFormatterUtil.isBlackExecutableDetected()
       }

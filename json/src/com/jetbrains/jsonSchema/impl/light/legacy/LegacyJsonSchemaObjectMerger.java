@@ -14,10 +14,9 @@ import java.util.*;
 
 @Deprecated
 public class LegacyJsonSchemaObjectMerger implements JsonSchemaObjectMerger {
-  @NotNull
-  private static JsonSchemaObjectImpl mergeObjectsInner(@NotNull JsonSchemaObjectImpl first,
-                                                        @NotNull JsonSchemaObjectImpl second,
-                                                        @NotNull JsonSchemaObjectImpl pointTo) {
+  private static @NotNull JsonSchemaObjectImpl mergeObjectsInner(@NotNull JsonSchemaObjectImpl first,
+                                                                 @NotNull JsonSchemaObjectImpl second,
+                                                                 @NotNull JsonSchemaObjectImpl pointTo) {
     final JsonSchemaObjectImpl object = new JsonSchemaObjectImpl(pointTo.getRawFile(), pointTo.getFileUrl(), pointTo.getPointer());
     mergeValues(object, second);
     mergeValues(object, first);
@@ -85,7 +84,8 @@ public class LegacyJsonSchemaObjectMerger implements JsonSchemaObjectMerger {
     if (other.getMinProperties() != null) base.setMinProperties(other.getMinProperties());
     if (other.getEnum() != null) base.setEnum(other.getEnum());
     if (other.getNot() != null) base.setNot(other.getNot());
-    if (other.getLanguageInjection() == null) base.setLanguageInjection(other.getLanguageInjection());
+    if (other.getLanguageInjection() != null) base.setLanguageInjection(other.getLanguageInjection());
+    if (other.getMetadata() != null) base.setMetadata(other.getMetadata());
 
     //computed together because influence each other
     var mergedExclusionAndType = computeMergedExclusionAndType(base.getType(), other.getType(), other.getTypeVariants());
@@ -106,9 +106,8 @@ public class LegacyJsonSchemaObjectMerger implements JsonSchemaObjectMerger {
     }
   }
 
-  @NotNull
   @Override
-  public JsonSchemaObject mergeObjects(@NotNull JsonSchemaObject base, @NotNull JsonSchemaObject other, @NotNull JsonSchemaObject pointTo) {
+  public @NotNull JsonSchemaObject mergeObjects(@NotNull JsonSchemaObject base, @NotNull JsonSchemaObject other, @NotNull JsonSchemaObject pointTo) {
     JsonSchemaObjectImpl base1 = (JsonSchemaObjectImpl)base;
     JsonSchemaObjectImpl other1 = (JsonSchemaObjectImpl)other;
     JsonSchemaObjectImpl pointTo1 = (JsonSchemaObjectImpl)pointTo;
@@ -187,27 +186,7 @@ public class LegacyJsonSchemaObjectMerger implements JsonSchemaObjectMerger {
 
   public static @Nullable JsonSchemaType getSubtypeOfBoth(@NotNull JsonSchemaType selfType,
                                                           @NotNull JsonSchemaType otherType) {
-    if (otherType == JsonSchemaType._any) return selfType;
-    if (selfType == JsonSchemaType._any) return otherType;
-    return switch (selfType) {
-      case _string -> otherType == JsonSchemaType._string || otherType == JsonSchemaType._string_number ? JsonSchemaType._string : null;
-      case _number -> {
-        if (otherType == JsonSchemaType._integer) yield JsonSchemaType._integer;
-        yield otherType == JsonSchemaType._number || otherType == JsonSchemaType._string_number ? JsonSchemaType._number : null;
-      }
-      case _integer -> otherType == JsonSchemaType._number
-                       || otherType == JsonSchemaType._string_number
-                       || otherType == JsonSchemaType._integer ? JsonSchemaType._integer : null;
-      case _object -> otherType == JsonSchemaType._object ? JsonSchemaType._object : null;
-      case _array -> otherType == JsonSchemaType._array ? JsonSchemaType._array : null;
-      case _boolean -> otherType == JsonSchemaType._boolean ? JsonSchemaType._boolean : null;
-      case _null -> otherType == JsonSchemaType._null ? JsonSchemaType._null : null;
-      case _string_number -> otherType == JsonSchemaType._integer
-                             || otherType == JsonSchemaType._number
-                             || otherType == JsonSchemaType._string
-                             || otherType == JsonSchemaType._string_number ? otherType : null;
-      default -> otherType;
-    };
+    return JsonSchemaObjectImpl.getSubtypeOfBoth(selfType, otherType);
   }
 
   public static HashMap<String, JsonSchemaObjectImpl> mergeProperties(@NotNull Map<String, JsonSchemaObjectImpl> baseProperties,

@@ -1,12 +1,13 @@
 package com.jetbrains.python.codeInsight.dataflow.scope;
 
+import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.ast.*;
 import com.jetbrains.python.ast.controlFlow.AstScopeOwner;
 import org.jetbrains.annotations.ApiStatus;
@@ -24,8 +25,7 @@ public final class ScopeUtilCore {
    *
    * This method does not access AST if underlying PSI is stub based.
    */
-  @Nullable
-  public static AstScopeOwner getScopeOwner(@Nullable final PsiElement element) {
+  public static @Nullable AstScopeOwner getScopeOwner(final @Nullable PsiElement element) {
     if (element == null) {
       return null;
     }
@@ -33,33 +33,37 @@ public final class ScopeUtilCore {
       final PsiElement context = element.getContext();
       return context instanceof AstScopeOwner ? (AstScopeOwner)context : getScopeOwner(context);
     }
-    if (element instanceof StubBasedPsiElement) {
-      final StubElement stub = ((StubBasedPsiElement<?>)element).getStub();
+    if (element instanceof StubBasedPsiElement<?> stubBasedElement) {
+      final StubElement<?> stub = stubBasedElement.getStub();
       if (stub != null) {
-        StubElement parentStub = stub.getParentStub();
-        while (parentStub != null) {
-          final PsiElement parent = parentStub.getPsi();
-          if (parent instanceof AstScopeOwner) {
-            return (AstScopeOwner)parent;
-          }
-          parentStub = parentStub.getParentStub();
+        AstScopeOwner firstOwner = stub.getParentStubOfType(AstScopeOwner.class);
+        AstScopeOwner nextOwner;
+        if (firstOwner != null && !(firstOwner instanceof PsiFile)) {
+          StubElement<?> firstOwnerStub = ((StubBasedPsiElementBase<?>)firstOwner).getGreenStub();
+          assert firstOwnerStub != null;
+          nextOwner = firstOwnerStub.getParentStubOfType(AstScopeOwner.class);
         }
-        return null;
+        else {
+          nextOwner = null;
+        }
+        if (stub.getParentStubOfType(PyAstDecoratorList.class) != null) {
+          return nextOwner;
+        }
+        return firstOwner;
       }
     }
     return CachedValuesManager.getCachedValue(element, () -> CachedValueProvider.Result
       .create(calculateScopeOwnerByAST(element), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
-  @Nullable
-  private static AstScopeOwner calculateScopeOwnerByAST(@Nullable PsiElement element) {
+  private static @Nullable AstScopeOwner calculateScopeOwnerByAST(@Nullable PsiElement element) {
     final AstScopeOwner firstOwner = getParentOfType(element, AstScopeOwner.class);
     if (firstOwner == null) {
       return null;
     }
     final AstScopeOwner nextOwner = getParentOfType(firstOwner, AstScopeOwner.class);
     // References in decorator expressions are resolved outside of the function (if the lambda is not inside the decorator)
-    final PyAstElement decoratorAncestor = getParentOfType(element, PyAstDecorator.class);
+    final PyAstElement decoratorAncestor = getParentOfType(element, PyAstDecorator.class, false);
     if (decoratorAncestor != null && !isAncestor(decoratorAncestor, firstOwner, true)) {
       return nextOwner;
     }
@@ -67,7 +71,7 @@ public final class ScopeUtilCore {
      * References in default values are resolved outside of the function (if the lambda is not inside the default value).
      * Annotations of parameters are resolved outside of the function if the function doesn't have type parameters list
      */
-    final PyAstNamedParameter parameterAncestor = getParentOfType(element, PyAstNamedParameter.class);
+    final PyAstNamedParameter parameterAncestor = getParentOfType(element, PyAstNamedParameter.class, false);
     if (parameterAncestor != null && !isAncestor(parameterAncestor, firstOwner, true)) {
       final PyAstExpression defaultValue = parameterAncestor.getDefaultValue();
       final PyAstAnnotation annotation = parameterAncestor.getAnnotation();

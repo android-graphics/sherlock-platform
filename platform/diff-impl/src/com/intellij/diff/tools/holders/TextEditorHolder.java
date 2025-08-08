@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.holders;
 
 import com.intellij.diff.DiffContext;
@@ -15,12 +15,14 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.panels.Wrapper;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.FocusListener;
 
+@ApiStatus.Internal
 public class TextEditorHolder extends EditorHolder {
   private final MyPanel myPanel;
 
@@ -28,8 +30,7 @@ public class TextEditorHolder extends EditorHolder {
     myPanel = new MyPanel(project, editor);
   }
 
-  @NotNull
-  public EditorEx getEditor() {
+  public @NotNull EditorEx getEditor() {
     return myPanel.editor;
   }
 
@@ -38,9 +39,8 @@ public class TextEditorHolder extends EditorHolder {
     EditorFactory.getInstance().releaseEditor(myPanel.editor);
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myPanel;
   }
 
@@ -49,9 +49,8 @@ public class TextEditorHolder extends EditorHolder {
     myPanel.editor.getContentComponent().addFocusListener(listener);
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myPanel.editor.getContentComponent();
   }
 
@@ -59,8 +58,7 @@ public class TextEditorHolder extends EditorHolder {
   // Build
   //
 
-  @NotNull
-  public static TextEditorHolder create(@Nullable Project project, @NotNull DocumentContent content) {
+  public static @NotNull TextEditorHolder create(@Nullable Project project, @NotNull DocumentContent content) {
     EditorEx editor = DiffUtil.createEditor(content.getDocument(), project, false, true);
     DiffUtil.configureEditor(editor, content, project);
     return new TextEditorHolder(project, editor);
@@ -70,8 +68,7 @@ public class TextEditorHolder extends EditorHolder {
     public static final TextEditorHolderFactory INSTANCE = new TextEditorHolderFactory();
 
     @Override
-    @NotNull
-    public TextEditorHolder create(@NotNull DiffContent content, @NotNull DiffContext context) {
+    public @NotNull TextEditorHolder create(@NotNull DiffContent content, @NotNull DiffContext context) {
       return TextEditorHolder.create(context.getProject(), (DocumentContent)content);
     }
 

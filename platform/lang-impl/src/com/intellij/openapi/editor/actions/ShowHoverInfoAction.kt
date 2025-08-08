@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.actions
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.hint.HintManagerImpl.ActionToIgnore
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.documentation.ide.impl.DocumentationManager
 import com.intellij.openapi.actionSystem.*
@@ -17,7 +18,9 @@ import com.intellij.openapi.project.DumbAware
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ShowHoverInfoAction: AnAction(), ActionToIgnore, PopupAction, DumbAware, PerformWithDocumentsCommitted {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
@@ -36,12 +39,13 @@ class ShowHoverInfoAction: AnAction(), ActionToIgnore, PopupAction, DumbAware, P
       // When there are multiple warnings at the same offset, this will return the HighlightInfo
       // containing all of them, not just the first one as found by findInfo()
       val highlightInfo = readAction {
+        val context = EditorContextManager.getEditorContext(editor, project)
         (DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl)
-          .findHighlightsByOffset(editor.document, editor.caretModel.offset, false, false, HighlightSeverity.INFORMATION)
+          .findHighlightsByOffset(editor.document, editor.caretModel.offset, false, false, HighlightSeverity.INFORMATION, true, context)
       }
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         if (highlightInfo != null) {
-          EditorMouseHoverPopupManager.getInstance().showInfoTooltip(editor, highlightInfo, editor.caretModel.offset, false, true, true)
+          EditorMouseHoverPopupManager.getInstance().showInfoTooltip(editor, highlightInfo, editor.caretModel.offset, false, true, true, true)
         }
         else {
           // No errors, just show doc

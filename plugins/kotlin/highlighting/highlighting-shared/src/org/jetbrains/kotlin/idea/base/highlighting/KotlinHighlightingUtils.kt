@@ -13,16 +13,17 @@ import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
-import org.jetbrains.kotlin.idea.core.script.IdeScriptReportSink
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
+import org.jetbrains.kotlin.idea.core.script.getScriptReports
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider
+import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import kotlin.script.experimental.api.ScriptDiagnostic
 
 @ApiStatus.Internal
@@ -73,17 +74,18 @@ private fun KtFile.shouldDefinitelyHighlight(): Boolean =
             OutsidersPsiFileSupport.isOutsiderFile(virtualFile) ||
             (this !is KtCodeFragment && virtualFile?.fileSystem is NonPhysicalFileSystem)
 
+@OptIn(KaPlatformInterface::class)
 private fun KtFile.calculateShouldHighlightFile(): Boolean =
-    shouldDefinitelyHighlight() || RootKindFilter.everything.matches(this) && moduleInfo !is NotUnderContentRootModuleInfo
+    shouldDefinitelyHighlight() || RootKindFilter.everything.matches(this) && getKaModule(project, useSiteModule = null) !is KaNotUnderContentRootModule
 
 private fun KtFile.calculateShouldHighlightScript(): Boolean {
     if (shouldDefinitelyHighlight()) return true
 
     return (!KotlinPlatformUtils.isCidr // There is no Java support in CIDR. So do not highlight errors in KTS if running in CIDR.
-            && !IdeScriptReportSink.getReports(this).any { it.severity == ScriptDiagnostic.Severity.FATAL }
+            && !getScriptReports(this).any { it.severity == ScriptDiagnostic.Severity.FATAL }
             && isConfigurationLoaded()
             && RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(this))
 }
 
 private fun KtFile.isConfigurationLoaded(): Boolean =
-    ScriptDependenciesProvider.getInstance(project)?.getScriptConfiguration(this) != null
+    ScriptConfigurationsProvider.getInstance(project)?.getScriptConfigurationResult(this) != null

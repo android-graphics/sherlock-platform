@@ -125,9 +125,11 @@ a:com.intellij.execution.testframework.TestConsoleProperties
 - sf:SCROLL_TO_SOURCE:com.intellij.util.config.BooleanProperty
 - sf:SCROLL_TO_STACK_TRACE:com.intellij.util.config.BooleanProperty
 - sf:SELECT_FIRST_DEFECT:com.intellij.util.config.BooleanProperty
+- sf:SHOW_AUTO_TEST_TOOLBAR:com.intellij.util.config.BooleanProperty
 - sf:SHOW_INLINE_STATISTICS:com.intellij.util.config.BooleanProperty
 - sf:SHOW_STATISTICS:com.intellij.util.config.BooleanProperty
 - sf:SORT_ALPHABETICALLY:com.intellij.util.config.BooleanProperty
+- sf:SORT_BY_DECLARATION_ORDER:com.intellij.util.config.BooleanProperty
 - sf:SORT_BY_DURATION:com.intellij.util.config.BooleanProperty
 - sf:SUITES_ALWAYS_ON_TOP:com.intellij.util.config.BooleanProperty
 - sf:TRACK_CODE_COVERAGE:com.intellij.util.config.BooleanProperty
@@ -204,12 +206,11 @@ a:com.intellij.execution.testframework.TestStatusListener
 a:com.intellij.execution.testframework.TestTreeView
 - com.intellij.ui.treeStructure.Tree
 - com.intellij.ide.CopyProvider
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - sf:MODEL_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - <init>():V
 - attachToModel(com.intellij.execution.testframework.TestFrameworkRunningModel):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- getData(java.lang.String):java.lang.Object
 - p:getPresentableName(com.intellij.execution.testframework.AbstractTestProxy):java.lang.String
 - pa:getRenderer(com.intellij.execution.testframework.TestConsoleProperties):javax.swing.tree.TreeCellRenderer
 - getSelectedTest():com.intellij.execution.testframework.AbstractTestProxy
@@ -219,6 +220,7 @@ a:com.intellij.execution.testframework.TestTreeView
 - isCopyEnabled(com.intellij.openapi.actionSystem.DataContext):Z
 - isCopyVisible(com.intellij.openapi.actionSystem.DataContext):Z
 - performCopy(com.intellij.openapi.actionSystem.DataContext):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 com.intellij.execution.testframework.TestTreeViewAction
 a:com.intellij.execution.testframework.TestTreeViewStructure
 - com.intellij.ide.util.treeView.AbstractTreeStructure
@@ -226,9 +228,8 @@ a:com.intellij.execution.testframework.TestTreeViewStructure
 - getFilter():com.intellij.execution.testframework.Filter
 - setFilter(com.intellij.execution.testframework.Filter):V
 f:com.intellij.execution.testframework.TestsUIUtil
-- sf:NOTIFICATION_GROUP:com.intellij.notification.NotificationGroup
-- sf:PASSED_COLOR:java.awt.Color
 - s:clearIconProgress(com.intellij.openapi.project.Project):V
+- s:getNotificationGroup():com.intellij.notification.NotificationGroup
 - s:getOpenFileDescriptor(com.intellij.execution.testframework.AbstractTestProxy,com.intellij.execution.testframework.TestConsoleProperties):com.intellij.pom.Navigatable
 - s:getOpenFileDescriptor(com.intellij.execution.testframework.AbstractTestProxy,com.intellij.execution.testframework.TestFrameworkRunningModel):com.intellij.pom.Navigatable
 - s:getTestSummary(com.intellij.execution.testframework.AbstractTestProxy):java.lang.String
@@ -274,7 +275,6 @@ c:com.intellij.execution.testframework.ToolbarPanel
 - hasPreviousOccurence():Z
 - setModel(com.intellij.execution.testframework.TestFrameworkRunningModel):V
 f:com.intellij.execution.testframework.TrackRunningTestUtil
-- s:installStopListeners(javax.swing.JTree,com.intellij.openapi.Disposable,com.intellij.openapi.util.Pass):V
 - s:installStopListeners(javax.swing.JTree,com.intellij.openapi.Disposable,java.util.function.Consumer):V
 a:com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction
 - com.intellij.openapi.actionSystem.AnAction
@@ -343,6 +343,7 @@ a:com.intellij.execution.testframework.autotest.AbstractAutoTestManager
 - p:myDelayMillis:I
 - <init>(com.intellij.openapi.project.Project):V
 - pa:createWatcher(com.intellij.openapi.project.Project):com.intellij.execution.testframework.autotest.AutoTestWatcher
+- disableAllAutoTests():V
 - getState():com.intellij.execution.testframework.autotest.AbstractAutoTestManager$State
 - loadState(com.intellij.execution.testframework.autotest.AbstractAutoTestManager$State):V
 - p:restartAllAutoTests(I):V
@@ -355,7 +356,6 @@ com.intellij.execution.testframework.autotest.AutoTestWatcher
 f:com.intellij.execution.testframework.autotest.DelayedDocumentWatcher
 - com.intellij.execution.testframework.autotest.AutoTestWatcher
 - <init>(com.intellij.openapi.project.Project,I,com.intellij.execution.testframework.autotest.AbstractAutoTestManager,java.util.function.Predicate):V
-- <init>(com.intellij.openapi.project.Project,I,com.intellij.util.Consumer,com.intellij.openapi.util.Condition):V
 - activate():V
 - deactivate():V
 - getProject():com.intellij.openapi.project.Project
@@ -437,7 +437,7 @@ a:com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView
 a:com.intellij.execution.testframework.ui.TestResultsPanel
 - javax.swing.JPanel
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - pf:myConsole:javax.swing.JComponent
 - pf:myConsoleActions:com.intellij.openapi.actionSystem.AnAction[]
 - pf:myProperties:com.intellij.execution.testframework.TestConsoleProperties
@@ -449,23 +449,25 @@ a:com.intellij.execution.testframework.ui.TestResultsPanel
 - p:createStatusLine():com.intellij.execution.testframework.ui.TestStatusLine
 - pa:createTestTreeView():javax.swing.JComponent
 - dispose():V
-- getData(java.lang.String):java.lang.Object
 - getStatusLine():com.intellij.execution.testframework.ui.TestStatusLine
 - p:getTreeView():com.intellij.execution.testframework.TestTreeView
 - p:hideToolbar():V
 - initUI():V
 - p:setLeftComponent(javax.swing.JComponent):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 c:com.intellij.execution.testframework.ui.TestStatusLine
 - com.intellij.ui.components.panels.NonOpaquePanel
 - pf:myProgressBar:javax.swing.JProgressBar
 - pf:myState:com.intellij.ui.SimpleColoredComponent
 - <init>():V
 - formatTestMessage(I,I,I,I,java.lang.Long,J):V
+- p:getStateDescription():com.intellij.ui.SimpleColoredComponent
 - getStateText():java.lang.String
 - getStatusColor():java.awt.Color
 - onTestsDone(java.util.function.Supplier):V
 - setFraction(D):V
 - setIndeterminate(Z):V
+- setStatus(java.lang.String):V
 - setStatusColor(java.awt.Color):V
 - setText(java.lang.String):V
 c:com.intellij.execution.testframework.ui.TestsConsoleBuilderImpl

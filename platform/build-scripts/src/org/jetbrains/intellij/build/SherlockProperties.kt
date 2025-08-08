@@ -34,7 +34,7 @@ class SherlockProperties(home: Path) : BaseIdeaProperties() {
       "intellij.platform.starter",
       "com.google.sherlock.branding",
     )
-    productLayout.bundledPluginModules = mutableListOf()
+    productLayout.bundledPluginModules = persistentListOf()
     productLayout.pluginLayouts = persistentListOf()
   }
 

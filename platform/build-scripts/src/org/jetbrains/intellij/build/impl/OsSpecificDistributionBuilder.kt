@@ -1,11 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.util.io.PosixFilePermissionsUtil
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
@@ -13,8 +11,9 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
-import org.jetbrains.intellij.build.TraceManager
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import java.io.BufferedInputStream
 import java.nio.file.FileSystems
 import java.nio.file.Files
@@ -32,26 +31,26 @@ interface OsSpecificDistributionBuilder {
 
   suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture)
 
-  fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture)
+  suspend fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture): Path
 
-  fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture): List<String> = emptyList()
+  fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture): Sequence<String> = emptySequence()
 
   fun generateExecutableFilesMatchers(includeRuntime: Boolean, arch: JvmArchitecture): Map<PathMatcher, String> {
     val fileSystem = FileSystems.getDefault()
     return generateExecutableFilesPatterns(includeRuntime, arch)
-      .asSequence().distinct()
+      .distinct()
       .map(FileUtil::toSystemIndependentName)
       .associateBy {
         fileSystem.getPathMatcher("glob:$it")
       }
   }
 
-  fun checkExecutablePermissions(distribution: Path, root: String, includeRuntime: Boolean = true, arch: JvmArchitecture) {
-    TraceManager.spanBuilder("Permissions check for ${distribution.name}").use {
+  suspend fun checkExecutablePermissions(distribution: Path, root: String, includeRuntime: Boolean = true, arch: JvmArchitecture) {
+    spanBuilder("Permissions check for ${distribution.name}").use {
       val patterns = generateExecutableFilesMatchers(includeRuntime, arch)
       val matchedFiles = when {
-        patterns.isEmpty() -> return
-        SystemInfoRt.isWindows && distribution.isDirectory() -> return
+        patterns.isEmpty() -> return@use
+        SystemInfoRt.isWindows && distribution.isDirectory() -> return@use
         distribution.isDirectory() -> checkDirectory(distribution.resolve(root), patterns.keys)
         "$distribution".endsWith(".tar.gz") -> checkTar(distribution, root, patterns.keys)
         else -> checkZip(distribution, root, patterns.keys)
@@ -107,7 +106,7 @@ interface OsSpecificDistributionBuilder {
     TarArchiveInputStream(GzipCompressorInputStream(BufferedInputStream(Files.newInputStream(distribution)))).use { stream ->
       val matched = mutableListOf<MatchedFile>()
       while (true) {
-        val entry = (stream.nextEntry ?: break) as TarArchiveEntry
+        val entry = stream.nextEntry ?: break
         var entryPath = Path.of(entry.name)
         if (!root.isEmpty()) {
           entryPath = Path.of(root).relativize(entryPath)
@@ -123,9 +122,8 @@ interface OsSpecificDistributionBuilder {
     }
   }
 
-
   private fun checkZip(distribution: Path, root: String, patterns: Collection<PathMatcher>): List<MatchedFile> {
-    return ZipFile(Files.newByteChannel(distribution)).use { zipFile ->
+    return ZipFile.Builder().setSeekableByteChannel(Files.newByteChannel(distribution)).get().use { zipFile ->
       zipFile.entries.asSequence().filter { !it.isDirectory }.mapNotNull { entry ->
         var entryPath = Path.of(entry.name)
         if (!root.isEmpty()) {
@@ -142,9 +140,7 @@ interface OsSpecificDistributionBuilder {
 
   companion object {
     @Internal
-    fun suffix(arch: JvmArchitecture): String = when (arch) {
-      JvmArchitecture.x64 -> ""
-      else -> "-${arch.fileSuffix}"
-    }
+    fun suffix(arch: JvmArchitecture): String =
+      if (arch == JvmArchitecture.x64) "" else "-${arch.fileSuffix}"
   }
 }

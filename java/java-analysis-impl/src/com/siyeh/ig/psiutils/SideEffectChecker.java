@@ -20,13 +20,14 @@ import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MutationSignature;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -137,12 +138,12 @@ public final class SideEffectChecker {
     return visitor.mayHaveSideEffects();
   }
 
-  public static List<PsiExpression> extractSideEffectExpressions(@NotNull PsiExpression element) {
+  public static @Unmodifiable List<PsiExpression> extractSideEffectExpressions(@NotNull PsiExpression element) {
     return extractSideEffectExpressions(element, e -> false);
   }
 
-  public static List<PsiExpression> extractSideEffectExpressions(@NotNull PsiExpression element,
-                                                                 @NotNull Predicate<? super PsiElement> ignoreElement) {
+  public static @Unmodifiable List<PsiExpression> extractSideEffectExpressions(@NotNull PsiExpression element,
+                                                                               @NotNull Predicate<? super PsiElement> ignoreElement) {
     List<PsiElement> list = new SmartList<>();
     element.accept(new SideEffectsVisitor(list, element, ignoreElement));
     return ContainerUtil.filterIsInstance(list, PsiExpression.class);
@@ -337,7 +338,7 @@ public final class SideEffectChecker {
       }
     }
     PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
-    PsiClass aClass = classReference == null ? null : (PsiClass)classReference.resolve();
+    PsiClass aClass = classReference == null ? null : tryCast(classReference.resolve(), PsiClass.class);
     String qualifiedName = aClass == null ? null : aClass.getQualifiedName();
     if (qualifiedName == null) return ThreeState.UNSURE;
     if (ourSideEffectFreeClasses.contains(qualifiedName)) return ThreeState.NO;

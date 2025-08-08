@@ -37,6 +37,7 @@ import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -68,8 +69,8 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -335,7 +336,18 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
   @Nullable
   MyNode findNode(Configurable configurable) {
-    return myConfigurableToNodeMap.get(configurable);
+    MyNode result = myConfigurableToNodeMap.get(configurable);
+    if (result != null || !(configurable instanceof ConfigurableWrapper))
+      return result;
+    ConfigurableEP<?> ep = ((ConfigurableWrapper)configurable).getExtensionPoint();
+    Configurable confKey = ContainerUtil.find(
+      myConfigurableToNodeMap.keySet(),
+      key -> (key instanceof ConfigurableWrapper) && ((ConfigurableWrapper)key).getExtensionPoint() == ep
+    );
+    if (confKey == null) {
+      return null;
+    }
+    return myConfigurableToNodeMap.get(confKey);
   }
 
   @Nullable
@@ -459,8 +471,8 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     return promise;
   }
 
-  private @NotNull Promise<? super Object> fireSelected(Configurable configurable) {
-    return myFilter.myContext.fireSelected(configurable, this);
+  private @NotNull Promise<?> fireSelected(Configurable configurable) {
+    return myFilter.context.fireSelected(configurable, this);
   }
 
   @Override
@@ -564,7 +576,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       SimpleNode[] result = new SimpleNode[configurables.length];
       for (int i = 0; i < configurables.length; i++) {
         result[i] = new MyNode(this, configurables[i], myLevel + 1);
-        myFilter.myContext.registerKid(myConfigurable, configurables[i]);
+        myFilter.context.registerKid(myConfigurable, configurables[i]);
       }
       return result;
     }
@@ -613,6 +625,11 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       public String getAccessibleName() {
         return myTextLabel.getCharSequence(true).toString();
       }
+
+      @Override
+      public AccessibleRole getAccessibleRole() {
+        return AccessibleRole.LABEL;
+      }
     }
 
     @Override
@@ -637,10 +654,10 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       myTextLabel.setForeground(selected ? UIUtil.getTreeSelectionForeground(true) : UIUtil.getTreeForeground());
       if (!selected && node != null) {
         Configurable configurable = node.myConfigurable;
-        if (myFilter.myContext.getErrors().containsKey(configurable)) {
+        if (myFilter.context.getErrors().containsKey(configurable)) {
           myTextLabel.setForeground(WRONG_CONTENT);
         }
-        else if (myFilter.myContext.getModified().contains(configurable)) {
+        else if (myFilter.context.getModified().contains(configurable)) {
           myTextLabel.setForeground(MODIFIED_CONTENT);
         }
       }

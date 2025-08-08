@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
+
 package com.intellij.notification.impl
 
-import com.intellij.UtilBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
@@ -48,6 +49,8 @@ import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
+import com.intellij.util.SingleEdtTaskScheduler
+import com.intellij.util.UtilBundle
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import org.jetbrains.annotations.ApiStatus
@@ -119,6 +122,7 @@ object NotificationsStateWatcher {
   }
 }
 
+@ApiStatus.Internal
 @JvmRecord
 data class StatusMessage(val notification: Notification, val text: @NlsContexts.StatusBarText String, val stamp: Long)
 
@@ -138,7 +142,7 @@ internal class NotificationContent(val project: Project,
 
   private var myVisible = true
 
-  private val mySearchUpdateAlarm = Alarm()
+  private val searchUpdateAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler()
 
   private val splitterWrapper: JPanel
 
@@ -158,7 +162,9 @@ internal class NotificationContent(val project: Project,
     val splitter = MySplitter()
     splitter.firstComponent = suggestions
     splitter.secondComponent = timeline
-    splitterWrapper = NonOpaquePanel(splitter)
+    splitterWrapper = object : NonOpaquePanel(splitter) {
+      override fun isVisible() = super.isVisible() && splitter.isVisible
+    }
     myMainPanel.add(splitterWrapper)
 
     autoProportionController = AutoProportionController(splitter, suggestions, timeline)
@@ -234,8 +240,7 @@ internal class NotificationContent(val project: Project,
 
     searchField.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
-        mySearchUpdateAlarm.cancelAllRequests()
-        mySearchUpdateAlarm.addRequest(searchController::doSearch, 100, ModalityState.stateForComponent(searchField))
+        searchUpdateAlarm.cancelAndRequest(100, ModalityState.stateForComponent(searchField), searchController::doSearch)
       }
     })
 
@@ -418,7 +423,7 @@ internal class NotificationContent(val project: Project,
 
   override fun dispose() {
     NotificationsToolWindowFactory.myModel.unregister(this)
-    Disposer.dispose(mySearchUpdateAlarm)
+    searchUpdateAlarm.cancel()
   }
 
   fun fullRepaint() {
@@ -699,7 +704,7 @@ private class NotificationGroupComponent(private val myMainContent: Notification
     for (i in 0 until count) {
       val component = myList.getComponent(i) as NotificationComponent
       if (component.myNotificationWrapper.notification === notification) {
-        if (notification.isSuggestionType) {
+        if (notification.isSuggestionType || notification.isRemoveWhenExpired) {
           component.removeFromParent()
           myList.remove(i)
         }
@@ -869,7 +874,8 @@ private class NotificationComponent(val project: Project,
   private var myMorePopup: JBPopup? = null
   var myMoreAwtPopup: JPopupMenu? = null
   var myDropDownPopup: JPopupMenu? = null
-  val myPopupAlarm = Alarm()
+  @JvmField
+  internal val popupAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler()
 
   private var myLafUpdater: Runnable? = null
 
@@ -1024,7 +1030,6 @@ private class NotificationComponent(val project: Project,
           button.addActionListener {
             runAction(actions[0], it.source)
           }
-          Notification.setDataProvider(notification, button)
           actionPanel.add(button)
 
           if (actionsSize == 2) {
@@ -1062,7 +1067,9 @@ private class NotificationComponent(val project: Project,
       centerPanel.add(actionPanel)
     }
 
-    add(centerPanel)
+    add(UiDataProvider.wrapComponent(centerPanel) { sink ->
+      sink[Notification.KEY] = notification
+    })
 
     if (notification.isSuggestionType) {
       val button = createPopupAction(notification)
@@ -1125,10 +1132,6 @@ private class NotificationComponent(val project: Project,
   @Suppress("DialogTitleCapitalization")
   private fun createAction(action: AnAction): JComponent =
     object : LinkLabel<AnAction>(action.templateText, action.templatePresentation.icon, { lnk, act -> runAction(act, lnk) }, action) {
-      init {
-        Notification.setDataProvider(myNotificationWrapper.notification!!, this)
-      }
-
       override fun getTextColor() = JBUI.CurrentTheme.Link.Foreground.ENABLED
     }
 
@@ -1224,11 +1227,6 @@ private class NotificationComponent(val project: Project,
       component.isEnabled = false
     }
 
-    val dropDownAction = UIUtil.findComponentOfType(this, MyDropDownAction::class.java)
-    if (dropDownAction != null) {
-      DataManager.removeDataProvider(dropDownAction)
-    }
-
     if (myMoreButton != null) {
       myMoreButton.isVisible = false
     }
@@ -1245,7 +1243,7 @@ private class NotificationComponent(val project: Project,
     myMorePopup?.cancel()
     myMoreAwtPopup?.isVisible = false
     myDropDownPopup?.isVisible = false
-    Disposer.dispose(myPopupAlarm)
+    popupAlarm.cancel()
   }
 
   private fun createTextComponent(text: @Nls String): JEditorPane {
@@ -1434,20 +1432,18 @@ private class MoreAction(val notificationComponent: NotificationComponent, actio
         return@LinkListener
       }
 
-      notificationComponent.myPopupAlarm.cancelAllRequests()
+      notificationComponent.popupAlarm.cancel()
 
       val popup = NotificationsManagerImpl.showPopup(link, group)
       notificationComponent.myMoreAwtPopup = popup
       popup?.addPopupMenuListener(object : PopupMenuListenerAdapter() {
         override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {
-          notificationComponent.myPopupAlarm.addRequest(Runnable { notificationComponent.myMoreAwtPopup = null }, 500)
+          notificationComponent.popupAlarm.request(500) { notificationComponent.myMoreAwtPopup = null }
         }
       })
     }, null)
 
     text = IdeCoreBundle.message("notifications.action.more")
-
-    Notification.setDataProvider(notificationComponent.myNotificationWrapper.notification!!, this)
   }
 
   override fun getTextColor() = JBUI.CurrentTheme.Link.Foreground.ENABLED
@@ -1473,21 +1469,19 @@ private class MyDropDownAction(val notificationComponent: NotificationComponent)
         }
       }
 
-      notificationComponent.myPopupAlarm.cancelAllRequests()
+      notificationComponent.popupAlarm.cancel()
 
       val popup = NotificationsManagerImpl.showPopup(link, group)
       notificationComponent.myDropDownPopup = popup
       popup?.addPopupMenuListener(object : PopupMenuListenerAdapter() {
         override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {
-          notificationComponent.myPopupAlarm.addRequest(Runnable { notificationComponent.myDropDownPopup = null }, 500)
+          notificationComponent.popupAlarm.request(500) { notificationComponent.myDropDownPopup = null }
         }
       })
     }, null)
 
     text = notificationComponent.myNotificationWrapper.notification!!.dropDownText
     isVisible = false
-
-    Notification.setDataProvider(notificationComponent.myNotificationWrapper.notification!!, this)
   }
 
   override fun getTextColor() = JBUI.CurrentTheme.Link.Foreground.ENABLED
@@ -1676,7 +1670,11 @@ internal class ApplicationNotificationModel {
   fun getNotifications(project: Project?): List<Notification> {
     synchronized(myLock) {
       if (project == null) {
-        return ArrayList(myNotifications)
+        val result = ArrayList(myNotifications)
+        for ((_, eachModel) in myProjectToModel.entries) {
+          result.addAll(eachModel.getNotifications(emptyList()))
+        }
+        return result
       }
       val model = myProjectToModel[project]
       if (model == null) {

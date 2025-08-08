@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInsight.Nullability;
@@ -6,6 +6,7 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionName;
@@ -202,6 +203,11 @@ public final class Java9CollectionFactoryInspection extends AbstractBaseJavaLoca
               PsiType sourceType = arg.getType();
               PsiType targetType = newExpression.getType();
               if (targetType != null && sourceType != null && sourceType.isAssignableFrom(targetType)) {
+                PsiType keyType = PsiUtil.substituteTypeParameter(sourceType, JAVA_UTIL_MAP, 0, false);
+                PsiType valueType = PsiUtil.substituteTypeParameter(sourceType, JAVA_UTIL_MAP, 1, false);
+                if (DfaPsiUtil.getTypeNullability(keyType) == Nullability.NULLABLE || DfaPsiUtil.getTypeNullability(valueType) == Nullability.NULLABLE) {
+                  return null;
+                }
                 return new PrepopulatedCollectionModel(Collections.singletonList(arg), Collections.emptyList(), "Map", true);
               }
             }
@@ -217,8 +223,7 @@ public final class Java9CollectionFactoryInspection extends AbstractBaseJavaLoca
       return null;
     }
 
-    @Nullable
-    private static PrepopulatedCollectionModel fromCollect(PsiMethodCallExpression call, String typeName, CallMatcher collector) {
+    private static @Nullable PrepopulatedCollectionModel fromCollect(PsiMethodCallExpression call, String typeName, CallMatcher collector) {
       if (STREAM_COLLECT.test(call) && collector.matches(call.getArgumentList().getExpressions()[0])) {
         PsiMethodCallExpression qualifier = MethodCallUtils.getQualifierMethodCall(call);
         if (STREAM_OF.matches(qualifier)) {
@@ -229,9 +234,8 @@ public final class Java9CollectionFactoryInspection extends AbstractBaseJavaLoca
       return null;
     }
 
-    @Nullable
-    private static PrepopulatedCollectionModel fromVariable(PsiReferenceExpression expression,
-                                                            String typeName, String collectionClass, CallMatcher addMethod) {
+    private static @Nullable PrepopulatedCollectionModel fromVariable(PsiReferenceExpression expression,
+                                                                      String typeName, String collectionClass, CallMatcher addMethod) {
       PsiLocalVariable variable = tryCast(expression.resolve(), PsiLocalVariable.class);
       if (variable == null) return null;
       PsiCodeBlock block = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
@@ -264,8 +268,7 @@ public final class Java9CollectionFactoryInspection extends AbstractBaseJavaLoca
       return null;
     }
 
-    @Nullable
-    private static PrepopulatedCollectionModel fromNewExpression(PsiNewExpression newExpression, String type, String className) {
+    private static @Nullable PrepopulatedCollectionModel fromNewExpression(PsiNewExpression newExpression, String type, String className) {
       PsiExpressionList argumentList = newExpression.getArgumentList();
       if (argumentList != null) {
         PsiExpression[] args = argumentList.getExpressions();
@@ -284,8 +287,7 @@ public final class Java9CollectionFactoryInspection extends AbstractBaseJavaLoca
       return null;
     }
 
-    @Nullable
-    private static PrepopulatedCollectionModel fromCopyConstructor(PsiExpression[] args, String type) {
+    private static @Nullable PrepopulatedCollectionModel fromCopyConstructor(PsiExpression[] args, String type) {
       if (args.length == 1) {
         PsiExpression arg = PsiUtil.skipParenthesizedExprDown(args[0]);
         PsiMethodCallExpression call = tryCast(arg, PsiMethodCallExpression.class);
@@ -295,14 +297,17 @@ public final class Java9CollectionFactoryInspection extends AbstractBaseJavaLoca
         if (arg != null &&
             PsiUtil.getLanguageLevel(arg).isAtLeast(LanguageLevel.JDK_10) &&
             InheritanceUtil.isInheritor(arg.getType(), JAVA_UTIL_COLLECTION)) {
+          PsiType elementType = PsiUtil.substituteTypeParameter(arg.getType(), JAVA_UTIL_COLLECTION, 0, false);
+          if (DfaPsiUtil.getTypeNullability(elementType) == Nullability.NULLABLE) {
+            return null;
+          }
           return new PrepopulatedCollectionModel(Collections.singletonList(arg), Collections.emptyList(), type, true);
         }
       }
       return null;
     }
 
-    @Nullable
-    private static PrepopulatedCollectionModel fromInitializer(PsiAnonymousClass anonymousClass, String type, CallMatcher addMethod) {
+    private static @Nullable PrepopulatedCollectionModel fromInitializer(PsiAnonymousClass anonymousClass, String type, CallMatcher addMethod) {
       PsiClassInitializer initializer = ClassUtils.getDoubleBraceInitializer(anonymousClass);
       if(initializer != null) {
         List<PsiExpression> contents = new ArrayList<>();
@@ -327,15 +332,13 @@ public final class Java9CollectionFactoryInspection extends AbstractBaseJavaLoca
       myMessage = message;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return myMessage;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.collection.factories.fix.family.name");
     }
 
@@ -372,8 +375,7 @@ public final class Java9CollectionFactoryInspection extends AbstractBaseJavaLoca
       RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(replacement);
     }
 
-    @NotNull
-    private static String getTypeArguments(PsiType type, String typeName) {
+    private static @NotNull String getTypeArguments(PsiType type, String typeName) {
       if (typeName.equals("Map")) {
         PsiType keyType = PsiUtil.substituteTypeParameter(type, JAVA_UTIL_MAP, 0, false);
         PsiType valueType = PsiUtil.substituteTypeParameter(type, JAVA_UTIL_MAP, 1, false);

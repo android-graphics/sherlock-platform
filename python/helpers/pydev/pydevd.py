@@ -57,11 +57,12 @@ from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_fr
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, remove_exception_from_frame
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from _pydevd_bundle.pydevd_trace_dispatch import (
-    trace_dispatch as _trace_dispatch, global_cache_skips, global_cache_frame_skips, show_tracing_warning)
+    trace_dispatch as _trace_dispatch, show_tracing_warning)
 from _pydevd_frame_eval.pydevd_frame_eval_main import (
     frame_eval_func, clear_thread_local_info, dummy_trace_dispatch,
     show_frame_eval_warning)
-from _pydevd_bundle.pydevd_pep_669_tracing_wrapper import enable_pep669_monitoring
+from _pydevd_bundle.pydevd_pep_669_tracing_wrapper import (
+    enable_pep669_monitoring, restart_events)
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
 from _pydevd_bundle.pydevd_utils import save_main_module, is_current_thread_main_thread, \
     kill_thread
@@ -520,6 +521,16 @@ class PyDB(object):
 
         self.is_pep669_monitoring_enabled = False
 
+        if USE_LOW_IMPACT_MONITORING:
+            from _pydevd_bundle.pydevd_pep_669_tracing_wrapper import (
+                global_cache_skips, global_cache_frame_skips)
+        else:
+            from _pydevd_bundle.pydevd_trace_dispatch import (
+                global_cache_skips, global_cache_frame_skips)
+
+        self._global_cache_skips = global_cache_skips
+        self._global_cache_frame_skips = global_cache_frame_skips
+
         self.value_resolve_thread_list = []
 
         if set_as_global:
@@ -922,8 +933,10 @@ class PyDB(object):
         self.clear_skip_caches()
 
     def clear_skip_caches(self):
-        global_cache_skips.clear()
-        global_cache_frame_skips.clear()
+        self._global_cache_skips.clear()
+        self._global_cache_frame_skips.clear()
+        if USE_LOW_IMPACT_MONITORING:
+            restart_events()
 
     def add_break_on_exception(
         self,
@@ -2085,6 +2098,9 @@ def main():
     if setup['help']:
         usage()
 
+    if SHOW_DEBUG_INFO_ENV:
+        set_debug(setup)
+
     if setup['print-in-debugger-startup']:
         try:
             pid = ' (pid: %s)' % os.getpid()
@@ -2099,9 +2115,6 @@ def main():
 
 
     pydevd_vm_type.setup_type(setup.get('vm_type', None))
-
-    if SHOW_DEBUG_INFO_ENV:
-        set_debug(setup)
 
     DebugInfoHolder.DEBUG_RECORD_SOCKET_READS = setup.get('DEBUG_RECORD_SOCKET_READS', DebugInfoHolder.DEBUG_RECORD_SOCKET_READS)
     DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS = setup.get('DEBUG_TRACE_BREAKPOINTS', DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS)

@@ -23,16 +23,15 @@ public final class UseHashCodeMethodInspection extends AbstractBaseJavaLocalInsp
   private static final CallMatcher DOUBLE_TO_LONG_BITS =
     CallMatcher.staticCall("java.lang.Double", "doubleToLongBits").parameterTypes("double");
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
         HashCodeModel model = getHashCodeModel(expression);
         if (model != null) {
-          PsiClass containingClass = ClassUtils.getContainingClass(expression);
+          PsiClass containingClass = PsiUtil.getContainingClass(expression);
           if (containingClass != null && containingClass.getQualifiedName() != null &&
               containingClass.getQualifiedName().startsWith("java.lang.")) {
             // Avoid suggesting inside JDK sources
@@ -112,10 +111,8 @@ public final class UseHashCodeMethodInspection extends AbstractBaseJavaLocalInsp
       return CommonQuickFixBundle.message("fix.replace.with.x", myType+".hashCode()");
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "hashCode()");
     }
 

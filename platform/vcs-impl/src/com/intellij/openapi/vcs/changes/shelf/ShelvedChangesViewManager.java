@@ -7,13 +7,13 @@ import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.impl.DiffEditorViewer;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.ide.dnd.*;
-import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -25,7 +25,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
@@ -48,11 +47,9 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
-import com.intellij.util.Consumer;
-import com.intellij.util.ModalityUiUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.PathUtil;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.DateFormatUtil;
@@ -60,7 +57,8 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import com.intellij.xml.util.XmlStringUtil;
+import com.intellij.platform.vcs.impl.shared.changes.DiffPreviewUpdateProcessor;
+import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent;
 import kotlinx.coroutines.CoroutineScope;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
@@ -71,8 +69,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -80,9 +78,8 @@ import java.util.stream.Collectors;
 import static com.intellij.openapi.util.Predicates.nonNull;
 import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.SHELVE_DELETION_UNDO;
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.REPOSITORY_GROUPING;
-import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.SHELF;
-import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
-import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.isCommitToolWindowShown;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.*;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.subscribeOnVcsToolWindowLayoutChanges;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Comparator.comparing;
@@ -90,7 +87,6 @@ import static java.util.Objects.requireNonNull;
 
 public class ShelvedChangesViewManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(ShelvedChangesViewManager.class);
-  private static final String HELP_ID = "ideaInterface.shelf";
   static final @NonNls String SHELF_CONTEXT_MENU = "Vcs.Shelf.ContextMenu";
   private static final String SHELVE_PREVIEW_SPLITTER_PROPORTION = "ShelvedChangesViewManager.DETAILS_SPLITTER_PROPORTION"; //NON-NLS
 
@@ -101,6 +97,8 @@ public class ShelvedChangesViewManager implements Disposable {
   private final List<Runnable> myPostUpdateEdtActivity = new ArrayList<>();
 
   private @Nullable ShelfToolWindowPanel myPanel = null;
+
+  public static final String HELP_ID = "ideaInterface.shelf";
 
   public static final DataKey<ChangesTree> SHELVED_CHANGES_TREE =
     DataKey.create("ShelveChangesManager.ShelvedChangesTree");
@@ -113,16 +111,15 @@ public class ShelvedChangesViewManager implements Disposable {
   public static final DataKey<List<ShelvedChange>> SHELVED_CHANGE_KEY = DataKey.create("ShelveChangesManager.ShelvedChange");
   public static final DataKey<List<ShelvedBinaryFile>> SHELVED_BINARY_FILE_KEY = DataKey.create("ShelveChangesManager.ShelvedBinaryFile");
 
-  public static ShelvedChangesViewManager getInstance(Project project) {
+  public static ShelvedChangesViewManager getInstance(@NotNull Project project) {
     return project.getService(ShelvedChangesViewManager.class);
   }
 
-  public ShelvedChangesViewManager(Project project) {
+  ShelvedChangesViewManager(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
-    myUpdateQueue = new MergingUpdateQueue("Update Shelf Content", 200, true, null, myProject, null, true);
+    myUpdateQueue = new MergingUpdateQueue("Update Shelf Content", 200, true, null, myProject, null, Alarm.ThreadToUse.SWING_THREAD, coroutineScope);
 
-    MessageBusConnection connection = project.getMessageBus().connect(this);
-    connection.subscribe(ShelveChangesManager.SHELF_TOPIC, () -> scheduleTreeUpdate());
+    project.getMessageBus().connect(coroutineScope).subscribe(ShelveChangesManager.SHELF_TOPIC, () -> scheduleTreeUpdate());
   }
 
   private void scheduleTreeUpdate() {
@@ -201,9 +198,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
   @RequiresEdt
   void updateTreeView() {
-    updateTreeIfShown(tree -> {
-      tree.rebuildTree();
-    });
+    updateTreeIfShown(tree -> tree.rebuildTree());
   }
 
   @ApiStatus.Internal
@@ -421,11 +416,13 @@ public class ShelvedChangesViewManager implements Disposable {
 
     @Override
     public void initTabContent(@NotNull Content content) {
-      ShelfToolWindowPanel panel = getInstance(myProject).initToolWindowPanel();
-      content.setHelpId(HELP_ID);
-      content.setComponent(panel);
-      content.setDisposer(panel);
-      content.setPreferredFocusableComponent(panel.myTree);
+      if (!Registry.is("vcs.shelves.rhizome.enabled")) {
+        ShelfToolWindowPanel panel = getInstance(myProject).initToolWindowPanel();
+        content.setHelpId(HELP_ID);
+        content.setComponent(panel);
+        content.setDisposer(panel);
+        content.setPreferredFocusableComponent(panel.myTree);
+      }
     }
   }
 
@@ -446,10 +443,11 @@ public class ShelvedChangesViewManager implements Disposable {
     deleteShelves(project, shelvedListsToDelete, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
   }
 
-  private static void deleteShelves(@NotNull Project project, @NotNull List<ShelvedChangeList> shelvedListsToDelete,
-                                    @NotNull List<ShelvedChangeList> shelvedListsFromChanges,
-                                    @NotNull List<ShelvedChange> selectedChanges,
-                                    @NotNull List<ShelvedBinaryFile> selectedBinaryChanges) {
+  @ApiStatus.Internal
+  public static void deleteShelves(@NotNull Project project, @NotNull List<ShelvedChangeList> shelvedListsToDelete,
+                                   @NotNull List<ShelvedChangeList> shelvedListsFromChanges,
+                                   @NotNull List<ShelvedChange> selectedChanges,
+                                   @NotNull List<ShelvedBinaryFile> selectedBinaryChanges) {
     List<ShelvedChange> changesToDelete = getChangesNotInLists(shelvedListsToDelete, selectedChanges);
     List<ShelvedBinaryFile> binariesToDelete = getBinariesNotInLists(shelvedListsToDelete, selectedBinaryChanges);
 
@@ -692,6 +690,8 @@ public class ShelvedChangesViewManager implements Disposable {
     private final ShelveChangesManager myShelveChangesManager;
     private final VcsConfiguration myVcsConfiguration;
 
+    private final @NotNull Wrapper myMainPanelContent = new Wrapper();
+    private final @NotNull JPanel myShelvePanel;
     private final @NotNull JScrollPane myTreeScrollPane;
     private final ShelfTree myTree;
 
@@ -721,21 +721,21 @@ public class ShelvedChangesViewManager implements Disposable {
       actionGroup.add(Separator.getInstance());
       actionGroup.add(new MyToggleDetailsAction());
 
-      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ShelvedChanges", actionGroup, false);
+      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ShelvedChanges", actionGroup, true);
       toolbar.setTargetComponent(myTree);
       myTreeScrollPane = ScrollPaneFactory.createScrollPane(myTree, true);
 
-      setContent(myTreeScrollPane);
-      setToolbar(toolbar.getComponent());
-      updatePanelLayout();
+      myShelvePanel = JBUI.Panels.simplePanel(myTreeScrollPane)
+        .addToTop(toolbar.getComponent());
+      myMainPanelContent.setContent(myShelvePanel);
+      setContent(myMainPanelContent);
 
       myEditorDiffPreview = new ShelveEditorDiffPreview();
       Disposer.register(this, myEditorDiffPreview);
 
-      setSplitterDiffPreview();
-      EditorTabDiffPreviewManager.getInstance(project).subscribeToPreviewVisibilityChange(this, this::setSplitterDiffPreview);
-
-      myProject.getMessageBus().connect(this).subscribe(ChangesViewContentManagerListener.TOPIC, () -> updatePanelLayout());
+      MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
+      subscribeOnVcsToolWindowLayoutChanges(busConnection, this::updatePanelLayout);
+      updatePanelLayout();
 
       PopupHandler.installPopupMenu(myTree, "ShelvedChangesPopupMenu", SHELF_CONTEXT_MENU);
       new MyDnDSupport(myProject, myTree, myTreeScrollPane).install(this);
@@ -752,12 +752,9 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     private void updatePanelLayout() {
-      setVertical(isCommitToolWindowShown(myProject));
-    }
+      boolean isVertical = ChangesViewContentManager.isToolWindowTabVertical(myProject, SHELF);
 
-    private void setSplitterDiffPreview() {
-      boolean hasSplitterPreview = !isCommitToolWindowShown(myProject);
-
+      boolean hasSplitterPreview = shouldHaveSplitterDiffPreview(myProject, isVertical);
       //noinspection DoubleNegation
       boolean needUpdatePreview = hasSplitterPreview != (mySplitterDiffPreview != null);
       if (!needUpdatePreview) return;
@@ -777,9 +774,8 @@ public class ShelvedChangesViewManager implements Disposable {
         super(myTree, myTreeScrollPane, MyShelvedPreviewProcessor.ShelveTreeDiffPreviewHandler.INSTANCE);
       }
 
-      @NotNull
       @Override
-      protected DiffEditorViewer createViewer() {
+      protected @NotNull DiffEditorViewer createViewer() {
         return new MyShelvedPreviewProcessor(myProject, myTree, true);
       }
 
@@ -794,9 +790,8 @@ public class ShelvedChangesViewManager implements Disposable {
         DiffShelvedChangesActionProvider.updateAvailability(event);
       }
 
-      @Nullable
       @Override
-      public String getEditorTabName(@Nullable ChangeViewDiffRequestProcessor.Wrapper wrapper) {
+      public @Nullable String getEditorTabName(@Nullable ChangeViewDiffRequestProcessor.Wrapper wrapper) {
         return wrapper != null
                ? VcsBundle.message("shelve.editor.diff.preview.title", wrapper.getPresentableName())
                : VcsBundle.message("shelved.version.name");
@@ -822,8 +817,8 @@ public class ShelvedChangesViewManager implements Disposable {
         myProcessor = new MyShelvedPreviewProcessor(myProject, myTree, false);
         mySplitterComponent = new PreviewDiffSplitterComponent(myProcessor, SHELVE_PREVIEW_SPLITTER_PROPORTION);
 
-        mySplitterComponent.setFirstComponent(myTreeScrollPane);
-        ShelfToolWindowPanel.this.setContent(mySplitterComponent);
+        mySplitterComponent.setFirstComponent(myShelvePanel);
+        myMainPanelContent.setContent(mySplitterComponent);
       }
 
       @Override
@@ -831,7 +826,7 @@ public class ShelvedChangesViewManager implements Disposable {
         Disposer.dispose(myProcessor);
 
         if (!ShelfToolWindowPanel.this.myDisposed) {
-          ShelfToolWindowPanel.this.setContent(myTreeScrollPane);
+          myMainPanelContent.setContent(myShelvePanel);
         }
       }
 
@@ -900,15 +895,14 @@ public class ShelvedChangesViewManager implements Disposable {
 
       private @NotNull DnDImage createDraggedImage(@NotNull DnDActionInfo info) {
         String imageText = VcsBundle.message("unshelve.changes.action");
-        Image image = DnDAwareTree.getDragImage(myTree, imageText, null).getFirst();
-        return new DnDImage(image, new Point(-image.getWidth(null), -image.getHeight(null)));
+        return ChangesTreeDnDSupport.createDragImage(myTree, imageText);
       }
     }
 
     @Override
     public void uiDataSnapshot(@NotNull DataSink sink) {
       super.uiDataSnapshot(sink);
-      sink.set(EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW, myEditorDiffPreview);
+      sink.set(DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW, myEditorDiffPreview);
     }
 
     private class MyToggleDetailsAction extends ShowDiffPreviewAction {
@@ -1125,21 +1119,6 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     public @Nullable Color getBackgroundColor(@NotNull Project project) {
       return getBackgroundColorFor(project, myFilePath);
-    }
-  }
-
-  public static class MyShelfManagerListener implements ShelveChangesManagerListener {
-    private final Project myProject;
-
-    public MyShelfManagerListener(@NotNull Project project) {
-      myProject = project;
-    }
-
-    @Override
-    public void shelvedListsChanged() {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        BackgroundTaskUtil.syncPublisher(myProject, ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged();
-      });
     }
   }
 }

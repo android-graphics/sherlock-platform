@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.google.gson.Gson;
@@ -12,9 +12,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,6 +28,7 @@ import java.util.function.Predicate;
 import static com.intellij.codeInspection.DefaultInspectionToolResultExporter.INSPECTION_RESULTS_LANGUAGE;
 import static com.intellij.codeInspection.reference.SmartRefElementPointerImpl.*;
 
+@ApiStatus.Internal
 public class JsonInspectionsReportConverter implements InspectionsReportConverter {
   private static final @NonNls String FORMAT_NAME = "json";
   private static final @NonNls String JSON_EXTENSION = ".json";
@@ -306,8 +305,8 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
     return parameter != null ? parameter.getAttributeValue("name") : null;
   }
 
-  private static @NotNull Collection<String> getVulnerabilityValues(@NotNull Element element,
-                                                                    @NotNull String vulnerabilitiesTagName) {
+  private static @Unmodifiable @NotNull Collection<String> getVulnerabilityValues(@NotNull Element element,
+                                                                                  @NotNull String vulnerabilitiesTagName) {
     Element vulnerabilities = element.getChild(vulnerabilitiesTagName);
     if (vulnerabilities == null) {
       return Collections.emptyList();

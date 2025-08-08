@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.concurrency.JobScheduler;
@@ -46,8 +46,7 @@ public final class FUCounterUsageLogger {
 
   private static final Logger LOG = Logger.getInstance(FUCounterUsageLogger.class);
 
-  @NotNull
-  public static FUCounterUsageLogger getInstance() {
+  public static @NotNull FUCounterUsageLogger getInstance() {
     return ApplicationManager.getApplication().getService(FUCounterUsageLogger.class);
   }
 
@@ -57,6 +56,7 @@ public final class FUCounterUsageLogger {
     for (CounterUsageCollectorEP ep : COUNTER_EP_NAME.getExtensionList()) {
       registerGroupFromEP(ep);
     }
+
     ApplicationManager.getApplication().getExtensionArea().getExtensionPoint(COUNTER_EP_NAME).addExtensionPointListener(
       new ExtensionPointListener<>() {
         @Override
@@ -79,6 +79,22 @@ public final class FUCounterUsageLogger {
         register(new EventLogGroup(id, ep.version));
       }
     }
+  }
+
+  /**
+   * Event log counter-system collectors aren't registered in EP,
+   * so we log 'registered' event for every StatisticsEventLoggerProvider event log collector.
+   *
+   * @see StatisticsEventLoggerProvider#getEventLogSystemLogger$intellij_platform_statistics()
+   */
+  private static List<CompletableFuture<Void>> eventLogSystemCollectorsRegisteredEvents() {
+    List<CompletableFuture<Void>> futures = new ArrayList<>();
+    for (StatisticsEventLoggerProvider statisticsEventLoggerProvider: StatisticsEventLogProviderUtil.getEventLogProviders()) {
+      EventLogGroup group = statisticsEventLoggerProvider.getEventLogSystemLogger$intellij_platform_statistics().getGroup();
+      StatisticsEventLogger logger = StatisticsEventLogProviderUtil.getEventLogProvider(group.getRecorder()).getLogger();
+      futures.add(logger.logAsync(group, EventLogSystemEvents.COLLECTOR_REGISTERED, false));
+    }
+    return futures;
   }
 
   public static @NotNull List<FeatureUsagesCollector> instantiateCounterCollectors() {
@@ -128,8 +144,9 @@ public final class FUCounterUsageLogger {
   public CompletableFuture<Void> logRegisteredGroups() {
     List<CompletableFuture<Void>> futures = new ArrayList<>();
     for (EventLogGroup group : myGroups.values()) {
-      futures.add(FeatureUsageLogger.INSTANCE.log(group, EventLogSystemEvents.COLLECTOR_REGISTERED));
+      futures.add(FeatureUsageLogger.getInstance().log(group, EventLogSystemEvents.COLLECTOR_REGISTERED));
     }
+    futures.addAll(eventLogSystemCollectorsRegisteredEvents());
     Map<String, StatisticsEventLogger> recorderLoggers = new HashMap<>();
     for (FeatureUsagesCollector collector : instantiateCounterCollectors()) {
       EventLogGroup group = collector.getGroup();
@@ -177,7 +194,7 @@ public final class FUCounterUsageLogger {
                        @NotNull FeatureUsageData data) {
     final EventLogGroup group = findRegisteredGroupById(groupId);
     if (group != null) {
-      FeatureUsageLogger.INSTANCE.log(group, eventId, data.addProject(project).build());
+      FeatureUsageLogger.getInstance().log(group, eventId, data.addProject(project).build());
     }
   }
 
@@ -201,7 +218,7 @@ public final class FUCounterUsageLogger {
                        @NonNls @NotNull String eventId) {
     final EventLogGroup group = findRegisteredGroupById(groupId);
     if (group != null) {
-      FeatureUsageLogger.INSTANCE.log(group, eventId);
+      FeatureUsageLogger.getInstance().log(group, eventId);
     }
   }
 
@@ -226,12 +243,11 @@ public final class FUCounterUsageLogger {
                        @NotNull FeatureUsageData data) {
     final EventLogGroup group = findRegisteredGroupById(groupId);
     if (group != null) {
-      FeatureUsageLogger.INSTANCE.log(group, eventId, data.build());
+      FeatureUsageLogger.getInstance().log(group, eventId, data.build());
     }
   }
 
-  @Nullable
-  private EventLogGroup findRegisteredGroupById(@NotNull String groupId) {
+  private @Nullable EventLogGroup findRegisteredGroupById(@NotNull String groupId) {
     if (!myGroups.containsKey(groupId)) {
       LOG.error(
         "Cannot record event because group '" + groupId + "' is not registered. " +

@@ -1,9 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Set;
 
@@ -11,6 +13,7 @@ import java.util.Set;
  * return -1 instead of 0 if no such mapping exists
  * @deprecated Use {@link Object2IntOpenHashMap}
  */
+@ApiStatus.Internal
 @Deprecated
 public final class ObjectIntHashMap<K> implements ObjectIntMap<K> {
   private final Object2IntMap<K> myMap;
@@ -79,7 +82,7 @@ public final class ObjectIntHashMap<K> implements ObjectIntMap<K> {
   }
 
   @Override
-  public @NotNull Iterable<Entry<K>> entries() {
+  public @Unmodifiable @NotNull Iterable<Entry<K>> entries() {
     return ContainerUtil.map(myMap.object2IntEntrySet(), e-> new IntEntry(e));
   }
 

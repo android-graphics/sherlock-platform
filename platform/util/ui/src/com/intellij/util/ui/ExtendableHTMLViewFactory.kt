@@ -4,14 +4,19 @@
 package com.intellij.util.ui
 
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.util.findIconUsingNewImplementation
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.ui.IconManager
+import com.intellij.ui.icons.getClassNameByIconPath
+import com.intellij.ui.icons.isReflectivePath
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.asSafely
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.ExtendableHTMLViewFactory.Extension
 import com.intellij.util.ui.html.*
 import com.intellij.util.ui.html.CssAttributesEx.BORDER_RADIUS
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
@@ -32,7 +37,7 @@ import kotlin.math.max
  */
 class ExtendableHTMLViewFactory internal constructor(
   private val extensions: List<(Element, View) -> View?>,
-  private val base: ViewFactory = HTMLEditorKit().viewFactory
+  private val base: ViewFactory = HTMLEditorKit().viewFactory,
 ) : HTMLFactory() {
   internal constructor(vararg extensions: (Element, View) -> View?) : this(extensions.asList())
 
@@ -50,9 +55,9 @@ class ExtendableHTMLViewFactory internal constructor(
   companion object {
     @JvmField
     internal val DEFAULT_EXTENSIONS: List<Extension> = listOf(
-      Extensions.ICONS, Extensions.BASE64_IMAGES, Extensions.HIDPI_IMAGES,
+      Extensions.ICONS, Extensions.HIDPI_IMAGES,
       Extensions.INLINE_VIEW_EX, Extensions.WBR_SUPPORT, Extensions.PARAGRAPH_VIEW_EX,
-      Extensions.LINE_VIEW_EX, Extensions.BLOCK_VIEW_EX
+      Extensions.LINE_VIEW_EX, Extensions.BLOCK_VIEW_EX, Extensions.FORM_VIEW_EX,
     )
 
     @JvmField
@@ -108,6 +113,7 @@ class ExtendableHTMLViewFactory internal constructor(
      *
      * Syntax is `<img src='data:image/png;base64,ENCODED_IMAGE_HERE'>`
      */
+    @Deprecated(message = "Use HIDPI_IMAGES or FIT_TO_WIDTH_IMAGES, which support base64 as well.")
     @JvmField
     val BASE64_IMAGES: Extension = Base64ImagesExtension()
 
@@ -130,6 +136,12 @@ class ExtendableHTMLViewFactory internal constructor(
      */
     @JvmField
     val BLOCK_VIEW_EX: Extension = BlockViewExExtension()
+
+    /**
+     * Supports improved handling of form controls, like <input> or <form>.
+     */
+    @JvmField
+    val FORM_VIEW_EX: Extension = FormViewExExtension()
 
     /**
      * Supports line-height property (%, px and no-unit) in paragraphs.
@@ -170,6 +182,11 @@ class ExtendableHTMLViewFactory internal constructor(
     @JvmField
     val BLOCK_HR_SUPPORT: Extension = BlockHrSupportExtension()
   }
+
+  @ApiStatus.Internal
+  interface ScaledHtmlJEditorPane {
+    val contentsScaleFactor: Float
+  }
 }
 
 private class IconExtension(private val existingIconProvider: (key: String) -> Icon?) : Extension {
@@ -190,7 +207,17 @@ private class IconExtension(private val existingIconProvider: (key: String) -> I
     if (existingIcon != null) {
       return existingIcon
     }
-    return findIconUsingNewImplementation(path = src, classLoader = ExtendableHTMLViewFactory::class.java.classLoader)
+
+    val classLoader = if (isReflectivePath(src)) {
+      val className = getClassNameByIconPath(src)
+      IconManager.getInstance().getClassLoaderByClassName(className)
+    }
+    else null
+
+    return findIconUsingNewImplementation(
+      path = src,
+      classLoader = classLoader ?: ExtendableHTMLViewFactory::class.java.classLoader,
+    )
   }
 }
 
@@ -199,16 +226,19 @@ private class IconExtension(private val existingIconProvider: (key: String) -> I
  */
 private class JBIconView(elem: Element, private val icon: Icon) : View(elem) {
   override fun getPreferredSpan(axis: Int): Float {
+    val scaleFactor = container.asSafely<ExtendableHTMLViewFactory.ScaledHtmlJEditorPane>()?.contentsScaleFactor ?: 1f
     return when (axis) {
-      X_AXIS -> icon.iconWidth.toFloat()
-      Y_AXIS -> icon.iconHeight.toFloat()
+      X_AXIS -> icon.iconWidth.toFloat() * scaleFactor
+      Y_AXIS -> icon.iconHeight.toFloat() * scaleFactor
       else -> throw IllegalArgumentException("Invalid axis: $axis")
     }
   }
 
   override fun getAlignment(axis: Int): Float {
     // 12 is a "standard" font height that has a user scale of 1
-    return if (axis == Y_AXIS) JBUIScale.scale(12) / icon.iconHeight.toFloat() else super.getAlignment(axis)
+    val scaleFactor = container.asSafely<ExtendableHTMLViewFactory.ScaledHtmlJEditorPane>()?.contentsScaleFactor ?: 1f
+    val fontSize = container.font.size
+    return if (axis == Y_AXIS) JBUIScale.scale(fontSize) / (icon.iconHeight.toFloat() * scaleFactor) else super.getAlignment(axis)
   }
 
   override fun getToolTipText(x: Float, y: Float, allocation: Shape): String? {
@@ -219,7 +249,13 @@ private class JBIconView(elem: Element, private val icon: Icon) : View(elem) {
     val g2d = g as Graphics2D
     val savedComposite = g2d.composite
     g2d.composite = AlphaComposite.SrcOver // support transparency
-    icon.paintIcon(null, g, allocation.bounds.x, allocation.bounds.y)
+
+    val scaleFactor = container.asSafely<ExtendableHTMLViewFactory.ScaledHtmlJEditorPane>()?.contentsScaleFactor ?: 1f
+    val scaledIcon = if (icon is ScalableIcon && scaleFactor != 1f)
+      icon.scale(scaleFactor)
+    else
+      icon
+    scaledIcon.paintIcon(null, g, allocation.bounds.x, allocation.bounds.y)
     g2d.composite = savedComposite
   }
 
@@ -430,13 +466,20 @@ private class BlockViewExExtension : Extension {
   }
 }
 
+private class FormViewExExtension : Extension {
+  override fun invoke(element: Element, view: View): View? {
+    if (view.javaClass != FormView::class.java) return null
+    return FormViewEx(element)
+  }
+}
+
 private class ParagraphViewExExtension : Extension {
   override fun invoke(element: Element, view: View): View? {
     if (view.javaClass != ParagraphView::class.java) return null
     val attrs = view.attributes
     if (
-      attrs.getAttribute(CSS.Attribute.LINE_HEIGHT) != null
-      || element.attributes.getAttribute(HTML.Attribute.TITLE) != null
+      (attrs.getAttribute(CSS.Attribute.LINE_HEIGHT) != null
+       || element.attributes.getAttribute(HTML.Attribute.TITLE) != null)
     ) {
       return ParagraphViewEx(element)
     }
@@ -464,7 +507,11 @@ private class BlockHrSupportExtension : Extension {
     val attrs = element.attributes
     if (attrs.getAttribute(AbstractDocument.ElementNameAttribute) == null &&
         attrs.getAttribute(StyleConstants.NameAttribute) === HTML.Tag.HR) {
-      (element as AbstractDocument.AbstractElement).addAttribute(HTML.Tag.HR, SimpleAttributeSet())
+      if (element.attributes.getAttribute(HTML.Tag.HR) == null) {
+        (element.document as JBHtmlEditorKit.JBHtmlDocument).tryRunUnderWriteLock {
+          (element as AbstractDocument.AbstractElement).addAttribute(HTML.Tag.HR, SimpleAttributeSet())
+        }
+      }
       return HRViewEx(element, View.Y_AXIS)
     }
     else {

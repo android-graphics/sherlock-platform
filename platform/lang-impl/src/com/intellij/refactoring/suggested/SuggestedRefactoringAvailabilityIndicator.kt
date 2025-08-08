@@ -2,6 +2,9 @@
 package com.intellij.refactoring.suggested
 
 import com.intellij.codeInsight.daemon.GutterMark
+import com.intellij.codeInsight.editorLineStripeHint.EditorLineStripeButtonRenderer
+import com.intellij.codeInsight.editorLineStripeHint.EditorLineStripeHintComponent
+import com.intellij.codeInsight.editorLineStripeHint.EditorLineStripeTextRenderer
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
@@ -14,13 +17,16 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.*
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.RefactoringCodeVisionSupport
+import com.intellij.ui.LightColors
 import com.intellij.util.concurrency.ThreadingAssertions
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import javax.swing.Icon
@@ -31,7 +37,8 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
     val highlighterRangeMarker: RangeMarker,
     val availabilityRangeMarker: RangeMarker,
     val refactoringEnabled: Boolean,
-    @NlsContexts.Tooltip val tooltip: String
+    @NlsContexts.Tooltip val tooltip: String,
+    @Nls val intentionText: String?,
   ) {
     override fun equals(other: Any?): Boolean {
       return other is Data
@@ -40,6 +47,7 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
              && other.availabilityRangeMarker.asTextRange == availabilityRangeMarker.asTextRange
              && other.refactoringEnabled == refactoringEnabled
              && other.tooltip == tooltip
+             && other.intentionText == intentionText
     }
 
     override fun hashCode() = tooltip.hashCode()
@@ -47,7 +55,7 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
 
   private var data: Data? = null
 
-  private val editorsAndHighlighters = mutableMapOf<Editor, RangeHighlighter?>()
+  private val editorsAndHighlighters = mutableMapOf<Editor, Pair<RangeHighlighter, EditorLineStripeHintComponent?>>()
 
   private val caretListener = object : CaretListener {
     override fun caretPositionChanged(event: CaretEvent) {
@@ -72,7 +80,8 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
     markerRange: TextRange,
     availabilityRange: TextRange,
     refactoringEnabled: Boolean,
-    @NlsContexts.Tooltip tooltip: String
+    @NlsContexts.Tooltip tooltip: String,
+    @Nls intentionText: String?,
   ) {
     ThreadingAssertions.assertEventDispatchThread()
 
@@ -81,7 +90,8 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
       document.createRangeMarker(markerRange),
       document.createRangeMarker(availabilityRange).apply { isGreedyToLeft = true; isGreedyToRight = true },
       refactoringEnabled,
-      tooltip
+      tooltip,
+      intentionText
     )
     if (newData == data) return
 
@@ -97,11 +107,19 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
     if (data == null) return
 
     data = null
-    for ((editor, highlighter) in editorsAndHighlighters) {
+    for ((editor, highlighterAndHint) in editorsAndHighlighters) {
       editor.caretModel.removeCaretListener(caretListener)
-      highlighter?.let { editor.markupModel.removeHighlighter(it) }
+      editor.markupModel.removeHighlighter(highlighterAndHint.first)
+      highlighterAndHint.second?.let { hint ->
+        hint.uninstall()
+        Disposer.dispose(hint)
+      }
     }
     editorsAndHighlighters.clear()
+  }
+
+  internal fun isHintShown(editor: Editor): Boolean {
+    return editorsAndHighlighters[editor]?.second != null
   }
 
   fun disable() {
@@ -113,7 +131,8 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
         data.highlighterRangeMarker.asTextRange ?: return,
         data.availabilityRangeMarker.asTextRange ?: return,
         false,
-        data.tooltip
+        data.tooltip,
+        data.intentionText,
       )
     }
   }
@@ -132,15 +151,20 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
   private fun updateHighlighter(editor: Editor) {
     ThreadingAssertions.assertEventDispatchThread()
 
-    val prevHighlighter = editorsAndHighlighters[editor]
-    if (prevHighlighter != null) {
-      editor.markupModel.removeHighlighter(prevHighlighter)
+    val prevHighlighterAndHint = editorsAndHighlighters[editor]
+    if (prevHighlighterAndHint != null) {
+      editor.markupModel.removeHighlighter(prevHighlighterAndHint.first)
       editorsAndHighlighters.remove(editor)
+      prevHighlighterAndHint.second?.let { hint ->
+        hint.uninstall()
+        Disposer.dispose(hint)
+      }
     }
 
+    val data = data
     val range = data?.availabilityRangeMarker?.asTextRange ?: return
     if (!range.containsOffset(editor.caretModel.offset)) return
-    val highlighterRange = data!!.highlighterRangeMarker.asTextRange ?: return
+    val highlighterRange = data.highlighterRangeMarker.asTextRange ?: return
 
     val highlighter = editor.markupModel.addRangeHighlighter(
       highlighterRange.startOffset,
@@ -149,11 +173,22 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
       TextAttributes(),
       HighlighterTargetArea.EXACT_RANGE
     )
-    highlighter.gutterIconRenderer = if (data!!.refactoringEnabled)
-      RefactoringAvailableGutterIconRenderer(data!!.tooltip)
-    else
-      RefactoringDisabledGutterIconRenderer(data!!.tooltip)
-    editorsAndHighlighters[editor] = highlighter
+
+    var hint: EditorLineStripeHintComponent? = null
+    if (data.refactoringEnabled) {
+      highlighter.gutterIconRenderer = RefactoringAvailableGutterIconRenderer(data.tooltip)
+      if (data.intentionText != null && isSuggestedRefactoringEditorHintEnabled()) {
+        hint = EditorLineStripeHintComponent(editor, {
+          listOf(listOf(EditorLineStripeTextRenderer(data.intentionText), EditorLineStripeButtonRenderer("Enter")))
+        }, LightColors.SLIGHTLY_GREEN)
+        hint.redraw()
+      }
+    }
+    else {
+      highlighter.gutterIconRenderer = RefactoringDisabledGutterIconRenderer(data.tooltip)
+    }
+
+    editorsAndHighlighters[editor] = highlighter to hint
   }
 
   companion object {
@@ -260,7 +295,7 @@ internal fun SuggestedRefactoringAvailabilityIndicator.update(
 
   fun doUpdate() {
     if (availabilityRange != null) {
-      show(document, markerRange, availabilityRange, refactoringAvailable, tooltip)
+      show(document, markerRange, availabilityRange, refactoringAvailable, tooltip, refactoringData?.getIntentionText())
     }
     else {
       clear()
@@ -294,6 +329,7 @@ internal fun SuggestedRefactoringSupport.changeSignatureAvailabilityRange(anchor
     ?.extend(document.charsSequence) { it == ' ' || it == '\t' }
 }
 
+@ApiStatus.Internal
 class SuggestedRefactoringGutterMarkPreprocessor : GutterMarkPreprocessor {
   override fun processMarkers(list: List<GutterMark>): List<GutterMark> {
     val mark = list.firstOrNull {

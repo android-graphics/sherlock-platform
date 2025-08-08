@@ -3,6 +3,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.externalDependencies.DependencyOnPlugin;
 import com.intellij.externalDependencies.ExternalDependenciesManager;
+import com.intellij.ide.CommandLineProcessorKt;
 import com.intellij.ide.impl.OpenProjectTaskKt;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationStarter;
@@ -12,6 +13,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +27,7 @@ public class HeadlessPluginsInstaller implements ApplicationStarter {
 
   @Override
   public int getRequiredModality() {
+    //noinspection MagicConstant (workaround for IDEA-359236)
     return NOT_IN_EDT;
   }
 
@@ -39,11 +42,15 @@ public class HeadlessPluginsInstaller implements ApplicationStarter {
       var pluginIds = new LinkedHashSet<PluginId>();
       var customRepositories = new LinkedHashSet<String>();
       var projectPaths = new ArrayList<Path>();
+      var giveConsentToUseThirdPartyPlugins = false;
 
       for (int i = 1; i < args.size(); i++) {
         var arg = args.get(i);
         if ("-h".equals(arg) || "--help".equals(arg)) {
           printUsageHint();
+        }
+        else if ("--give-consent-to-use-third-party-plugins".equals(arg)) {
+          giveConsentToUseThirdPartyPlugins = true;
         }
         else if (arg.startsWith("--for-project=")) {
           projectPaths.add(Path.of(arg.replace("--for-project=", "")));
@@ -63,7 +70,7 @@ public class HeadlessPluginsInstaller implements ApplicationStarter {
       }
       logInfo("plugin repositories: " + RepositoryHelper.getPluginHosts());
 
-      var installed = installPlugins(pluginIds);
+      var installed = installPlugins(pluginIds, giveConsentToUseThirdPartyPlugins);
       System.exit(installed.size() == pluginIds.size() ? 0 : 1);
     }
     catch (Throwable t) {
@@ -72,13 +79,17 @@ public class HeadlessPluginsInstaller implements ApplicationStarter {
     }
   }
 
-  protected void printUsageHint() {
-    System.out.println(
+  private void printUsageHint() {
+    var commandName = CommandLineProcessorKt.getCommandNameFromExtension(this);
+    System.out.printf(
       """
-        Usage: installPlugins pluginId* repository* (--for-project=<project-path>)*
+        Usage: %s pluginId* repository* (--for-project=<project-path>)* [--give-consent-to-use-third-party-plugins]
 
         Installs plugins with `pluginId` from the Marketplace or provided `repository`-es.
-        If `--for-project` is specified, also installs the required plugins for a project located at <project-path>.""");
+        If `--for-project` is specified, also installs the required plugins for a project located at <project-path>.
+        If `--give-consent-to-use-third-party-plugins` is specified, installed third-party plugins will be approved automatically.
+        Without this option, if a third-party plugin is installed, a user will be asked to approve it when the IDE starts.%n""",
+      commandName);
   }
 
   private static void collectProjectRequiredPlugins(Collection<PluginId> collector, List<Path> projectPaths) {
@@ -101,10 +112,14 @@ public class HeadlessPluginsInstaller implements ApplicationStarter {
   }
 
   public static @NotNull Collection<PluginNode> installPlugins(@NotNull Set<PluginId> pluginIds) {
+    return installPlugins(pluginIds, false);
+  }
+    
+  private static @NotNull Collection<PluginNode> installPlugins(@NotNull Set<PluginId> pluginIds, boolean giveConsentToUseThirdPartyPlugins) {
     logInfo("looking up plugins: " + pluginIds);
     var plugins = RepositoryHelper.loadPlugins(pluginIds);
 
-    if (!PluginManagerMain.checkThirdPartyPluginsAllowed(plugins)) {
+    if (!giveConsentToUseThirdPartyPlugins && !PluginManagerMain.checkThirdPartyPluginsAllowed(plugins)) {
       logInfo("3rd-party plugins rejected");
       return Collections.emptyList();
     }
@@ -142,13 +157,17 @@ public class HeadlessPluginsInstaller implements ApplicationStarter {
       }
     }
 
+    if (giveConsentToUseThirdPartyPlugins && 
+        ContainerUtil.exists(installed, plugin -> !plugin.isBundled() && !PluginManagerCore.isVendorTrusted(plugin))) {
+      PluginManagerCore.giveConsentToSpecificThirdPartyPlugins(pluginIds);
+    }
     PluginEnabler.HEADLESS.enable(installed);
 
     return new ArrayList<>(installed);
   }
 
   private static void logInfo(String message) {
-    // info level logs are not printed to stdout/stderr by default and toolbox does not include stdout/stderr in its log
+    // info level logs are not printed to stdout/stderr by default, and toolbox does not include stdout/stderr in its log
     System.out.println(message);
     LOG.info(message);
   }

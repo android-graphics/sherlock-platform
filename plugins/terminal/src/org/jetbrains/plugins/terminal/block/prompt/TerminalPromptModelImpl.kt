@@ -2,7 +2,8 @@
 package org.jetbrains.plugins.terminal.block.prompt
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.DocumentReferenceManager
 import com.intellij.openapi.command.undo.UndoManager
@@ -15,35 +16,40 @@ import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.MarkupModel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
-import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.intellij.terminal.TerminalColorPalette
 import com.intellij.util.DocumentUtil
+import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
-import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
+import org.jetbrains.plugins.terminal.block.BlockTerminalOptionsListener
+import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorDescription
 import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorStateListener
-import java.util.concurrent.CopyOnWriteArrayList
+import org.jetbrains.plugins.terminal.block.prompt.renderer.BuiltInPromptRenderer
+import org.jetbrains.plugins.terminal.block.prompt.renderer.PlaceholderPromptRenderer
+import org.jetbrains.plugins.terminal.block.prompt.renderer.ShellPromptRenderer
+import org.jetbrains.plugins.terminal.block.prompt.renderer.TerminalPromptRenderer
+import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
+import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
+import org.jetbrains.plugins.terminal.block.ui.getDisposed
+import org.jetbrains.plugins.terminal.block.ui.invokeLater
 
-/**
- * Shell session agnostic prompt model that is managing the prompt and input command positions in the Prompt editor.
- * Should know nothing about shell session except the things provided in [sessionInfo].
- */
 internal class TerminalPromptModelImpl(
   override val editor: EditorEx,
-  private val sessionInfo: TerminalSessionInfo,
+  private val session: BlockTerminalSession,
 ) : TerminalPromptModel, Disposable {
   private val document: DocumentEx
     get() = editor.document
 
   private var renderer: TerminalPromptRenderer = createPromptRenderer()
+  private var placeholderPromptRenderer: TerminalPromptRenderer = createPlaceholderPromptRenderer()
 
   private var rightPromptManager: RightPromptManager? = null
 
-  override var promptState: TerminalPromptState = TerminalPromptState(currentDirectory = "")
+  override var promptState: TerminalPromptState? = TerminalPromptState.EMPTY
     private set
 
   override var renderingInfo: TerminalPromptRenderingInfo = TerminalPromptRenderingInfo("", emptyList())
@@ -60,30 +66,49 @@ internal class TerminalPromptModelImpl(
       }
     }
 
-  private val errorStateListeners: MutableList<TerminalPromptErrorStateListener> = CopyOnWriteArrayList()
+  private val errorStateDispatcher: EventDispatcher<TerminalPromptErrorStateListener> = EventDispatcher.create(TerminalPromptErrorStateListener::class.java)
 
   init {
     editor.caretModel.addCaretListener(PreventMoveToPromptListener(), this)
     EditorActionManager.getInstance().setReadonlyFragmentModificationHandler(document) { /* do nothing */ }
 
+    session.addCommandListener(object : ShellCommandListener {
+      override fun promptStateUpdated(newState: TerminalPromptState) {
+        updatePrompt(newState)
+      }
+      override fun commandStarted(command: String) {
+        updatePrompt(null)
+      }
+    })
+
     editor.project!!.messageBus.connect(this).subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
       doUpdatePrompt(renderingInfo)
     })
-    BlockTerminalOptions.getInstance().addListener(this) {
-      renderer = createPromptRenderer()
-      updatePrompt(promptState)
-    }
+    BlockTerminalOptions.getInstance().addListener(this, object : BlockTerminalOptionsListener {
+      override fun promptStyleChanged(promptStyle: TerminalPromptStyle) {
+        renderer = createPromptRenderer()
+        placeholderPromptRenderer = createPlaceholderPromptRenderer()
+        updatePrompt(promptState)
+      }
+    })
   }
 
   @RequiresEdt
-  override fun resetUndoRedoStack() {
-    val undoManager = UndoManager.getInstance(editor.project!!) as UndoManagerImpl
-    undoManager.invalidateActionsFor(DocumentReferenceManager.getInstance().create(document))
+  override fun resetChangesHistory() {
+    WriteIntentReadAction.run {
+      val undoManager = UndoManager.getInstance(editor.project!!) as UndoManagerImpl
+      undoManager.invalidateActionsFor(DocumentReferenceManager.getInstance().create(document))
+    }
   }
 
-  override fun updatePrompt(state: TerminalPromptState) {
-    val updatedInfo = renderer.calculateRenderingInfo(state)
-    runInEdt {
+  private fun updatePrompt(state: TerminalPromptState?) {
+    val updatedInfo: TerminalPromptRenderingInfo = if (state == null) {
+      placeholderPromptRenderer.calculateRenderingInfo(TerminalPromptState.EMPTY)
+    }
+    else {
+      renderer.calculateRenderingInfo(state)
+    }
+    invokeLater(editor.getDisposed(), ModalityState.any()) {
       doUpdatePrompt(updatedInfo)
       promptState = state
       renderingInfo = updatedInfo
@@ -93,16 +118,18 @@ internal class TerminalPromptModelImpl(
   @RequiresEdt
   private fun doUpdatePrompt(renderingInfo: TerminalPromptRenderingInfo) {
     DocumentUtil.writeInRunUndoTransparentAction {
-      document.guardedBlocks.clear()
+      document.clearGuardedBlocks()
       document.replaceString(0, commandStartOffset, renderingInfo.text)
       document.createGuardedBlock(0, renderingInfo.text.length)
+      // We should move the caret to the same place of the command.
+      // PS1(previous)$ command t|yped          ->          PS1(new)$ command t|yped
+      // |_____________||_______| |__|          ->          |________||_______| |__|
+      //                ^-command start offset
+      //                         ^-caret model offset
+      //                                                    |         ^-renderingInfo text length
+      editor.caretModel.moveToOffset(editor.caretModel.offset - commandStartOffset + renderingInfo.text.length )
     }
-    editor.markupModel.removeAllHighlighters()
-    for (highlighting in renderingInfo.highlightings) {
-      editor.markupModel.addRangeHighlighter(highlighting.startOffset, highlighting.endOffset, HighlighterLayer.SYNTAX,
-                                             highlighting.textAttributesProvider.getTextAttributes(), HighlighterTargetArea.EXACT_RANGE)
-    }
-
+    editor.markupModel.replaceHighlighters(renderingInfo.highlightings)
     val rightPrompt = renderingInfo.rightText
     if (rightPrompt.isNotEmpty()) {
       val manager = getOrCreateRightPromptManager()
@@ -116,7 +143,7 @@ internal class TerminalPromptModelImpl(
 
   private fun getOrCreateRightPromptManager(): RightPromptManager {
     rightPromptManager?.let { return it }
-    val manager = RightPromptManager(editor, sessionInfo.settings)
+    val manager = RightPromptManager(editor, session.settings)
     Disposer.register(this, manager)
     rightPromptManager = manager
     return manager
@@ -124,20 +151,29 @@ internal class TerminalPromptModelImpl(
 
   private fun createPromptRenderer(): TerminalPromptRenderer {
     return when (BlockTerminalOptions.getInstance().promptStyle) {
-      TerminalPromptStyle.SINGLE_LINE -> BuiltInPromptRenderer(sessionInfo, isSingleLine = true)
-      TerminalPromptStyle.DOUBLE_LINE -> BuiltInPromptRenderer(sessionInfo, isSingleLine = false)
-      TerminalPromptStyle.SHELL -> ShellPromptRenderer(sessionInfo)
+      TerminalPromptStyle.SINGLE_LINE -> BuiltInPromptRenderer(session.colorPalette, isSingleLine = true)
+      TerminalPromptStyle.DOUBLE_LINE -> BuiltInPromptRenderer(session.colorPalette, isSingleLine = false)
+      TerminalPromptStyle.SHELL -> {
+        val sizeProvider = { session.model.withContentLock { TermSize(session.model.width, session.model.height) } }
+        ShellPromptRenderer(session.colorPalette, session.settings, sizeProvider)
+      }
+    }
+  }
+
+  private fun createPlaceholderPromptRenderer(): TerminalPromptRenderer {
+    return when (BlockTerminalOptions.getInstance().promptStyle) {
+      TerminalPromptStyle.SINGLE_LINE -> PlaceholderPromptRenderer(isSingleLine = true)
+      TerminalPromptStyle.DOUBLE_LINE -> PlaceholderPromptRenderer(isSingleLine = false)
+      TerminalPromptStyle.SHELL -> PlaceholderPromptRenderer(isSingleLine = true)
     }
   }
 
   override fun setErrorDescription(errorDescription: TerminalPromptErrorDescription?) {
-    for (listener in errorStateListeners) {
-      listener.errorStateChanged(errorDescription)
-    }
+    errorStateDispatcher.multicaster.errorStateChanged(errorDescription)
   }
 
   override fun addErrorStateListener(listener: TerminalPromptErrorStateListener, parentDisposable: Disposable) {
-    TerminalUtil.addItem(errorStateListeners, listener, parentDisposable)
+    errorStateDispatcher.addListener(listener, parentDisposable)
   }
 
   override fun dispose() {}
@@ -163,11 +199,22 @@ internal class TerminalPromptModelImpl(
       }
     }
   }
-}
 
-/** The information about the terminal session required for [TerminalPromptModel] */
-internal interface TerminalSessionInfo {
-  val settings: JBTerminalSystemSettingsProviderBase
-  val colorPalette: TerminalColorPalette
-  val terminalSize: TermSize
+  companion object {
+    internal fun MarkupModel.replaceHighlighters(highlightings: List<HighlightingInfo>) {
+      removeAllHighlighters()
+      highlightings.forEach {
+        applyHighlighting(it)
+      }
+    }
+
+    internal fun MarkupModel.applyHighlighting(highlighting: HighlightingInfo) {
+      addRangeHighlighter(highlighting.startOffset, highlighting.endOffset, HighlighterLayer.SYNTAX,
+                          highlighting.textAttributesProvider.getTextAttributes(), HighlighterTargetArea.EXACT_RANGE)
+    }
+
+    private fun DocumentEx.clearGuardedBlocks() {
+      this.guardedBlocks.forEach { removeGuardedBlock(it) }
+    }
+  }
 }

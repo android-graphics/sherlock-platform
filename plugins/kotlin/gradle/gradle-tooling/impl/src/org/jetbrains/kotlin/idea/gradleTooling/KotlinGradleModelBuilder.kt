@@ -5,14 +5,19 @@ package org.jetbrains.kotlin.idea.gradleTooling
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicy
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyCache
 import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleDependencyResolver
+import com.intellij.gradle.toolingExtension.impl.util.GradleModelProviderUtil
+import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ConfigurationContainer
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.provider.Property
 import org.gradle.tooling.BuildController
-import org.gradle.tooling.model.gradle.BasicGradleProject
+import org.gradle.tooling.model.gradle.GradleBuild
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinExtensionReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinTaskProperties
 import org.jetbrains.kotlin.tooling.core.Interner
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
@@ -39,6 +44,7 @@ interface KotlinGradleModel : Serializable {
     val kotlinTarget: String?
     val kotlinTaskProperties: KotlinTaskPropertiesBySourceSet
     val gradleUserHome: String
+    val kotlinGradlePluginVersion: KotlinGradlePluginVersion?
 }
 
 data class KotlinGradleModelImpl(
@@ -51,6 +57,7 @@ data class KotlinGradleModelImpl(
     override val kotlinTarget: String? = null,
     override val kotlinTaskProperties: KotlinTaskPropertiesBySourceSet,
     override val gradleUserHome: String,
+    override val kotlinGradlePluginVersion: KotlinGradlePluginVersion?
 ) : KotlinGradleModel
 
 abstract class AbstractKotlinGradleModelBuilder : ModelBuilderService {
@@ -94,25 +101,23 @@ abstract class AbstractKotlinGradleModelBuilder : ModelBuilderService {
 
 private const val REQUEST_FOR_NON_ANDROID_MODULES_ONLY = "*"
 
-class AndroidAwareGradleModelProvider<TModel>(
-    private val modelClass: Class<TModel>,
+class AndroidAwareGradleModelProvider(
     private val androidPluginIsRequestingVariantSpecificModels: Boolean
 ) : ProjectImportModelProvider {
-
-    override fun populateProjectModels(
-        controller: BuildController,
-        projectModel: BasicGradleProject,
-        modelConsumer: GradleModelConsumer
-    ) {
-        val model = if (androidPluginIsRequestingVariantSpecificModels) {
-            controller.findModel(projectModel, modelClass, ModelBuilderService.Parameter::class.java) {
+    private val modelClass = KotlinGradleModel::class.java
+    override fun populateModels(controller: BuildController, buildModels: Collection<GradleBuild>, modelConsumer: GradleModelConsumer) {
+        if (androidPluginIsRequestingVariantSpecificModels) {
+            GradleModelProviderUtil.buildModelsWithParameter(
+                controller,
+                buildModels,
+                modelClass,
+                modelConsumer,
+                ModelBuilderService.Parameter::class.java
+            ) {
                 it.value = REQUEST_FOR_NON_ANDROID_MODULES_ONLY
             }
         } else {
-            controller.findModel(projectModel, modelClass)
-        }
-        if (model != null) {
-            modelConsumer.consumeProjectModel(projectModel, model, modelClass)
+            GradleModelProviderUtil.buildModels(controller, buildModels, modelClass, modelConsumer)
         }
     }
 
@@ -197,11 +202,20 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         return buildAll(project, builderContext = null, parameter = null)
     }
 
-    override fun buildAll(modelName: String, project: Project, builderContext: ModelBuilderContext, parameter: ModelBuilderService.Parameter?): KotlinGradleModelImpl? {
+    override fun buildAll(
+        modelName: String,
+        project: Project,
+        builderContext: ModelBuilderContext,
+        parameter: ModelBuilderService.Parameter?
+    ): KotlinGradleModelImpl? {
         return buildAll(project, builderContext, parameter)
     }
 
-    private fun buildAll(project: Project, builderContext: ModelBuilderContext?, parameter: ModelBuilderService.Parameter?): KotlinGradleModelImpl? {
+    private fun buildAll(
+        project: Project,
+        builderContext: ModelBuilderContext?,
+        parameter: ModelBuilderService.Parameter?
+    ): KotlinGradleModelImpl? {
         val interner = Interner()
         // When running in Android Studio, Android Studio would request specific source sets only to avoid syncing
         // currently not active build variants. We convert names to the lower case to avoid ambiguity with build variants
@@ -252,6 +266,7 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
             kotlinTarget = platform ?: kotlinPluginId,
             kotlinTaskProperties = extraProperties,
             gradleUserHome = project.gradle.gradleUserHomeDir.absolutePath,
+            kotlinGradlePluginVersion = project.kotlinGradlePluginVersion()
         )
     }
 
@@ -266,11 +281,16 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
             .getDependencyDownloadPolicy(project)
         if (dependencyDownloadPolicy.isDownloadSources()) return
 
+        if (GradleVersionUtil.isCurrentGradleAtLeast("7.3")) {
+            downloadKotlinStdlibSources(project, context)
+        } else {
+            downloadKotlinStdlibSourcesDeprecated(project, context)
+        }
+    }
+
+    private fun downloadKotlinStdlibSourcesDeprecated(project: Project, context: ModelBuilderContext) {
         val kotlinStdlib = project.configurations.detachedConfiguration()
         project.configurations.forEachUsedKotlinLibrary {
-            kotlinStdlib.dependencies.add(it)
-        }
-        project.buildscript.configurations.forEachUsedKotlinLibrary {
             kotlinStdlib.dependencies.add(it)
         }
         if (kotlinStdlib.dependencies.isEmpty()) {
@@ -290,5 +310,43 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
                 }
             }
         }
+    }
+
+    private fun downloadKotlinStdlibSources(project: Project, context: ModelBuilderContext) {
+        JavaPluginUtil.getSourceSetContainer(project)?.forEach {
+            val compileClasspath = (it.compileClasspath as? Configuration)
+            if (compileClasspath != null && compileClasspath.isCanBeResolved) {
+                downloadSourcesForCompileClasspathKoltinSdlibDependencies(context, project, compileClasspath)
+            }
+        }
+    }
+
+    private fun downloadSourcesForCompileClasspathKoltinSdlibDependencies(
+        context: ModelBuilderContext,
+        project: Project,
+        compileClassPathConfiguration: Configuration?
+    ) {
+        val stdlibDependencyGroups =
+            setOf("org.jetbrains.kotlin", "org.jetbrains.kotlinx")
+        GradleDependencyResolver(context, project, GradleDependencyDownloadPolicy.SOURCES)
+            .resolveDependencies(compileClassPathConfiguration, stdlibDependencyGroups)
+    }
+
+    private fun ConfigurationContainer.forEachUsedDependency(
+        configurationToExclude: Configuration,
+        dependencyConsumer: (Dependency) -> Unit
+    ) {
+        for (configuration in this) {
+            if (configuration == configurationToExclude) continue
+            for (dependency in configuration.dependencies) {
+                dependencyConsumer.invoke(dependency)
+            }
+        }
+    }
+
+    private fun Project.kotlinGradlePluginVersion(): KotlinGradlePluginVersion? {
+        val extension = project.extensions.findByName("kotlin") ?: return null
+        val kotlinGradlePluginVersionString = KotlinExtensionReflection(project, extension).kotlinGradlePluginVersion ?: return null
+        return KotlinGradlePluginVersion.parse(kotlinGradlePluginVersionString)
     }
 }

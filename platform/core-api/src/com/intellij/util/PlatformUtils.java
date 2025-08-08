@@ -37,7 +37,6 @@ public final class PlatformUtils {
   public static final String APPCODE_PREFIX = "AppCode";
   public static final String AQUA_PREFIX = "Aqua";
   public static final String CLION_PREFIX = "CLion";
-  public static final String MOBILE_IDE_PREFIX = "MobileIDE";
   public static final String PYCHARM_PREFIX = "Python";
   public static final String PYCHARM_CE_PREFIX = "PyCharmCore";
   public static final String DATASPELL_PREFIX = "DataSpell";
@@ -62,8 +61,8 @@ public final class PlatformUtils {
   public static final String GATEWAY_PREFIX = "Gateway";
 
   @SuppressWarnings("SSBasedInspection") private static final Set<String> COMMERCIAL_EDITIONS = new HashSet<>(Arrays.asList(
-    IDEA_PREFIX, APPCODE_PREFIX, CLION_PREFIX, MOBILE_IDE_PREFIX, PYCHARM_PREFIX, DATASPELL_PREFIX, RUBY_PREFIX, PHP_PREFIX, WEB_PREFIX,
-    DBE_PREFIX, RIDER_PREFIX, GOIDE_PREFIX));
+    IDEA_PREFIX, APPCODE_PREFIX, CLION_PREFIX, PYCHARM_PREFIX, DATASPELL_PREFIX, RUBY_PREFIX, PHP_PREFIX, WEB_PREFIX,
+    DBE_PREFIX, RIDER_PREFIX, GOIDE_PREFIX, RUSTROVER_PREFIX, AQUA_PREFIX));
 
   public static @NotNull String getPlatformPrefix() {
     return getPlatformPrefix(IDEA_PREFIX);
@@ -117,9 +116,8 @@ public final class PlatformUtils {
   }
 
   /**
-   * @deprecated use other ways to customize behavior in different IDEs, see {@link com.jetbrains.cidr.PluginUtils CIDR-specific information}
+   * see {@link com.jetbrains.cidr.PluginUtils CIDR-specific information}
    */
-  @Deprecated
   public static boolean isAppCode() {
     return is(APPCODE_PREFIX);
   }
@@ -129,19 +127,17 @@ public final class PlatformUtils {
   }
 
   /**
-   * @deprecated use other ways to customize behavior in different IDEs, see {@link com.jetbrains.cidr.PluginUtils CIDR-specific information}
+   * see {@link com.jetbrains.cidr.PluginUtils CIDR-specific information}
    */
-  @Deprecated
   public static boolean isCLion() {
     return is(CLION_PREFIX);
   }
 
-  public static boolean isMobileIde() {
-    return is(MOBILE_IDE_PREFIX);
-  }
-
+  /**
+   * see {@link com.jetbrains.cidr.PluginUtils CIDR-specific information}
+   */
   public static boolean isCidr() {
-    return isAppCode() || isCLion() || isMobileIde();
+    return isAppCode() || isCLion();
   }
 
   public static boolean isPyCharm() {

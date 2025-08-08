@@ -13,7 +13,7 @@ import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.project.impl.P3SupportInstaller
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.bootstrap.initMarketplace
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
@@ -23,7 +23,7 @@ import com.intellij.platform.ide.bootstrap.startApplication
 import com.intellij.platform.impl.toolkit.IdeFontManager
 import com.intellij.platform.impl.toolkit.IdeGraphicsEnvironment
 import com.intellij.platform.impl.toolkit.IdeToolkit
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.TextLayoutUtil
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -44,10 +44,20 @@ fun main(rawArgs: Array<String>) {
   val startTimeUnixNano = System.currentTimeMillis() * 1000000
   startupTimings.add("startup begin")
   startupTimings.add(startTimeNano)
-  mainImpl(rawArgs, startupTimings, startTimeUnixNano, changeClassPath = null)
+  mainImpl(
+    rawArgs = rawArgs,
+    startupTimings = startupTimings,
+    startTimeUnixNano = startTimeUnixNano,
+    changeClassPath = null,
+  )
 }
 
-internal fun mainImpl(rawArgs: Array<String>, startupTimings: ArrayList<Any>, startTimeUnixNano: Long, changeClassPath: Consumer<ClassLoader>?) {
+internal fun mainImpl(
+  rawArgs: Array<String>,
+  startupTimings: ArrayList<Any>,
+  startTimeUnixNano: Long,
+  changeClassPath: Consumer<ClassLoader>?,
+) {
   val args = preprocessArgs(rawArgs)
   AppMode.setFlags(args)
   addBootstrapTiming("AppMode.setFlags", startupTimings)
@@ -66,7 +76,7 @@ internal fun mainImpl(rawArgs: Array<String>, startupTimings: ArrayList<Any>, st
       withContext(Dispatchers.Default + StartupAbortedExceptionHandler() + rootTask()) {
         addBootstrapTiming("init scope creating", startupTimings)
         StartUpMeasurer.addTimings(startupTimings, "bootstrap", startTimeUnixNano)
-        startApp(args, mainScope = this@runBlocking, busyThread, changeClassPath)
+        startApp(args = args, mainScope = this@runBlocking, busyThread = busyThread, changeClassPath = changeClassPath)
       }
 
       awaitCancellation()
@@ -83,13 +93,16 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
     launch {
       CoroutineTracerShim.coroutineTracer = object : CoroutineTracerShim {
         override suspend fun getTraceActivity() = com.intellij.platform.diagnostic.telemetry.impl.getTraceActivity()
+
         override fun rootTrace() = rootTask()
-        override suspend fun <T> span(name: String, context: CoroutineContext, action: suspend CoroutineScope.() -> T): T =
-          com.intellij.platform.diagnostic.telemetry.impl.span(name, context, action)
+
+        override suspend fun <T> span(name: String, context: CoroutineContext, action: suspend CoroutineScope.() -> T): T {
+          return com.intellij.platform.diagnostic.telemetry.impl.span(name, context, action)
+        }
       }
     }
 
-    if (AppMode.isRemoteDevHost()) {
+    if (AppMode.isRemoteDevHost() || java.lang.Boolean.getBoolean("ide.started.from.remote.dev.launcher")) {
       span("cwm host init") {
         initRemoteDev(args)
       }
@@ -152,7 +165,15 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
       }
     }
 
-    startApplication(args, configImportNeededDeferred, customTargetDirectoryToImportConfig, mainClassLoaderDeferred, appStarterDeferred, mainScope, busyThread)
+    startApplication(
+      args = args,
+      configImportNeededDeferred = configImportNeededDeferred,
+      customTargetDirectoryToImportConfig = customTargetDirectoryToImportConfig,
+      mainClassLoaderDeferred = mainClassLoaderDeferred,
+      appStarterDeferred = appStarterDeferred,
+      mainScope = mainScope,
+      busyThread = busyThread,
+    )
   }
 }
 
@@ -174,12 +195,22 @@ private fun initRemoteDev(args: List<String>) {
     error("JBR version 17.0.6b796 or later is required to run a remote-dev server with lux")
   }
 
-  if (args.firstOrNull() == AppMode.SPLIT_MODE_COMMAND) {
+  val isSplitMode = args.firstOrNull() == AppMode.SPLIT_MODE_COMMAND
+  if (isSplitMode) {
+    System.setProperty("jb.privacy.policy.text", "<!--999.999-->")
+    System.setProperty("jb.consents.confirmation.enabled", "false")
     System.setProperty("idea.initially.ask.config", "never")
   }
-  if (SystemInfo.isMac) { // avoid icon jumping in dock for the backend process
-    System.setProperty("apple.awt.BackgroundOnly", "true") // this makes sure that the following call doesn't create an icon in Dock
-    Toolkit.getDefaultToolkit() // this tells the OS that app initialization is finished
+
+  // avoid an icon jumping in dock for the backend process
+  if (SystemInfoRt.isMac) {
+    val shouldInitDefaultToolkit = isSplitMode || isInAquaSession()
+    if (System.getProperty("REMOTE_DEV_INIT_MAC_DEFAULT_TOOLKIT", shouldInitDefaultToolkit.toString()).toBoolean()) {
+      // this makes sure that the following call doesn't create an icon in Dock
+      System.setProperty("apple.awt.BackgroundOnly", "true")
+      // this tells the OS that app initialization is finished
+      Toolkit.getDefaultToolkit()
+    }
   }
   initRemoteDevGraphicsEnvironment()
   initLux()
@@ -198,8 +229,29 @@ private fun setStaticField(clazz: Class<out Any>, fieldName: String, value: Any)
   handle.invoke(value)
 }
 
+private fun isInAquaSession(): Boolean {
+  if (!SystemInfoRt.isMac) return false
+
+  if (System.getenv("AWT_FORCE_HEADFUL") != null) {
+    return false // the value is forcefully set, assume the worst case
+  }
+
+  try {
+    val aClass = ClassLoader.getPlatformClassLoader().loadClass("sun.awt.PlatformGraphicsInfo")
+    val handle = MethodHandles.lookup().findStatic(aClass, "isInAquaSession", MethodType.methodType(Boolean::class.javaPrimitiveType))
+    return handle.invoke() as Boolean
+  }
+  catch (e: Throwable) {
+    e.printStackTrace()
+    return false
+  }
+}
+
 private fun initLux() {
+  // See also 'AWT_FORCE_HEADFUL'
+  setStaticField(java.awt.GraphicsEnvironment::class.java, "headless", false) // ensure cached value is overridden
   System.setProperty("java.awt.headless", false.toString())
+
   System.setProperty("swing.volatileImageBufferEnabled", false.toString())
   System.setProperty("keymap.current.os.only", false.toString())
   System.setProperty("awt.nativeDoubleBuffering", false.toString())
@@ -217,7 +269,7 @@ private fun initLux() {
   @Suppress("SpellCheckingInspection")
   System.setProperty("sun.font.fontmanager", IdeFontManager::class.java.canonicalName)
 
-  UIUtil.disableLayoutInTextComponents()
+  TextLayoutUtil.disableLayoutInTextComponents()
 }
 
 private fun addBootstrapTiming(name: String, startupTimings: MutableList<Any>) {

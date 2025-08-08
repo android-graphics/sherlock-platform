@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.Field;
 import java.util.Collections;
@@ -262,6 +263,10 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
                                 "RPAREN_ON_NEW_LINE_IN_RECORD_HEADER",
                                 ApplicationBundle.message("wrapping.rpar.on.new.line"),
                                 recordComponentsGroup);
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "ANNOTATION_NEW_LINE_IN_RECORD_COMPONENT",
+                                JavaBundle.message("annotations.new.line.record.component"),
+                                recordComponentsGroup);
 
       // Try statement
       consumer.showCustomOption(JavaCodeStyleSettings.class,
@@ -304,6 +309,26 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
       consumer.showAllStandardOptions();
       consumer.showCustomOption(JavaCodeStyleSettings.class, "BLANK_LINES_AROUND_INITIALIZER",
                                 JavaBundle.message("editbox.blanklines.around.initializer"),
+                                getInstance().BLANK_LINES);
+
+      consumer.renameStandardOption(
+        "BLANK_LINES_AROUND_FIELD_IN_INTERFACE",
+        JavaBundle.message("editbox.blank.lines.field.in.interface"));
+
+      consumer.renameStandardOption(
+        "BLANK_LINES_AROUND_FIELD",
+        JavaBundle.message("editbox.blank.lines.field.without.annotations"));
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS",
+                                JavaBundle.message("editbox.blank.lines.field.with.annotations"),
+                                getInstance().BLANK_LINES,
+                                OptionAnchor.AFTER,
+                                "BLANK_LINES_AROUND_FIELD");
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "BLANK_LINES_BETWEEN_RECORD_COMPONENTS",
+                                JavaBundle.message("editbox.blank.lines.record.components"),
                                 getInstance().BLANK_LINES);
     }
     else if (settingsType == SettingsType.COMMENTER_SETTINGS) {
@@ -467,7 +492,7 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
     }
 
     @Override
-    protected List<String> parseString(@NotNull String string) {
+    protected @Unmodifiable List<String> parseString(@NotNull String string) {
       return CodeStylePropertiesUtil.getValueList(string);
     }
 
@@ -552,6 +577,8 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
 
       import javax.swing.*;
       import java.util.Vector;
+      import org.jetbrains.annotations.NotNull;
+      import org.jetbrains.annotations.Nullable;
 
       public class Foo {
         private int field1;
@@ -573,6 +600,20 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
       }
       class AnotherClass {
       }
+      
+      public class ClassWithAnnotatedFields {
+          @NotNull
+          public Boolean publicAnnotatedField = true;
+          public Boolean publicNonAnnotatedField = true;
+          @NotNull Boolean typeAnnotatedField = false;
+          @NotNull
+          private Boolean firstPrivateAnnotatedField = true;
+          @NotNull
+          private Boolean secondPrivateAnnotatedField = true;
+      }
+      
+      public record RecordWithAnnotatedComponents(@NotNull Double s, @Nullable String t, @NotNull Double w) {}
+      
       interface TestInterface {
           int MAX = 10;
           int MIN = 1;
@@ -633,7 +674,7 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
           }
       }
       interface Abba {}
-      record Rec(String s, int i) {}
+      public record Rec(String s, int i) {}
       
       class SimpleClass {
         class EmptyClass{}
@@ -718,6 +759,8 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
       enum Breed {
           Dalmatian(), Labrador(), Dachshund()
       }
+      
+      public record RecordWithAnnotatedComponents(@Annotation1 @Annotation2 String s, @Annotation1 @Annotation3(param1="value1", param2="value2") Integer t, @Annotation3(param1="value1", param2="value2") @Annotation1 Double u, @Annotation3(param1="value1", param2="value2") @Annotation5(param1="value1", param2="value2") Float w) {}
 
       @Annotation1 @Annotation2 @Annotation3(param1="value1", param2="value2") @Annotation4 class Foo {
           @Annotation1 @Annotation3(param1="value1", param2="value2") public static void foo(){

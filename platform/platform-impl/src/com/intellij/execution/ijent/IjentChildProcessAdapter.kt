@@ -3,7 +3,6 @@ package com.intellij.execution.ijent
 
 import com.intellij.execution.process.SelfKiller
 import com.intellij.platform.ijent.IjentChildProcess
-import com.intellij.platform.ijent.IjentId
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -20,15 +19,11 @@ import java.util.concurrent.TimeUnit
 @ApiStatus.Internal
 class IjentChildProcessAdapter(
   coroutineScope: CoroutineScope,
-  ijentId: IjentId,
   private val ijentChildProcess: IjentChildProcess,
-  redirectStderr: Boolean,
 ) : Process(), SelfKiller {
   private val delegate = IjentChildProcessAdapterDelegate(
-    ijentId,
     coroutineScope,
     ijentChildProcess,
-    redirectStderr = redirectStderr,
   )
 
   override fun toString(): String = "${javaClass.simpleName}($ijentChildProcess)"

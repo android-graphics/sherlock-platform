@@ -13,10 +13,6 @@ import kotlinx.coroutines.debug.internal.SUSPENDED
 import kotlinx.coroutines.internal.ScopeCoroutine
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
-import java.io.BufferedOutputStream
-import java.io.ByteArrayOutputStream
-import java.io.PrintStream
-import java.nio.charset.StandardCharsets
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -52,13 +48,10 @@ fun dumpCoroutines(scope: CoroutineScope? = null, stripDump: Boolean = true, ded
     if (!isCoroutineDumpEnabled()) {
       return null
     }
-    val charset = StandardCharsets.UTF_8.name()
-    val outputStream = ByteArrayOutputStream()
-    PrintStream(BufferedOutputStream(outputStream), true, charset).use { out ->
+    return buildString {
       val jobTree = jobTrees(scope).toList()
-      dumpCoroutines(jobTree, out, stripDump, deduplicateTrees)
+      dumpCoroutines(jobTree, out = this, stripDump, deduplicateTrees)
     }
-    return outputStream.toString(charset)
   } catch (e: Throwable) {
     // if there is an unexpected exception, we won't be able to provide meaningful information anyway,
     // but the exception should not prevent other diagnostic tools from collecting data
@@ -120,7 +113,7 @@ fun dumpCoroutines(scope: CoroutineScope? = null, stripDump: Boolean = true, ded
  *  			at kotlinx.coroutines.flow.internal.ChannelFlow$collectToFun$1.invokeSuspend(ChannelFlow.kt:60)
  *  ```
  */
-private fun dumpCoroutines(jobTrees: List<JobTree>, out: PrintStream, stripDump: Boolean, deduplicateTrees: Boolean) {
+private fun dumpCoroutines(jobTrees: List<JobTree>, out: Appendable, stripDump: Boolean, deduplicateTrees: Boolean) {
   val representationTrees: List<JobRepresentationTree>
   if (!deduplicateTrees) {
     representationTrees = jobTrees.map { it.toRepresentation(stripDump) }
@@ -134,7 +127,7 @@ private fun dumpCoroutines(jobTrees: List<JobTree>, out: PrintStream, stripDump:
   }
 
   for (representation in representationTrees) {
-    out.println()
+    out.appendOsLine()
     representation.write(out)
   }
 }
@@ -200,42 +193,42 @@ private data class JobRepresentation(
   val context: String?,
   val trace: List<StackTraceElement>
 ) {
-  private fun indent(out: PrintStream, level: Int) {
-    out.print("\t".repeat(level))
+  private fun indent(out: Appendable, level: Int) {
+    out.append("\t".repeat(level))
   }
 
-  private fun writeHeader(out: PrintStream, level: Int, additionalInfo: String) {
+  private fun writeHeader(out: Appendable, level: Int, additionalInfo: String) {
     indent(out, level)
-    out.print("-$additionalInfo ")
+    out.append("-$additionalInfo ")
     coroutineName?.let {
       // repeat format from kotlinx.coroutines.AbstractCoroutine.nameString
-      out.print("\"${it}\":")
+      out.append("\"${it}\":")
     }
-    out.print(job)
+    out.append(job)
     state?.let {
-      out.print(", state: ${it}")
+      out.append(", state: ${it}")
     }
     context?.let {
-      out.print(" [$it]")
+      out.append(" [$it]")
     }
-    out.println()
+    out.appendOsLine()
   }
 
-  private fun writeTrace(out: PrintStream, level: Int) {
+  private fun writeTrace(out: Appendable, level: Int) {
     for (stackFrame in trace) {
       indent(out, level)
-      out.println("\tat $stackFrame")
+      out.appendOsLine("\tat $stackFrame")
     }
   }
 
-  fun write(out: PrintStream, level: Int, additionalInfo: String) {
+  fun write(out: Appendable, level: Int, additionalInfo: String) {
     writeHeader(out, level, additionalInfo)
     writeTrace(out, level)
   }
 }
 
 private open class JobRepresentationTree(val job: JobRepresentation, open val children: Collection<JobRepresentationTree>) {
-  open fun write(out: PrintStream, indentLevel: Int = 0) {
+  open fun write(out: Appendable, indentLevel: Int = 0) {
     job.write(out, indentLevel, "")
     children.forEach { it.write(out, indentLevel + 1) }
   }
@@ -244,7 +237,7 @@ private open class JobRepresentationTree(val job: JobRepresentation, open val ch
 private class DeduplicatedJobRepresentationTree(
   val count: Int, job: JobRepresentation, override val children: Set<DeduplicatedJobRepresentationTree>
 ) : JobRepresentationTree(job, children) {
-  override fun write(out: PrintStream, indentLevel: Int) {
+  override fun write(out: Appendable, indentLevel: Int) {
     val countInfo = if (count == 1) "" else "[x$count of]"
     job.write(out, indentLevel, countInfo)
     children.forEach { it.write(out, indentLevel + 1) }
@@ -290,9 +283,7 @@ private fun JobTree.toRepresentation(stripTrace: Boolean): JobRepresentationTree
   }
   val interestingContext = context.minusKey(Job).minusKey(CoroutineName)
   val contextString = if (interestingContext != EmptyCoroutineContext) {
-    interestingContext.fold("") { acc, element ->
-      if (acc.isEmpty()) element.toString() else "$acc, $element"
-    }
+    interestingContext.joinElementsToString()
   }
   else null
   val trace = debugInfo?.let { traceToDump(it, stripTrace) } ?: emptyList()
@@ -311,10 +302,22 @@ private fun JobRepresentationTree.deduplicate(): DeduplicatedJobRepresentationTr
   )
 
 private fun JobRepresentation.withoutJobAddress(): JobRepresentation {
-  val ind = job.lastIndexOf("}@")
-  if (ind == -1) return this
-  assert(job.substring(ind + 2, job.length).all { it.isLetterOrDigit() })
-  return JobRepresentation(coroutineName, job.substring(0, ind + 1), state, context, trace)
+  val closingBracketPosition = job.lastIndexOf("}@")
+  if (closingBracketPosition == -1) {
+    return this
+  }
+  val openingBracketPosition = job.substring(0, closingBracketPosition).lastIndexOf('{')
+  if (openingBracketPosition == -1) {
+    return this
+  }
+  if (job.substring(0, openingBracketPosition).endsWith("BlockingCoroutine")) {
+    return this // the address of BlockingCoroutine is important to link it to the thread that awaits it
+  }
+  if (job.substring(closingBracketPosition + 2, job.length).any { !it.isLetterOrDigit() }) {
+    return this // suffix doesn't look like a job address
+  }
+  val jobWithoutAddress = job.substring(0, closingBracketPosition + 1)
+  return JobRepresentation(coroutineName, jobWithoutAddress, state, context, trace)
 }
 
 private fun traceToDump(info: DebugCoroutineInfo, stripTrace: Boolean): List<StackTraceElement> {
@@ -323,6 +326,29 @@ private fun traceToDump(info: DebugCoroutineInfo, stripTrace: Boolean): List<Sta
     return stripCoroutineTrace(trace)
   }
   return DebugProbesImpl.enhanceStackTraceWithThreadDump(info, trace)
+}
+
+private fun CoroutineContext.joinElementsToString(): String =
+  this.fold(StringBuilder()) { acc, element ->
+    if (acc.isNotEmpty()) {
+      acc.append(", ")
+    }
+    acc.append(element.toStringSmart())
+  }.toString()
+
+/**
+ * Default implementation of [Object.toString] includes hex representation of the object's hash code
+ * This prevents our logic for deduplication, resulting in huge coroutine dumps
+ */
+private fun Any.toStringSmart(): String {
+  val baseToString = toString()
+  val hashCodeSuffix = "@" + Integer.toHexString(this.hashCode())
+  return if (baseToString.endsWith(hashCodeSuffix)) {
+    baseToString.substring(0, baseToString.length - hashCodeSuffix.length)
+  }
+  else {
+    return baseToString
+  }
 }
 
 private fun <T, R> MutableSet<T>.withElement(elem: T, body: (added: Boolean) -> R): R {
@@ -340,3 +366,15 @@ private class RecursiveJob(private val originalJob: Job) : Job by originalJob {
     return "CIRCULAR REFERENCE: $originalJob"
   }
 }
+
+/**
+ * Similar to [appendLine], but with OS-dependant line ending.
+ */
+private fun Appendable.appendOsLine(): Appendable =
+  append(System.lineSeparator())
+
+/**
+ * Similar to [appendLine], but with OS-dependant line ending.
+ */
+private fun Appendable.appendOsLine(value: CharSequence): Appendable =
+  append(value).appendOsLine()

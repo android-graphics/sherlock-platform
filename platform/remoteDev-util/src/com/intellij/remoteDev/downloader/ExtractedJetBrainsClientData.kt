@@ -1,6 +1,5 @@
 package com.intellij.remoteDev.downloader
 
-import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 /**
@@ -10,7 +9,7 @@ import java.nio.file.Path
  * 
  * TODO: extract a separate class to represent an embedded client installation.
  */
-@ApiStatus.Internal
+@Deprecated("Use FrontendInstallation instead")
 data class ExtractedJetBrainsClientData(
   val clientDir: Path,
 

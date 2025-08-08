@@ -1,8 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ShortcutProvider;
+import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -13,6 +16,7 @@ import com.intellij.ui.PopupBorder;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.UiInterceptors;
+import com.intellij.ui.awt.AnchoredPoint;
 import com.intellij.ui.popup.list.ComboBoxPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.tree.TreePopupImpl;
@@ -22,6 +26,7 @@ import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimerUtil;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,14 +65,6 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   private final InputMap myInputMap = new InputMap();
 
   private boolean myKeyPressedReceived;
-
-  /**
-   * @deprecated use {@link #WizardPopup(Project, JBPopup, PopupStep)}
-   */
-  @Deprecated(forRemoval = true)
-  public WizardPopup(@NotNull PopupStep<Object> aStep) {
-    this(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()), null, aStep);
-  }
 
   public WizardPopup(@Nullable Project project, @Nullable JBPopup aParent, @NotNull PopupStep<Object> aStep) {
     myParent = (WizardPopup) aParent;
@@ -196,28 +193,48 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   @Override
-  public void show(final @NotNull Component owner, final int aScreenX, final int aScreenY, final boolean considerForcedXY) {
+  @ApiStatus.Internal
+  protected void showImpl(@NotNull PopupShowOptionsBuilder showOptions) {
     if (UiInterceptors.tryIntercept(this)) return;
 
     LOG.assertTrue (!isDisposed());
-    Dimension size = getContent().getPreferredSize();
-    Dimension minimumSize = getMinimumSize();
-    size.width = Math.max(size.width, minimumSize.width);
-    size.height = Math.max(size.height, minimumSize.height);
-    Rectangle targetBounds = new Rectangle(new Point(aScreenX, aScreenY), size);
 
-    if (getParent() != null && alignByParentBounds) {
-      final Rectangle parentBounds = getParent().getBounds();
-      parentBounds.x += STEP_X_PADDING;
-      parentBounds.width -= STEP_X_PADDING * 2;
-      ScreenUtil.moveToFit(targetBounds, ScreenUtil.getScreenRectangle(
-        parentBounds.x + parentBounds.width / 2,
-        parentBounds.y + parentBounds.height / 2), null);
-      if (parentBounds.intersects(targetBounds)) {
-        targetBounds.x = getParent().getBounds().x - targetBounds.width - STEP_X_PADDING;
+    PopupShowOptionsImpl options = showOptions.build();
+    PopupShowOptionsBuilder newOptions;
+
+    if (options.getPopupAnchor() == AnchoredPoint.Anchor.TOP_LEFT) {
+      // The old logic that existed here before other anchors were added.
+      Component owner = options.getOwner();
+      var aScreenX = options.getScreenX();
+      var aScreenY = options.getScreenY();
+
+      Dimension size = getContent().getPreferredSize();
+      Dimension minimumSize = getMinimumSize();
+      size.width = Math.max(size.width, minimumSize.width);
+      size.height = Math.max(size.height, minimumSize.height);
+      Rectangle targetBounds = new Rectangle(new Point(aScreenX, aScreenY), size);
+
+      if (getParent() != null && alignByParentBounds) {
+        final Rectangle parentBounds = getParent().getBounds();
+        parentBounds.x += STEP_X_PADDING;
+        parentBounds.width -= STEP_X_PADDING * 2;
+        ScreenUtil.moveToFit(targetBounds, ScreenUtil.getScreenRectangle(
+          parentBounds.x + parentBounds.width / 2,
+          parentBounds.y + parentBounds.height / 2), null);
+        if (parentBounds.intersects(targetBounds)) {
+          targetBounds.x = getParent().getBounds().x - targetBounds.width - STEP_X_PADDING;
+        }
+      } else {
+        ScreenUtil.moveToFit(targetBounds, ScreenUtil.getScreenRectangle(aScreenX + 1, aScreenY + 1), null);
       }
-    } else {
-      ScreenUtil.moveToFit(targetBounds, ScreenUtil.getScreenRectangle(aScreenX + 1, aScreenY + 1), null);
+      newOptions = new PopupShowOptionsBuilder()
+        .withOwner(owner)
+        .withScreenXY(targetBounds.x, targetBounds.y)
+        .withForcedXY(true);
+    }
+    else {
+      // The superclass does positioning for the new anchors, so do nothing here.
+      newOptions = showOptions;
     }
 
     if (getParent() == null && myIsActiveRoot) {
@@ -228,7 +245,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     }
 
     LOG.assertTrue (!isDisposed(), "Disposed popup, parent="+getParent());
-    super.show(owner, targetBounds.x, targetBounds.y, true);
+    super.showImpl(newOptions);
   }
 
   @Override
@@ -378,7 +395,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   public final boolean dispatch(KeyEvent event) {
-    if (anyModalWindowsKeepPopupOpen()) {
+    if (anyModalWindowsAbovePopup()) {
       return false; // Popups should not process key events if there's a modal dialog on top of them.
     }
     if (event.getID() == KeyEvent.KEY_PRESSED) {
@@ -412,7 +429,9 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     if (myInputMap.get(stroke) != null) {
       final Action action = myActionMap.get(myInputMap.get(stroke));
       if (action != null && action.isEnabled()) {
-        action.actionPerformed(new ActionEvent(getContent(), event.getID(), "", event.getWhen(), event.getModifiers()));
+        WriteIntentReadAction.run(
+          (Runnable)() -> action.actionPerformed(new ActionEvent(getContent(), event.getID(), "", event.getWhen(), event.getModifiers()))
+        );
         event.consume();
         return true;
       }
@@ -521,6 +540,16 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     } else {
       getParent().setOk(ok);
     }
+  }
+
+  @ApiStatus.Internal
+  public @NotNull ActionMap getOwnActionMap() {
+    return myActionMap;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull InputMap getOwnInputMap() {
+    return myInputMap;
   }
 
   private class ActionShortcutDelegate extends DumbAwareAction {

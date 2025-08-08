@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.formatter;
 
@@ -2328,6 +2328,11 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
             @TestMetadata("SplitStringByEnterExistingParentheses.after.kt")
             public void testSplitStringByEnterExistingParentheses() throws Exception {
                 runTest("testData/editor/enterHandler/SplitStringByEnterExistingParentheses.after.kt");
+            }
+
+            @TestMetadata("SplitStringByEnterMultiCaret.after.kt")
+            public void testSplitStringByEnterMultiCaret() throws Exception {
+                runTest("testData/editor/enterHandler/SplitStringByEnterMultiCaret.after.kt");
             }
         }
     }

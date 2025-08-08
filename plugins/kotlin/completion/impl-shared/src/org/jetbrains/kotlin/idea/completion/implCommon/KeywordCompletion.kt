@@ -474,6 +474,7 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
 
     private fun computeKeywordApplications(prefixText: String, keyword: KtKeywordToken): Sequence<String> = when (keyword) {
         SUSPEND_KEYWORD -> sequenceOf("suspend () -> Unit>", "suspend X")
+        CONTEXT_KEYWORD -> sequenceOf("context", "context(X) fun")
         else -> {
             if (prefixText.endsWith("@"))
                 sequenceOf(keyword.value + ":X Y.Z")
@@ -664,7 +665,6 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
     ): Boolean {
         val feature = when (keyword) {
             TYPE_ALIAS_KEYWORD -> LanguageFeature.TypeAliases
-            HEADER_KEYWORD, IMPL_KEYWORD -> return false
             EXPECT_KEYWORD, ACTUAL_KEYWORD -> LanguageFeature.MultiPlatformProjects
             SUSPEND_KEYWORD -> LanguageFeature.Coroutines
             FIELD_KEYWORD -> {

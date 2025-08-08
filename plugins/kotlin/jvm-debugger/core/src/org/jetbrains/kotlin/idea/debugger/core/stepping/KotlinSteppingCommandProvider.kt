@@ -6,6 +6,7 @@ import com.intellij.debugger.PositionManager
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.MethodFilter
+import com.intellij.debugger.engine.RequestHint
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.JvmSteppingCommandProvider
@@ -23,8 +24,7 @@ import com.sun.jdi.StackFrame
 import com.sun.jdi.request.StepRequest
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
-import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
-import org.jetbrains.kotlin.idea.debugger.base.util.safeStackFrame
+import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.idea.debugger.core.findElementAtLine
 import org.jetbrains.kotlin.idea.debugger.core.getInlineFunctionAndArgumentVariablesToBordersMap
@@ -34,11 +34,7 @@ import org.jetbrains.kotlin.idea.debugger.core.stepping.filter.KotlinStepOverPar
 import org.jetbrains.kotlin.idea.debugger.core.stepping.filter.LocationToken
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtDeclarationWithBody
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtParameterList
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 class KotlinSteppingCommandProvider : JvmSteppingCommandProvider() {
@@ -127,8 +123,11 @@ fun getStepOverAction(
     val srcLocationToken = LocationToken.from(srcStackFrame).takeIf { it.lineNumber > 0 } ?: return KotlinStepAction.JvmStepOver
 
     if (srcLocationToken.inlineVariables.isEmpty() && srcMethod.isSyntheticMethodForDefaultParameters()) {
-        val psiLineNumber = location.lineNumber() - 1
-        val lineNumbers = Range(psiLineNumber, psiLineNumber)
+        val psiLineNumber = location.safeLineNumber() - 1
+        val startLine = srcMethod.safeAllLineLocations().minOf { it.safeLineNumber() } - 1
+        // Consider [start line, current line] as the current scope
+        // to prevent jumping back to the first line of a default method
+        val lineNumbers = Range(startLine, psiLineNumber)
         return KotlinStepAction.StepInto(KotlinStepOverParamDefaultImplsMethodFilter.create(location, lineNumbers))
     }
 
@@ -198,20 +197,23 @@ fun getStepOverAction(
     return KotlinStepAction.KotlinStepOver(filter)
 }
 
-private fun Location.isOnFunctionDeclaration(positionManager: PositionManager): Boolean  =
-    runReadAction {
-        val sourcePosition = positionManager.getSourcePosition(this) ?: return@runReadAction false
+private fun Location.isOnFunctionDeclaration(positionManager: PositionManager): Boolean {
+    val sourcePosition = positionManager.getSourcePosition(this) ?: return false
+    return runReadAction {
         val file = sourcePosition.file as? KtFile ?: return@runReadAction false
         val elementAtLine = findElementAtLine(file, sourcePosition.line)
         elementAtLine is KtNamedFunction || elementAtLine?.parentOfType<KtParameterList>() != null
     }
+}
 
-private fun Location.getContainingNamedFunction(positionManager: PositionManager): KtDeclarationWithBody? =
-    runReadAction {
-        positionManager.getSourcePosition(this)
+private fun Location.getContainingNamedFunction(positionManager: PositionManager): KtDeclarationWithBody? {
+    val sourcePosition = positionManager.getSourcePosition(this)
+    return runReadAction {
+        sourcePosition
             ?.elementAt
             ?.parentOfType<KtNamedFunction>(withSelf = true)
     }
+}
 
 internal fun createKotlinInlineFilter(suspendContext: SuspendContextImpl): KotlinInlineFilter? {
     val location = suspendContext.location ?: return null
@@ -232,7 +234,17 @@ internal class KotlinInlineFilter(location: Location, method: Method) {
 }
 
 fun Method.isSyntheticMethodForDefaultParameters(): Boolean {
-    return isSynthetic && name().endsWith(JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX)
+    if (!isSynthetic) return false
+    val name = name()
+    if (name.endsWith(JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX)) return true
+    if (name != "<init>") return false
+    val arguments = argumentTypeNames()
+    val size = arguments.size
+    // at least 1 param, 1 int flag, and 1 marker
+    if (size < 3) return false
+    // We should check not only the marker parameter, as it is present also
+    // for object constructor and sealed class constructor
+    return arguments[size - 2] == "int" && arguments[size - 1] == KotlinDebuggerConstants.DEFAULT_CONSTRUCTOR_MARKER_FQ_NAME.asString()
 }
 
 private fun isInlineFunctionFromLibrary(positionManager: PositionManager, location: Location, token: LocationToken): Boolean {
@@ -251,8 +263,9 @@ private fun isInlineFunctionFromLibrary(positionManager: PositionManager, locati
         return getDeclarationName(declaration.parent)
     }
 
+    val sourcePosition = positionManager.getSourcePosition(location)
     val fqn = runReadAction {
-        val element = positionManager.getSourcePosition(location)?.elementAt
+        val element = sourcePosition?.elementAt
         getDeclarationName(element)?.takeIf { !it.isRoot }?.asString()
     } ?: return false
 
@@ -276,10 +289,11 @@ fun PsiElement.getLineRange(): IntRange? {
 }
 
 fun getStepOutAction(location: Location, frameProxy: StackFrameProxyImpl): KotlinStepAction {
-    val stackFrame = frameProxy.safeStackFrame() ?: return KotlinStepAction.StepOut
-    val token = LocationToken.from(stackFrame).takeIf { it.lineNumber > 0 } ?: return KotlinStepAction.StepOut
+    val stackFrame = frameProxy.safeStackFrame() ?: return KotlinStepAction.StepOut()
+    val token = LocationToken.from(stackFrame).takeIf { it.lineNumber > 0 } ?: return KotlinStepAction.StepOut()
     if (token.inlineVariables.isEmpty()) {
-        return KotlinStepAction.StepOut
+        createStepOutMethodWithDefaultArgsActionIfNeeded(frameProxy)?.let { return it }
+        return KotlinStepAction.StepOut()
     }
     val filter = object : KotlinStepOverFilter(location) {
         override fun isAcceptable(location: Location, locationToken: LocationToken, stackFrame: StackFrame): Boolean =
@@ -294,6 +308,27 @@ fun getStepOutAction(location: Location, frameProxy: StackFrameProxyImpl): Kotli
         else
             StepRequest.STEP_LINE
     return KotlinStepAction.KotlinStepOver(filter, stepSize)
+}
+
+/**
+ * Steps out from the `$default` method also
+ */
+private fun createStepOutMethodWithDefaultArgsActionIfNeeded(frameProxy: StackFrameProxyImpl): KotlinStepAction.StepOut? {
+    val frames = frameProxy.safeThreadProxy()?.frames() ?: return null
+    if (frames.size <= 1) return null
+    val previousLocation = frames.getOrNull(1)?.safeStackFrame()?.location() ?: return null
+    val parentMethod = previousLocation.safeMethod() ?: return null
+    if (!parentMethod.isSyntheticMethodForDefaultParameters()) return null
+
+    val parentLines = parentMethod.safeAllLineLocations().map { it.safeLineNumber() - 1 }
+    // Could have no lines in case of constructor with value class parameter
+    val parentRange = if (parentLines.isNotEmpty()) Range(parentLines.min(), parentLines.max()) else null
+    return KotlinStepAction.StepOut(object : MethodFilter {
+        override fun getCallingExpressionLines() = parentRange
+        override fun onReached(context: SuspendContextImpl?, hint: RequestHint?) = StepRequest.STEP_OUT
+        override fun locationMatches(process: DebugProcessImpl?, location: Location?): Boolean =
+            location?.safeMethod() == parentMethod
+    })
 }
 
 private fun LocationToken.isInsideOneLineInlineLambda(): Boolean {

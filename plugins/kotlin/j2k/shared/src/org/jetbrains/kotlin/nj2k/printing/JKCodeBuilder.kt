@@ -2,9 +2,11 @@
 
 package org.jetbrains.kotlin.nj2k.printing
 
+import com.intellij.psi.PsiReferenceExpression
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK1Mode
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.printing.JKPrinterBase.ParenthesisKind
 import org.jetbrains.kotlin.nj2k.symbols.getDisplayFqName
@@ -18,7 +20,7 @@ import org.jetbrains.kotlin.nj2k.types.isInterface
 import org.jetbrains.kotlin.nj2k.types.isUnit
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class JKCodeBuilder(private val context: NewJ2kConverterContext) {
+class JKCodeBuilder(private val context: ConverterContext) {
     private val elementInfoStorage = context.elementsInfoStorage
     private val printer = JKPrinter(context.project, context.importStorage, elementInfoStorage)
     private val commentPrinter = JKCommentPrinter(printer)
@@ -741,7 +743,13 @@ class JKCodeBuilder(private val context: NewJ2kConverterContext) {
         }
 
         override fun visitFieldAccessExpressionRaw(fieldAccessExpression: JKFieldAccessExpression) {
-            printer.renderSymbol(fieldAccessExpression.identifier, fieldAccessExpression)
+            try {
+                printer.renderSymbol(fieldAccessExpression.identifier, fieldAccessExpression)
+            } catch (ignored: UninitializedPropertyAccessException) {
+                // This should only happen on copy-pasting broken (incomplete) code
+                val psi = fieldAccessExpression.psi as? PsiReferenceExpression ?: return
+                printer.print(psi.text)
+            }
         }
 
         override fun visitPackageAccessExpressionRaw(packageAccessExpression: JKPackageAccessExpression) {

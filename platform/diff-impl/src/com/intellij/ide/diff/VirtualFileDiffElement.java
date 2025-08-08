@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.diff;
 
 import com.intellij.diff.util.DiffUtil;
@@ -41,7 +41,7 @@ import java.util.concurrent.Callable;
  * @author Konstantin Bulenkov
  */
 public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
-  private final static Logger LOGGER = Logger.getInstance(VirtualFileDiffElement.class);
+  private static final Logger LOGGER = Logger.getInstance(VirtualFileDiffElement.class);
   private final VirtualFile myFile;
   protected final VirtualFile myDiffRoot;
 
@@ -59,9 +59,8 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
     return myFile.getPresentableUrl();
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myFile.getName();
   }
 
@@ -90,8 +89,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
   }
 
   @Override
-  @Nullable
-  public Navigatable getNavigatable(@Nullable Project project) {
+  public @Nullable Navigatable getNavigatable(@Nullable Project project) {
     if (project == null || project.isDefault() || !myFile.isValid()) return null;
     return new OpenFileDescriptor(project, myFile);
   }
@@ -116,9 +114,8 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
     return ReadAction.compute(() -> myFile.contentsToByteArray());
   }
 
-  @Nullable
   @Override
-  public InputStream getContentStream() throws IOException {
+  public @Nullable InputStream getContentStream() throws IOException {
     return DiffUtil.getFileInputStream(myFile);
   }
 
@@ -141,8 +138,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
     };
   }
 
-  @NotNull
-  public static VirtualFileDiffElement createElement(VirtualFile file, VirtualFile diffRoot) {
+  public static @NotNull VirtualFileDiffElement createElement(VirtualFile file, VirtualFile diffRoot) {
     if (file.getFileType() instanceof ArchiveFileType &&
         file.getFileSystem() != JarFileSystem.getInstance()) {
       VirtualFile jar = JarFileSystem.getInstance().getJarRootForLocalFile(file);
@@ -177,12 +173,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
   }
 
   protected FileChooserDescriptor getChooserDescriptor() {
-    return new FileChooserDescriptor(true, true, true, true, false, false) {
-      @Override
-      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        return file.isDirectory() || file.getFileType() instanceof ArchiveFileType;
-      }
-    };
+    return new FileChooserDescriptor(true, true, true, true, false, false).withExtensionFilter(ArchiveFileType.INSTANCE);
   }
 
   @Override
@@ -190,9 +181,8 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
     return myFile.getFileSystem() instanceof LocalFileSystem;
   }
 
-  @NotNull
   @Override
-  public Charset getCharset() {
+  public @NotNull Charset getCharset() {
     return myFile.getCharset();
   }
 

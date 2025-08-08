@@ -312,6 +312,16 @@ public class PyMoveTest extends PyTestCase {
     doMoveSymbolTest("func", "b.py");
   }
 
+  // PY-54168
+  public void testMoveFromInitPyPreserveDunderAll() {
+    doMoveSymbolTest("MyClass", "my_class.py");
+  }
+
+  // PY-54168
+  public void testMoveInHierarchyUpdatesDunderAllInInitPy() {
+    doMoveSymbolTest("MyClass", "new.py");
+  }
+
   // PY-15343
   public void testDunderAllSingleElementTuple() {
     doMoveSymbolTest("func", "b.py");
@@ -425,6 +435,32 @@ public class PyMoveTest extends PyTestCase {
       final VirtualFile sourceRoot = testDir.findFileByRelativePath("src");
       runWithSourceRoots(Collections.singletonList(sourceRoot), () -> moveSymbols(testDir, "src/pkg/subpkg/b.py", "MyClass"));
     });
+  }
+
+  public void testMoveSymbolFromTopLevelModuleToNewPackageCreatesInitPy() {
+    doComparingDirectories(testDir -> {
+      moveSymbols(testDir, "pkg/subpkg/b.py", "MyClass");
+    });
+  }
+
+  //PY-44858
+  public void testMoveNotCreateInitPyForNamespacePackagesToAnotherDirectory() {
+    doMoveSymbolsTest("pkg/subpkg/B/module_b.py", "myfunc");
+  }
+
+  //PY-44858
+  public void testMoveNotCreateInitPyForNamespacePackagesInSameDirectory() {
+    doMoveSymbolsTest("pkg/subpkg/module_b.py", "myfunc");
+  }
+
+  //PY-44858
+  public void testMoveNotCreateInitPyForNamespacePackagesToParentDirectory() {
+    doMoveSymbolsTest("pkg/subpkg/B/module_b.py", "myfunc");
+  }
+
+  //PY-44858
+  public void testMoveNotCreateInitPyForNamespacePackagesToChildDirectory() {
+    doMoveSymbolsTest("pkg/subpkg/A/B/module_b.py", "myfunc");
   }
 
   // PY-23968

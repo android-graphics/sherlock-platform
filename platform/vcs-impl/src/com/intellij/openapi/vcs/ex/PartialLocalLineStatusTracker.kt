@@ -4,12 +4,9 @@ package com.intellij.openapi.vcs.ex
 import com.intellij.codeWithMe.ClientId
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
-import com.intellij.ide.DataManager
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
@@ -23,10 +20,8 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -37,10 +32,10 @@ import com.intellij.openapi.vcs.changes.ChangeListWorker
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.LineStatusTrackerBlockOperations.Companion.isSelectedByLine
+import com.intellij.openapi.vcs.ex.commit.CommitChunkService
 import com.intellij.openapi.vcs.impl.ActiveChangeListTracker
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.components.DropDownLink
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -48,6 +43,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.WeakList
 import com.intellij.util.ui.JBUI
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import java.awt.Graphics
 import java.awt.Point
@@ -131,6 +127,7 @@ class LocalRange internal constructor(line1: Int, line2: Int, vcsLine1: Int, vcs
 }
 
 
+@ApiStatus.Internal
 class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
                                                              document: Document,
                                                              virtualFile: VirtualFile
@@ -652,55 +649,45 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
                                            mousePosition: Point?,
                                            disposable: Disposable): JComponent? {
       val superPanel = super.createAdditionalInfoPanel(editor, range, mousePosition, disposable)
-      val changelistPanel = createChangelistInfoPanel(editor, range, mousePosition, disposable)
-      if (superPanel == null || changelistPanel == null) return superPanel ?: changelistPanel
+      val commitPanel = createCommitPanel(editor, range, mousePosition, disposable)
 
-      return JBUI.Panels.simplePanel(changelistPanel)
+      if (superPanel == null || commitPanel == null) return superPanel ?: commitPanel
+
+      val panel = JBUI.Panels.simplePanel(commitPanel)
         .addToRight(superPanel)
         .andTransparent()
+      return panel
     }
 
-    private fun createChangelistInfoPanel(editor: Editor,
-                                          range: Range,
-                                          mousePosition: Point?,
-                                          disposable: Disposable): JComponent? {
+    private fun createCommitPanel(editor: Editor, range: Range, point: Point?, disposable: Disposable): JComponent? {
       if (range !is LocalRange) return null
+      return CommitChunkService.getInstance(project!!).getComponent(tracker, range, disposable).getCommitInput()
+    }
+
+    override fun createAdditionalToolbarActions(editor: Editor, range: Range, mousePosition: Point?, popupDisposable: Disposable): List<AnAction> {
+      return createChangeListActions(editor, range, mousePosition)
+    }
+
+    private fun createChangeListActions(editor: Editor,
+                                        range: Range,
+                                        mousePosition: Point?): List<AnAction> {
+      if (range !is LocalRange) return emptyList()
 
       val changeLists = ChangeListManager.getInstance(tracker.project).changeLists
-      val rangeList = changeLists.find { it.id == range.changelistId } ?: return null
+      changeLists.find { it.id == range.changelistId } ?: return emptyList()
 
-      val group = DefaultActionGroup()
+      val group = DefaultActionGroup(VcsBundle.message("ex.changelists"), null, AllIcons.Vcs.Changelist)
+      group.isPopup = true
       if (changeLists.size > 1) {
         group.add(Separator(VcsBundle.message("ex.changelists")))
         for (changeList in changeLists) {
-          group.add(MoveToChangeListAction(editor, range, mousePosition, changeList))
+          group.add(MoveToChangeListToggleAction(editor, range, mousePosition, changeList))
         }
         group.add(Separator.getInstance())
       }
       group.add(MoveToAnotherChangeListAction(editor, range, mousePosition))
 
-
-      val link = DropDownLink(rangeList.name) { linkLabel ->
-        val dataContext = DataManager.getInstance().getDataContext(linkLabel)
-        JBPopupFactory.getInstance()
-          .createActionGroupPopup(null, group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
-      }
-      link.border = JBUI.Borders.emptyLeft(7)
-      link.isOpaque = false
-
-      val moveChangesShortcutSet = ActionManager.getInstance().getAction("Vcs.MoveChangedLinesToChangelist").shortcutSet
-      object : DumbAwareAction() {
-        override fun actionPerformed(e: AnActionEvent) {
-          link.doClick()
-        }
-      }.registerCustomShortcutSet(moveChangesShortcutSet, editor.component, disposable)
-
-      val shortcuts = moveChangesShortcutSet.shortcuts
-      if (shortcuts.isNotEmpty()) {
-        link.toolTipText = VcsBundle.message("ex.move.lines.to.another.changelist.0", KeymapUtil.getShortcutText(shortcuts.first()))
-      }
-
-      return link
+      return listOf(group)
     }
 
     private inner class MoveToAnotherChangeListAction(editor: Editor, range: Range, val mousePosition: Point?)
@@ -717,19 +704,43 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
       }
     }
 
-    private inner class MoveToChangeListAction(editor: Editor, range: Range, val mousePosition: Point?, val changelist: LocalChangeList)
-      : LineStatusMarkerPopupActions.RangeMarkerAction(editor, tracker, range, null) {
+    private inner class MoveToChangeListToggleAction(
+      private val editor: Editor, private val range: Range, val mousePosition: Point?, val changelist: LocalChangeList
+    ) : DumbAwareToggleAction(changelist.name) {
       init {
         templatePresentation.setText(StringUtil.trimMiddle(changelist.name, 60), false)
+        templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.Never
       }
 
-      override fun isEnabled(editor: Editor, range: Range): Boolean = range is LocalRange
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-      override fun actionPerformed(editor: Editor, range: Range) {
-        tracker.moveToChangelist(range, changelist)
-        reopenRange(editor, range, mousePosition)
+      override fun update(e: AnActionEvent) {
+        super.update(e)
+        val newRange = findRange(range)
+        e.presentation.setEnabled(newRange != null && !editor.isDisposed() && newRange is LocalRange)
+      }
+
+      override fun isSelected(e: AnActionEvent): Boolean {
+        val newRange = findRange(range) ?: return false
+        newRange as? LocalRange ?: return false
+        return newRange.changelistId == changelist.id
+      }
+
+      override fun setSelected(e: AnActionEvent, state: Boolean) {
+        val newRange = findRange(range) ?: return
+        moveToChangeList(newRange, changelist, editor, mousePosition)
       }
     }
+
+    private fun findRange(range: Range): Range? {
+      return rangesSource.findRange(range)
+    }
+
+    private fun moveToChangeList(range: Range, changeList: LocalChangeList, editor: Editor, mousePosition: Point?) {
+      tracker.moveToChangelist(range, changeList)
+      reopenRange(editor, range, mousePosition)
+    }
+
 
     override fun toString(): String = "MyLineStatusMarkerRenderer(tracker=$tracker)"
   }
@@ -784,7 +795,13 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
 
   @RequiresEdt
   override fun setExcludedFromCommit(isExcluded: Boolean) {
-    affectedChangeLists.forEach { setExcludedFromCommit(it, isExcluded) }
+    setExcludedFromCommit({ true }, isExcluded)
+
+    if (!isOperational()) {
+      for (changelistId in affectedChangeLists) {
+        initialExcludeState[ChangeListMarker(changelistId)] = isExcluded
+      }
+    }
   }
 
   override fun setExcludedFromCommit(changelistId: String, isExcluded: Boolean) {
@@ -901,7 +918,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
   }
 
   @RequiresReadLock
-  private fun collectRangeStates(): List<RangeState> {
+  internal fun collectRangeStates(): List<RangeState> {
     return documentTracker.readLock {
       blocks.map { RangeState(it.range, it.marker.changelistId, it.excludedFromCommit) }
     }

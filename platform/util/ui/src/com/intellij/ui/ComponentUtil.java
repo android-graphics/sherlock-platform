@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Key;
@@ -24,7 +24,7 @@ public final class ComponentUtil {
   /**
    * @deprecated use {@link ClientProperty#get(Component, Key)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static <T> T getClientProperty(@NotNull JComponent component, @NotNull Key<T> key) {
     return ClientProperty.get(component, key);
   }
@@ -232,6 +232,17 @@ public final class ComponentUtil {
     if (Boolean.getBoolean("java.awt.headless")) {
       return;
     }
+    forceMarkAsShowing(component, value);
+  }
+
+  /**
+   * Marks a component as showing regardless of headless mode.
+   *
+   * @see #isShowing(Component, boolean)
+   */
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static void forceMarkAsShowing(@NotNull JComponent component, boolean value) {
     component.putClientProperty(IS_SHOWING, value ? Boolean.TRUE : null);
   }
 

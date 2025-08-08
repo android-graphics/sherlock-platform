@@ -83,6 +83,7 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.code-insight-common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.grazie" scope="RUNTIME" />
@@ -108,8 +109,8 @@
     <orderEntry type="module" module-name="kotlin.jvm-debugger.coroutines" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.eval4j" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.jvm-debugger.sequence" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.jvm-debugger.util" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation.k1" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.sequence.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-decompiler" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.inspections-fe10" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.maven" scope="RUNTIME" />

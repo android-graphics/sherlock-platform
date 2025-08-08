@@ -3,40 +3,61 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
 import com.intellij.java.analysis.JavaAnalysisBundle
 import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.siblings
 import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor
-import org.jetbrains.kotlin.idea.KotlinFileType
+import com.intellij.util.takeWhileInclusive
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
+import org.jetbrains.kotlin.idea.core.createKotlinFile
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2ChangePackageDescriptor
-import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
+import org.jetbrains.kotlin.kdoc.psi.api.KDocElement
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 
-internal fun Iterable<KtNamedDeclaration>.moveInto(targetFile: KtFile): Map<KtNamedDeclaration, KtNamedDeclaration> {
-    val oldToNewMap = mutableMapOf<KtNamedDeclaration, KtNamedDeclaration>()
-    forEach { oldMovedDeclaration ->
-        val newMovedDeclaration = targetFile.add(oldMovedDeclaration) as KtNamedDeclaration
-        // we assume that the children are in the same order before and after the move
-        for ((oldChild, newChild) in oldMovedDeclaration.withChildDeclarations().zip(newMovedDeclaration.withChildDeclarations())) {
-            oldToNewMap[oldChild] = newChild
+/**
+ * @return whether an [PsiElement] should be moved when it's in between moved declarations.
+ */
+private fun PsiElement.isContextElement(): Boolean = this is KDocElement || this is PsiWhiteSpace
+
+internal fun Collection<KtNamedDeclaration>.withContext(): Collection<PsiElement> {
+    val allElementsToMove = mutableListOf<PsiElement>()
+    val first = first()
+    val containingFile = first.containingKtFile
+    if (size == containingFile.declarations.size) { // when moving all declarations, move all context elements before the first declaration
+        allElementsToMove.addAll(first.siblings(forward = false, withSelf = false).toList().filter { it.isContextElement() }.dropWhile { it is PsiWhiteSpace })
+    }
+    windowed(size = 2) { (prev, next) ->
+        allElementsToMove.add(prev)
+        val elementsUntilNext = prev.siblings(forward = true, withSelf = false).takeWhileInclusive { it !is KtNamedDeclaration }
+        if (next in elementsUntilNext) { // if the next declaration is also moved, move all context elements that are in between declarations
+            elementsUntilNext.filterTo(allElementsToMove) { it.isContextElement() }
         }
     }
-    return oldToNewMap
+    val last = last()
+    allElementsToMove.add(last)
+    if (size == containingFile.declarations.size) { // when moving all declarations, move all context elements after the last declaration
+        allElementsToMove.addAll(last.siblings(forward = true, withSelf = false).toList().filter { it.isContextElement() }.dropLastWhile { it is PsiWhiteSpace })
+    }
+    return allElementsToMove
 }
 
-internal fun KtNamedDeclaration.withChildDeclarations() = collectDescendantsOfType<KtNamedDeclaration>().toList() + this
+internal fun PsiElement.withChildDeclarations() = collectDescendantsOfType<KtNamedDeclaration>().toList()
 
 internal fun K2ChangePackageDescriptor.usageViewDescriptor(): MoveMultipleElementsViewDescriptor {
     return MoveMultipleElementsViewDescriptor(files.toTypedArray(), target.presentablePkgName())
 }
 
-internal fun K2MoveDescriptor.usageViewDescriptor(): MoveMultipleElementsViewDescriptor {
-    return MoveMultipleElementsViewDescriptor(source.elements.toTypedArray(), target.pkgName.presentablePkgName())
+internal fun K2MoveOperationDescriptor<*>.usageViewDescriptor(): MoveMultipleElementsViewDescriptor {
+    return MoveMultipleElementsViewDescriptor(sourceElements.toTypedArray(), moveDescriptors.first().target.pkgName.presentablePkgName())
 }
 
 internal fun FqName.presentablePkgName(): String = if (asString() == "") {
@@ -64,15 +85,11 @@ fun getOrCreateKotlinFile(
 ): KtFile =
     (targetDir.findFile(fileName) ?: createKotlinFile(fileName, targetDir, packageName)) as KtFile
 
-fun createKotlinFile(
-    fileName: String,
-    targetDir: PsiDirectory,
-    packageName: String? = targetDir.getFqNameWithImplicitPrefix()?.asString()
-): KtFile {
-    targetDir.checkCreateFile(fileName)
-    val packageFqName = packageName?.let(::FqName) ?: FqName.ROOT
-    val file = PsiFileFactory.getInstance(targetDir.project).createFileFromText(
-        fileName, KotlinFileType.INSTANCE, if (!packageFqName.isRoot) "package ${packageFqName.quoteIfNeeded()} \n\n" else ""
-    )
-    return targetDir.add(file) as KtFile
+
+internal fun isValidTargetForImplicitCompanionAsDispatchReceiver(
+    moveTarget: K2MoveTargetDescriptor,
+    companionObject: KtObjectDeclaration
+): Boolean {
+    // TODO: Add support for moving into other classes!
+    return false
 }

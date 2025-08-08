@@ -35,8 +35,8 @@ data class ProjectScanningHistoryImpl(override val project: Project,
 
     fun startDumbModeBeginningTracking(project: Project,
                                        scanningHistory: ProjectScanningHistoryImpl): Runnable {
-      val now = ZonedDateTime.now(ZoneOffset.UTC)
       val callback = Runnable {
+        val now = ZonedDateTime.now(ZoneOffset.UTC)
         scanningHistory.createScanningDumbModeCallBack().accept(now)
       }
       ReadAction.run<RuntimeException> {
@@ -115,14 +115,13 @@ data class ProjectScanningHistoryImpl(override val project: Project,
   }
 
   fun scanningFinished() {
-    val now = ZonedDateTime.now(ZoneOffset.UTC)
-    timesImpl.updatingEnd = now
     timesImpl.totalUpdatingTime = System.nanoTime() - timesImpl.totalUpdatingTime
+    timesImpl.updatingEnd = timesImpl.updatingStart.plusNanos(timesImpl.totalUpdatingTime)
 
     eventsLock.withLock {
       currentDumbModeStart?.let {
         timesImpl.dumbModeStart = it
-        stopStage(Stage.DumbMode, now.toInstant())
+        stopStage(Stage.DumbMode, timesImpl.updatingEnd.toInstant())
         timesImpl.dumbModeWithPausesDuration = Duration.between(it, timesImpl.updatingEnd)
       }
     }
@@ -135,8 +134,9 @@ data class ProjectScanningHistoryImpl(override val project: Project,
       scanningStatistics.sumOf { stat -> stat.timeIndexingWithoutContentViaInfrastructureExtension.nano })
   }
 
-  fun setWasInterrupted() {
-    timesImpl.wasInterrupted = true
+  fun setWasCancelled(reason: String?) {
+    timesImpl.isCancelled = true
+    timesImpl.cancellationReason = reason
   }
 
   private fun createScanningDumbModeCallBack(): Consumer<ZonedDateTime> = Consumer { now ->
@@ -150,7 +150,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
    * Some StageEvent may appear between the beginning and end of suspension
    * because it actually takes place only on ProgressIndicator's check.
    * These normalizations move the moment of suspension start from declared to after all other events between it and suspension end:
-   * suspended, event1, ..., eventN, unsuspended -> event1, ..., eventN, suspended, unsuspended
+   * suspended, event1, ..., eventN, unsuspended → event1, ..., eventN, suspended, unsuspended
    *
    * Suspended and unsuspended events appear only in pairs with none in between.
    */
@@ -304,7 +304,8 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     override var concurrentFileCheckSumOfThreadTimesWithPauses: Duration = Duration.ZERO,
     override var indexExtensionsDuration: Duration = Duration.ZERO,
     override var pausedDuration: Duration = Duration.ZERO,
-    override var wasInterrupted: Boolean = false
+    override var isCancelled: Boolean = false,
+    override var cancellationReason: String? = null,
   ) : ScanningTimes
 }
 
@@ -337,7 +338,7 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
   }
 
   fun addProviderStatistics(statistics: IndexingFileSetStatistics) {
-    // Convert to Json to release memory occupied by statistic values.
+    // Convert to JSON to release memory occupied by statistic values.
     providerStatistics += statistics.toJsonStatistics(visibleTimeToAllThreadsTimeRatio)
 
     for ((fileType, fileTypeStats) in statistics.statsPerFileType) {
@@ -394,15 +395,14 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
 
   fun indexingFinished() {
     writeStagesToDurations()
-  }
-
-  fun setWasInterrupted() {
-    timesImpl.wasInterrupted = true
-  }
-
-  fun finishTotalUpdatingTime() {
-    timesImpl.updatingEnd = ZonedDateTime.now(ZoneOffset.UTC)
+    
     timesImpl.totalUpdatingTime = System.nanoTime() - timesImpl.totalUpdatingTime
+    timesImpl.updatingEnd = timesImpl.updatingStart.plusNanos(timesImpl.totalUpdatingTime)
+  }
+
+  fun setWasCancelled(reason: String?) {
+    timesImpl.isCancelled = true
+    timesImpl.cancellationReason = reason
   }
 
   private fun writeStagesToDurations() {
@@ -456,6 +456,7 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
     override var retrievingChangedDuringIndexingFilesDuration: Duration = Duration.ZERO,
     override var pausedDuration: Duration = Duration.ZERO,
     override var separateValueApplicationVisibleTime: TimeNano = 0,
-    override var wasInterrupted: Boolean = false
+    override var isCancelled: Boolean = false,
+    override var cancellationReason: String? = null,
   ) : DumbIndexingTimes
 }

@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -28,6 +29,16 @@ public interface TypeAnnotationProvider {
 
   @NotNull PsiAnnotation @NotNull [] getAnnotations();
 
+  /**
+   * @param owner owner for annotations in this provider
+   * @return a provider whose annotations are updated to return the supplied owner. 
+   * May return itself if changing the owner is not supported, or owner is already set for all the annotations.
+   */
+  @ApiStatus.Internal
+  default @NotNull TypeAnnotationProvider withOwner(@NotNull PsiAnnotationOwner owner) {
+    return this;
+  }
+
 
   final class Static implements TypeAnnotationProvider {
     private final @NotNull PsiAnnotation @NotNull [] myAnnotations;
@@ -41,8 +52,7 @@ public interface TypeAnnotationProvider {
       return myAnnotations;
     }
 
-    @NotNull
-    public static TypeAnnotationProvider create(@NotNull PsiAnnotation @NotNull [] annotations) {
+    public static @NotNull TypeAnnotationProvider create(@NotNull PsiAnnotation @NotNull [] annotations) {
       if (annotations.length == 0) return EMPTY;
       for (PsiAnnotation annotation : annotations) {
         Objects.requireNonNull(annotation);

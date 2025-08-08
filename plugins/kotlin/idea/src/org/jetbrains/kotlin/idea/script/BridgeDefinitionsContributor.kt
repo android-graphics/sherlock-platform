@@ -2,20 +2,17 @@
 
 package org.jetbrains.kotlin.idea.script
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionSourceAsContributor
+import org.jetbrains.kotlin.idea.core.script.k2.loggingReporter
 import org.jetbrains.kotlin.idea.core.script.loadDefinitionsFromTemplates
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsFromClasspathDiscoverySource
-import kotlin.script.experimental.api.ScriptDiagnostic
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
-class BridgeScriptDefinitionsContributor(private val project: Project) : ScriptDefinitionSourceAsContributor {
-    override val id: String = "BridgeScriptDefinitionsContributor"
-
+class BridgeScriptDefinitionsContributor(private val project: Project) : ScriptDefinitionsSource {
     override val definitions: Sequence<ScriptDefinition>
         get() = ScriptDefinitionsProvider.EP_NAME.getExtensionList(project).asSequence().flatMap { provider ->
             val explicitClasses = provider.getDefinitionClasses().toList()
@@ -49,14 +46,4 @@ class BridgeScriptDefinitionsContributor(private val project: Project) : ScriptD
         }
 }
 
-fun loggingReporter(severity: ScriptDiagnostic.Severity, message: String) {
-    val log = Logger.getInstance("ScriptDefinitionsProviders")
-    when (severity) {
-        ScriptDiagnostic.Severity.FATAL,
-        ScriptDiagnostic.Severity.ERROR -> log.error(message)
-        ScriptDiagnostic.Severity.WARNING,
-        ScriptDiagnostic.Severity.INFO -> log.info(message)
-        else -> {}
-    }
-}
 

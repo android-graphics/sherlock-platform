@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations.coverage;
 
 import com.intellij.coverage.*;
@@ -36,9 +36,9 @@ public final class JavaCoverageEnabledConfiguration extends CoverageEnabledConfi
   private boolean myIsMergeWithPreviousResults = false;
   private String mySuiteToMergeWith;
 
-  @NonNls private static final String COVERAGE_PATTERN_ELEMENT_NAME = "pattern";
-  @NonNls private static final String COVERAGE_MERGE_ATTRIBUTE_NAME = "merge";
-  @NonNls private static final String COVERAGE_MERGE_SUITE_ATT_NAME = "merge_suite";
+  private static final @NonNls String COVERAGE_PATTERN_ELEMENT_NAME = "pattern";
+  private static final @NonNls String COVERAGE_MERGE_ATTRIBUTE_NAME = "merge";
+  private static final @NonNls String COVERAGE_MERGE_SUITE_ATT_NAME = "merge_suite";
 
 
   public JavaCoverageEnabledConfiguration(RunConfigurationBase configuration) {
@@ -53,8 +53,7 @@ public final class JavaCoverageEnabledConfiguration extends CoverageEnabledConfi
     }
   }
 
-  @Nullable
-  public static JavaCoverageEnabledConfiguration getFrom(@NotNull final RunConfigurationBase<?> configuration) {
+  public static @Nullable JavaCoverageEnabledConfiguration getFrom(final @NotNull RunConfigurationBase<?> configuration) {
     final CoverageEnabledConfiguration coverageEnabledConfiguration = getOrCreate(configuration);
     if (coverageEnabledConfiguration instanceof JavaCoverageEnabledConfiguration) {
       return (JavaCoverageEnabledConfiguration)coverageEnabledConfiguration;
@@ -99,21 +98,21 @@ public final class JavaCoverageEnabledConfiguration extends CoverageEnabledConfi
   }
 
   public String @Nullable [] getPatterns() {
-    if (myCoveragePatterns != null) {
-      List<String> patterns = new ArrayList<>();
-      for (ClassFilter coveragePattern : myCoveragePatterns) {
-        if (coveragePattern.isEnabled() && coveragePattern.isInclude()) patterns.add(coveragePattern.getPattern());
-      }
-      return ArrayUtilRt.toStringArray(patterns);
-    }
-    return null;
+    return getPatterns(true);
   }
 
   public String @Nullable [] getExcludePatterns() {
+    return getPatterns(false);
+  }
+
+  private String @Nullable [] getPatterns(boolean include) {
     if (myCoveragePatterns != null) {
       List<String> patterns = new ArrayList<>();
       for (ClassFilter coveragePattern : myCoveragePatterns) {
-        if (coveragePattern.isEnabled() && !coveragePattern.isInclude()) patterns.add(coveragePattern.getPattern());
+        if (coveragePattern == null) continue;
+        if (coveragePattern.isEnabled() && coveragePattern.isInclude() == include) {
+          patterns.add(coveragePattern.getPattern());
+        }
       }
       return ArrayUtilRt.toStringArray(patterns);
     }
@@ -179,7 +178,8 @@ public final class JavaCoverageEnabledConfiguration extends CoverageEnabledConfi
     // patterns
     if (myCoveragePatterns != null) {
       for (ClassFilter pattern : myCoveragePatterns) {
-        @NonNls final Element patternElement = new Element(COVERAGE_PATTERN_ELEMENT_NAME);
+        if (pattern == null) continue;
+        final @NonNls Element patternElement = new Element(COVERAGE_PATTERN_ELEMENT_NAME);
         pattern.writeExternal(patternElement);
         element.addContent(patternElement);
       }

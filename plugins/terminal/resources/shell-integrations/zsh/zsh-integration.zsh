@@ -2,9 +2,14 @@
 
 function __jetbrains_intellij_update_environment() {
   if [[ -n "${JEDITERM_SOURCE:-}" ]]; then
-    builtin source -- "$JEDITERM_SOURCE" ${=JEDITERM_SOURCE_ARGS:-}
+    if [[ -n "${JEDITERM_SOURCE_SINGLE_ARG}" ]]; then
+      # JEDITERM_SOURCE_ARGS might be either list of args or one arg depending on JEDITERM_SOURCE_SINGLE_ARG
+      builtin source -- "$JEDITERM_SOURCE" "${JEDITERM_SOURCE_ARGS}"
+    else
+      builtin source -- "$JEDITERM_SOURCE" ${=JEDITERM_SOURCE_ARGS:-}
+    fi
   fi
-  builtin unset JEDITERM_SOURCE JEDITERM_SOURCE_ARGS
+
 
   # Enable native zsh options to make coding easier.
   builtin emulate -L zsh
@@ -35,4 +40,6 @@ builtin unset -f __jetbrains_intellij_update_environment
 
 builtin local command_block_support="${JETBRAINS_INTELLIJ_ZSH_DIR}/command-block-support.zsh"
 [ -r "$command_block_support" ] && builtin source "$command_block_support"
+builtin local command_block_support_reworked="${JETBRAINS_INTELLIJ_ZSH_DIR}/command-block-support-reworked.zsh"
+[ -r "$command_block_support_reworked" ] && builtin source "$command_block_support_reworked"
 builtin unset JETBRAINS_INTELLIJ_ZSH_DIR

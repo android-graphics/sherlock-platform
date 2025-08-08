@@ -63,7 +63,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class InjectLanguageAction implements IntentionAction, LowPriorityAction {
+public final class InjectLanguageAction implements IntentionAction, LowPriorityAction {
   public static final String LAST_INJECTED_LANGUAGE = "LAST_INJECTED_LANGUAGE";
   public static final Key<Processor<? super PsiLanguageInjectionHost>> FIX_KEY = Key.create("inject fix key");
 
@@ -79,8 +79,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
     });
   };
 
-  @NotNull
-  public static List<Injectable> getAllInjectables() {
+  public static @NotNull List<Injectable> getAllInjectables() {
     Language[] languages = InjectedLanguage.getAvailableLanguages();
     List<Injectable> list = new ArrayList<>();
     for (Language language : languages) {
@@ -92,14 +91,12 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return IntelliLangBundle.message("intelliLang.inject.language.action.text");
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
@@ -107,7 +104,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
   public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiLanguageInjectionHost host = findInjectionHost(editor, file);
     if (host == null) return false;
-    if (!InjectionUtils.isInjectLanguageActionEnabled(host)) return false;
+    if (!InjectionUtils.isInjectLanguageActionEnabled(file)) return false;
     List<Pair<PsiElement, TextRange>> injectedPsi = InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(host);
     if (injectedPsi == null || injectedPsi.isEmpty()) {
       return !InjectedReferencesContributor.isInjected(file.findReferenceAt(editor.getCaretModel().getOffset()));
@@ -123,9 +120,8 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
     return new IntentionPreviewInfo.Html(IntelliLangBundle.message("intelliLang.inject.language.action.preview", text));
   }
 
-  @Nullable
-  protected static PsiLanguageInjectionHost findInjectionHost(@NotNull Editor editor,
-                                                              @NotNull PsiFile file) {
+  private static @Nullable PsiLanguageInjectionHost findInjectionHost(@NotNull Editor editor,
+                                                                      @NotNull PsiFile file) {
     if (editor instanceof EditorWindow) return null;
     int offset = editor.getCaretModel().getOffset();
 
@@ -311,8 +307,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
       myFix = fix;
     }
 
-    @NlsContexts.PopupContent
-    public String getText() {
+    public @NlsContexts.PopupContent String getText() {
       return myText;
     }
 

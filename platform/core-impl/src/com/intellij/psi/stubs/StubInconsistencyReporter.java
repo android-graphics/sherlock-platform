@@ -57,6 +57,7 @@ public interface StubInconsistencyReporter {
   /**
    * @deprecated Use {@link #reportStubInconsistencyBetweenPsiAndText(Project, SourceOfCheck, InconsistencyType)}
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   void reportEnforcedStubInconsistency(@NotNull Project project, @NotNull StubInconsistencyReporter.SourceOfCheck reason,
                                        @NotNull EnforcedInconsistencyType enforcedInconsistencyType);
@@ -64,6 +65,7 @@ public interface StubInconsistencyReporter {
   /**
    * @deprecated Use {@link #reportStubInconsistencyBetweenPsiAndText(Project, SourceOfCheck, InconsistencyType)}
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   void reportStubInconsistencyBetweenPsiAndText(@NotNull Project project, @NotNull StubInconsistencyReporter.SourceOfCheck reason,
                                                 @NotNull InconsistencyType type,

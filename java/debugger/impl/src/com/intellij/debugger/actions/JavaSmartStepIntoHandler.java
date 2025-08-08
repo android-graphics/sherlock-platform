@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
@@ -12,6 +12,7 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
@@ -61,10 +62,10 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     return file.getLanguage().isKindOf(JavaLanguage.INSTANCE);
   }
 
-  @NotNull
-  private Promise<List<SmartStepTarget>> findSmartStepTargetsAsync(SourcePosition position, DebuggerSession session, boolean smart) {
+  private @NotNull Promise<List<SmartStepTarget>> findSmartStepTargetsAsync(SourcePosition position, DebuggerSession session, boolean smart) {
     var res = new AsyncPromise<List<SmartStepTarget>>();
-    session.getProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(session.getContextManager().getContext()) {
+    DebuggerContextImpl context = session.getContextManager().getContext();
+    Objects.requireNonNull(context.getManagerThread()).schedule(new DebuggerContextCommandImpl(context) {
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         Promises.compute(res, () ->
@@ -84,24 +85,21 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     return res;
   }
 
-  @NotNull
   @Override
-  public Promise<List<SmartStepTarget>> findSmartStepTargetsAsync(SourcePosition position, DebuggerSession session) {
+  public @NotNull Promise<List<SmartStepTarget>> findSmartStepTargetsAsync(SourcePosition position, DebuggerSession session) {
     return findSmartStepTargetsAsync(position, session, true);
   }
 
-  @NotNull
   @Override
-  public Promise<List<SmartStepTarget>> findStepIntoTargets(SourcePosition position, DebuggerSession session) {
+  public @NotNull Promise<List<SmartStepTarget>> findStepIntoTargets(SourcePosition position, DebuggerSession session) {
     if (DebuggerSettings.getInstance().ALWAYS_SMART_STEP_INTO) {
       return findSmartStepTargetsAsync(position, session, false);
     }
     return Promises.rejectedPromise();
   }
 
-  @NotNull
   @Override
-  public List<SmartStepTarget> findSmartStepTargets(SourcePosition position) {
+  public @NotNull List<SmartStepTarget> findSmartStepTargets(SourcePosition position) {
     throw new IllegalStateException("Should not be used");
   }
 
@@ -166,8 +164,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       private int myNextLambdaExpressionOrdinal = 0;
       private boolean myInsideLambda = false;
 
-      @Nullable
-      private String getCurrentParamName() {
+      private @Nullable String getCurrentParamName() {
         return myParamNameStack.peekFirst();
       }
 
@@ -569,7 +566,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       return targets;
     }
     catch (Exception e) {
-      LOG.error(e);
+      DebuggerUtilsImpl.logError(e);
       DebuggerStatistics.logSmartStepIntoTargetsDetection(element.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.INTERNAL_ERROR);
       return Collections.emptyList();
     }
@@ -600,6 +597,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
   }
 
   private static StreamEx<MethodSmartStepTarget> existingMethodCalls(List<SmartStepTarget> targets, PsiMethod psiMethod) {
-    return immediateMethodCalls(targets).filter(t -> t.getMethod().equals(psiMethod));
+    return immediateMethodCalls(targets)
+      .filter(t -> psiMethod.getManager().areElementsEquivalent(psiMethod, t.getMethod()));
   }
 }

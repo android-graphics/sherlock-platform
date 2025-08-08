@@ -1,9 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
-import com.intellij.concurrency.currentThreadContextOrNull
+import com.intellij.concurrency.currentThreadOverriddenContextOrNull
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.impl.ModalityStateEx
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.testFramework.assertErrorLogged
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.util.application
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -15,10 +20,8 @@ class RunBlockingCancellableTest : CancellationTest() {
 
   @Test
   fun `without context`() {
-    assertLogThrows<IllegalStateException> {
-      runBlockingCancellable {
-        fail()
-      }
+    assertErrorLogged<IllegalStateException> {
+      runBlockingCancellable {}
     }
   }
 
@@ -41,7 +44,7 @@ class RunBlockingCancellableTest : CancellationTest() {
 
       runBlockingCancellable {
         assertJobIsChildOf(coroutineContext.job, job)
-        assertNull(currentThreadContextOrNull())
+        assertNull(currentThreadOverriddenContextOrNull())
         assertEquals(coroutineContext.job, Cancellation.currentJob())
         assertNull(ProgressManager.getGlobalProgressIndicator())
       }
@@ -83,7 +86,7 @@ class RunBlockingCancellableTest : CancellationTest() {
       assertNotNull(ProgressManager.getGlobalProgressIndicator())
 
       runBlockingCancellable {
-        assertNull(currentThreadContextOrNull())
+        assertNull(currentThreadOverriddenContextOrNull())
         assertEquals(coroutineContext.job, Cancellation.currentJob())
         assertNull(ProgressManager.getGlobalProgressIndicator())
       }
@@ -264,6 +267,30 @@ class RunBlockingCancellableTest : CancellationTest() {
         // -> set context 2
         // -> reset context to whatever was before 1
         // -> reset context to whatever was before 2 (i.e. 1)
+      }
+    }
+  }
+
+  @Test
+  @RegistryKey("ide.run.blocking.cancellable.assert.in.tests", "true")
+  fun `runBlockingCancellable is not allowed in wa`(): Unit = timeoutRunBlocking {
+    edtWriteAction {
+      assertErrorLogged<java.lang.IllegalStateException> {
+        runBlockingCancellable {
+        }
+      }
+    }
+  }
+
+  @Suppress("ForbiddenInSuspectContextMethod")
+  @Test
+  @RegistryKey("ide.run.blocking.cancellable.assert.in.tests", "true")
+  fun `runBlockingCancellable in inner explicit ra of wa`(): Unit = timeoutRunBlocking {
+    application.runWriteAction {
+      ReadAction.run<Throwable> {
+        // checks that there are no assertions
+        runBlockingCancellable {
+        }
       }
     }
   }

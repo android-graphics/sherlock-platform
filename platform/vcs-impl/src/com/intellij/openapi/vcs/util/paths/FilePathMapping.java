@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.util.paths;
 
 import com.intellij.util.UriUtil;
@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +15,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class FilePathMapping<T> {
   private final boolean myCaseSensitive;
 
@@ -42,8 +44,7 @@ public final class FilePathMapping<T> {
     myPathHashSet.clear();
   }
 
-  @NotNull
-  public Collection<T> values() {
+  public @NotNull Collection<T> values() {
     return myPathMap.values();
   }
 
@@ -52,8 +53,7 @@ public final class FilePathMapping<T> {
     return myPathMap.containsKey(path);
   }
 
-  @Nullable
-  public T getMappingFor(@NotNull String filePath) {
+  public @Nullable T getMappingFor(@NotNull String filePath) {
     String path = UriUtil.trimTrailingSlashes(filePath);
 
     int index = 0;

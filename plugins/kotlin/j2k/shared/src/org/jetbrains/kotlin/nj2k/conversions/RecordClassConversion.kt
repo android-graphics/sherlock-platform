@@ -5,12 +5,13 @@ package org.jetbrains.kotlin.nj2k.conversions
 import com.intellij.psi.*
 import com.intellij.psi.util.JavaPsiRecordUtil.*
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.name.JvmStandardClassIds.JVM_RECORD_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKLightMethodData
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
-import org.jetbrains.kotlin.nj2k.tree.Mutability.MUTABLE
+import org.jetbrains.kotlin.nj2k.tree.Mutability.IMMUTABLE
 import org.jetbrains.kotlin.nj2k.tree.Visibility.PRIVATE
 import org.jetbrains.kotlin.nj2k.tree.Visibility.PUBLIC
 import org.jetbrains.kotlin.nj2k.types.determineType
@@ -20,7 +21,7 @@ import org.jetbrains.kotlin.nj2k.types.determineType
  *
  * See [JEP 395](https://openjdk.org/jeps/395) and [Records documentation](https://docs.oracle.com/en/java/javase/16/language/records.html)
  */
-class RecordClassConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+class RecordClassConversion(context: ConverterContext) : RecursiveConversion(context) {
     context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element is JKRecordClass) element.convert()
@@ -68,7 +69,7 @@ class RecordClassConversion(context: NewJ2kConverterContext) : RecursiveConversi
                 otherModifierElements = emptyList(),
                 JKVisibilityModifierElement(PUBLIC),
                 JKModalityModifierElement(FINAL),
-                JKMutabilityModifierElement(MUTABLE)
+                JKMutabilityModifierElement(IMMUTABLE)
             ).also { field ->
                 field.lineBreaksAfter = 1
                 symbolProvider.provideUniverseSymbol(field)

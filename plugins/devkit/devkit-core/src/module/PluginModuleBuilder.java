@@ -1,15 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.module;
 
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.ide.projectView.actions.MarkRootActionBase;
+import com.intellij.ide.projectView.actions.MarkRootsManager;
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.SettingsStep;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.SdkTypeId;
@@ -41,12 +41,12 @@ import static java.awt.GridBagConstraints.HORIZONTAL;
 public class PluginModuleBuilder extends JavaModuleBuilder {
 
   @Override
-  public ModuleType getModuleType() {
+  public ModuleType<?> getModuleType() {
     return PluginModuleType.getInstance();
   }
 
   @Override
-  public void setupRootModel(@NotNull final ModifiableRootModel rootModel) throws ConfigurationException {
+  public void setupRootModel(final @NotNull ModifiableRootModel rootModel) throws ConfigurationException {
     super.setupRootModel(rootModel);
     String contentEntryPath = getContentEntryPath();
     if (contentEntryPath == null) return;
@@ -55,7 +55,7 @@ public class PluginModuleBuilder extends JavaModuleBuilder {
     VirtualFile contentRoot = LocalFileSystem.getInstance().findFileByPath(contentEntryPath);
     if (contentRoot == null) return;
 
-    ContentEntry contentEntry = MarkRootActionBase.findContentEntry(rootModel, contentRoot);
+    ContentEntry contentEntry = MarkRootsManager.findContentEntry(rootModel, contentRoot);
     if (contentEntry != null) {
       contentEntry.addSourceFolder(VfsUtilCore.pathToUrl(resourceRootPath), JavaResourceRootType.RESOURCE);
     }
@@ -76,9 +76,8 @@ public class PluginModuleBuilder extends JavaModuleBuilder {
     });
   }
 
-  @Nullable
   @Override
-  public Module commitModule(@NotNull Project project, @Nullable ModifiableModuleModel model) {
+  public @Nullable Module commitModule(@NotNull Project project, @Nullable ModifiableModuleModel model) {
     Module module = super.commitModule(project, model);
     if (module != null) {
       RunManager runManager = RunManager.getInstance(project);

@@ -1,12 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.inspectionProfile
 
 import com.intellij.codeInspection.inspectionProfile.YamlProfileUtils.makeYaml
+import org.jetbrains.annotations.ApiStatus
 import org.yaml.snakeyaml.Yaml
 import java.io.Reader
 import java.nio.file.Path
 import java.nio.file.Paths
 
+@ApiStatus.Internal
 class YamlInspectionProfileRaw(
   val baseProfile: String? = null,
   val name: String? = null,
@@ -17,16 +19,16 @@ class YamlInspectionProfileRaw(
     val yaml = makeYaml()
     return yaml.dump(this)
   }
-
-
 }
 
+@ApiStatus.Internal
 class YamlInspectionGroupRaw(
   val groupId: String = "Unknown",
   val inspections: List<String> = emptyList(),
   val groups: List<String> = emptyList()
 )
 
+@ApiStatus.Internal
 class YamlInspectionConfigRaw(
   val inspection: String? = null,
   val group: String? = null,
@@ -36,8 +38,7 @@ class YamlInspectionConfigRaw(
   val options: Map<String, String>? = null
 )
 
-
-fun readConfig(reader: Reader, includeReaders: (Path) -> Reader): YamlInspectionProfileRaw {
+internal fun readConfig(reader: Reader, includeReaders: (Path) -> Reader): YamlInspectionProfileRaw {
   val merged = readRaw(reader, includeReaders)
   val yaml = makeYaml()
 
@@ -67,7 +68,11 @@ private val FIELDS_TO_MERGE = setOf("groups", "inspections")
 private fun readRaw(reader: Reader, includeReaders: (Path) -> Reader): Map<String, *> {
   val yamlReader = Yaml()
   val rawConfig: Map<String, *> = yamlReader.load(reader)
-  val includedConfigs = (rawConfig["include"] as? List<*>)?.filterIsInstance(String::class.java).orEmpty().map { Paths.get(it) }
+  val includedConfigs = (rawConfig["include"] as? List<*>)
+    ?.filterIsInstance<String>()
+    .orEmpty()
+    .map { Paths.get(it) }
+    .asReversed() // Values from included placed at the beginning of config. So the first in the list should be added last to keep order.
 
   return includedConfigs.fold(rawConfig) { accumulator, path ->
     val includedYaml = includeReaders.invoke(path).use { includeReader ->

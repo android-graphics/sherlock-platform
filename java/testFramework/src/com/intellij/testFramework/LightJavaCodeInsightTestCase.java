@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
@@ -93,17 +93,22 @@ public abstract class LightJavaCodeInsightTestCase extends LightPlatformCodeInsi
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    LanguageLevel languageLevel = getLanguageLevel();
     return new SimpleLightProjectDescriptor(getModuleTypeId(), getProjectJDK()) {
       @Override
       protected void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-        DefaultLightProjectDescriptor.addJetBrainsAnnotations(model);
+        if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+          DefaultLightProjectDescriptor.addJetBrainsAnnotationsWithTypeUse(model);
+        }
+        else {
+          DefaultLightProjectDescriptor.addJetBrainsAnnotations(model);
+        }
       }
     };
   }
 
-  @NotNull
   @Override
-  protected String getModuleTypeId() {
+  protected @NotNull String getModuleTypeId() {
     return JAVA_MODULE_ENTITY_TYPE_ID_NAME;
   }
 }

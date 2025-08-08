@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.openapi.Disposable;
@@ -17,12 +17,13 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 public final class WaitForContributorsListenerWrapper implements SearchListener, Disposable {
 
   private static final Logger LOG = Logger.getInstance(WaitForContributorsListenerWrapper.class);
 
-  static final long DEFAULT_WAIT_TIMEOUT_MS = 2000;
-  static final long DEFAULT_THROTTLING_TIMEOUT_MS = 100;
+  public static final long DEFAULT_WAIT_TIMEOUT_MS = 2000;
+  public static final long DEFAULT_THROTTLING_TIMEOUT_MS = 100;
 
   private final Map<SearchEverywhereContributor<?>, Boolean> contributorsMap = new HashMap<>();
   private final ScheduledExecutorService executorService = EdtExecutorService.getScheduledExecutorInstance();

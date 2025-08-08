@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.onboarding.k2.satisfaction.survey
 
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.feedback.InIdeFeedbackSurveyConfig
@@ -15,17 +16,17 @@ import org.jetbrains.kotlin.onboarding.FeedbackNotificationWithKotlinLogo
 class K2FeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
 
     override val surveyId: String = "k2_feedback"
-    override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2024, 11, 1)
+    override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2026, 1, 1)
     override val requireIdeEAP: Boolean = false
 
-    private val suitableIdeVersion = Registry.stringValue("k2.feedback.survey.ide.version.number")
+    private val suitableIdeVersion: String = Registry.stringValue("k2.feedback.survey.ide.version.number")
 
     override fun checkIdeIsSuitable(): Boolean {
         return PlatformUtils.isIdeaUltimate() || PlatformUtils.isIdeaCommunity()
     }
 
     override fun checkExtraConditionSatisfied(project: Project): Boolean {
-        return suitableIdeVersion == ApplicationInfo.getInstance().shortVersion &&
+        return (ApplicationManager.getApplication().isInternal || suitableIdeVersion == ApplicationInfo.getInstance().shortVersion) &&
                 K2UserTracker.getInstance().shouldShowK2FeedbackDialog(project)
     }
 

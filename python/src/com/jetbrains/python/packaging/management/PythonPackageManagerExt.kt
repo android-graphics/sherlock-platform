@@ -4,41 +4,46 @@
 package com.jetbrains.python.packaging.management
 
 import com.intellij.execution.RunCanceledByUserException
-import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.targetPath
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.net.HttpConfigurable
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
-import com.jetbrains.python.packaging.common.normalizePackageName
+import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
+import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.buildTargetedCommandLine
 import com.jetbrains.python.run.ensureProjectSdkAndModuleDirsAreOnTarget
 import com.jetbrains.python.run.prepareHelperScriptExecution
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import kotlin.math.min
 
+@RequiresBackgroundThread
 fun PythonPackageManager.launchReload() {
-  (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().launch {
-    reloadPackages()
+  runBlockingCancellable {
+    runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.packaging.operation.failed.title")) {
+      reloadPackages()
+    }
   }
 }
 
-suspend fun PythonPackageManager.runPackagingTool(operation: String, arguments: List<String>, @Nls text: String): String {
+suspend fun PythonPackageManager.runPackagingTool(
+  operation: String, arguments: List<String>, @Nls text: String,
+  withBackgroundProgress: Boolean = true,
+): String {
   // todo[akniazev]: check for package management tools
   val helpersAwareTargetRequest = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, project)
   val targetEnvironmentRequest = helpersAwareTargetRequest.targetEnvironmentRequest
@@ -93,16 +98,8 @@ suspend fun PythonPackageManager.runPackagingTool(operation: String, arguments: 
   val commandLineString = commandLine.joinToString(" ")
 
   thisLogger().debug("Running python packaging tool. Operation: $operation")
-  val handler = blockingContext {
-    CapturingProcessHandler(process, targetedCommandLine.charset, commandLineString)
-  }
 
-  val result = withBackgroundProgress(project, text, cancellable = true) {
-    blockingContext {
-      handler.runProcess(10 * 60 * 1000)
-    }
-  }
-
+  val result = PythonPackageManagerRunner.runProcess(this, process, commandLineString, text, withBackgroundProgress)
   if (result.isCancelled) throw RunCanceledByUserException()
   result.checkSuccess(thisLogger())
   val exitCode = result.exitCode
@@ -132,16 +129,23 @@ private val proxyString: String?
     return null
   }
 
-fun PythonRepositoryManager.packagesByRepository(): Sequence<Pair<PyPackageRepository, List<String>>> {
-  return repositories.asSequence().map { it to packagesFromRepository(it) }
+fun PythonRepositoryManager.packagesByRepository(): Sequence<Pair<PyPackageRepository, Set<String>>> {
+  return repositories.asSequence().map { it to it.getPackages() }
 }
 
 fun PythonPackageManager.isInstalled(name: String): Boolean {
   return installedPackages.any { it.name.lowercase() == name.lowercase() }
 }
 
-fun PythonRepositoryManager.createSpecification(name: String,
-                                                versionSpec: String? = null): PythonPackageSpecification? {
-  val repository = packagesByRepository().firstOrNull { it.second.any { pkg -> normalizePackageName(pkg) == normalizePackageName(name) } }?.first
+fun PythonRepositoryManager.createSpecification(
+  name: String,
+  versionSpec: String? = null,
+): PythonPackageSpecification? {
+  val normalizePackageName = normalizePackageName(name)
+  val repository = packagesByRepository().firstOrNull { repo ->
+    val packages = repo.second
+    packages.contains(normalizePackageName) ||
+    repo.second.any { normalizePackageName(it) == normalizePackageName }
+  }?.first
   return repository?.createForcedSpecPackageSpecification(name, versionSpec)
 }

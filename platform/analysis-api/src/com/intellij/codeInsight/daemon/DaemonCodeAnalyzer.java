@@ -27,6 +27,7 @@ public abstract class DaemonCodeAnalyzer {
 
   public abstract void settingsChanged();
 
+  @ApiStatus.Internal
   public abstract void setUpdateByTimerEnabled(boolean value);
 
   public abstract void disableUpdateByTimer(@NotNull Disposable parentDisposable);
@@ -35,6 +36,8 @@ public abstract class DaemonCodeAnalyzer {
 
   public abstract void setImportHintsEnabled(@NotNull PsiFile file, boolean value);
 
+  @Deprecated(forRemoval = true)
+  @ApiStatus.Internal
   public abstract void resetImportHintsEnabledForProject();
 
   public abstract void setHighlightingEnabled(@NotNull PsiFile file, boolean value);
@@ -59,6 +62,11 @@ public abstract class DaemonCodeAnalyzer {
 
   public abstract void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file);
 
+  @ApiStatus.Internal
+  public boolean isRunning() {
+    return false;
+  }
+
   @Topic.ProjectLevel
   public static final Topic<DaemonListener> DAEMON_EVENT_TOPIC = new Topic<>(DaemonListener.class, Topic.BroadcastDirection.NONE, true);
 
@@ -82,11 +90,7 @@ public abstract class DaemonCodeAnalyzer {
     }
 
     /**
-     * Fired when the background code analysis is stopped.
-     * <p>
-     * Analysis can be stopped because either it was completed, or it was canceled (for various reasons).
-     * If it was canceled, the {@link DaemonListener#daemonCancelEventOccurred(String)} is called at least once
-     * between {@link DaemonListener#daemonStarting(Collection)} and this method invocations.
+     * Fired when the background code analysis is stopped because it was completed successfully without exceptions.
      *
      * @param fileEditors The list of files analyzed during the current execution of the daemon.
      */

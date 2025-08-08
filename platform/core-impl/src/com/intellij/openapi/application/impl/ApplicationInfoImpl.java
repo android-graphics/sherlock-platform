@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
+import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -32,7 +33,7 @@ import java.util.*;
 @ApiStatus.Internal
 public final class ApplicationInfoImpl extends ApplicationInfoEx {
   public static final String DEFAULT_PLUGINS_HOST = "https://plugins.jetbrains.com";
-         static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
+  public static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
 
   private static final String IDEA_APPLICATION_INFO_DEFAULT_DARK_LAF = "idea.application.info.default.dark.laf";
   private static final String IDEA_APPLICATION_INFO_DEFAULT_CLASSIC_DARK_LAF = "idea.application.info.default.classic.dark.laf";
@@ -54,9 +55,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myCopyrightStart = "2000";
   private String myShortCompanyName;
   private String myCompanyUrl = "https://www.jetbrains.com/";
-  private String mySplashImageUrl;
-  private String myEapSplashImageUrl;
-  private String mySvgIconUrl;
+  private @Nullable String splashImageUrl;
+  private @Nullable String eapSplashImageUrl;
+  private String svgIconUrl;
   private String mySvgEapIconUrl;
   private String mySmallSvgIconUrl;
   private String mySmallSvgEapIconUrl;
@@ -72,14 +73,13 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myFeedbackUrl;
   private String myPluginManagerUrl;
   private String myPluginsListUrl;
-  private String channelListUrl;
   private String pluginDownloadUrl;
   private String myBuiltinPluginsUrl;
   private String myWhatsNewUrl;
   private boolean myShowWhatsNewOnUpdate;
   private String myWinKeymapUrl;
   private String myMacKeymapUrl;
-  private boolean myEAP;
+  private boolean isEap;
   private boolean myHasHelp = true;
   private boolean myHasContextHelp = true;
   private String myWebHelpUrl = "https://www.jetbrains.com/idea/webhelp/";
@@ -114,8 +114,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
           myPatchVersion = child.getAttributeValue("patch");
           myFullVersionFormat = child.getAttributeValue("full");
           myCodeName = child.getAttributeValue("codename");
-          myEAP = Boolean.parseBoolean(child.getAttributeValue("eap"));
-          myVersionSuffix = child.getAttributeValue("suffix", myEAP ? "EAP" : null);
+          isEap = Boolean.parseBoolean(child.getAttributeValue("eap"));
+          myVersionSuffix = child.getAttributeValue("suffix", isEap ? "EAP" : null);
         }
         break;
 
@@ -133,17 +133,17 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         break;
 
         case "logo": {
-          mySplashImageUrl = getAttributeValue(child, "url");
+          splashImageUrl = getAttributeValue(child, "url");
         }
         break;
 
         case "logo-eap": {
-          myEapSplashImageUrl = getAttributeValue(child, "url");
+          eapSplashImageUrl = getAttributeValue(child, "url");
         }
         break;
 
         case "icon": {
-          mySvgIconUrl = child.getAttributeValue("svg");
+          svgIconUrl = child.getAttributeValue("svg");
           mySmallSvgIconUrl = child.getAttributeValue("svg-small");
         }
         break;
@@ -271,7 +271,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       readPluginInfo(null);
     }
     
-    Objects.requireNonNull(mySvgIconUrl, "Missing attribute: //icon@svg");
+    Objects.requireNonNull(svgIconUrl, "Missing attribute: //icon@svg");
     Objects.requireNonNull(mySmallSvgIconUrl, "Missing attribute: //icon@svg-small");
 
     overrideFromProperties();
@@ -408,7 +408,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public String getVersionName() {
     String fullName = ApplicationNamesInfo.getInstance().getFullProductName();
-    if (myEAP && myCodeName != null && !myCodeName.isEmpty()) {
+    if (isEap && myCodeName != null && !myCodeName.isEmpty()) {
       fullName += " (" + myCodeName + ")";
     }
     return fullName;
@@ -430,8 +430,17 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public String getSplashImageUrl() {
-    return isEAP() && myEapSplashImageUrl != null ? myEapSplashImageUrl : mySplashImageUrl;
+  public @Nullable String getSplashImageUrl() {
+    if (getVersionName().equals("IntelliJ IDEA")) {
+      LocalDate startDate = LocalDate.of(2025, 5, 22);
+      LocalDate endDate = LocalDate.of(2025, 5, 31);
+      LocalDate nowDate = LocalDate.now();
+      String splashUrl = splashImageUrl;
+      if (splashUrl != null && nowDate.isAfter(startDate) && nowDate.isBefore(endDate)) {
+        return splashUrl.replace(".png", "_java_30.png");
+      }
+    }
+    return isEap && eapSplashImageUrl != null ? eapSplashImageUrl : splashImageUrl;
   }
 
   @Override
@@ -441,7 +450,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @ApiStatus.Internal
   public @NotNull String getApplicationSvgIconUrl(boolean isEap) {
-    return isEap && mySvgEapIconUrl != null ? mySvgEapIconUrl : mySvgIconUrl;
+    return isEap && mySvgEapIconUrl != null ? mySvgEapIconUrl : svgIconUrl;
   }
 
   @Override
@@ -455,23 +464,18 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public @Nullable String getWelcomeScreenLogoUrl() {
-    return myWelcomeScreenLogoUrl;
-  }
-
-  @Override
   public boolean isEAP() {
-    return myEAP;
+    return isEap;
   }
 
   @Override
   public boolean isMajorEAP() {
-    return myEAP && (myMinorVersion == null || myMinorVersion.indexOf('.') < 0);
+    return isEap && (myMinorVersion == null || myMinorVersion.indexOf('.') < 0);
   }
 
   @Override
   public boolean isPreview() {
-    return !myEAP && myVersionSuffix != null && ("Preview".equalsIgnoreCase(myVersionSuffix) || myVersionSuffix.startsWith("RC"));
+    return !isEap && myVersionSuffix != null && ("Preview".equalsIgnoreCase(myVersionSuffix) || myVersionSuffix.startsWith("RC"));
   }
 
   @Override
@@ -522,11 +526,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public @NotNull String getPluginsListUrl() {
     return myPluginsListUrl;
-  }
-
-  @Override
-  public String getChannelListUrl() {
-    return channelListUrl;
   }
 
   @Override
@@ -639,7 +638,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private void readPluginInfo(@Nullable XmlElement element) {
     String pluginManagerUrl = DEFAULT_PLUGINS_HOST;
     String pluginListUrl = null;
-    channelListUrl = null;
     pluginDownloadUrl = null;
     if (element != null) {
       String url = element.getAttributeValue("url");
@@ -650,11 +648,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       String listUrl = element.getAttributeValue("list-url");
       if (listUrl != null) {
         pluginListUrl = listUrl;
-      }
-
-      String channelListUrl = element.getAttributeValue("channel-list-url");
-      if (channelListUrl != null) {
-        this.channelListUrl = channelListUrl;
       }
 
       String downloadUrl = element.getAttributeValue("download-url");
@@ -671,14 +664,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     String pluginHost = System.getProperty(IDEA_PLUGINS_HOST_PROPERTY);
     if (pluginHost != null) {
       pluginManagerUrl = pluginHost.endsWith("/") ? pluginHost.substring(0, pluginHost.length() - 1) : pluginHost;
-      pluginListUrl = channelListUrl = pluginDownloadUrl = null;
+      pluginListUrl = pluginDownloadUrl = null;
     }
 
     myPluginManagerUrl = pluginManagerUrl;
     myPluginsListUrl = pluginListUrl == null ? (pluginManagerUrl + "/plugins/list/") : pluginListUrl;
-    if (channelListUrl == null) {
-      channelListUrl = pluginManagerUrl + "/channels/list/";
-    }
     if (pluginDownloadUrl == null) {
       pluginDownloadUrl = pluginManagerUrl + "/pluginManager/";
     }

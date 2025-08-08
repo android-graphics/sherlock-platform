@@ -16,6 +16,7 @@ class PyTestFixtureResolvingTest : PyTestCase() {
     const val TESTS_SUBDIR = "/testPytestFixtureResolving"
     const val STR_TYPE_NAME = "str"
     const val STR_TYPE_DICT = "dict[$STR_TYPE_NAME, $STR_TYPE_NAME]"
+    const val INT_STR_UNION = "int | str"
 
     const val SIMPLE_TEST_DIR = "/testSimple"
     const val SIMPLE_TEST_CONFTEST_FIXTURE = "/test_conftest_fixture.py"
@@ -68,6 +69,7 @@ class PyTestFixtureResolvingTest : PyTestCase() {
     const val PYTEST_PLUGINS_FIXTURES_AS_LIST_DIR = "/pytest_plugins_as_list"
     const val PYTEST_PLUGINS_FIXTURES_AS_STR_DIR = "/pytest_plugins_as_str"
     const val PYTEST_PLUGINS_FIXTURES_AS_TUPLE_DIR = "/pytest_plugins_as_tuple"
+    const val PYTEST_PLUGINS_FIXTURES_AS_REF_DIR = "/pytest_plugins_as_ref"
     const val PYTEST_PLUGINS_FIXTURES = "fixtures"
     const val PYTEST_PLUGINS_FIXTURES_FIRST = "first.py"
     const val PYTEST_PLUGINS_FIXTURES_SECOND = "second.py"
@@ -76,6 +78,7 @@ class PyTestFixtureResolvingTest : PyTestCase() {
     const val PYTEST_PLUGINS_FIXTURES_AS_TUPLE_FIRST_TEST = "/test_pytest_plugins_as_tuple_first.py"
     const val PYTEST_PLUGINS_FIXTURES_AS_TUPLE_SECOND_TEST = "/test_pytest_plugins_as_tuple_second.py"
     const val PYTEST_PLUGINS_FIXTURES_AS_STR_TEST = "/test_pytest_plugins_as_str.py"
+    const val PYTEST_PLUGINS_FIXTURES_AS_REF_TEST = "/test_pytest_plugins_as_ref.py"
 
     const val IMPORT_WITH_WILDCARD_DIR_NAME = "testImportWithWildcard"
     const val IMPORT_WITH_WILDCARD_DIR = "/$IMPORT_WITH_WILDCARD_DIR_NAME"
@@ -96,6 +99,9 @@ class PyTestFixtureResolvingTest : PyTestCase() {
     const val TEST_ASYNC_GENERATOR = "/test_async_generator.py"
     const val TEST_ASYNC_ITERABLE = "/test_async_iterable.py"
     const val TEST_ASYNC_ITERATOR = "/test_async_iterator.py"
+
+    const val PARAMETRIZED_DIR = "/testParameters"
+    const val TEST_PARAMETER_TYPES = "/test_parameter_types.py"
 
   }
 
@@ -293,6 +299,11 @@ class PyTestFixtureResolvingTest : PyTestCase() {
     assertCorrectFile(testDir, PYTEST_PLUGINS_FIXTURES_AS_STR_TEST, PYTEST_PLUGINS_FIXTURES_FIRST, PYTEST_PLUGINS_FIXTURES)
   }
 
+  fun testPytestPluginsFixtureAsReferences() {
+    val testDir = PYTEST_PLUGINS_FIXTURES_DIR + PYTEST_PLUGINS_FIXTURES_AS_REF_DIR
+    assertCorrectFile(testDir, PYTEST_PLUGINS_FIXTURES_AS_REF_TEST, PYTEST_PLUGINS_FIXTURES_FIRST, PYTEST_PLUGINS_FIXTURES)
+  }
+
   fun testImportWithWildCardFromInit() {
     val testDir = IMPORT_WITH_WILDCARD_DIR + IMPORT_WITH_WILDCARD_FROM_INIT_DIR
     assertCorrectFile(testDir, IMPORT_WITH_WILDCARD_TEST_FILE, IMPORT_WITH_WILDCARD_FIXTURES_FILE, IMPORT_WITH_WILDCARD_FIXTURES_DIR)
@@ -329,5 +340,9 @@ class PyTestFixtureResolvingTest : PyTestCase() {
 
   fun testAsyncFunction() {
     assertCorrectType(ASYNC_DIR, TEST_ASYNC_FUNCTION, STR_TYPE_DICT)
+  }
+
+  fun testNamedParameterTypes() {
+    assertCorrectType(PARAMETRIZED_DIR, TEST_PARAMETER_TYPES, INT_STR_UNION)
   }
 }

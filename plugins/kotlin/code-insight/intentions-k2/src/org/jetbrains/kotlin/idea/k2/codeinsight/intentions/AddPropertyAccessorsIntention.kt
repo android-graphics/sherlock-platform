@@ -2,12 +2,15 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
-import com.intellij.codeInsight.intention.LowPriorityAction
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -54,14 +57,23 @@ internal abstract class AbstractAddAccessorIntention(
         return true
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtProperty): Unit? {
+    @OptIn(KaExperimentalApi::class)
+    override fun KaSession.prepareContext(element: KtProperty): Unit? {
+        if (element.isPropertyNotInitialized()) return null
         if (element.annotationEntries.isEmpty()) return Unit
-        val symbol = element.getVariableSymbol() as? KaPropertySymbol ?: return null
+        val symbol = element.symbol as? KaPropertySymbol ?: return null
 
-        val isApplicable = symbol.backingFieldSymbol
-            ?.hasAnnotation(JVM_FIELD_CLASS_ID) != true
+        val isApplicable = symbol.backingFieldSymbol?.annotations?.contains(JVM_FIELD_CLASS_ID) != true
         return isApplicable.asUnit
+    }
+
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
+    private fun KtProperty.isPropertyNotInitialized(): Boolean {
+        // TODO: when KT-63221 is fixed use `diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)` instead
+        return containingKtFile.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+            .filter { it.psi == this@isPropertyNotInitialized }
+            .any { it is KaFirDiagnostic.MustBeInitialized }
     }
 
     override fun invoke(
@@ -76,6 +88,10 @@ internal abstract class AbstractAddAccessorIntention(
 
 private val JVM_FIELD_CLASS_ID = ClassId.topLevel(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME)
 
-internal class AddPropertyAccessorsIntention : AbstractAddAccessorIntention(addGetter = true, addSetter = true), LowPriorityAction
+internal class AddPropertyAccessorsIntention : AbstractAddAccessorIntention(addGetter = true, addSetter = true) {
+    override fun getPresentation(context: ActionContext, element: KtProperty): Presentation {
+        return Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
+    }
+}
 internal class AddPropertyGetterIntention : AbstractAddAccessorIntention(addGetter = true, addSetter = false)
 internal class AddPropertySetterIntention : AbstractAddAccessorIntention(addGetter = false, addSetter = true)

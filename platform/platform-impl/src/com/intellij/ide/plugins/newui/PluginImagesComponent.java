@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,7 @@ import java.util.Objects;
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 public final class PluginImagesComponent extends JPanel {
   private static final Color CURRENT_IMAGE_FILL_COLOR =
     JBColor.namedColor("Plugins.ScreenshotPagination.CurrentImage.fillColor", new JBColor(0x6C707E, 0xCED0D6));
@@ -203,14 +205,17 @@ public final class PluginImagesComponent extends JPanel {
             }
             else {
               images.add(image);
+              if (images.size() >= 10) break;
             }
           }
           catch (IOException e) {
-            throw new IOException("Unable to read image file " + imageFile.getAbsolutePath(), e);
+            throw new IOException("Unable to read image for plugin " + node.getExternalPluginIdForScreenShots()
+                                  + " file " + imageFile.getAbsolutePath(), e);
           }
         }
         catch (IOException e) {
-          Logger.getInstance(PluginImagesComponent.class).error(e);
+          // IO errors such as image decoding problems are expected and must not be treated as IDE errors
+          Logger.getInstance(PluginImagesComponent.class).warn(e);
         }
       }
 

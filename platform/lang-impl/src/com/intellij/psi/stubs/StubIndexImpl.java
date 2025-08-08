@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.google.common.util.concurrent.Futures;
@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.tree.StubFileElementType;
+import com.intellij.psi.tree.IFileElementType;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
@@ -39,6 +39,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@ApiStatus.Internal
 public final class StubIndexImpl extends StubIndexEx {
   static final Logger LOG = Logger.getInstance(StubIndexImpl.class);
 
@@ -46,7 +47,9 @@ public final class StubIndexImpl extends StubIndexEx {
     Disabled,
     ChangedFilesCollector
   }
+
   public static final PerFileElementTypeStubChangeTrackingSource PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE;
+
   static {
     int sourceId = SystemProperties.getIntProperty("stub.index.per.file.element.type.stub.change.tracking.source", 1);
     PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE = PerFileElementTypeStubChangeTrackingSource.values()[sourceId];
@@ -78,8 +81,8 @@ public final class StubIndexImpl extends StubIndexEx {
   private AsyncState getAsyncState() {
     AsyncState state = myState; // memory barrier
     if (state == null) {
-      if (myStateFuture == null) {
-        ((FileBasedIndexImpl)FileBasedIndex.getInstance()).waitUntilIndicesAreInitialized();
+      if (myStateFuture == null && FileBasedIndex.getInstance() instanceof FileBasedIndexEx index) {
+        index.waitUntilIndicesAreInitialized();
       }
       if (ProgressManager.getInstance().isInNonCancelableSection()) {
         try {
@@ -128,8 +131,8 @@ public final class StubIndexImpl extends StubIndexEx {
 
     Path indexRootDir = IndexInfrastructure.getIndexRootDir(indexKey);
     IndexVersion.IndexVersionDiff versionDiff = forceClean
-                                                 ? new IndexVersion.IndexVersionDiff.InitialBuild(version)
-                                                 : IndexVersion.versionDiffers(indexKey, version);
+                                                ? new IndexVersion.IndexVersionDiff.InitialBuild(version)
+                                                : IndexVersion.versionDiffers(indexKey, version);
 
     registrationResultSink.setIndexVersionDiff(indexKey, versionDiff);
     if (versionDiff != IndexVersion.IndexVersionDiff.UP_TO_DATE) {
@@ -168,7 +171,7 @@ public final class StubIndexImpl extends StubIndexEx {
         onExceptionInstantiatingIndex(indexKey, version, indexRootDir, e);
       }
       catch (RuntimeException e) {
-        Throwable cause = FileBasedIndexEx.getCauseToRebuildIndex(e);
+        Throwable cause = FileBasedIndexEx.extractCauseToRebuildIndex(e);
         if (cause == null) {
           throw e;
         }
@@ -226,8 +229,11 @@ public final class StubIndexImpl extends StubIndexEx {
   }
 
   @Override
-  void initializeStubIndexes() {
+  @ApiStatus.Internal
+  public void initializeStubIndexes() {
     assert !myInitialized;
+
+    myPerFileElementTypeStubModificationTracker.undispose();
 
     // might be called on the same thread twice if initialization has been failed
     if (myStateFuture == null) {
@@ -251,7 +257,8 @@ public final class StubIndexImpl extends StubIndexEx {
           LOG.error(e);
         }
       }), false);
-    } finally {
+    }
+    finally {
       clearState();
     }
   }
@@ -266,7 +273,8 @@ public final class StubIndexImpl extends StubIndexEx {
   }
 
   @Override
-  void setDataBufferingEnabled(final boolean enabled) {
+  @ApiStatus.Internal
+  public void setDataBufferingEnabled(final boolean enabled) {
     AsyncState state = ProgressManager.getInstance().computeInNonCancelableSection(this::getAsyncState);
     for (UpdatableIndex<?, ?, ?, ?> index : state.myIndices.values()) {
       index.setBufferingEnabled(enabled);
@@ -274,17 +282,10 @@ public final class StubIndexImpl extends StubIndexEx {
   }
 
   @Override
-  void cleanupMemoryStorage() {
-    UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> stubUpdatingIndex = getStubUpdatingIndex();
-    stubUpdatingIndex.getLock().writeLock().lock();
-
-    try {
-      for (UpdatableIndex<?, ?, ?, ?> index : getAsyncState().myIndices.values()) {
-        index.cleanupMemoryStorage();
-      }
-    }
-    finally {
-      stubUpdatingIndex.getLock().writeLock().unlock();
+  public void cleanupMemoryStorage() {
+    //'eventually consistent'
+    for (UpdatableIndex<?, ?, ?, ?> index : getAsyncState().myIndices.values()) {
+      index.cleanupMemoryStorage();
     }
   }
 
@@ -388,7 +389,7 @@ public final class StubIndexImpl extends StubIndexEx {
         extensionsIterator = Collections.emptyIterator();
       }
 
-      boolean forceClean = Boolean.TRUE == myForcedClean.getAndSet(false);
+      boolean forceClean = myForcedClean.getAndSet(false);
       List<ThrowableRunnable<?>> tasks = new ArrayList<>();
       while (extensionsIterator.hasNext()) {
         StubIndexExtension<?, ?> extension = extensionsIterator.next();
@@ -410,7 +411,7 @@ public final class StubIndexImpl extends StubIndexEx {
   }
 
   @Override
-  public @NotNull ModificationTracker getPerFileElementTypeModificationTracker(@NotNull StubFileElementType<?> fileElementType) {
+  public @NotNull ModificationTracker getPerFileElementTypeModificationTracker(@NotNull IFileElementType fileElementType) {
     return () -> {
       if (PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE == PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {
         ReadAction.run(() -> {

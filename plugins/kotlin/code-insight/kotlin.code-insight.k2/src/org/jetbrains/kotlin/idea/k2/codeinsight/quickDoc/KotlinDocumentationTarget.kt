@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc
 
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil
@@ -19,7 +19,8 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
@@ -160,21 +161,28 @@ private fun getContainerInfo(ktDeclaration: KtDeclaration): HtmlChunk {
             it
         }
 
-        DocumentationManagerUtil.createHyperlink(link, it, highlighted, false, false)
+        DocumentationManagerUtil.createHyperlink(link, it, highlighted, false)
         HtmlChunk.fragment(
-            HtmlChunk.tag("icon").attr("src", "/org/jetbrains/kotlin/idea/icons/classKotlin.svg"),
+            HtmlChunk.tag("icon").attr(
+                "src",
+                if (ktDeclaration.isTopLevelKtOrJavaMember()) {
+                    "AllIcons.Nodes.Package"
+                } else {
+                    "KotlinBaseResourcesIcons.ClassKotlin"
+                }
+            ),
             HtmlChunk.nbsp(),
             HtmlChunk.raw(link.toString()),
             HtmlChunk.br()
         )
     } ?: HtmlChunk.empty()
 
-    val fileNameSection = ktDeclaration.containingFile
+    val fileNameSection = ktDeclaration.navigationElement.containingFile
         ?.name
-        ?.takeIf { containingSymbol == null }
+        ?.takeIf { ktDeclaration.isTopLevelKtOrJavaMember() }
         ?.let {
             HtmlChunk.fragment(
-                HtmlChunk.tag("icon").attr("src", "/org/jetbrains/kotlin/idea/icons/kotlin_file.svg"),
+                HtmlChunk.tag("icon").attr("src", "KotlinBaseResourcesIcons.Kotlin_file"),
                 HtmlChunk.nbsp(),
                 HtmlChunk.text(it),
                 HtmlChunk.br()
@@ -196,7 +204,7 @@ private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
         // element is not an KtReferenceExpression, but KtClass of enum
         // so reference extracted from originalElement
         analyze(referenceExpression) {
-            val symbol = referenceExpression.resolveToCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol as? KaNamedSymbol
+            val symbol = referenceExpression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.symbol as? KaNamedSymbol
             val name = symbol?.name?.asString()
             if (name != null && symbol is KaDeclarationSymbol) {
                 val containingClass = symbol.containingDeclaration as? KaClassSymbol
@@ -270,7 +278,7 @@ private fun renderKDoc(
     symbol: KaSymbol,
     stringBuilder: StringBuilder,
 ) {
-    val declaration = symbol.psi as? KtElement
+    val declaration = symbol.psi?.navigationElement as? KtElement
     val kDoc = findKDoc(symbol)
     if (kDoc != null) {
         stringBuilder.renderKDoc(kDoc.contentTag, kDoc.sections)

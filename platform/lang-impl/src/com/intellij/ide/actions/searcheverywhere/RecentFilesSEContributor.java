@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
@@ -24,21 +24,19 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-public final class RecentFilesSEContributor extends FileSearchEverywhereContributor {
+public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
 
   public RecentFilesSEContributor(@NotNull AnActionEvent event) {
     super(event);
   }
 
-  @NotNull
   @Override
-  public String getSearchProviderId() {
+  public @NotNull String getSearchProviderId() {
     return RecentFilesSEContributor.class.getSimpleName();
   }
 
-  @NotNull
   @Override
-  public String getGroupName() {
+  public @NotNull String getGroupName() {
     return IdeBundle.message("search.everywhere.group.name.recent.files");
   }
 
@@ -56,10 +54,6 @@ public final class RecentFilesSEContributor extends FileSearchEverywhereContribu
   public void fetchWeightedElements(@NotNull String pattern,
                                     @NotNull ProgressIndicator progressIndicator,
                                     @NotNull Processor<? super FoundItemDescriptor<Object>> consumer) {
-    if (myProject == null) {
-      return; //nothing to search
-    }
-
     String searchString = filterControlSymbols(pattern);
     boolean preferStartMatches = !searchString.startsWith("*");
     MinusculeMatcher matcher = createMatcher(searchString, preferStartMatches);

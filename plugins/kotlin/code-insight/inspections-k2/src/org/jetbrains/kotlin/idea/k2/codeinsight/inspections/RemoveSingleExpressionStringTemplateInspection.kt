@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
@@ -30,21 +30,20 @@ internal class RemoveSingleExpressionStringTemplateInspection :
         KotlinBundle.message("remove.single.expression.string.template")
 
     override fun getProblemHighlightType(element: KtStringTemplateExpression, context: Context): ProblemHighlightType =
-      if (context.isString) ProblemHighlightType.GENERIC_ERROR_OR_WARNING else ProblemHighlightType.INFORMATION
+        if (context.isString) ProblemHighlightType.GENERIC_ERROR_OR_WARNING else ProblemHighlightType.INFORMATION
 
     override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean = element.singleExpressionOrNull() != null
 
-    context(KaSession)
-    override fun prepareContext(element: KtStringTemplateExpression): Context? {
+    override fun KaSession.prepareContext(element: KtStringTemplateExpression): Context? {
         val expression = element.singleExpressionOrNull() ?: return null
         val type = expression.expressionType
-        return Context(type?.isString == true && !type.isMarkedNullable)
+        return Context(type?.isStringType == true && !type.isMarkedNullable)
     }
 
     override fun createQuickFix(
         element: KtStringTemplateExpression,
         context: Context,
-    ) = object : KotlinModCommandQuickFix<KtStringTemplateExpression>() {
+    ): KotlinModCommandQuickFix<KtStringTemplateExpression> = object : KotlinModCommandQuickFix<KtStringTemplateExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("remove.single.expression.string.template")

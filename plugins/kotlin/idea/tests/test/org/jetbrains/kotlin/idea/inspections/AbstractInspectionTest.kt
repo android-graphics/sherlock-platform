@@ -8,7 +8,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.TestLoggerFactory
-import com.intellij.util.ThrowableRunnable
+import com.intellij.testFramework.runInEdtAndWait
 import org.jdom.Document
 import org.jdom.input.SAXBuilder
 import org.jetbrains.kotlin.formatter.FormatSettingsUtil
@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.test.util.invalidateCaches
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.junit.runner.Description
 import java.io.File
@@ -29,7 +30,7 @@ abstract class AbstractInspectionTest : KotlinLightCodeInsightFixtureTestCase() 
         try {
             super.setUp()
             EntryPointsManagerBase.getInstance(project).ADDITIONAL_ANNOTATIONS.add(ENTRY_POINT_ANNOTATION)
-            registerGradlPlugin()
+            registerGradlePlugin()
         } catch (e: Throwable) {
             TestLoggerFactory.logTestFailure(e)
             TestLoggerFactory.onTestFinished(false, Description.createTestDescription(javaClass, name))
@@ -37,14 +38,18 @@ abstract class AbstractInspectionTest : KotlinLightCodeInsightFixtureTestCase() 
         }
     }
 
-    protected open fun registerGradlPlugin() {
+    protected open fun registerGradlePlugin() {
         runWriteAction { FileTypeManager.getInstance().associateExtension(GroovyFileType.GROOVY_FILE_TYPE, "gradle") }
     }
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { EntryPointsManagerBase.getInstance(project).ADDITIONAL_ANNOTATIONS.remove(ENTRY_POINT_ANNOTATION) },
-            ThrowableRunnable { super.tearDown() }
+            {
+                EntryPointsManagerBase.getInstance(project).ADDITIONAL_ANNOTATIONS.remove(ENTRY_POINT_ANNOTATION)
+            }, {
+                runInEdtAndWait { project.invalidateCaches() }
+            },
+            { super.tearDown() }
         )
     }
 

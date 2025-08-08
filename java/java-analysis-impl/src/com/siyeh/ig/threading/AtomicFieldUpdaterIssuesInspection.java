@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.threading;
 
 import com.intellij.psi.*;
@@ -17,9 +17,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class AtomicFieldUpdaterIssuesInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return (String)infos[0];
   }
 
@@ -123,19 +122,22 @@ public final class AtomicFieldUpdaterIssuesInspection extends BaseInspection {
       else if (field.hasModifierProperty(PsiModifier.STATIC)) {
         registerError(lastArgument, InspectionGadgetsBundle.message("field.has.static.modifier.problem.descriptor", fieldName));
       }
-      else if (!field.hasModifierProperty(PsiModifier.PUBLIC) && ClassUtils.getContainingClass(expression) != field.getContainingClass()) {
-        if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
-          registerError(lastArgument, InspectionGadgetsBundle.message("private.field.not.accessible.problem.descriptor", fieldName));
-        }
-        else if (!ClassUtils.inSamePackage(expression, field)) {
-          if (field.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
-            registerError(lastArgument, InspectionGadgetsBundle.message("package.local.field.not.accessible", fieldName));
+      else {
+        if (!field.hasModifierProperty(PsiModifier.PUBLIC) && PsiUtil.getContainingClass(expression) != field.getContainingClass()) {
+          if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
+            registerError(lastArgument, InspectionGadgetsBundle.message("private.field.not.accessible.problem.descriptor", fieldName));
           }
-          final PsiClass expressionClass = ClassUtils.getContainingClass(expression);
-          final PsiClass fieldClass = field.getContainingClass();
-          if (expressionClass != null && fieldClass != null && !expressionClass.isInheritor(fieldClass, true)) {
-            if (field.hasModifierProperty(PsiModifier.PROTECTED)) {
-              registerError(lastArgument, InspectionGadgetsBundle.message("protected.field.not.accessible.problem.descriptor", fieldName));
+          else if (!ClassUtils.inSamePackage(expression, field)) {
+            if (field.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
+              registerError(lastArgument, InspectionGadgetsBundle.message("package.local.field.not.accessible", fieldName));
+            }
+            final PsiClass expressionClass = PsiUtil.getContainingClass(expression);
+            final PsiClass fieldClass = field.getContainingClass();
+            if (expressionClass != null && fieldClass != null && !expressionClass.isInheritor(fieldClass, true)) {
+              if (field.hasModifierProperty(PsiModifier.PROTECTED)) {
+                registerError(lastArgument,
+                              InspectionGadgetsBundle.message("protected.field.not.accessible.problem.descriptor", fieldName));
+              }
             }
           }
         }

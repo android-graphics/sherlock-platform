@@ -17,10 +17,7 @@ import com.intellij.ide.projectView.impl.nodes.PackageViewProjectNode;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -33,9 +30,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -53,8 +48,9 @@ public class PackageViewPane extends AbstractProjectViewPaneWithAsyncSupport {
     super(project);
   }
 
+  @ApiStatus.Internal
   @Override
-  protected void configureAsyncSupport(@NotNull AsyncProjectViewSupport support) {
+  protected void configureAsyncSupport(@NotNull ProjectViewPaneSupport support) {
     support.setMultiSelectionEnabled(false);
   }
 
@@ -74,7 +70,7 @@ public class PackageViewPane extends AbstractProjectViewPaneWithAsyncSupport {
   }
 
   @Override
-  public @NotNull List<PsiElement> getElementsFromNode(@Nullable Object node) {
+  public @Unmodifiable @NotNull List<PsiElement> getElementsFromNode(@Nullable Object node) {
     Object o = getValueFromNode(node);
     if (o instanceof PackageElement) {
       PsiPackage aPackage = ((PackageElement)o).getPackage();
@@ -92,26 +88,25 @@ public class PackageViewPane extends AbstractProjectViewPaneWithAsyncSupport {
   }
 
   @Override
-  protected @Nullable Object getSlowDataFromSelection(@Nullable Object @NotNull [] selectedUserObjects,
-                                                      @Nullable Object @Nullable [] singleSelectedPathUserObjects,
-                                                      @NotNull String dataId) {
-    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
+  protected void uiDataSnapshotForSelection(@NotNull DataSink sink,
+                                            @Nullable Object @NotNull [] selectedUserObjects,
+                                            @Nullable Object @Nullable [] singleSelectedPathUserObjects) {
+    super.uiDataSnapshotForSelection(sink, selectedUserObjects, singleSelectedPathUserObjects);
+    sink.lazy(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, () -> {
       Object o = selectedUserObjects.length != 1 ? null : getValueFromNode(selectedUserObjects[0]);
       if (o instanceof PackageElement) {
         return myDeletePSIElementProvider;
       }
-    }
-    if (PackageElement.DATA_KEY.is(dataId)) {
-      Object o = selectedUserObjects.length != 1 ? null : getValueFromNode(selectedUserObjects[0]);
-      return o instanceof PackageElement ? o : null;
-    }
-    if (PlatformCoreDataKeys.MODULE.is(dataId)) {
-      Object o = selectedUserObjects.length != 1 ? null : getValueFromNode(selectedUserObjects[0]);
-      if (o instanceof PackageElement) {
-        return ((PackageElement)o).getModule();
-      }
-    }
-    return super.getSlowDataFromSelection(selectedUserObjects, singleSelectedPathUserObjects, dataId);
+      return null;
+    });
+    sink.lazy(PackageElement.DATA_KEY, () -> {
+      Object value = selectedUserObjects.length != 1 ? null : getValueFromNode(selectedUserObjects[0]);
+      return value instanceof PackageElement o ? o : null;
+    });
+    sink.lazy(PlatformCoreDataKeys.MODULE, () -> {
+      Object value = selectedUserObjects.length != 1 ? null : getValueFromNode(selectedUserObjects[0]);
+      return value instanceof PackageElement o ? o.getModule() : null;
+    });
   }
 
   @RequiresBackgroundThread(generateAssertion = false)
@@ -156,7 +151,7 @@ public class PackageViewPane extends AbstractProjectViewPaneWithAsyncSupport {
   protected @NotNull ProjectAbstractTreeStructureBase createStructure() {
     return new ProjectTreeStructure(myProject, ID){
       @Override
-      protected AbstractTreeNode createRoot(final @NotNull Project project, @NotNull ViewSettings settings) {
+      protected AbstractTreeNode<?> createRoot(final @NotNull Project project, @NotNull ViewSettings settings) {
         return new PackageViewProjectNode(project, settings);
       }
 
@@ -170,6 +165,7 @@ public class PackageViewPane extends AbstractProjectViewPaneWithAsyncSupport {
   @Override
   protected @NotNull ProjectViewTree createTree(@NotNull DefaultTreeModel treeModel) {
     return new ProjectViewTree(treeModel) {
+      @Override
       public String toString() {
         return getTitle() + " " + super.toString();
       }

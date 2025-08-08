@@ -2,18 +2,18 @@
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.AppLifecycleListener
-import com.intellij.ide.DataManager
-import com.intellij.ide.IdeBundle
-import com.intellij.ide.RecentProjectListActionProvider
+import com.intellij.ide.*
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEditServiceListener
 import com.intellij.ide.ui.LafManagerListener
+import com.intellij.idea.AppMode
 import com.intellij.notification.NotificationsManager
 import com.intellij.notification.impl.NotificationsManagerImpl
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
@@ -83,6 +83,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
   private var header: DefaultFrameHeader? = null
 
   private val coroutineScope = service<CoreUiCoroutineScopeHolder>().coroutineScope.childScope()
+  private val displayChangeListener = DisplayChangeDetector.Listener { updateComponentsAndResize() }
 
   companion object {
     @JvmField
@@ -91,8 +92,10 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     const val CUSTOM_HEADER: String = "CUSTOM_HEADER"
 
     @JvmField
-    val DEFAULT_HEIGHT: Int = if (USE_TABBED_WELCOME_SCREEN) 650 else 460
-    const val MAX_DEFAULT_WIDTH: Int = 800
+    val DEFAULT_HEIGHT: Int = if (USE_TABBED_WELCOME_SCREEN) System.getProperty("welcome.screen.defaultHeight", "650").toInt() else 460
+
+    @JvmField
+    val MAX_DEFAULT_WIDTH: Int = System.getProperty("welcome.screen.defaultWidth", "800").toInt()
 
     private fun saveSizeAndLocation(location: Rectangle) {
       val middle = Point(location.x + location.width / 2, location.y + location.height / 2)
@@ -171,6 +174,11 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
         }
       }
     })
+    if (AppMode.isRemoteDevHost()) {
+      // The welcome frame is created and positioned before a client connects,
+      // so it needs to be repositioned when information about client display arrives.
+      DisplayChangeDetector.getInstance().addListener(displayChangeListener)
+    }
 
     setupCloseAction()
     MnemonicHelper.init(this)
@@ -271,6 +279,9 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     }
     Disposer.dispose(screen)
     WelcomeFrame.resetInstance()
+    if (AppMode.isRemoteDevHost()) {
+      DisplayChangeDetector.getInstance().removeListener(displayChangeListener)
+    }
   }
 
   override fun isWindowDisposed(): Boolean = isDisposed
@@ -438,10 +449,12 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     }
 
     private fun createQuickStartActionPanel(): ActionPanel {
-      val group = DefaultActionGroup()
-      val quickStart = ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART) as ActionGroup
-      WelcomeScreenActionsUtil.collectAllActions(group, quickStart)
-      @Suppress("SpellCheckingInspection")
+      val presentationFactory = PresentationFactory()
+      val quickStartGroup = ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART) as ActionGroup
+      val dataContext = DataManager.getInstance().getDataContext(this)
+      val visibleActions = Utils.expandActionGroup(quickStartGroup, presentationFactory, dataContext,
+                                                   ActionPlaces.WELCOME_SCREEN, ActionUiKind.NONE)
+
       val mainPanel = ActionPanel(MigLayout("ins 0, novisualpadding, gap 5, flowy", "push[pref!, center]push"))
       mainPanel.isOpaque = false
       val panel = object : JPanel(VerticalLayout(JBUI.scale(5))) {
@@ -465,43 +478,41 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
       panel.isOpaque = false
       frame.extendActionsGroup(mainPanel)
       mainPanel.add(panel)
-      for (item in group.getChildren(null)) {
-        var action = item
-        val e = AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataManager.getInstance().getDataContext(this))
-        action.update(e)
-        val presentation = e.presentation
-        if (presentation.isVisible) {
-          var text = presentation.text
-          if (text != null && text.endsWith("...")) {
-            text = text.substring(0, text.length - 3)
-          }
-          var icon = presentation.icon
-          if (icon == null || icon.iconHeight != JBUIScale.scale(16) || icon.iconWidth != JBUIScale.scale(16)) {
-            icon = if (icon == null) JBUIScale.scaleIcon(EmptyIcon.create(16)) else IconUtil.scale(icon, null, 16f / icon.iconWidth)
-            icon = IconUtil.colorize(icon, JBColor(0x6e6e6e, 0xafb1b3))
-          }
-          action = ActionGroupPanelWrapper.wrapGroups(action, this)
-          val link = ActionLink(text, icon, action, null, ActionPlaces.WELCOME_SCREEN)
-          link.isFocusable = false // don't allow focus, as the containing panel is going to be focusable
-          link.setPaintUnderline(false)
-          link.setNormalColor(WelcomeScreenUIManager.getLinkNormalColor())
-          val button = JActionLinkPanel(link)
-          button.border = JBUI.Borders.empty(8, 20)
-          if (action is WelcomePopupAction) {
-            button.add(WelcomeScreenComponentFactory.createArrow(link), BorderLayout.EAST)
-            TouchbarActionCustomizations.setComponent(action, link)
-          }
-          WelcomeScreenFocusManager.installFocusable(
-            frame,
-            button,
-            action,
-            KeyEvent.VK_DOWN,
-            KeyEvent.VK_UP,
-            UIUtil.findComponentOfType(frame.component, JList::class.java)
-          )
-          panel.add(button)
-          mainPanel.addAction(action)
+      for (action in visibleActions) {
+        val presentation = presentationFactory.getPresentation(action)
+        var text = presentation.text
+        if (text != null && text.endsWith("...")) {
+          text = text.substring(0, text.length - 3)
         }
+        var icon = presentation.icon
+        if (icon == null || icon.iconHeight != JBUIScale.scale(16) || icon.iconWidth != JBUIScale.scale(16)) {
+          icon = if (icon == null) JBUIScale.scaleIcon(EmptyIcon.create(16)) else IconUtil.scale(icon, null, 16f / icon.iconWidth)
+          icon = IconUtil.colorize(icon, JBColor(0x6e6e6e, 0xafb1b3))
+        }
+        val wrapper = when {
+          action is ActionGroup && action is ActionsWithPanelProvider -> ActionGroupPanelWrapper.wrapGroups(action, this)
+          else -> action
+        }
+        val link = ActionLink(text, icon, wrapper, null, ActionPlaces.WELCOME_SCREEN)
+        link.isFocusable = false // don't allow focus, as the containing panel is going to be focusable
+        link.setPaintUnderline(false)
+        link.setNormalColor(WelcomeScreenUIManager.getLinkNormalColor())
+        val button = JActionLinkPanel(link)
+        button.border = JBUI.Borders.empty(8, 20)
+        if (wrapper is WelcomePopupAction) {
+          button.add(WelcomeScreenComponentFactory.createArrow(link), BorderLayout.EAST)
+          TouchbarActionCustomizations.setComponent(wrapper, link)
+        }
+        WelcomeScreenFocusManager.installFocusable(
+          frame,
+          button,
+          wrapper,
+          KeyEvent.VK_DOWN,
+          KeyEvent.VK_UP,
+          UIUtil.findComponentOfType(frame.component, JList::class.java)
+        )
+        panel.add(button)
+        mainPanel.addAction(wrapper)
       }
       return mainPanel
     }

@@ -1,13 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.psi.*;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -15,16 +14,22 @@ import java.util.regex.Pattern;
 
 /**
  * Base class for local inspections.
+ * <p/>
+ * You can make your inspection dumb-aware by marking it with {@link com.intellij.openapi.project.DumbAware DumbAware} interface.
+ * Such an inspection must not use indexes during its inference, or it must be prepared to catch
+ * {@link com.intellij.openapi.project.IndexNotReadyException IndexNotReadyException}.
+ * In this case, the inspection shall just silently catch it and not report any warnings.
  *
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/code-inspections.html">Code Inspections (IntelliJ Platform Docs)</a>
  * @see GlobalInspectionTool
  */
-public abstract class LocalInspectionTool extends InspectionProfileEntry {
+public abstract class LocalInspectionTool extends InspectionProfileEntry implements PossiblyDumbAware {
   public static final LocalInspectionTool[] EMPTY_ARRAY = new LocalInspectionTool[0];
 
   private static final Logger LOG = Logger.getInstance(LocalInspectionTool.class);
 
-  interface LocalDefaultNameProvider extends DefaultNameProvider {
+  @ApiStatus.Internal
+  public interface LocalDefaultNameProvider extends DefaultNameProvider {
     @Nullable
     String getDefaultID();
 
@@ -52,8 +57,9 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    * @return inspection tool ID.
    */
   public @NonNls @NotNull String getID() {
-    if (myNameProvider instanceof LocalDefaultNameProvider) {
-      String id = ((LocalDefaultNameProvider)myNameProvider).getDefaultID();
+    DefaultNameProvider nameProvider = getNameProvider();
+    if (nameProvider instanceof LocalDefaultNameProvider) {
+      String id = ((LocalDefaultNameProvider)nameProvider).getDefaultID();
       if (id != null) {
         return id;
       }
@@ -68,8 +74,9 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
 
   @Override
   public @NonNls @Nullable String getAlternativeID() {
-    if (myNameProvider instanceof LocalDefaultNameProvider) {
-      return ((LocalDefaultNameProvider)myNameProvider).getDefaultAlternativeID();
+    DefaultNameProvider nameProvider = getNameProvider();
+    if (nameProvider instanceof LocalDefaultNameProvider) {
+      return ((LocalDefaultNameProvider)nameProvider).getDefaultAlternativeID();
     }
     return null;
   }
@@ -92,7 +99,8 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
 
   /**
    * Override to report problems at file level.
-   *
+   * Please use {@link #buildVisitor} instead, and do the analysis from there in a more fine-grained and latency-friendly way,
+   * as opposed to this {@code checkFile}, which should finish the analysis of the whole file before displaying result.
    * @param file       to check.
    * @param manager    InspectionManager to ask for ProblemDescriptor's from.
    * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
@@ -208,7 +216,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   public void inspectionFinished(@NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder problemsHolder) {
   }
 
-  public @NotNull List<ProblemDescriptor> processFile(@NotNull PsiFile file, @NotNull InspectionManager manager) {
+  public @Unmodifiable @NotNull List<ProblemDescriptor> processFile(@NotNull PsiFile file, @NotNull InspectionManager manager) {
     return manager.defaultProcessFile(this, file);
   }
 }

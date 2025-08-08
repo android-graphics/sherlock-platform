@@ -438,10 +438,11 @@ class ApplicationStoreTest {
     }
 
     val component = MyComponent()
-    assertThatThrownBy {
-      componentStore.initComponent(component, null, PluginManagerCore.CORE_ID)
-    }.hasMessage("Cannot init component state (componentName=Bad, componentClass=MyComponent) [Plugin: com.intellij]")
-
+    rethrowLoggedErrorsIn {
+      assertThatThrownBy {
+        componentStore.initComponent(component, null, PluginManagerCore.CORE_ID)
+      }.hasMessage("Cannot init component state (componentName=Bad, componentClass=MyComponent) [Plugin: com.intellij]")
+    }
     assertThat(componentStore.getComponents()).doesNotContainKey("Bad")
   }
 
@@ -646,6 +647,7 @@ class ApplicationStoreTest {
       get() = ApplicationManager.getApplication() as ComponentManagerImpl
 
     override val storageManager = ApplicationStateStorageManager(pathMacroManager = null, service<SettingsController>())
+    override val isStoreInitialized: Boolean = true
 
     init {
       setPath(testAppConfigPath)

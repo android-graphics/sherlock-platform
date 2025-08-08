@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.completion;
 
@@ -30,8 +30,18 @@ public class FirWithMppStdlibCompletionTestGenerated extends AbstractFirWithMppS
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("ErrorType.kt")
+    public void testErrorType() throws Exception {
+        runTest("../../completion/testData/basic/stdlibWithCommon/ErrorType.kt");
+    }
+
     @TestMetadata("extension.kt")
     public void testExtension() throws Exception {
         runTest("../../completion/testData/basic/stdlibWithCommon/extension.kt");
+    }
+
+    @TestMetadata("KTIJ-27041.kt")
+    public void testKTIJ_27041() throws Exception {
+        runTest("../../completion/testData/basic/stdlibWithCommon/KTIJ-27041.kt");
     }
 }

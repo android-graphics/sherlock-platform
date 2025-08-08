@@ -7,50 +7,54 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.ui.content.custom.options.PersistentContentCustomLayoutOption
 import com.intellij.ui.content.custom.options.PersistentContentCustomLayoutOptions
 import com.intellij.xdebugger.XDebuggerBundle
+import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.frame.XDebugView
 import com.intellij.xdebugger.impl.frame.XFramesView
 import com.intellij.xdebugger.impl.frame.XThreadsFramesView
 import com.intellij.xdebugger.impl.frame.XThreadsView
+import org.jetbrains.annotations.ApiStatus.Internal
 
-object ThreadsViewConstants {
+internal object ThreadsViewConstants {
   const val DEFAULT_THREADS_VIEW_KEY = "Default"
   const val THREADS_TREE_VIEW_KEY = "Threads"
   const val SIDE_BY_SIDE_THREADS_VIEW_KEY = "SideBySide"
   const val FRAMES_ONLY_THREADS_VIEW_KEY = "FramesOnly"
-
 }
 
+@Internal
 abstract class FramesAndThreadsLayoutOptionBase(options: XDebugTabLayoutSettings.XDebugFramesAndThreadsLayoutOptions) : PersistentContentCustomLayoutOption(
   options) {
-  abstract fun createView(): XDebugView
+  abstract fun createView(session: XDebugSessionImpl): XDebugView
 }
 
-class DefaultLayoutOption(private val options: XDebugTabLayoutSettings.XDebugFramesAndThreadsLayoutOptions) : FramesAndThreadsLayoutOptionBase(
+internal class DefaultLayoutOption(options: XDebugTabLayoutSettings.XDebugFramesAndThreadsLayoutOptions) : FramesAndThreadsLayoutOptionBase(
   options) {
   override fun getDisplayName(): String = XDebuggerBundle.message("debug.threads.and.frames.default.layout.option")
 
-  override fun createView(): XFramesView = XFramesView(options.session)
+  override fun createView(session: XDebugSessionImpl): XFramesView = XFramesView(session)
 
   override fun getOptionKey(): String = ThreadsViewConstants.DEFAULT_THREADS_VIEW_KEY
 }
 
-class ThreadsTreeLayoutOption(
-  private val options: XDebugTabLayoutSettings.XDebugFramesAndThreadsLayoutOptions) : FramesAndThreadsLayoutOptionBase(options) {
+internal class ThreadsTreeLayoutOption(
+  options: XDebugTabLayoutSettings.XDebugFramesAndThreadsLayoutOptions) : FramesAndThreadsLayoutOptionBase(options) {
   override fun getDisplayName(): String = XDebuggerBundle.message("debug.threads.and.frames.threads.tree.layout.option")
 
-  override fun createView(): XThreadsView = XThreadsView(options.session.project, options.session)
+  override fun createView(session: XDebugSessionImpl): XThreadsView = XThreadsView(session.project, session)
 
   override fun getOptionKey(): String = ThreadsViewConstants.THREADS_TREE_VIEW_KEY
 }
 
+@Internal
 abstract class SideBySideLayoutOptionBase(private val options: XDebugTabLayoutSettings.XDebugFramesAndThreadsLayoutOptions,
                                           private val areThreadsVisible: Boolean) : FramesAndThreadsLayoutOptionBase(options) {
 
-  override fun createView(): XThreadsFramesView = XThreadsFramesView(options.session.project).apply {
+  override fun createView(session: XDebugSessionImpl): XThreadsFramesView = XThreadsFramesView(options.debugTab).apply {
     this.setThreadsVisible(areThreadsVisible)
   }
 }
 
+@Internal
 class SideBySideLayoutOption(options: XDebugTabLayoutSettings.XDebugFramesAndThreadsLayoutOptions) : SideBySideLayoutOptionBase(options,
                                                                                                                                 true) {
   override fun getDisplayName(): String = XDebuggerBundle.message("debug.threads.and.frames.side.by.side.layout.option")
@@ -58,6 +62,7 @@ class SideBySideLayoutOption(options: XDebugTabLayoutSettings.XDebugFramesAndThr
   override fun getOptionKey(): String = ThreadsViewConstants.SIDE_BY_SIDE_THREADS_VIEW_KEY
 }
 
+@Internal
 class FramesOnlyLayoutOption(options: XDebugTabLayoutSettings.XDebugFramesAndThreadsLayoutOptions) : SideBySideLayoutOptionBase(options,
                                                                                                                                 false) {
   override fun getDisplayName(): String = XDebuggerBundle.message("debug.threads.and.frames.frames.only.layout.option")

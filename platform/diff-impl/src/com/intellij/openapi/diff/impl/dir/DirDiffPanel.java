@@ -10,7 +10,6 @@ import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable;
 import com.intellij.diff.util.DiffPlaces;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.util.PropertiesComponent;
@@ -45,7 +44,6 @@ import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +65,7 @@ import java.util.concurrent.Callable;
  */
 @ApiStatus.Internal
 @SuppressWarnings("unchecked")
-public class DirDiffPanel implements Disposable, DataProvider {
+public class DirDiffPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance(DirDiffPanel.class);
 
   public static final DataKey<DirDiffTableModel> DIR_DIFF_MODEL = DataKey.create("DIR_DIFF_MODEL");
@@ -205,7 +203,6 @@ public class DirDiffPanel implements Disposable, DataProvider {
       UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, label);
       filesPanel.addToBottom(label);
     }
-    DataManager.registerDataProvider(filesPanel, this);
     PopupHandler.installPopupMenu(myTable, "DirDiffMenu", "DirDiffPanel");
 
     myFilterPanel = new JPanel(new BorderLayout());
@@ -222,8 +219,8 @@ public class DirDiffPanel implements Disposable, DataProvider {
     headerPanel.add(targetPanel, gb.next());
 
     Splitter tableSplitter = new OnePixelSplitter(true, SPLITTER_PROPORTION_KEY, 0.4f);
-    tableSplitter.setFirstComponent(JBUI.Panels.simplePanel(filesPanel)
-                                      .addToTop(headerPanel));
+    JComponent wrapped = UiDataProvider.wrapComponent(filesPanel, sink -> uiDataSnapshot(sink));
+    tableSplitter.setFirstComponent(JBUI.Panels.simplePanel(wrapped).addToTop(headerPanel));
 
     final JBLoadingPanel loadingPanel = new JBLoadingPanel(new BorderLayout(), wnd.getDisposable());
     loadingPanel.addListener(new JBLoadingPanelListener.Adapter() {
@@ -334,8 +331,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
     }
   }
 
-  @NotNull
-  private AbstractAction createNavigationAction(boolean goDown, boolean withSelection) {
+  private @NotNull AbstractAction createNavigationAction(boolean goDown, boolean withSelection) {
     return new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -385,8 +381,8 @@ public class DirDiffPanel implements Disposable, DataProvider {
     myTable.changeSelection(row, (myModel.getColumnCount() - 1) / 2, false, extend);
   }
 
-  public AnAction[] getActions() {
-    return new DirDiffToolbarActions(myModel).getChildren(null);
+  public AnAction @NotNull [] getActions() {
+    return new DirDiffToolbarActions(myModel).getActions();
   }
 
   public JComponent extractFilterPanel() {
@@ -411,7 +407,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
   }
 
   private static void registerCustomShortcuts(DirDiffToolbarActions actions, JComponent component) {
-    for (AnAction action : actions.getChildren(null)) {
+    for (AnAction action : actions.getActions()) {
       if (action instanceof ShortcutProvider) {
         final ShortcutSet shortcut = ((ShortcutProvider)action).getShortcut();
         if (shortcut != null) {
@@ -453,27 +449,13 @@ public class DirDiffPanel implements Disposable, DataProvider {
     myModel.stopUpdating();
   }
 
-  @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myProject;
-    }
-    else if (DIR_DIFF_MODEL.is(dataId)) {
-      return myModel;
-    }
-    else if (DIR_DIFF_TABLE.is(dataId)) {
-      return myTable;
-    }
-    else if (DIR_DIFF_FILTER.is(dataId)) {
-      return myFilter;
-    }
-    else if (DiffDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      return getNavigatableArray();
-    }
-    else if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.is(dataId)) {
-      return new MyPrevNextDifferenceIterable();
-    }
-    return null;
+  private void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(CommonDataKeys.PROJECT, myProject);
+    sink.set(DIR_DIFF_MODEL, myModel);
+    sink.set(DIR_DIFF_TABLE, myTable);
+    sink.set(DIR_DIFF_FILTER, myFilter);
+    sink.set(DiffDataKeys.NAVIGATABLE_ARRAY, getNavigatableArray());
+    sink.set(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE, new MyPrevNextDifferenceIterable());
   }
 
   private Navigatable @NotNull [] getNavigatableArray() {
@@ -556,9 +538,8 @@ public class DirDiffPanel implements Disposable, DataProvider {
       super(project, DiffPlaces.DIR_DIFF);
     }
 
-    @Nullable
     @Override
-    protected String getRequestName(@NotNull ElementWrapper element) {
+    protected @Nullable String getRequestName(@NotNull ElementWrapper element) {
       return null;
     }
 
@@ -568,9 +549,8 @@ public class DirDiffPanel implements Disposable, DataProvider {
       return element != null ? new ElementWrapper(element) : null;
     }
 
-    @NotNull
     @Override
-    protected DiffRequest loadRequest(@NotNull ElementWrapper element, @NotNull ProgressIndicator indicator)
+    protected @NotNull DiffRequest loadRequest(@NotNull ElementWrapper element, @NotNull ProgressIndicator indicator)
       throws ProcessCanceledException, DiffRequestProducerException {
       DiffElement sourceElement = element.sourceElement;
       DiffElement targetElement = element.targetElement;
@@ -618,8 +598,8 @@ public class DirDiffPanel implements Disposable, DataProvider {
   }
 
   private static class ElementWrapper {
-    @Nullable public final DiffElement sourceElement;
-    @Nullable public final DiffElement targetElement;
+    public final @Nullable DiffElement sourceElement;
+    public final @Nullable DiffElement targetElement;
 
     ElementWrapper(@NotNull DirDiffElementImpl element) {
       sourceElement = element.getSource();

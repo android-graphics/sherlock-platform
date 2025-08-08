@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.DiffDialogHints;
@@ -19,6 +19,7 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.vcsUtil.VcsImplUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ import java.util.concurrent.ExecutionException;
 
 import static com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT;
 
+@ApiStatus.Internal
 public class ShowDiffFromLocalChangesActionProvider implements AnActionExtensionProvider {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -78,7 +80,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
     ChangesListView view = e.getData(ChangesListView.DATA_KEY);
@@ -147,17 +149,15 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
     return needsConversion;
   }
 
-  @NotNull
-  private static List<? extends Change> loadFakeRevisions(@NotNull Project project, @NotNull List<? extends Change> changes) {
+  private static @NotNull List<? extends Change> loadFakeRevisions(@NotNull Project project, @NotNull List<? extends Change> changes) {
     Collection<Change> allChanges = ChangeListManager.getInstance(project).getAllChanges();
     return VcsImplUtil.filterChangesUnder(allChanges, ChangesUtil.getPaths(changes)).toList();
   }
 
-  @NotNull
-  public static ListSelection<Producer> collectRequestProducers(@NotNull Project project,
-                                                                @NotNull List<? extends Change> changes,
-                                                                @NotNull List<? extends FilePath> unversioned,
-                                                                @NotNull ChangesListView changesView) {
+  public static @NotNull ListSelection<Producer> collectRequestProducers(@NotNull Project project,
+                                                                         @NotNull List<? extends Change> changes,
+                                                                         @NotNull List<? extends FilePath> unversioned,
+                                                                         @NotNull ChangesListView changesView) {
     if (changes.size() == 1 && unversioned.isEmpty()) { // show all changes from this changelist
       Change selectedChange = changes.get(0);
       List<Change> selectedChanges = changesView.getAllChangesFromSameChangelist(selectedChange);

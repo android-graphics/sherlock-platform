@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.Application;
@@ -10,31 +10,28 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.FastUtilHashingStrategies;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 // Stores result of various `FSRecords#list*` methods and the current `FSRecords#getModCount` for optimistic locking support.
-final class ListResult {
+@ApiStatus.Internal
+public final class ListResult {
   private final int parentModStamp;
-  final List<? extends ChildInfo> children;  // sorted by `#getId`
+  public final @Unmodifiable List<? extends ChildInfo> children;  // sorted by `#getId`
   private final int parentId;
 
-  ListResult(@NotNull FSRecordsImpl vfs,
-             @NotNull List<? extends ChildInfo> children,
-             int parentId) {
-    this(vfs.getModCount(parentId), children, parentId);
-  }
-
-  ListResult(int parentModStamp,
-             @NotNull List<? extends ChildInfo> children, int parentId) {
+  public ListResult(int parentModStamp, @NotNull @Unmodifiable List<? extends ChildInfo> children, int parentId) {
     this.parentModStamp = parentModStamp;
     this.children = children;
     this.parentId = parentId;
     Application app = ApplicationManager.getApplication();
+
     if (app != null && (app.isUnitTestMode() && !ApplicationManagerEx.isInStressTest() || app.isInternal())) {
       assertSortedById(children);
     }
@@ -74,7 +71,7 @@ final class ListResult {
 
   @Contract(pure = true)
   @NotNull ListResult remove(@NotNull ChildInfo child) {
-    List<ChildInfo> newChildren = new ArrayList<>(children.size() + 1);
+    List<ChildInfo> newChildren = new ArrayList<>(children.size() - 1);
     int id = child.getId();
     int toRemove = ObjectUtils.binarySearch(0, children.size(), mid -> Integer.compare(children.get(mid).getId(), id));
     if (toRemove < 0) {
@@ -92,6 +89,24 @@ final class ListResult {
     return new ListResult(parentModStamp, newChildren, parentId);
   }
 
+  @Contract(pure = true)
+  @NotNull ListResult remove(int childId) {
+    int toRemove = ObjectUtils.binarySearch(0, children.size(), mid -> Integer.compare(children.get(mid).getId(), childId));
+    if (toRemove < 0) {
+      // wow, the child is not there
+      return this;
+    }
+
+    List<ChildInfo> newChildren = new ArrayList<>(children.size() - 1);
+    for (int j = 0; j < toRemove; j++) {
+      newChildren.add(children.get(j));
+    }
+    for (int j = toRemove + 1; j < children.size(); j++) {
+      newChildren.add(children.get(j));
+    }
+    return new ListResult(parentModStamp, newChildren, parentId);
+  }
+
   // Returns entries from this list plus `otherList';
   // in case of a name clash uses ID from the corresponding this list entry and a name from the `otherList` entry
   // (to avoid duplicating ids: preserve old id but supply new name).
@@ -99,7 +114,7 @@ final class ListResult {
   @NotNull ListResult merge(@NotNull FSRecordsImpl vfs,
                             @NotNull List<? extends ChildInfo> newChildren,
                             boolean isCaseSensitive) {
-    ListResult newList = new ListResult(vfs, newChildren, parentId);  // assume the list is sorted
+    ListResult newList = new ListResult(vfs.getModCount(parentId), newChildren, parentId);  // assume the list is sorted
     if (children.isEmpty()) return newList;
     List<? extends ChildInfo> oldChildren = children;
     // Both `newChildren` and `oldChildren` are sorted by id, but not `nameId`, so plain O(N) merging is not possible.

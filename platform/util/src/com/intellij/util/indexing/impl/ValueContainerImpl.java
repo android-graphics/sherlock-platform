@@ -3,14 +3,14 @@ package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
+import com.intellij.util.containers.SingletonIterator;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.containers.ChangeBufferingList;
 import com.intellij.util.indexing.containers.IntIdsIterator;
+import com.intellij.util.indexing.impl.diagnostics.SynchronizedValueContainerImplWithChecks;
+import com.intellij.util.indexing.impl.diagnostics.ValueContainerImplWithChecks;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -19,14 +19,17 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.function.IntPredicate;
 
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 
 @ApiStatus.Internal
 public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable {
-  static final Logger LOG = Logger.getInstance(ValueContainerImpl.class);
+  protected static final Logger LOG = Logger.getInstance(ValueContainerImpl.class);
 
   private static final boolean DO_EXPENSIVE_CHECKS = (IndexDebugProperties.IS_UNIT_TEST_MODE ||
                                                       IndexDebugProperties.EXTRA_SANITY_CHECKS) && !IndexDebugProperties.IS_IN_STRESS_TESTS;
@@ -52,53 +55,29 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
   private Object myInputIdMapping;
   private Object myInputIdMappingValue;
 
-  //fields below are for expensiveSelfChecks, they are null if expensiveSelfChecks=false
-  private Int2ObjectMap<Object> myPresentInputIds;
-  private List<UpdateOp> myUpdateOps;
 
   public static <Value> ValueContainerImpl<Value> createNewValueContainer() {
-    return USE_SYNCHRONIZED_VALUE_CONTAINER
-           ? new SynchronizedValueContainerImpl<>()
-           : new ValueContainerImpl<>();
-  }
-
-  public static <Value> ValueContainerImpl<Value> createNewValueContainer(boolean doExpensiveChecks) {
-    return USE_SYNCHRONIZED_VALUE_CONTAINER
-           ? new SynchronizedValueContainerImpl<>(doExpensiveChecks)
-           : new ValueContainerImpl<>(doExpensiveChecks);
-  }
-
-  ValueContainerImpl() {
-    this(DO_EXPENSIVE_CHECKS);
-  }
-
-  ValueContainerImpl(boolean doExpensiveChecks) {
-    myPresentInputIds = doExpensiveChecks ? new Int2ObjectOpenHashMap<>() : null;
-    myUpdateOps = doExpensiveChecks ? new SmartList<>() : null;
-  }
-
-  private static final class UpdateOp {
-    private UpdateOp(Type type, int id, Object value) {
-      myType = type;
-      myInputId = id;
-      myValue = value;
+    if (USE_SYNCHRONIZED_VALUE_CONTAINER) {
+      if (DO_EXPENSIVE_CHECKS) {
+        return new SynchronizedValueContainerImplWithChecks<>();
+      }
+      else {
+        return new SynchronizedValueContainerImpl<>();
+      }
     }
-
-    @Override
-    public String toString() {
-      return "(" + myType + ", " + myInputId + ", " + myValue + ")";
+    else {
+      if (DO_EXPENSIVE_CHECKS) {
+        return new ValueContainerImplWithChecks<>();
+      }
+      else {
+        return new ValueContainerImpl<>();
+      }
     }
-
-    private enum Type {
-      ADD,
-      ADD_DIRECT,
-      REMOVE
-    }
-
-    private final Type myType;
-    private final int myInputId;
-    private final Object myValue;
   }
+
+  protected ValueContainerImpl() {
+  }
+
 
   @Override
   public void addValue(int inputId, Value value) {
@@ -125,34 +104,7 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
     }
   }
 
-  private void ensureInputIdIsntAssociatedWithAnotherValue(int inputId, Value value, boolean isDirect) {
-    if (myPresentInputIds != null) {
-      Object normalizedValue = wrapValue(value);
-      Object previousValue = myPresentInputIds.put(inputId, normalizedValue);
-      myUpdateOps.add(new UpdateOp(isDirect ? UpdateOp.Type.ADD_DIRECT : UpdateOp.Type.ADD, inputId, normalizedValue));
-      if (previousValue != null && !previousValue.equals(normalizedValue)) {
-        LOG.error("Can't add value '" + normalizedValue + "'; input id " + inputId + " is already present in:\n" + getDebugMessage());
-      }
-    }
-  }
-
-  private void ensureInputIdAssociatedWithValue(int inputId, Value value) {
-    if (myPresentInputIds != null) {
-      Object normalizedValue = wrapValue(value);
-      Object previousValue = myPresentInputIds.remove(inputId);
-      myUpdateOps.add(new UpdateOp(UpdateOp.Type.REMOVE, inputId, normalizedValue));
-      if (previousValue != null && !previousValue.equals(normalizedValue)) {
-        LOG.error("Can't remove value '" +
-                  normalizedValue +
-                  "'; input id " +
-                  inputId +
-                  " is not present for the specified value in:\n" +
-                  getDebugMessage());
-      }
-    }
-  }
-
-  private @Nullable ValueToInputMap<Value> asMapping() {
+  protected @Nullable ValueToInputMap<Value> asMapping() {
     //noinspection unchecked
     return myInputIdMapping instanceof ValueToInputMap ? (ValueToInputMap<Value>)myInputIdMapping : null;
   }
@@ -190,11 +142,8 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
     return false;
   }
 
-  @NotNull
-  String getDebugMessage() {
-    return "Actual value container = \n" + this +
-           (myPresentInputIds == null ? "" : "\nExpected value container = " + myPresentInputIds) +
-           (myUpdateOps == null ? "" : "\nUpdate operations = " + myUpdateOps);
+  protected @NotNull String getDebugMessage() {
+    return "Actual value container = \n" + this;
   }
 
   @Override
@@ -207,7 +156,7 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
     return sb.toString();
   }
 
-  void removeValue(int inputId, Value value) {
+  protected void removeValue(int inputId, Value value) {
     removeValue(inputId, getFileSetObject(value), value);
   }
 
@@ -247,7 +196,8 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
     }
   }
 
-  static @NotNull <Value> Value wrapValue(Value value) {
+  //TODO RC: replace with NotNullizer
+  protected static @NotNull <Value> Value wrapValue(Value value) {
     //noinspection unchecked
     return value == null ? (Value)ObjectUtils.NULL : value;
   }
@@ -263,12 +213,21 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
       return (InvertedIndexValueIterator<Value>)EmptyValueIterator.INSTANCE;
     }
 
-    Map<Value, Object> value = asMapping();
-    Map<Value, Object> mapping = value == null ? Collections.singletonMap(wrapValue(asValue()), myInputIdMappingValue) : value;
+    Map<Value, Object> mapping = asMapping();
+    Iterator<Map.Entry<Value, Object>> iterator;
+    if (mapping == null) {
+      Map.Entry<Value, Object> entry = new SimpleImmutableEntry<>(
+        wrapValue(asValue()),
+        myInputIdMappingValue
+      );
+      iterator = new SingletonIterator<>(entry);
+    }
+    else {
+      iterator = mapping.entrySet().iterator();
+    }
     return new InvertedIndexValueIterator<Value>() {
-      private Value current;
-      private Object currentValue;
-      private final Iterator<Map.Entry<Value, Object>> iterator = mapping.entrySet().iterator();
+      private Value currentValue;
+      private Object currentFileSet;
 
       @Override
       public boolean hasNext() {
@@ -278,9 +237,9 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
       @Override
       public Value next() {
         Map.Entry<Value, Object> entry = iterator.next();
-        current = entry.getKey();
-        Value next = current;
-        currentValue = entry.getValue();
+        currentValue = entry.getKey();
+        Value next = currentValue;
+        currentFileSet = entry.getValue();
         return unwrap(next);
       }
 
@@ -296,8 +255,8 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
 
       @Override
       public Object getFileSetObject() {
-        if (current == null) throw new IllegalStateException();
-        return currentValue;
+        if (currentValue == null) throw new IllegalStateException();
+        return currentFileSet;
       }
     };
   }
@@ -359,15 +318,22 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
   private Object getFileSetObject(Value value) {
     if (myInputIdMapping == null) return null;
 
-    value = wrapValue(value);
+    if (value == null) {
+      if (myInputIdMapping == ObjectUtils.NULL) {
+        return myInputIdMappingValue;
+      }
 
-    if (myInputIdMapping == value || // myNullValue is Object
-        myInputIdMapping.equals(value)) {
-      return myInputIdMappingValue;
+      Map<Value, Object> mapping = asMapping();
+      return mapping == null ? null : mapping.get(ObjectUtils.NULL);
     }
+    else {
+      if (myInputIdMapping == value || myInputIdMapping.equals(value)) {
+        return myInputIdMappingValue;
+      }
 
-    Map<Value, Object> mapping = asMapping();
-    return mapping == null ? null : mapping.get(value);
+      Map<Value, Object> mapping = asMapping();
+      return mapping == null ? null : mapping.get(value);
+    }
   }
 
   @Override
@@ -389,12 +355,6 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
       else if (myInputIdMappingValue instanceof ChangeBufferingList) {
         clone.myInputIdMappingValue = ((ChangeBufferingList)myInputIdMappingValue).clone();
       }
-      clone.myPresentInputIds = myPresentInputIds != null
-                                ? new Int2ObjectOpenHashMap<>(myPresentInputIds)
-                                : null;
-      clone.myUpdateOps = myUpdateOps != null
-                          ? new SmartList<>(myUpdateOps)
-                          : null;
       return clone;
     }
     catch (CloneNotSupportedException e) {
@@ -475,7 +435,21 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
   @Override
   public void saveTo(@NotNull DataOutput out,
                      @NotNull DataExternalizer<? super Value> externalizer) throws IOException {
-    DataInputOutputUtil.writeINT(out, size());
+    int size = size();
+    DataInputOutputUtil.writeINT(out, size);
+
+    if (size == 0) {
+      return;
+    }
+
+
+    if (asMapping() == null) {
+      //single entry: skip creating iterator for a most frequent case
+      Value value = unwrap(asValue());
+      externalizer.save(out, value);
+      storeFileSet(out, myInputIdMappingValue);
+      return;
+    }
 
     for (final InvertedIndexValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext(); ) {
       final Value value = valueIterator.next();
@@ -642,6 +616,14 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
     }
   }
 
+  protected void ensureInputIdIsntAssociatedWithAnotherValue(int inputId, Object value, boolean isDirect) {
+    //to override
+  }
+
+  protected void ensureInputIdAssociatedWithValue(int inputId, Object value) {
+    //to override
+  }
+
   private static final class SingleValueIterator implements IntIdsIterator {
     private final int myValue;
     private boolean myValueRead;
@@ -680,7 +662,7 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
   /**
    * Dedicated class to distinguish a difference between user-value with Object2ObjectOpenHashMap type and internal value container.
    */
-  private static final class ValueToInputMap<Value> extends Object2ObjectOpenHashMap<Value, Object> {
+  protected static final class ValueToInputMap<Value> extends Object2ObjectOpenHashMap<Value, Object> {
     ValueToInputMap(int size) {
       super(size);
     }

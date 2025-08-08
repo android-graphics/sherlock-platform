@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reflectiveAccess;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.lookup.*;
@@ -24,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -37,7 +39,7 @@ public final class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJ
   public static final Key<ReflectiveSignature> DEFAULT_SIGNATURE = Key.create("DEFAULT_SIGNATURE");
   public static final Key<List<LookupElement>> POSSIBLE_SIGNATURES = Key.create("POSSIBLE_SIGNATURES");
 
-  static final Set<String> KNOWN_METHOD_NAMES =
+  static final @Unmodifiable Set<String> KNOWN_METHOD_NAMES =
     ContainerUtil.union(Arrays.asList(HANDLE_FACTORY_METHOD_NAMES), Collections.singletonList(FIND_CONSTRUCTOR));
 
   private interface CallChecker {
@@ -50,9 +52,8 @@ public final class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJ
     JavaLangReflectVarHandleInvocationChecker::checkVarHandleAccess,
   };
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression callExpression) {
@@ -225,6 +226,10 @@ public final class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJ
         return;
       }
     }
+    PsiMethod onlyMethod = ContainerUtil.getOnlyItem(filteredMethods);
+    if (onlyMethod != null && AnnotationUtil.isAnnotated(onlyMethod, CommonClassNames.JAVA_LANG_INVOKE_MH_POLYMORPHIC, 0)) {
+      return;
+    }
 
     final ReflectiveSignature methodSignature = composeMethodSignature(methodTypeExpression);
     if (methodSignature == null) return;
@@ -253,7 +258,6 @@ public final class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJ
       }
     }
   }
-
 
   private static void checkSpecial(@NotNull ReflectiveClass ownerClass,
                                    @NotNull PsiExpression callerClassExpression,
@@ -293,14 +297,12 @@ public final class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJ
     holder.registerProblem(arguments[0], JavaBundle.message("inspection.reflect.handle.invocation.argument.not.array"));
   }
 
-  @NotNull
-  private static String getMethodDeclarationText(@NotNull String methodName, @NotNull ReflectiveSignature methodSignature) {
+  private static @NotNull String getMethodDeclarationText(@NotNull String methodName, @NotNull ReflectiveSignature methodSignature) {
     final String returnType = methodSignature.getShortReturnType();
     return returnType + " " + methodName + methodSignature.getShortArgumentTypes();
   }
 
-  @Nullable
-  private static String getConstructorDeclarationText(@NotNull ReflectiveClass ownerClass, @NotNull ReflectiveSignature methodSignature) {
+  private static @Nullable String getConstructorDeclarationText(@NotNull ReflectiveClass ownerClass, @NotNull ReflectiveSignature methodSignature) {
     final String className = ownerClass.getPsiClass().getName();
     if (className != null) {
       return getConstructorDeclarationText(className, methodSignature);
@@ -308,17 +310,15 @@ public final class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJ
     return null;
   }
 
-  @NotNull
-  private static String getConstructorDeclarationText(@NotNull String className, @NotNull ReflectiveSignature methodSignature) {
+  private static @NotNull String getConstructorDeclarationText(@NotNull String className, @NotNull ReflectiveSignature methodSignature) {
     // Return type of the constructor should be 'void'. If it isn't so let's make that mistake more noticeable.
     final String returnType = methodSignature.getShortReturnType();
     final String fakeReturnType = !PsiKeyword.VOID.equals(returnType) ? returnType + " " : "";
     return fakeReturnType + className + methodSignature.getShortArgumentTypes();
   }
 
-  @NotNull
-  private static List<PsiMethod> findMethodBySignature(@NotNull List<? extends PsiMethod> methods,
-                                                       @NotNull ReflectiveSignature expectedMethodSignature) {
+  private static @NotNull @Unmodifiable List<PsiMethod> findMethodBySignature(@NotNull List<? extends PsiMethod> methods,
+                                                                              @NotNull ReflectiveSignature expectedMethodSignature) {
     return ContainerUtil.filter(methods, method -> expectedMethodSignature.equals(getMethodSignature(method)));
   }
 
@@ -327,10 +327,8 @@ public final class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJ
 
     FieldTypeQuickFix(String fieldTypeText) {myFieldTypeText = fieldTypeText;}
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.handle.signature.change.type.fix.name", myFieldTypeText);
     }
 
@@ -361,10 +359,8 @@ public final class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJ
       myReplacementName = replacementName;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", myReplacementName);
     }
 
@@ -376,8 +372,7 @@ public final class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJ
       styleManager.shortenClassReferences(element.replace(identifier));
     }
 
-    @Nullable
-    public static LocalQuickFix createFix(@NotNull String methodName, boolean wasStatic) {
+    public static @Nullable LocalQuickFix createFix(@NotNull String methodName, boolean wasStatic) {
       final String replacementName = wasStatic ? STATIC_TO_NON_STATIC.get(methodName) : NON_STATIC_TO_STATIC.get(methodName);
       return replacementName != null ? new SwitchStaticnessQuickFix(replacementName) : null;
     }
@@ -398,16 +393,13 @@ public final class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJ
       myIsConstructor = isConstructor;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return getText();
     }
 
-    @NotNull
     @Override
-    public String getText() {
+    public @NotNull String getText() {
       if (mySignatures.size() == 1) {
         final String declarationText = getDeclarationText(mySignatures.get(0));
         return JavaBundle.message(myIsConstructor
@@ -462,8 +454,7 @@ public final class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJ
       return IntentionPreviewInfo.DIFF;
     }
 
-    @NotNull
-    private List<LookupElement> createLookupElements() {
+    private @NotNull List<LookupElement> createLookupElements() {
       return mySignatures.stream()
         .sorted(ReflectiveSignature::compareTo)
         .map(signature -> LookupElementBuilder.create(signature, "")
@@ -507,16 +498,14 @@ public final class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJ
       styleManager.shortenClassReferences(element.replace(replacement));
     }
 
-    @NotNull
-    private String getDeclarationText(@NotNull ReflectiveSignature signature) {
+    private @NotNull String getDeclarationText(@NotNull ReflectiveSignature signature) {
       return myIsConstructor ? getConstructorDeclarationText(myName, signature) : getMethodDeclarationText(myName, signature);
     }
 
-    @Nullable
-    private static LocalQuickFix createFix(@Nullable PsiElement element,
-                                           @NotNull String methodName,
-                                           @NotNull List<ReflectiveSignature> methodSignatures,
-                                           boolean isConstructor, boolean isOnTheFly) {
+    private static @Nullable LocalQuickFix createFix(@Nullable PsiElement element,
+                                                     @NotNull String methodName,
+                                                     @NotNull List<ReflectiveSignature> methodSignatures,
+                                                     boolean isConstructor, boolean isOnTheFly) {
       if (isOnTheFly && !methodSignatures.isEmpty() || methodSignatures.size() == 1) {
         return new ReplaceSignatureQuickFix(element, methodName, methodSignatures, isConstructor);
       }

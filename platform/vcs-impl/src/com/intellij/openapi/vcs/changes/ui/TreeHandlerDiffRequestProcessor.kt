@@ -5,6 +5,7 @@ import com.intellij.diagnostic.Checks.fail
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.tools.combined.*
+import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.Change
@@ -17,8 +18,8 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.UiNotifyConnector
 import com.intellij.util.ui.update.Update
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.beans.PropertyChangeListener
@@ -41,6 +42,10 @@ open class TreeHandlerDiffRequestProcessor(
 
   final override fun selectChange(change: Wrapper) {
     handler.selectChange(tree, change)
+  }
+
+  override fun showAllChangesForEmptySelection(): Boolean {
+    return handler.isShowAllChangesForEmptySelection
   }
 }
 
@@ -96,7 +101,7 @@ open class TreeHandlerChangesTreeTracker(
     }
 
     if (updateWhileShown) {
-      UiNotifyConnector.installOn(editorViewer.component, object : Activatable {
+      DiffUtil.installShowNotifyListener(editorViewer.component, object : Activatable {
         override fun showNotify() {
           updatePreview(UpdateType.FULL)
           updatePreviewQueue.cancelAllUpdates()
@@ -231,6 +236,8 @@ abstract class TreeHandlerEditorDiffPreview(
 
 
 abstract class ChangesTreeDiffPreviewHandler {
+  open val isShowAllChangesForEmptySelection: Boolean get() = true
+
   abstract fun iterateSelectedChanges(tree: ChangesTree): Iterable<@JvmWildcard Wrapper>
 
   abstract fun iterateAllChanges(tree: ChangesTree): Iterable<@JvmWildcard Wrapper>
@@ -238,7 +245,8 @@ abstract class ChangesTreeDiffPreviewHandler {
   abstract fun selectChange(tree: ChangesTree, change: Wrapper)
 
   fun hasContent(tree: ChangesTree): Boolean {
-    return JBIterable.from(iterateAllChanges(tree)).isNotEmpty
+    val producers = if (isShowAllChangesForEmptySelection) iterateAllChanges(tree) else iterateSelectedChanges(tree)
+    return JBIterable.from(producers).isNotEmpty
   }
 
   fun collectDiffProducers(tree: ChangesTree, selectedOnly: Boolean): ListSelection<out DiffRequestProducer> {
@@ -250,6 +258,7 @@ abstract class ChangesTreeDiffPreviewHandler {
   }
 }
 
+@ApiStatus.Internal
 abstract class ChangesTreeDiffPreviewHandlerBase : ChangesTreeDiffPreviewHandler() {
   override fun iterateSelectedChanges(tree: ChangesTree): JBIterable<Wrapper> {
     return collectWrappers(VcsTreeModelData.selected(tree))

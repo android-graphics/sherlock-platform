@@ -4,13 +4,14 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.client.impl.RefWrapper
 import com.intellij.driver.model.RdTarget
 import com.intellij.driver.model.transport.Ref
+import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.SearchContext
 import com.intellij.driver.sdk.ui.UiRobot
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.remote.*
-import org.intellij.lang.annotations.Language
 import org.w3c.dom.Element
 import java.awt.Point
+import java.awt.Rectangle
 import kotlin.reflect.KClass
 
 
@@ -48,12 +49,12 @@ open class BeControlComponentBase(
   private fun getFrontendRef(): Ref = (frontendComponent as RefWrapper).getRef()
   private fun getBackendRef(): Ref = (backendComponent as RefWrapper).getRef()
 
-  protected fun <T : UiComponent> onFrontend(@Language("xpath") xpath: String, type: KClass<T>): T {
-    return frontendUi.x(xpath, type.java)
+  protected fun <T : UiComponent> onFrontend(type: KClass<T>, locator: QueryBuilder.() -> String): T {
+    return frontendUi.x(type.java, locator)
   }
 
-  protected fun onFrontend(@Language("xpath") xpath: String): UiComponent {
-    return frontendUi.x(xpath)
+  protected fun onFrontend(locator: QueryBuilder.() -> String): UiComponent {
+    return frontendUi.x(locator)
   }
 
   override val x: Int
@@ -65,6 +66,10 @@ open class BeControlComponentBase(
   override val height: Int
     get() = frontendComponent.height
 
+  override fun getBounds(): Rectangle {
+    return frontendComponent.getBounds()
+  }
+
   override fun isVisible(): Boolean {
     return frontendComponent.isVisible()
   }
@@ -75,6 +80,10 @@ open class BeControlComponentBase(
 
   override fun isEnabled(): Boolean {
     return frontendComponent.isEnabled()
+  }
+
+  override fun requestFocus() {
+    frontendComponent.requestFocus()
   }
 
   override fun isFocusOwner(): Boolean {
@@ -114,7 +123,7 @@ open class BeControlComponentBase(
   override fun getRefPluginId() = ""
 }
 
-fun getFrontendRef(element: Element) = Ref(
+internal fun getFrontendRef(element: Element) = Ref(
   element.getAttribute("frontend_refId"),
   element.getAttribute("frontend_javaclass"),
   element.getAttribute("frontend_hashCode").toInt(),
@@ -122,10 +131,16 @@ fun getFrontendRef(element: Element) = Ref(
   RdTarget.FRONTEND
 )
 
-fun getBackendRef(element: Element) = Ref(
+internal fun getBackendRef(element: Element) = Ref(
   element.getAttribute("backend_refId"),
   element.getAttribute("backend_javaclass"),
   element.getAttribute("backend_hashCode").toInt(),
   element.getAttribute("backend_asString"),
   RdTarget.BACKEND
 )
+
+internal fun validateBeControlElement(element: Element): Boolean {
+  val attrNames = listOf("refId", "javaclass", "hashCode", "asString")
+  val necessaryAttributes = attrNames.map { "frontend_$it" } + attrNames.map { "backend_$it" }
+  return necessaryAttributes.all { element.hasAttribute(it) }
+}

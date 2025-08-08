@@ -3,38 +3,31 @@ package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.util.Version
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GroovyDslGradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isTaskConfigurationAvoidanceSupported
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
-import org.jetbrains.plugins.gradle.testFramework.util.buildscript.TestGroovyDslGradleBuildScriptBuilder
 import java.io.File
 import java.util.function.Consumer
 import kotlin.apply as applyKt
 
 @Suppress("MemberVisibilityCanBePrivate", "unused")
 open class TestGradleBuildScriptBuilder(
-  gradleVersion: GradleVersion
-) : TestGroovyDslGradleBuildScriptBuilder<TestGradleBuildScriptBuilder>(gradleVersion) {
+  gradleVersion: GradleVersion,
+) : GroovyDslGradleBuildScriptBuilder<TestGradleBuildScriptBuilder>(gradleVersion) {
 
   override fun apply(action: TestGradleBuildScriptBuilder.() -> Unit) = applyKt(action)
 
   fun withTask(name: String) = withTask(name, null)
-  fun withTask(name: String, type: String?) = withTask(name, type, null)
-  fun withTask(name: String, type: String?, dependsOn: String?) = withTask(name, type, dependsOn) {}
+  fun withTask(name: String, type: String?) = withTask(name, type) {}
   fun withTask(name: String, configure: ScriptTreeBuilder.() -> Unit) = withTask(name, null, configure)
-  fun withTask(name: String, type: String?, configure: ScriptTreeBuilder.() -> Unit) = withTask(name, type, null, configure)
-  fun withTask(name: String, type: String?, dependsOn: String?, configure: ScriptTreeBuilder.() -> Unit) =
+  fun withTask(name: String, type: String?, configure: ScriptTreeBuilder.() -> Unit) =
     withPostfix {
       val arguments = listOfNotNull(
         argument(name),
         type?.let { argument(code(it)) },
       )
-      call("tasks.create", arguments) {
-        if (dependsOn != null) {
-          call("dependsOn", dependsOn)
-        }
-        configure()
-      }
+      call("tasks.create", arguments, configure)
     }
 
   fun registerTask(name: String, configure: ScriptTreeBuilder.() -> Unit) = apply {

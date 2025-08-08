@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.junit
 
 import com.intellij.execution.junit.JUnit3Framework
 import com.intellij.execution.junit.JUnitUtil
+import com.intellij.ide.fileTemplates.FileTemplateDescriptor
 import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.lang.Language
 import com.intellij.openapi.util.NlsSafe
@@ -10,6 +11,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.impl.compiled.ClsFileImpl
+import com.intellij.psi.impl.compiled.ClsJavaCodeReferenceElementImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.util.CachedValueProvider
@@ -19,6 +21,7 @@ import com.intellij.util.ThreeState
 import com.intellij.util.ThreeState.*
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
 import org.jetbrains.kotlin.idea.testIntegration.framework.AbstractKotlinPsiBasedTestFramework
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
@@ -84,7 +87,7 @@ class KotlinJUnit3Framework: JUnit3Framework(), KotlinPsiBasedTestFramework {
             if (name == null) return NO
             return checkJUnit3TestClass(
                 declaration,
-                PsiShortNamesCache.getInstance(declaration.project),
+                PsiShortNamesCache.getInstance(declaration.project).withoutLanguages(KotlinLanguage.INSTANCE),
                 declaration.resolveScope,
                 mutableSetOf(name)
             )
@@ -102,7 +105,7 @@ class KotlinJUnit3Framework: JUnit3Framework(), KotlinPsiBasedTestFramework {
             if (objects.flatMap { it.declarations }.filterIsInstance<KtNamedFunction>().any { it.name == "suite" }) {
                 return UNSURE // suites don't need to extend TestClass
             }
-            if (declaration is KtObjectDeclaration) return NO // private constructor can't be instantiated
+            if (declaration is KtObjectDeclaration || declaration.primaryConstructor?.isPrivate() == true) return NO
             val superTypeListEntries = declaration.superTypeListEntries
             for (superTypeEntry in superTypeListEntries) {
                 if (superTypeEntry is KtSuperTypeCallEntry) {
@@ -158,16 +161,21 @@ class KotlinJUnit3Framework: JUnit3Framework(), KotlinPsiBasedTestFramework {
             // circular dependency detected
             val superShortName = superClass.name
             if (superShortName == null || !visitedShortNames.add(superShortName)) return NO
-            if (checkNameMatch(psiJavaFile, TEST_CLASS_FQN, superShortName)) {
+            if (checkNameMatch(psiJavaFile, psiClass, TEST_CLASS_FQN, superShortName)) {
                 return YES
             }
 
             return checkJUnit3TestClass(superClass, shortNamesCache, resolveScope, visitedShortNames)
         }
 
-        private fun checkNameMatch(file: PsiJavaFile, fqNames: Set<String>, shortName: String): Boolean {
+        private fun checkNameMatch(file: PsiJavaFile, psiClass: PsiClass, fqNames: Set<String>, shortName: String): Boolean {
             if (shortName in fqNames || "${file.packageName}.$shortName" in fqNames) return true
-            val importStatements = (file.importList ?: ((file as? ClsFileImpl)?.decompiledPsiFile as? PsiJavaFile)?.importList)?.importStatements ?: return false
+            if (file is ClsFileImpl) {
+                val referenceElements = psiClass.extendsList?.referenceElements?.takeIf { it.size > 0 } ?: return false
+                val referenceElement = referenceElements[0] as? ClsJavaCodeReferenceElementImpl ?: return false
+                return referenceElement.qualifiedName in fqNames
+            }
+            val importStatements = file.importList?.importStatements ?: return false
             for (importStatement in importStatements) {
                 val importedFqName = importStatement.qualifiedName ?: continue
                 if (importedFqName.endsWith(".$shortName") && importedFqName in fqNames) {
@@ -187,6 +195,12 @@ class KotlinJUnit3Framework: JUnit3Framework(), KotlinPsiBasedTestFramework {
     override fun isTestClass(clazz: PsiElement): Boolean =
         when (val checkTestClass = checkTestClass(clazz)) {
             UNSURE -> super.isTestClass(clazz)
+            else -> checkTestClass == YES
+        }
+
+    override fun isTestClass(clazz: PsiClass, canBePotential: Boolean): Boolean =
+        when (val checkTestClass = checkTestClass(clazz)) {
+            UNSURE -> super.isTestClass(clazz, canBePotential)
             else -> checkTestClass == YES
         }
 
@@ -226,6 +240,33 @@ class KotlinJUnit3Framework: JUnit3Framework(), KotlinPsiBasedTestFramework {
     override fun isIgnoredMethod(declaration: KtNamedFunction): Boolean =
         psiBasedDelegate.isIgnoredMethod(declaration)
 
+    override fun getSetUpMethodFileTemplateDescriptor(): FileTemplateDescriptor? =
+        if (KotlinPluginModeProvider.isK1Mode()) {
+            super.getSetUpMethodFileTemplateDescriptor()
+        } else {
+            FileTemplateDescriptor("Kotlin JUnit3 SetUp Function.kt")
+        }
+
+    override fun getTearDownMethodFileTemplateDescriptor(): FileTemplateDescriptor? =
+        if (KotlinPluginModeProvider.isK1Mode()) {
+            super.getTearDownMethodFileTemplateDescriptor()
+        } else {
+            FileTemplateDescriptor("Kotlin JUnit3 TearDown Function.kt")
+        }
+
+    override fun getTestMethodFileTemplateDescriptor(): FileTemplateDescriptor =
+        if (KotlinPluginModeProvider.isK1Mode()) {
+            super.getTestMethodFileTemplateDescriptor()
+        } else {
+            FileTemplateDescriptor("Kotlin JUnit3 Test Function.kt")
+        }
+
+    override fun getTestClassFileTemplateDescriptor(): FileTemplateDescriptor? =
+        if (KotlinPluginModeProvider.isK1Mode()) {
+            super.getTestClassFileTemplateDescriptor()
+        } else {
+            FileTemplateDescriptor("Kotlin JUnit3 Test Class.kt")
+        }
 }
 
 private val TEST_CLASS_FQN = setOf(JUnitUtil.TEST_CASE_CLASS)

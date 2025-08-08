@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -5,6 +6,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.lexer.BasicJavaLexer;
 import com.intellij.lang.java.lexer.JavaDocLexer;
+import com.intellij.lang.java.lexer.JavaTypeEscapeLexer;
 import com.intellij.lang.java.parser.BasicJavaDocParser;
 import com.intellij.lang.java.parser.BasicJavaParser;
 import com.intellij.lang.java.parser.BasicJavaParserUtil;
@@ -63,9 +65,8 @@ public interface BasicJavaDocElementType {
       myParentElementTypes = Collections.singleton(parentElementType);
     }
 
-    @NotNull
     @Override
-    public ASTNode createCompositeNode() {
+    public @NotNull ASTNode createCompositeNode() {
       return myConstructor.get();
     }
 
@@ -78,7 +79,7 @@ public interface BasicJavaDocElementType {
   class JavaDocLazyElementType extends ILazyParseableElementType implements ParentProviderElementType {
     private final Set<IElementType> myParentElementTypes;
 
-    private JavaDocLazyElementType(@NonNls final String debugName, @NotNull IElementType parentElementType) {
+    private JavaDocLazyElementType(final @NonNls String debugName, @NotNull IElementType parentElementType) {
       super(debugName, JavaLanguage.INSTANCE);
       myParentElementTypes = Collections.singleton(parentElementType);
     }
@@ -111,9 +112,8 @@ public interface BasicJavaDocElementType {
       this.javaLexer = javaLexer;
     }
 
-    @Nullable
     @Override
-    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
+    public @Nullable ASTNode parseContents(final @NotNull ASTNode chameleon) {
       BasicJavaParserUtil.ParserWrapper wrapper = builder -> BasicJavaDocParser.parseJavadocReference(builder,
                                                                                                       myJavaThinParser.get());
       return BasicJavaParserUtil.parseFragment(chameleon, wrapper, false, LanguageLevel.JDK_1_3, javaDocLexer, javaLexer
@@ -125,20 +125,19 @@ public interface BasicJavaDocElementType {
 
     private final @NotNull Supplier<? extends BasicJavaParser> myJavaThinParser;
     private final Function<LanguageLevel, JavaDocLexer> javaDocLexer;
-    private final Function<LanguageLevel, BasicJavaLexer> javaLexer;
+    private final Function<LanguageLevel, JavaTypeEscapeLexer> javaLexer;
 
     public DocTypeHolderElementType(@NotNull Supplier<? extends BasicJavaParser> parser,
                                     @NotNull Function<LanguageLevel, JavaDocLexer> docLexerFunction,
-                                    @NotNull Function<LanguageLevel, BasicJavaLexer> javaLexer) {
+                                    @NotNull Function<LanguageLevel, JavaTypeEscapeLexer> javaLexer) {
       super("DOC_TYPE_HOLDER", BASIC_DOC_TYPE_HOLDER);
       this.myJavaThinParser = parser;
       this.javaDocLexer = docLexerFunction;
       this.javaLexer = javaLexer;
     }
 
-    @Nullable
     @Override
-    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
+    public @Nullable ASTNode parseContents(final @NotNull ASTNode chameleon) {
       BasicJavaParserUtil.ParserWrapper wrapper = builder -> BasicJavaDocParser.parseJavadocType(builder, myJavaThinParser.get());
       return BasicJavaParserUtil.parseFragment(chameleon, wrapper, false, LanguageLevel.JDK_1_3, javaDocLexer, javaLexer
       );
@@ -168,14 +167,13 @@ public interface BasicJavaDocElementType {
       lexerByProject = project;
     }
 
-    @Nullable
     @Override
-    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
+    public @Nullable ASTNode parseContents(final @NotNull ASTNode chameleon) {
       return BasicJavaParserUtil.parseFragment(chameleon, myParser, myDocLexerFunction, myLexerFunction);
     }
 
     @Override
-    public boolean isParsable(@NotNull final CharSequence buffer, @NotNull Language fileLanguage, @NotNull final Project project) {
+    public boolean isParsable(final @NotNull CharSequence buffer, @NotNull Language fileLanguage, final @NotNull Project project) {
       if (!StringUtil.startsWith(buffer, "/**") || !StringUtil.endsWith(buffer, "*/")) return false;
 
       Lexer lexer = lexerByProject.apply(project);

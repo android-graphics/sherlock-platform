@@ -36,7 +36,7 @@ fun <VM : DiffMapped> DiffViewerBase.controlInlaysIn(
   cs: CoroutineScope,
   vmsFlow: Flow<Collection<VM>>,
   vmKeyExtractor: (VM) -> Any,
-  rendererFactory: CodeReviewRendererFactory<VM>
+  rendererFactory: CodeReviewRendererFactory<VM>,
 ) {
   when (this) {
     is SimpleOnesideDiffViewer -> controlInlaysIn(cs, vmsFlow, vmKeyExtractor, rendererFactory)
@@ -52,7 +52,7 @@ private fun <VM : DiffMapped> SimpleOnesideDiffViewer.controlInlaysIn(
   cs: CoroutineScope,
   vmsFlow: Flow<Collection<VM>>,
   vmKeyExtractor: (VM) -> Any,
-  rendererFactory: CodeReviewRendererFactory<VM>
+  rendererFactory: CodeReviewRendererFactory<VM>,
 ) {
   val viewerReady = viewerReadyFlow()
   val vmsForEditor = combine(viewerReady, vmsFlow) { ready, vms ->
@@ -71,7 +71,7 @@ private fun <VM : DiffMapped> UnifiedDiffViewer.controlInlaysIn(
   cs: CoroutineScope,
   vmsFlow: Flow<Collection<VM>>,
   vmKeyExtractor: (VM) -> Any,
-  rendererFactory: CodeReviewRendererFactory<VM>
+  rendererFactory: CodeReviewRendererFactory<VM>,
 ) {
   val viewerReady = viewerReadyFlow()
   val vmsForEditor = combine(viewerReady, vmsFlow) { ready, vms ->
@@ -90,7 +90,7 @@ private fun <VM : DiffMapped> TwosideTextDiffViewer.controlInlaysIn(
   cs: CoroutineScope,
   vmsFlow: Flow<Collection<VM>>,
   vmKeyExtractor: (VM) -> Any,
-  rendererFactory: CodeReviewRendererFactory<VM>
+  rendererFactory: CodeReviewRendererFactory<VM>,
 ) {
   val viewerReady = viewerReadyFlow()
 
@@ -125,13 +125,14 @@ private fun <VM : DiffMapped> TwosideTextDiffViewer.controlInlaysIn(
  * @param I - inlay model
  */
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Using a suspend function is safer for threading",
             ReplaceWith("cs.launch { controlReview(modelFactory, modelKey, rendererFactory) }"))
 fun <M : CodeReviewEditorModel<I>, I : CodeReviewInlayModel> DiffViewerBase.controlReviewIn(
   cs: CoroutineScope,
   modelFactory: CoroutineScope.(locationToLine: (DiffLineLocation) -> Int?, lineToLocation: (Int) -> DiffLineLocation?) -> M,
   modelKey: Key<M>,
-  rendererFactory: CodeReviewRendererFactory<I>
+  rendererFactory: CodeReviewRendererFactory<I>,
 ) {
   cs.launchNow { showCodeReview(modelFactory, modelKey, rendererFactory) }
 }
@@ -147,8 +148,24 @@ fun <M : CodeReviewEditorModel<I>, I : CodeReviewInlayModel> DiffViewerBase.cont
 @ApiStatus.Experimental
 suspend fun <M, I> DiffViewerBase.showCodeReview(
   modelFactory: CoroutineScope.(locationToLine: (DiffLineLocation) -> Int?, lineToLocation: (Int) -> DiffLineLocation?) -> M,
-  modelKey: Key<M>,
-  rendererFactory: RendererFactory<I, JComponent>
+  rendererFactory: RendererFactory<I, JComponent>,
+): Nothing where I : CodeReviewInlayModel, M : CodeReviewEditorModel<I> {
+  showCodeReview(modelFactory, null, rendererFactory)
+}
+
+/**
+ * Create editor models for diff editors via [modelFactory] and show inlays and gutter controls
+ * Inlays are created via [rendererFactory]
+ *
+ * @param M editor inlays and controls model
+ * @param I inlay model
+ * @param modelKey will be used to store model in editor user data keys
+ */
+@ApiStatus.Experimental
+suspend fun <M, I> DiffViewerBase.showCodeReview(
+  modelFactory: CoroutineScope.(locationToLine: (DiffLineLocation) -> Int?, lineToLocation: (Int) -> DiffLineLocation?) -> M,
+  modelKey: Key<M>? = null,
+  rendererFactory: RendererFactory<I, JComponent>,
 ): Nothing where I : CodeReviewInlayModel, M : CodeReviewEditorModel<I> {
   val viewer = this
   withContext(Dispatchers.Main + CoroutineName("Code review diff UI")) {
@@ -205,7 +222,7 @@ suspend fun <M, I> DiffViewerBase.showCodeReview(
   }
 }
 
-private suspend fun <I, M> EditorEx.showCodeReview(model: M, modelKey: Key<M>, rendererFactory: RendererFactory<I, JComponent>): Nothing
+private suspend fun <I, M> EditorEx.showCodeReview(model: M, modelKey: Key<M>?, rendererFactory: RendererFactory<I, JComponent>): Nothing
   where I : CodeReviewInlayModel, M : CodeReviewEditorModel<I> {
   val editor = this
   coroutineScope {
@@ -217,23 +234,24 @@ private suspend fun <I, M> EditorEx.showCodeReview(model: M, modelKey: Key<M>, r
       renderInlays(model.inlays, HashingUtil.mappingStrategy(CodeReviewInlayModel::key)) { rendererFactory(it) }
     }
 
-    putUserData(modelKey, model)
+    if (modelKey != null) {
+      putUserData(modelKey, model)
+    }
+    putUserData(CodeReviewCommentableEditorModel.KEY, model)
     try {
       awaitCancellation()
     }
     finally {
-      withContext(NonCancellable) {
+      putUserData(CodeReviewCommentableEditorModel.KEY, null)
+      if (modelKey != null) {
         putUserData(modelKey, null)
       }
     }
   }
 }
 
-private fun <V : DiffViewerBase> V.viewerReadyFlow(
-): Flow<Boolean> {
-  val isViewerGood: V.() -> Boolean = {
-    if (this is UnifiedDiffViewer) isContentGood else true
-  }
+internal fun <V : DiffViewerBase> V.viewerReadyFlow(): Flow<Boolean> {
+  val isViewerGood: V.() -> Boolean = { !hasPendingRediff() }
   return callbackFlow {
     val listener = object : DiffViewerListener() {
       // for now this utility is only used for constant diffs
@@ -265,8 +283,10 @@ private class Wrapper<VM : DiffMapped>(val vm: VM, val mapper: (DiffLineLocation
 }
 
 /**
+ * @see com.intellij.openapi.diff.impl.DiffTitleWithDetailsCustomizers
  * @see com.intellij.openapi.vcs.history.VcsDiffUtil.putFilePathsIntoChangeContext
  */
+@Deprecated("Path of changed files is shown via DiffTitleFilePathCustomizer")
 fun RefComparisonChange.buildChangeContext(): Map<Key<*>, Any> {
   val titleLeft = VcsDiffUtil.getRevisionTitle(revisionNumberBefore.toShortString(), filePathBefore, filePathAfter)
   val titleRight = VcsDiffUtil.getRevisionTitle(revisionNumberAfter.toShortString(), filePathAfter, null)

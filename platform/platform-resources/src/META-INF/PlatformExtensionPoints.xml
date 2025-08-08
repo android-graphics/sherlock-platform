@@ -1,3 +1,4 @@
+<!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin>
   <extensionPoints>
     <extensionPoint name="projectStoreClassProvider" interface="com.intellij.openapi.project.impl.ProjectStoreFactory"/>
@@ -144,6 +145,7 @@
                     beanClass="com.intellij.platform.ProjectTemplateEP" dynamic="true"/>
 
     <extensionPoint name="ideStartupWizard" interface="com.intellij.platform.ide.bootstrap.IdeStartupWizard" dynamic="false"/>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="ApplicationLoadListener" interface="com.intellij.ide.ApplicationLoadListener" dynamic="false"/>
     <extensionPoint name="ideEventQueueDispatcher" interface="com.intellij.ide.IdeEventQueue$EventDispatcher" dynamic="true"/>
 
@@ -186,7 +188,7 @@
 
     <extensionPoint name="toolWindowAllowlist" beanClass="com.intellij.openapi.wm.ToolWindowAllowlistEP" dynamic="true"/>
     <extensionPoint name="statistics.gotItTooltipAllowlist" beanClass="com.intellij.internal.statistic.collectors.fus.ui.GotItTooltipAllowlistEP" dynamic="true"/>
-
+    <extensionPoint name="dialogInvocationPlace" beanClass="com.intellij.internal.statistic.collectors.fus.ui.DialogInvocationPlaceEP" dynamic="true"/>
     <extensionPoint name="library.toolWindow" beanClass="com.intellij.openapi.wm.ext.LibraryDependentToolWindow" dynamic="true">
       <with attribute="librarySearchClass" implements="com.intellij.openapi.wm.ext.LibrarySearchHelper"/>
       <with attribute="factoryClass" implements="com.intellij.openapi.wm.ToolWindowFactory"/>
@@ -261,7 +263,7 @@
     </extensionPoint>
     <extensionPoint name="statistics.validation.customValidationRule" interface="com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule" dynamic="true"/>
     <extensionPoint name="statistics.validation.customValidationRuleFactory" interface="com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRuleFactory" dynamic="true"/>
-    <extensionPoint name="statistics.collectorExtension" interface="com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension"/>
+    <extensionPoint name="statistics.collectorExtension" interface="com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension" dynamic="true"/>
     <extensionPoint name="statistics.actionCustomPlaceAllowlist" beanClass="com.intellij.internal.statistic.collectors.fus.ActionCustomPlaceAllowlist" dynamic="true"/>
     <extensionPoint name="statistics.notificationIdsHolder" interface="com.intellij.notification.impl.NotificationIdsHolder" dynamic="true"/>
     <extensionPoint name="statistics.actionIdsHolder" interface="com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdsHolder" dynamic="true"/>
@@ -297,7 +299,6 @@
     <extensionPoint name="pluginSuggestionProvider" dynamic="true"
                     interface="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestionProvider"/>
 
-    <extensionPoint name="customPluginRepoContributor" interface="com.intellij.ide.plugins.CustomPluginRepoContributor" dynamic="true"/>
     <extensionPoint name="pluginRepositoryAuthProvider" interface="com.intellij.ide.plugins.auth.PluginRepositoryAuthProvider" dynamic="true"/>
     <extensionPoint name="pluginsViewCustomizer" interface="com.intellij.ide.plugins.newui.PluginsViewCustomizer" dynamic="true"/>
 
@@ -338,12 +339,18 @@
 
     <extensionPoint name="cachesInvalidator" interface="com.intellij.ide.caches.CachesInvalidator" dynamic="true"/>
 
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="diff.DiffTool" interface="com.intellij.diff.DiffTool" dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="diff.merge.MergeTool" interface="com.intellij.diff.merge.MergeTool" dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="diff.DiffExtension" interface="com.intellij.diff.DiffExtension" dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="diff.lang.DiffIgnoredRangeProvider" interface="com.intellij.diff.lang.DiffIgnoredRangeProvider" dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="diff.impl.DiffToolSubstitutor" interface="com.intellij.diff.impl.DiffToolSubstitutor" dynamic="true"/>
     <extensionPoint name="diff.editor.diffRequestProcessorEditorCustomizer" interface="com.intellij.diff.editor.DiffRequestProcessorEditorCustomizer" dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="diff.merge.external.AutomaticExternalMergeTool" interface="com.intellij.diff.merge.external.AutomaticExternalMergeTool" dynamic="true"/>
     <extensionPoint name="testStatusListener" interface="com.intellij.execution.testframework.TestStatusListener"/>
 
@@ -355,10 +362,12 @@
                     interface="com.intellij.execution.ExecutionActionSuppressor"
                     dynamic="true"/>
 
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="diff.actions.ShowDiffAction.ExtensionProvider"
                     interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"
                     dynamic="true"/>
 
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="diff.actions.ShowStandaloneDiffAction.ExtensionProvider"
                     interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"
                     dynamic="true"/>
@@ -412,6 +421,7 @@
     <extensionPoint name="iconMapperSuppressor" beanClass="java.lang.Object" dynamic="false"/>
     <extensionPoint name="uiChangeListener" interface="com.intellij.ui.ExperimentalUI$Listener" dynamic="true"/>
 
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="tree.CustomLanguageASTComparator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.tree.CustomLanguageASTComparator"/>
     </extensionPoint>
@@ -438,7 +448,8 @@
     <extensionPoint name="projectCloseHandler" interface="com.intellij.openapi.project.ProjectCloseHandler"/>
 
     <extensionPoint name="projectServiceContainerCustomizer" interface="com.intellij.openapi.project.impl.ProjectServiceContainerCustomizer" dynamic="true"/>
-    <extensionPoint name="projectServiceContainerInitializedListener" interface="com.intellij.openapi.project.impl.ProjectServiceContainerInitializedListener" dynamic="true"/>
+    <extensionPoint name="projectServiceInitializer" interface="com.intellij.openapi.project.impl.ProjectServiceInitializer" dynamic="true"/>
+    <extensionPoint name="projectServiceInitializer.essential" interface="com.intellij.openapi.project.impl.ProjectServiceInitializer" dynamic="true"/>
 
     <extensionPoint name="actionConfigurationCustomizer" interface="com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer" dynamic="false"/>
     <extensionPoint name="dynamicActionConfigurationCustomizer" interface="com.intellij.openapi.actionSystem.impl.DynamicActionConfigurationCustomizer" dynamic="true"/>
@@ -493,6 +504,8 @@
     <extensionPoint name="dependencyCollector" beanClass="com.intellij.ide.plugins.DependencyCollectorBean" dynamic="true">
       <with attribute="implementation" implements="com.intellij.ide.plugins.DependencyCollector"/>
     </extensionPoint>
+    <extensionPoint name="ide.dynamicPluginVetoer" interface="com.intellij.ide.plugins.DynamicPluginVetoer" dynamic="true"/>
+
     <extensionPoint name="dependencySupport" beanClass="com.intellij.ide.plugins.DependencySupportBean" dynamic="true"/>
     <extensionPoint name="actionOnSaveInfoProvider" interface="com.intellij.ide.actionsOnSave.ActionOnSaveInfoProvider" dynamic="true"/>
     <extensionPoint name="actionOnSave" interface="com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener$ActionOnSave" dynamic="true"/>
@@ -500,9 +513,15 @@
     <extensionPoint name="contentTabActionProvider" interface="com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider"
                     dynamic="true"/>
 
+    <extensionPoint name="toolWindowTabInEditorHelper" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.wm.impl.tabInEditor.ToolWindowTabInEditorHelper"/>
+    </extensionPoint>
+
     <extensionPoint name="inspectionPopupLevelChangePolicy" interface="com.intellij.openapi.editor.impl.InspectionPopupLevelChangePolicy" dynamic="true"/>
 
     <extensionPoint name="protocolHandler" interface="com.intellij.ide.ProtocolHandler" dynamic="true"/>
+
+    <extensionPoint name="protocolNavigationCommandProcessor" interface="com.intellij.ide.protocolHandler.ProtocolNavigationCommandProcessor" dynamic="true"/>
 
     <extensionPoint name="recoveryAction" interface="com.intellij.ide.actions.cache.RecoveryAction" dynamic="true"/>
 
@@ -539,25 +558,26 @@
 
     <extensionPoint name="codeWithMe.authorizationProvider" interface="com.intellij.codeWithMe.CodeWithMeAuthorizationProvider" dynamic="true" />
     <extensionPoint name="codeWithMe.serverUrlProvider" interface="com.intellij.codeWithMe.CodeWithMeServerUrlProvider" dynamic="true" />
-    <extensionPoint name="emptyIntentionProvider" interface="com.intellij.codeInsight.daemon.impl.EmptyIntentionProvider" dynamic="true"/>
 
     <extensionPoint name="idePerformanceListener" interface="com.intellij.diagnostic.PerformanceListener" dynamic="true"/>
 
     <extensionPoint name="mac.dockMenuActions" interface="com.intellij.ui.mac.MacDockMenuActions"/>
     
-    <extensionPoint name="textEditorInitializer" interface="com.intellij.openapi.fileEditor.impl.text.TextEditorInitializer"/>
+    <extensionPoint name="textEditorNecromancerAwaker" interface="com.intellij.openapi.editor.impl.zombie.NecromancerAwaker"/>
 
     <extensionPoint name="toolbarQuickAction" beanClass="com.intellij.ide.ui.customization.ToolbarAddQuickActionInfoBean">
       <with attribute="implementationClass" implements="com.intellij.ide.ui.customization.ToolbarAddQuickActionInfo"/>
     </extensionPoint>
 
     <extensionPoint name="meetNewUiCustomization" interface="com.intellij.ide.ui.experimental.meetNewUi.MeetNewUiCustomization" dynamic="true"/>
-    <extensionPoint name="uiDslRendererProvider" interface="com.intellij.ui.dsl.listCellRenderer.UiDslRendererProvider" dynamic="true"/>
 
     <extensionPoint name="notificationRouter" interface="com.intellij.notification.NotificationRouter" dynamic="true"/>
     <extensionPoint name="usageFilteringRuleCustomizer" interface="com.intellij.usages.rules.UsageFilteringRuleCustomizer" dynamic="true"/>
 
     <extensionPoint name="endUserAgreementUpdater" beanClass="com.intellij.ide.gdpr.EndUserAgreement$PluginAgreementUpdateDescriptor" dynamic="true"/>
+    <extensionPoint name="aiDataCollectionExternalSettings"
+                    interface="com.intellij.ide.gdpr.ui.consents.AiDataCollectionExternalSettings"
+                    dynamic="true"/>
 
     <extensionPoint name="cefDelegate" interface="com.intellij.ui.jcef.CefDelegate"/>
 
@@ -567,5 +587,46 @@
     <extensionPoint name="recentProjectsBranchesProvider"
                     interface="com.intellij.ide.vcs.RecentProjectsBranchesProvider"
                     dynamic="true"/>
+
+    <extensionPoint name="recentProjectsProvider"
+                    interface="com.intellij.ide.RecentProjectProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="applicationSettings"
+                    beanClass="com.intellij.ide.settings.SettingsComponentDescriptor"
+                    dynamic="true">
+      <with attribute="service" implements="com.intellij.openapi.components.PersistentStateComponent"/>
+    </extensionPoint>
+    <extensionPoint name="projectSettings"
+                    beanClass="com.intellij.ide.settings.SettingsComponentDescriptor"
+                    area="IDEA_PROJECT"
+                    dynamic="true">
+      <with attribute="service" implements="com.intellij.openapi.components.PersistentStateComponent"/>
+    </extensionPoint>
+    <extensionPoint name="genericAuthProvider"
+                    interface="com.intellij.auth.GenericAuthProviderExtension" dynamic="true"/>
+    <extensionPoint name="findInDirectoryScopeProvider" interface="com.intellij.find.impl.FindInDirectoryScopeProvider" dynamic="true"/>
+
+    <extensionPoint name="customTypeRpcSerializer" interface="com.intellij.ide.rpc.CustomTypeRpcSerializer" dynamic="true"/>
+
+    <extensionPoint name="projectTaskManagerListener" interface="com.intellij.task.impl.ProjectTaskManagerListenerExtensionPoint" dynamic="true" />
+
+    <extensionPoint name="logLevelConfigurationListener" interface="com.intellij.diagnostic.logs.LogLevelConfigurationManager$Listener" dynamic="true"/>
+
+    <extensionPoint name="pluginInstallationCustomization" interface="com.intellij.ide.plugins.newui.PluginInstallationCustomization" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.ui.content.impl.toolWindowContentPostprocessor"
+                    interface="com.intellij.ui.content.impl.ToolWindowContentPostProcessor"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.actionGroupCustomization" interface="com.intellij.ide.ui.customization.ActionGroupCustomizationExtension" dynamic="true"/>
+    <extensionPoint name="subprojectInfoProvider"
+                    interface="com.intellij.openapi.project.workspace.SubprojectInfoProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="commandLineEnvCustomizer"
+                    interface="com.intellij.execution.process.CommandLineEnvCustomizer"
+                    dynamic="true"/>
+
   </extensionPoints>
 </idea-plugin>

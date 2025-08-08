@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
@@ -12,12 +12,12 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -359,7 +359,7 @@ public final class PluginManagerMain {
 
     if (AppMode.isHeadless()) {
       // postponing the dialog till the next start
-      PluginManagerCore.INSTANCE.write3rdPartyPlugins(aliens);
+      PluginManagerCore.writeThirdPartyPluginsIds(ContainerUtil.map(aliens, IdeaPluginDescriptor::getPluginId));
       return true;
     }
 
@@ -367,7 +367,7 @@ public final class PluginManagerMain {
     var pluginList = aliens.stream()
       .map(descriptor -> "&nbsp;&nbsp;&nbsp;" + PluginManagerCore.getPluginNameAndVendor(descriptor))
       .collect(Collectors.joining("<br>"));
-    var message = CoreBundle.message("third.party.plugins.privacy.note.text", pluginList, ApplicationInfo.getInstance().getShortCompanyName());
+    var message = CoreBundle.message("third.party.plugins.privacy.note.text", pluginList, ApplicationInfoImpl.getShadowInstance().getShortCompanyName());
     var yesText = CoreBundle.message("third.party.plugins.privacy.note.accept");
     var noText = CommonBundle.getCancelButtonText();
     if (Messages.showYesNoDialog(message, title, yesText, noText, Messages.getWarningIcon()) == Messages.YES) {

@@ -10,7 +10,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolder
-import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -34,9 +33,6 @@ interface PySdkProvider {
    */
   fun loadAdditionalDataForSdk(element: Element): SdkAdditionalData?
 
-  // Packaging
-  fun tryCreatePackageManagementServiceForSdk(project: Project, sdk: Sdk): PyPackageManagementService?
-
   // Inspections
   /**
    * Quickfix that makes the existing environment available to the module, or null.
@@ -54,7 +50,7 @@ interface PySdkProvider {
                                 module: Module?,
                                 existingSdks: List<Sdk>,
                                 newProjectPath: String?,
-                                context: UserDataHolder): PyAddNewEnvPanel
+                                context: UserDataHolder): PyAddNewEnvPanel?
 
 
   companion object {

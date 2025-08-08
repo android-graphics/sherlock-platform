@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.setup
 
-import com.intellij.ide.impl.NewProjectUtil
+import com.intellij.ide.impl.createProjectFromWizardImpl
 import com.intellij.ide.projectWizard.NewProjectWizard
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
@@ -16,6 +16,7 @@ import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GENERATE_ONBOARDIN
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GIT_PROPERTY_NAME
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GROUP_ID_PROPERTY_NAME
 import com.intellij.ide.wizard.Step
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
@@ -28,20 +29,24 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.utils.vfs.getDirectory
 import com.intellij.testFramework.withProjectAsync
 import com.intellij.ui.UIBundle
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
+import org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFile
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.javaGradleData
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
 import org.jetbrains.plugins.gradle.testFramework.GradleTestCase
 import org.jetbrains.plugins.gradle.testFramework.util.ModuleInfo
 import org.jetbrains.plugins.gradle.testFramework.util.ProjectInfo
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.toJvmCriteria
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
+import java.nio.file.Path
 
 abstract class GradleCreateProjectTestCase : GradleTestCase() {
 
@@ -80,10 +85,7 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
     step.baseData!!.name = moduleInfo.name
     step.baseData!!.path = testRoot.toNioPath().getResolvedPath(moduleInfo.relativePath).parent.toCanonicalPath()
     step.javaBuildSystemData!!.buildSystem = GRADLE
-    step.javaGradleData!!.gradleDsl = when (moduleInfo.useKotlinDsl) {
-      true -> GradleNewProjectWizardStep.GradleDsl.KOTLIN
-      else -> GradleNewProjectWizardStep.GradleDsl.GROOVY
-    }
+    step.javaGradleData!!.gradleDsl = GradleDsl.valueOf(moduleInfo.useKotlinDsl)
     step.javaGradleData!!.parentData = parentData
     step.javaGradleData!!.groupId = moduleInfo.groupId
     step.javaGradleData!!.artifactId = moduleInfo.artifactId
@@ -93,38 +95,32 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
 
   suspend fun createProjectByWizard(
     group: String,
-    wait: Boolean = true,
-    configure: NewProjectWizardStep.() -> Unit
+    numProjectSyncs: Int = 1,
+    configure: NewProjectWizardStep.() -> Unit,
   ): Project {
-    val wizard = createAndConfigureWizard(group, null, configure)
-    return closeOpenedProjectsIfFailAsync {
-      awaitAnyGradleProjectReload(wait = wait) {
-        blockingContext {
-          invokeAndWaitIfNeeded {
-            val project = NewProjectUtil.createFromWizard(wizard, null)!!
-            PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
-            project
-          }
-        }
+    val wizard = createAndConfigureWizard(group = group, project = null, configure = configure)
+    return awaitOpenProjectConfiguration(numProjectSyncs) {
+      val project = createProjectFromWizardImpl(wizard = wizard, projectFile = Path.of(wizard.newProjectFilePath), projectToClose = null)
+      withContext(Dispatchers.EDT) {
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
       }
+      project!!
     }
   }
 
   suspend fun createModuleByWizard(
     project: Project,
     group: String,
-    wait: Boolean = true,
-    configure: NewProjectWizardStep.() -> Unit
+    numProjectSyncs: Int = 1,
+    configure: NewProjectWizardStep.() -> Unit,
   ): Module? {
     val wizard = createAndConfigureWizard(group, project, configure)
-    return closeOpenedProjectsIfFailAsync {
-      awaitAnyGradleProjectReload(wait = wait) {
-        blockingContext {
-          invokeAndWaitIfNeeded {
-            val module = NewModuleAction().createModuleFromWizard(project, null, wizard)
-            PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
-            module
-          }
+    return awaitProjectConfiguration(project, numProjectSyncs) {
+      blockingContext {
+        invokeAndWaitIfNeeded {
+          val module = NewModuleAction().createModuleFromWizard(project, null, wizard)
+          PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+          module
         }
       }
     }
@@ -195,6 +191,13 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
       val moduleRoot = testRoot.getDirectory(moduleInfo.relativePath)
       moduleInfo.filesConfiguration.assertContentsAreEqual(moduleRoot)
     }
+  }
+
+  fun assertDaemonJvmProperties(project: Project) {
+    val externalProjectPath = Path.of(project.basePath!!)
+    val properties = GradleDaemonJvmPropertiesFile.getProperties(externalProjectPath)
+    Assertions.assertNotNull(properties)
+    Assertions.assertEquals(gradleJvmInfo.toJvmCriteria(), properties!!.criteria)
   }
 
   companion object {

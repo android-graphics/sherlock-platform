@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.application.options.CodeStyle;
@@ -347,19 +347,22 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public static void cleanupApplicationCaches(@Nullable Project project) {
-    Application app = ApplicationManager.getApplication();
+    var app = ApplicationManager.getApplication();
     if (app == null) {
       return;
     }
 
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
 
-    UndoManagerImpl globalInstance = (UndoManagerImpl)UndoManager.getGlobalInstance();
-    if (globalInstance != null) {
-      globalInstance.dropHistoryInTests();
+    var undoManager = (UndoManagerImpl)UndoManager.getGlobalInstance();
+    if (undoManager != null) {
+      app.runWriteIntentReadAction(() -> { undoManager.dropHistoryInTests(); return null; });
     }
 
-    ((DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance()).cleanupForNextTest();
+    var docRefManager = (DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance();
+    if (docRefManager != null) {
+      docRefManager.cleanupForNextTest();
+    }
 
     cleanupProjectDependentCaches(project);
 
@@ -476,6 +479,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       },
       () -> {
         if (myThreadTracker != null) {
+          VfsTestUtil.waitForFileWatcher();
           myThreadTracker.checkLeak();
         }
       },
@@ -623,7 +627,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
   protected void runBareRunnable(@NotNull ThrowableRunnable<Throwable> runnable) throws Throwable {
     if (runInDispatchThread()) {
-      EdtTestUtil.runInEdtAndWait(runnable);
+      EdtTestUtil.runInEdtAndWait(wrapTestRunnable(runnable));
     }
     else {
       runnable.run();
@@ -663,8 +667,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     return dir.toFile();
   }
 
-  @NotNull
-  protected static VirtualFile getVirtualFile(@NotNull File file) {
+  protected static @NotNull VirtualFile getVirtualFile(@NotNull File file) {
     return Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
   }
 

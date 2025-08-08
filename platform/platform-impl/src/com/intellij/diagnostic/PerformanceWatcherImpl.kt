@@ -1,9 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.diagnostic
 
-import com.intellij.execution.process.OSProcessUtil
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.DebugAttachDetector
@@ -24,6 +22,8 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.platform.diagnostic.telemetry.Scope
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
@@ -42,7 +42,6 @@ import sun.awt.ModalityEvent
 import sun.awt.ModalityListener
 import sun.awt.SunToolkit
 import java.awt.Toolkit
-import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -52,7 +51,7 @@ import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.coroutineContext
-import kotlin.io.path.name
+import kotlin.io.path.*
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -104,8 +103,7 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
       }
     }
     (Toolkit.getDefaultToolkit() as? SunToolkit)?.addModalityListener(object : ModalityListener {
-      override fun modalityPushed(ev: ModalityEvent) {
-      }
+      override fun modalityPushed(ev: ModalityEvent) { }
 
       override fun modalityPopped(ev: ModalityEvent) {
         stopCurrentTaskAndReEmit(FreezeCheckerTask(System.nanoTime()))
@@ -152,7 +150,7 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
           if (executorSize > reasonableThreadPoolSize.asInteger() + allAvailableProcessors) {
             val message = "Too many threads: $executorSize created in the global Application pool. " +
                           "($reasonableThreadPoolSize, available processors: $allAvailableProcessors)"
-            val file = doDumpThreads("newPooledThread/", true, message, true)
+            val file = dumpThreads(pathPrefix = "newPooledThread/", appendMillisecondsToFileName = true, contentsPrefix = message, stripDump = true)
             LOG.info(message + if (file == null) "" else "; thread dump is saved to '$file'")
           }
         }
@@ -166,7 +164,7 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
         Files.newDirectoryStream(logDir) { it.fileName.toString().startsWith(THREAD_DUMPS_PREFIX) }.use { it.sorted() }
       }
     }
-    catch (ignore: NoSuchFileException) {
+    catch (_: NoSuchFileException) {
       return
     }
 
@@ -185,8 +183,7 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
         } ?: continue
         consumer(file, duration)
       }
-      catch (ignored: Exception) {
-      }
+      catch (_: Exception) { }
     }
   }
 
@@ -248,17 +245,12 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
     check(taskFlow.tryEmit(task))
   }
 
-  override fun dumpThreads(pathPrefix: String, appendMillisecondsToFileName: Boolean, stripDump: Boolean): Path? {
-    return doDumpThreads(pathPrefix = pathPrefix,
-                         appendMillisecondsToFileName = appendMillisecondsToFileName,
-                         contentsPrefix = "",
-                         stripDump = stripDump)
-  }
+  override fun dumpThreads(pathPrefix: String, appendMillisecondsToFileName: Boolean, stripDump: Boolean): Path? =
+    dumpThreads(pathPrefix, appendMillisecondsToFileName, contentsPrefix = "", stripDump)
 
-  private fun doDumpThreads(pathPrefix: String, appendMillisecondsToFileName: Boolean, contentsPrefix: String, stripDump: Boolean): Path? {
-    return dumpThreads(pathPrefix = pathPrefix,
-                       appendMillisecondsToFileName = appendMillisecondsToFileName,
-                       rawDump = contentsPrefix + ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), stripDump).rawDump)
+  private fun dumpThreads(pathPrefix: String, appendMillisecondsToFileName: Boolean, contentsPrefix: String, stripDump: Boolean): Path? {
+    val rawDump = contentsPrefix + ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), stripDump).rawDump
+    return dumpThreads(pathPrefix, appendMillisecondsToFileName, rawDump)
   }
 
   private fun dumpThreads(pathPrefix: String, appendMillisecondsToFileName: Boolean, rawDump: String): Path? {
@@ -415,11 +407,26 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
     private val startMillis = System.currentTimeMillis()
 
     override fun logResponsivenessSinceCreation(activityName: @NonNls String) {
-      LOG.info(getLogResponsivenessSinceCreationMessage(activityName))
+      logResponsivenessSinceCreation(activityName, null)
     }
 
-    override fun getLogResponsivenessSinceCreationMessage(activityName: @NonNls String): String {
-      return "$activityName took ${System.currentTimeMillis() - startMillis}ms; general responsiveness: ${
+    override fun logResponsivenessSinceCreation(activityName: @NonNls String, spanName: String?) {
+      LOG.info(getLogResponsivenessSinceCreationMessage(activityName, spanName))
+    }
+
+    override fun getLogResponsivenessSinceCreationMessage(activityName: @NonNls String): String =
+      getLogResponsivenessSinceCreationMessage(activityName, null)
+
+    override fun getLogResponsivenessSinceCreationMessage(activityName: @NonNls String, spanName: String?): String {
+      val currentTime = System.currentTimeMillis()
+      if (spanName != null) {
+        TelemetryManager.getTracer(Scope("PerformanceWatcher"))
+          .spanBuilder(spanName)
+          .setStartTimestamp(startMillis, TimeUnit.MILLISECONDS)
+          .startSpan()
+          .end(currentTime, TimeUnit.MILLISECONDS)
+      }
+      return "$activityName took ${currentTime - startMillis}ms; general responsiveness: ${
         watcher.generalApdex.summarizePerformanceSince(startGeneralSnapshot)
       }; EDT responsiveness: ${watcher.swingApdex.summarizePerformanceSince(startSwingSnapshot)}"
     }
@@ -513,7 +520,7 @@ private suspend fun reportCrashesIfAny() {
       if (crashInfo.extraJvmLog != null) {
         // Detect crashes caused by OOME
         if (crashInfo.extraJvmLog.contains("java.lang.OutOfMemoryError: Java heap space")) {
-          LowMemoryNotifier.showNotification(VMOptions.MemoryKind.HEAP, true)
+          LowMemoryNotifier.showNotificationFromCrashAnalysis()
         }
         attachments += Attachment("jbr_err.txt", crashInfo.extraJvmLog).also { it.isIncluded = true }
       }
@@ -526,17 +533,17 @@ private suspend fun reportCrashesIfAny() {
                     ?: crashInfo.extraJvmLog
                     ?: crashInfo.osCrashContent
                     ?: "<no crash info retrieved>" // actually should never happen, but it's better than throwing, at least attachments are reported
-      val event = LogMessage.eventOf(JBRCrash(), message, attachments)
-      IdeaFreezeReporter.setAppInfo(event, Files.readString(appInfoFile))
+      val event = LogMessage(JBRCrash(), message, attachments)
+      event.appInfo = Files.readString(appInfoFile)
       IdeaFreezeReporter.report(event)
       LifecycleUsageTriggerCollector.onCrashDetected()
     }
   }
 
-  IdeaFreezeReporter.saveAppInfo(appInfoFile = appInfoFile, overwrite = true)
+  IdeaFreezeReporter.saveAppInfo(appInfoFile, overwrite = true)
   withContext(Dispatchers.IO) {
     Files.createDirectories(pidFile.parent)
-    Files.writeString(pidFile, OSProcessUtil.getApplicationPid())
+    Files.writeString(pidFile, ProcessHandle.current().pid().toString())
   }
 }
 
@@ -552,16 +559,16 @@ private data class CrashInfo(val jvmCrashContent: String?, val extraJvmLog: Stri
 
 private fun collectCrashInfo(pid: String, lastModified: Long): CrashInfo? {
   val javaCrashContent = runCatching {
-    val crashFiles = ((File(SystemProperties.getUserHome()).listFiles { file ->
-      file.name.startsWith("java_error_in") && file.name.endsWith("$pid.log") && file.isFile && file.lastModified() > lastModified
-    }) ?: arrayOfNulls(0))
-
+    val crashFiles = Path.of(SystemProperties.getUserHome()).useDirectoryEntries { entries -> entries
+      .filter { it.name.startsWith("java_error_in") && it.name.endsWith("${pid}.log") && it.isRegularFile() && it.getLastModifiedTime().toMillis() > lastModified }
+      .toList()
+    }
     crashFiles.firstNotNullOfOrNull { file ->
-      if (file.length() > CRASH_MAX_SIZE) {
+      if (file.fileSize() > CRASH_MAX_SIZE) {
         LOG.info("Crash file $file is too big to report")
         return@firstNotNullOfOrNull null
       }
-      return@firstNotNullOfOrNull Files.readString(file.toPath())
+      return@firstNotNullOfOrNull Files.readString(file)
     }
   }.getOrLogException(LOG)
 
@@ -578,16 +585,17 @@ private fun collectCrashInfo(pid: String, lastModified: Long): CrashInfo? {
   val osCrashContent = runCatching {
     if (!SystemInfoRt.isMac) return@runCatching null
     for (reportsDir in MacOSDiagnosticReportDirectories) {
-      val reportFiles = File(reportsDir).listFiles { file ->
-        file.name.endsWith(".ips") && file.isFile && file.lastModified() > lastModified
-      } ?: arrayOfNulls(0)
+      val reportFiles = Path.of(reportsDir).useDirectoryEntries { entries -> entries
+        .filter { it.name.endsWith(".ips") && it.isRegularFile() && it.getLastModifiedTime().toMillis() > lastModified }
+        .toList()
+      }
       val osCrashContent = reportFiles.firstNotNullOfOrNull { file ->
-        if (file.length() > CRASH_MAX_SIZE) {
+        if (file.fileSize() > CRASH_MAX_SIZE) {
           LOG.info("OS crash file $file is too big to process or report")
           return@firstNotNullOfOrNull null
         }
         // https://developer.apple.com/documentation/xcode/interpreting-the-json-format-of-a-crash-report
-        val content = Files.readString(file.toPath())
+        val content = Files.readString(file)
         if (!content.contains(pid)) return@firstNotNullOfOrNull null // certainly not our crash report
         try {
           val jsonObjects = content.splitToSequence("\r\n", "\n", "\r", limit = 2).toList()
@@ -636,7 +644,7 @@ private fun cleanOldFiles(dir: Path, level: Int) {
   val children = try {
     Files.newDirectoryStream(dir) { level > 0 || it.fileName.toString().startsWith(THREAD_DUMPS_PREFIX) }.use { it.sorted() }
   }
-  catch (ignore: NoSuchFileException) {
+  catch (_: NoSuchFileException) {
     return
   }
 
@@ -650,16 +658,14 @@ private fun cleanOldFiles(dir: Path, level: Int) {
   }
 }
 
-private fun ageInDays(file: Path): Long {
-  return (System.currentTimeMillis() - Files.getLastModifiedTime(file).toMillis()).toDuration(DurationUnit.MILLISECONDS).inWholeDays
-}
+private fun ageInDays(file: Path): Long =
+  (System.currentTimeMillis() - Files.getLastModifiedTime(file).toMillis()).toDuration(DurationUnit.MILLISECONDS).inWholeDays
 
 /** for [PerformanceListener.uiResponded] events (ms)  */
 private const val samplingInterval = 1000L
 
 private fun buildName(): String = ApplicationInfo.getInstance().build.asString()
 
-@Suppress("SpellCheckingInspection")
 private val dateFormat = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")
 
 private fun formatTime(time: ZonedDateTime): String = dateFormat.format(time)
@@ -668,11 +674,10 @@ private fun cleanup(dir: Path) {
   Files.deleteIfExists(dir.resolve(DURATION_FILE_NAME))
 }
 
-internal fun getStacktraceCommonPart(commonPart: List<StackTraceElement>,
-                                     stackTraceElements: Array<StackTraceElement>): List<StackTraceElement> {
+internal fun getStacktraceCommonPart(commonPart: List<StackTraceElement>, stackTraceElements: Array<StackTraceElement>): List<StackTraceElement> {
   var i = 0
   while (i < commonPart.size && i < stackTraceElements.size) {
-    val el1 = commonPart.get(commonPart.size - i - 1)
+    val el1 = commonPart[commonPart.size - i - 1]
     val el2 = stackTraceElements[stackTraceElements.size - i - 1]
     if (!compareStackTraceElements(el1, el2)) {
       return commonPart.subList(commonPart.size - i, commonPart.size)
@@ -683,15 +688,10 @@ internal fun getStacktraceCommonPart(commonPart: List<StackTraceElement>,
 }
 
 // same as java.lang.StackTraceElement.equals, but do not care about the line number
-internal fun compareStackTraceElements(el1: StackTraceElement, el2: StackTraceElement): Boolean {
-  if (el1 === el2) {
-    return true
-  }
-  else {
-    return el1.className == el2.className && el1.methodName == el2.methodName && el1.fileName == el2.fileName
-  }
-}
+internal fun compareStackTraceElements(el1: StackTraceElement, el2: StackTraceElement): Boolean =
+  el1 === el2 || el1.className == el2.className && el1.methodName == el2.methodName && el1.fileName == el2.fileName
 
+@Suppress("ClassName")
 private sealed interface CheckerState {
   object CHECKING : CheckerState
   object FREEZE_DETECTED : CheckerState

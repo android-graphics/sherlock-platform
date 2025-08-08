@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.search.refIndex;
 
@@ -58,6 +58,44 @@ public abstract class KotlinCompilerReferenceFirTestGenerated extends AbstractKo
             @TestMetadata("companion")
             public void testCompanion() throws Exception {
                 runTest("../tests/testData/compilerIndex/classOrObject/companion/");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../tests/testData/compilerIndex/classOrObject")
+        public static class TestEnumEntry extends AbstractKotlinCompilerReferenceFirTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("enumEntry")
+            public void testEnumEntry() throws Exception {
+                runTest("../tests/testData/compilerIndex/classOrObject/enumEntry/");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../tests/testData/compilerIndex/classOrObject")
+        public static class TestEnumEntryWithClassInitializer extends AbstractKotlinCompilerReferenceFirTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("enumEntryWithClassInitializer")
+            public void testEnumEntryWithClassInitializer() throws Exception {
+                runTest("../tests/testData/compilerIndex/classOrObject/enumEntryWithClassInitializer/");
             }
         }
 

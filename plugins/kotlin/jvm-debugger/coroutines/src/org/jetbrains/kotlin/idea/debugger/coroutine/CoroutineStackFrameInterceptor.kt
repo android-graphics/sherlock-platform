@@ -1,21 +1,21 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine
 
 import com.intellij.debugger.actions.AsyncStacksToggleAction
 import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl
+import com.intellij.debugger.engine.MethodInvokeUtils
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.SuspendManagerUtil
-import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.DebuggerUtilsImpl
+import com.intellij.debugger.impl.HelperClassNotAvailableException
+import com.intellij.debugger.impl.MethodNotFoundException
 import com.intellij.debugger.jdi.StackFrameProxyImpl
-import com.intellij.execution.ui.layout.impl.RunnerContentUi
-import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
-import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.rt.debugger.ExceptionDebugHelper
 import com.intellij.rt.debugger.coroutines.CoroutinesDebugHelper
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
@@ -24,58 +24,56 @@ import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionCon
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
+import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
 import org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor
 import org.jetbrains.kotlin.idea.debugger.core.stepping.CoroutineFilter
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.SuspendExitMode
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.SkipCoroutineStackFrameProxyImpl
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.*
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.CoroutineStackFrameLight
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugMetadata
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImplCoroutineOwner
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.*
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
-class CoroutineStackFrameInterceptor : StackFrameInterceptor {
+private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
     override fun createStackFrames(frame: StackFrameProxyImpl, debugProcess: DebugProcessImpl): List<XStackFrame>? {
-        if (debugProcess.xdebugProcess?.session is XDebugSessionImpl
-            && frame !is SkipCoroutineStackFrameProxyImpl
-            && AsyncStacksToggleAction.isAsyncStacksEnabled(debugProcess.xdebugProcess?.session as XDebugSessionImpl)) {
-            // skip -1 line in invokeSuspend and main
-            val location = frame.safeLocation()
-            if (location != null && location.safeLineNumber() < 0 &&
-                (location.safeMethod()?.name() == "main" || location.isInvokeSuspend())) {
-                return emptyList()
-            }
+        DebuggerManagerThreadImpl.assertIsManagerThread()
+        if (debugProcess.xdebugProcess?.session !is XDebugSessionImpl
+            || frame is SkipCoroutineStackFrameProxyImpl
+            || !AsyncStacksToggleAction.isAsyncStacksEnabled(debugProcess.xdebugProcess?.session as XDebugSessionImpl)) {
+            return null
+        }
+        // skip -1 line in invokeSuspend and main
+        val location = frame.safeLocation()
+        if (location != null && location.safeLineNumber() < 0 &&
+            (location.safeMethod()?.name() == "main" || location.isInvokeSuspend())) {
+            return emptyList()
+        }
 
-            val suspendContextImpl = SuspendManagerUtil.getContextForEvaluation(debugProcess.suspendManager)
-            val stackFrame = suspendContextImpl?.let {
-                CoroutineFrameBuilder.coroutineExitFrame(frame, it)
-            } ?: return null
+        val suspendContext = SuspendManagerUtil.getContextForEvaluation(debugProcess.suspendManager) ?: return null
 
-            // only leave the first suspend frame
-            if (!stackFrame.isFirstSuspendFrame) {
-                return emptyList() // skip
-            }
+        val (isSuspendFrame, isFirst) = CoroutineFrameBuilder.isFirstSuspendFrame(frame)
+        if (!isSuspendFrame) {
+            return null
+        }
 
-            if (Registry.`is`("debugger.kotlin.auto.show.coroutines.view")) {
-                showCoroutinePanel(debugProcess)
-            }
+        if (!isFirst) {
+            return emptyList() // skip
+        }
 
-            val resumeWithFrame = stackFrame.threadPreCoroutineFrames.firstOrNull()
+        // only get the information for the first suspend frame
+        val stackFrame = CoroutineFrameBuilder.coroutineExitFrame(frame, suspendContext) ?: return null
 
-            if (threadAndContextSupportsEvaluation(suspendContextImpl, resumeWithFrame)) {
-                val frameItemLists = CoroutineFrameBuilder.build(stackFrame, suspendContextImpl, withPreFrames = false)
-                return listOf(stackFrame) + frameItemLists.frames.mapNotNull { it.createFrame(debugProcess) }
-            }
+        if (Registry.`is`("debugger.kotlin.auto.show.coroutines.view")) {
+            showOrHideCoroutinePanel(debugProcess, true)
+        }
+
+        if (!threadAndContextSupportsEvaluation(suspendContext, frame)) {
             return listOf(stackFrame)
         }
-        return null
-    }
-
-    private fun showCoroutinePanel(debugProcess: DebugProcessImpl) {
-        val ui = debugProcess.session.xDebugSession?.ui.safeAs<RunnerLayoutUiImpl>() ?: return
-        val runnerContentUi = RunnerContentUi.KEY.getData(ui) ?: return
-        runInEdt {
-            runnerContentUi.findOrRestoreContentIfNeeded(CoroutineDebuggerContentInfo.XCOROUTINE_THREADS_CONTENT)
-        }
+        val frameItemLists = CoroutineFrameBuilder.build(stackFrame, suspendContext, withPreFrames = false)
+        return listOf(stackFrame) + frameItemLists.frames.mapNotNull { it.createFrame(debugProcess) }
     }
 
     override fun extractCoroutineFilter(suspendContext: SuspendContextImpl): CoroutineFilter? {
@@ -193,33 +191,6 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         return (result as ArrayReference).values.asSequence().map { (it as LongValue).value() }.toHashSet()
     }
 
-    private fun callMethodFromHelper(helperClass: Class<*>, context: DefaultExecutionContext, methodName: String, args: List<Value?>): Value? {
-        try {
-            return DebuggerUtilsImpl.invokeHelperMethod(context.evaluationContext, helperClass, methodName, args)
-        } catch (e: Exception) {
-            if (e is EvaluateException && e.exceptionFromTargetVM != null) {
-                var exceptionStack = DebuggerUtilsImpl.getExceptionText(context.evaluationContext, e.exceptionFromTargetVM!!)
-                if (exceptionStack != null) {
-                    // drop user frames
-                    val currentStackDepth = (DebuggerUtilsImpl.invokeHelperMethod(
-                        context.evaluationContext,
-                        ExceptionDebugHelper::class.java,
-                        "getCurrentThreadStackDepth",
-                        emptyList()
-                    ) as IntegerValue).value()
-                    val lines = exceptionStack.lines()
-                    if (lines.size > currentStackDepth) {
-                        exceptionStack = lines.subList(0, lines.size - currentStackDepth + 1).joinToString(separator = "\n")
-                    }
-                    DebuggerUtilsImpl.logError(e.message, e, exceptionStack)
-                    return null
-                }
-            }
-            DebuggerUtilsImpl.logError(e) // for now log everything
-        }
-        return null
-    }
-
     private fun extractContinuation(frameProxy: StackFrameProxyImpl): ObjectReference? {
         val suspendExitMode = frameProxy.location().getSuspendExitMode()
         return when (suspendExitMode) {
@@ -251,7 +222,7 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         val debugMetadata = DebugMetadata.instance(executionContext) ?: return null
         val callerFrame = callMethodFromHelper(CoroutinesDebugHelper::class.java, executionContext, "getCallerFrame", listOf(continuationObject))?: return null
         val stackTraceElement = debugMetadata.getStackTraceElement(callerFrame as ObjectReference, executionContext)?.stackTraceElement() ?: return null
-        return stackTraceElement.let { DebuggerUtilsEx.findOrCreateLocation(suspendContext.debugProcess, it) }
+        return stackTraceElement.let { DebuggerUtilsEx.findOrCreateLocation(suspendContext.virtualMachineProxy.virtualMachine, it) }
     }
 
     private fun SuspendContextImpl.getStackFrameProxyImpl(): StackFrameProxyImpl? =
@@ -266,6 +237,14 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         }
         override fun canRunTo(nextCoroutineFilter: CoroutineFilter): Boolean =
             (nextCoroutineFilter is CoroutineIdFilter && coroutinesRunningOnCurrentThread.intersect(nextCoroutineFilter.coroutinesRunningOnCurrentThread).isNotEmpty())
+
+        override val coroutineFilterName: String get() {
+            coroutinesRunningOnCurrentThread.singleOrNull()?.let {
+                return KotlinDebuggerCoreBundle.message("stepping.filter.coroutine.name", "#$it")
+            }
+            val ids = coroutinesRunningOnCurrentThread.toList().sortedBy { it }.joinToString(", ") { "#$it" }
+            return KotlinDebuggerCoreBundle.message("stepping.filter.several.coroutines.name", ids)
+        }
     }
 
     /**
@@ -274,5 +253,25 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
     private data class ContinuationObjectFilter(val reference: ObjectReference) : CoroutineFilter {
         override fun canRunTo(nextCoroutineFilter: CoroutineFilter): Boolean =
             this == nextCoroutineFilter
+
+        override val coroutineFilterName: String get() = reference.toString()
     }
+}
+
+internal fun callMethodFromHelper(
+    helperClass: Class<*>, context: DefaultExecutionContext, methodName: String, args: List<Value?>,
+    vararg additionalClassesToLoad: String
+): Value? {
+    try {
+        return DebuggerUtilsImpl.invokeHelperMethod(context.evaluationContext, helperClass, methodName, args, true, *additionalClassesToLoad)
+    } catch (e: HelperClassNotAvailableException) {
+        fileLogger().warn(e)
+    } catch (e: MethodNotFoundException) {
+        fileLogger().warn(e)
+    } catch (e: Exception) {
+        val helperExceptionStackTrace = MethodInvokeUtils.getHelperExceptionStackTrace(context.evaluationContext, e)
+        DebuggerUtilsImpl.logError("Exception from helper: ${e.message}", e,
+                                   *listOfNotNull(helperExceptionStackTrace).toTypedArray()) // log helper exception if available
+    }
+    return null
 }

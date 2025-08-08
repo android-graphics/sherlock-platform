@@ -6,10 +6,7 @@ import com.intellij.util.asSafely
 import com.jetbrains.jsonSchema.extension.JsonSchemaValidation
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
-import com.jetbrains.jsonSchema.impl.IfThenElse
-import com.jetbrains.jsonSchema.impl.JsonSchemaObject
-import com.jetbrains.jsonSchema.impl.JsonSchemaType
-import com.jetbrains.jsonSchema.impl.MergedJsonSchemaObject
+import com.jetbrains.jsonSchema.impl.*
 import com.jetbrains.jsonSchema.impl.light.legacy.LegacyJsonSchemaObjectMerger
 import com.jetbrains.jsonSchema.impl.light.versions.JsonSchemaInterpretationStrategy
 
@@ -38,15 +35,15 @@ internal class InheritedJsonSchemaObjectView(
     return other.ref
   }
 
-  override fun readChildNodeValue(vararg childNodeName: String): String? {
+  override fun readChildNodeValue(childNodeName: String): String? {
     return baseIfConditionOrOtherWithArgument(JsonSchemaObject::readChildNodeValue, childNodeName, String?::isNotBlank)
   }
 
-  override fun hasChildNode(vararg childNodeName: String): Boolean {
-    return other.hasChildNode(*childNodeName)
+  override fun hasChildNode(childNodeName: String): Boolean {
+    return other.hasChildNode(childNodeName)
   }
 
-  override fun hasChildFieldsExcept(namesToSkip: Array<String>): Boolean {
+  override fun hasChildFieldsExcept(namesToSkip: List<String>): Boolean {
     return booleanOrWithArgument(JsonSchemaObject::hasChildFieldsExcept, namesToSkip)
   }
 
@@ -119,6 +116,10 @@ internal class InheritedJsonSchemaObjectView(
     if (otherDef == null) return baseDef
 
     return LightweightJsonSchemaObjectMerger.mergeObjects(baseDef, otherDef, otherDef)
+  }
+
+  override fun getMetadata(): MutableList<JsonSchemaMetadataEntry>? {
+    return other.metadata
   }
 
   override fun hasPatternProperties(): Boolean {

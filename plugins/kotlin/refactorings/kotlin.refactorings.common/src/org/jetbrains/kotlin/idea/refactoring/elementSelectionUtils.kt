@@ -4,17 +4,15 @@ package org.jetbrains.kotlin.idea.refactoring
 
 import com.intellij.codeInsight.navigation.PsiTargetNavigator
 import com.intellij.codeInsight.unwrap.ScopeHighlighter
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.openapi.util.Computable
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -27,9 +25,9 @@ import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import java.util.concurrent.Callable
 
 @Deprecated("If called on EDT, callback is called on EDT. Use overload, passing `failOnEmptySuggestion = false` instead")
@@ -118,9 +116,10 @@ fun getSmartSelectSuggestions(
     var element: PsiElement? = file.findElementAt(offset) ?: return emptyList()
 
     if (element is PsiWhiteSpace
-        || isOriginalOffset && element?.node?.elementType == KtTokens.RPAR
+        || isOriginalOffset && element is LeafPsiElement && element.elementType == KtTokens.RPAR
         || element is PsiComment
-        || element?.getStrictParentOfType<KDoc>() != null
+        || element is LeafPsiElement && (element.elementType == KtTokens.DOT || element.elementType == KtTokens.COMMA)
+        || element?.getParentOfType<KDoc>(strict = true, KtDeclaration::class.java) != null
     ) return getSmartSelectSuggestions(file, offset - 1, elementKind, isOriginalOffset = false)
 
     val elements = ArrayList<KtElement>()

@@ -15,7 +15,6 @@ import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.Path
-import kotlin.io.path.absolute
 import kotlin.io.path.inputStream
 import kotlin.system.exitProcess
 
@@ -56,7 +55,7 @@ fun main(args: Array<String>) {
 }
 
 private fun loadProductModules(moduleRepository: RuntimeModuleRepository, projectHome: Path): ProductModules {
-  val currentModeId = System.getProperty(PLATFORM_PRODUCT_MODE_PROPERTY, ProductMode.LOCAL_IDE.id)
+  val currentModeId = System.getProperty(PLATFORM_PRODUCT_MODE_PROPERTY, ProductMode.MONOLITH.id)
   val currentMode = ProductMode.entries.find { it.id == currentModeId }
   if (currentMode == null) {
     reportError("Unknown mode '$currentModeId' specified in '$PLATFORM_PRODUCT_MODE_PROPERTY' system property")

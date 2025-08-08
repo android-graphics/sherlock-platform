@@ -26,7 +26,6 @@ import com.intellij.psi.impl.light.LightElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.collapseSpaces
-import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import java.util.*
@@ -62,7 +61,7 @@ private fun <T> chooseContainerElementIfNecessaryImpl(
 ) {
     when {
         containers.isEmpty() -> return
-        containers.size == 1 || isUnitTestMode() -> onSelect(containers.first())
+        containers.size == 1 -> onSelect(containers.first())
         toPsi != null -> chooseContainerElement(containers, editor, title, highlightSelection, toPsi, onSelect)
         else -> {
             @Suppress("UNCHECKED_CAST")
@@ -116,20 +115,19 @@ private fun <T, E : PsiElement> choosePsiContainerElement(
     psi2Container: (E) -> T,
     onSelect: (T) -> Unit,
 ) {
-    val popup = getPsiElementPopup(
-        editor,
-        elements,
-        popupPresentationProvider(),
-        title,
-        highlightSelection,
-        selection,
-    ) { psiElement ->
-        @Suppress("UNCHECKED_CAST")
-        onSelect(psi2Container(psiElement as E))
-        true
-    }
-
     invokeLater {
+        val popup = getPsiElementPopup(
+            editor,
+            elements,
+            popupPresentationProvider(),
+            title,
+            highlightSelection,
+            selection,
+        ) { psiElement ->
+            @Suppress("UNCHECKED_CAST")
+            onSelect(psi2Container(psiElement as E))
+            true
+        }
         popup.showInBestPositionFor(editor)
     }
 }
@@ -169,7 +167,7 @@ private fun <T : PsiElement> getPsiElementPopup(
         .createPopup(project, title)
 }
 
-private fun popupPresentationProvider() = object : PsiTargetPresentationRenderer<PsiElement>() {
+fun popupPresentationProvider(): TargetPresentationProvider<PsiElement> = object : PsiTargetPresentationRenderer<PsiElement>() {
 
     @NlsSafe
     private fun PsiElement.renderText(): String = when (this) {
@@ -191,11 +189,11 @@ private fun popupPresentationProvider() = object : PsiTargetPresentationRenderer
         is KtNamedFunction -> {
             val list = mutableListOf<String>()
             for (child in allChildren) {
-                if (child is PsiComment || child is PsiWhiteSpace) continue
+                if (child is PsiComment) continue
                 if (child is KtBlockExpression) break
                 list.add(child.text)
             }
-            StringUtil.shortenTextWithEllipsis(list.joinToString(separator = " "), 53, 0)
+            StringUtil.shortenTextWithEllipsis(list.joinToString(separator = "").trim(), 53, 0)
         }
         else -> {
             val text = text ?: "<invalid text>"

@@ -2,6 +2,7 @@
 
 package com.intellij.ide.util.gotoByName;
 
+import com.google.common.base.Strings;
 import com.intellij.BundleBase;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -15,6 +16,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.internal.inspector.PropertyBean;
+import com.intellij.internal.inspector.UiInspectorActionUtil;
 import com.intellij.internal.inspector.UiInspectorContextProvider;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.lang.LangBundle;
@@ -54,16 +56,13 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.lang.ref.WeakReference;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public final class GotoActionModel implements ChooseByNameModel, Comparator<Object>, DumbAware {
   private static final Logger LOG = Logger.getInstance(GotoActionModel.class);
-  private static final Pattern INNER_GROUP_WITH_IDS = Pattern.compile("(.*) \\(\\d+\\)");
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_16;
 
   private final @Nullable Project myProject;
@@ -91,14 +90,22 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     });
 
   public GotoActionModel(@Nullable Project project, @Nullable Component component, @Nullable Editor editor) {
+    this(project, component, editor, null);
+  }
+
+  /**
+   * In case of Remote Development the component doesn't contain the full DataContext, and we have to explicitly provide the context.
+   */
+  @ApiStatus.Internal
+  public GotoActionModel(@Nullable Project project, @Nullable Component component, @Nullable Editor editor, @Nullable DataContext dataContext) {
     myProject = project;
     myEditor = new WeakReference<>(editor);
-    myDataContext = Utils.createAsyncDataContext(DataManager.getInstance().getDataContext(component));
+    myDataContext = dataContext == null ? Utils.createAsyncDataContext(DataManager.getInstance().getDataContext(component)) : dataContext;
     myUpdateSession = newUpdateSession();
   }
 
   private @NotNull UpdateSession newUpdateSession() {
-    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, myDataContext);
+    AnActionEvent event = AnActionEvent.createEvent(myDataContext, null, ActionPlaces.ACTION_SEARCH, ActionUiKind.SEARCH_POPUP, null);
     Utils.initUpdateSession(event);
     return event.getUpdateSession();
   }
@@ -310,7 +317,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       // Implement here, as GotoActionListCellRenderer is behind 9000 wrappers
       List<PropertyBean> result = new ArrayList<>();
       if (value instanceof ActionWrapper actionWrapper) {
-        result.add(new PropertyBean("Action ID", UiInspectorUtil.getActionId(actionWrapper.myAction), true));
+        result.add(new PropertyBean("Action ID", UiInspectorActionUtil.getActionId(actionWrapper.myAction), true));
         result.add(new PropertyBean("Action Class", UiInspectorUtil.getClassPresentation(actionWrapper.myAction), true));
       }
       return result;
@@ -456,7 +463,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
         return MatchMode.SYNONYM;
       }
     }
-    if (description != null && !description.equals(text) && new WordPrefixMatcher(pattern).matches(description)) {
+    if (!Strings.isNullOrEmpty(description) && !description.equals(text) && new WordPrefixMatcher(pattern).matches(description)) {
       return MatchMode.DESCRIPTION;
     }
     if (text == null) {
@@ -516,109 +523,6 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   @Override
   public boolean useMiddleMatching() {
     return true;
-  }
-
-  public static final class GroupMapping implements Comparable<GroupMapping> {
-    private final boolean myShowNonPopupGroups;
-    private final List<List<ActionGroup>> myPaths = new ArrayList<>();
-
-    private @Nullable @ActionText String myBestGroupName;
-    private boolean myBestNameComputed;
-
-    public GroupMapping() {
-      this(false);
-    }
-
-    public GroupMapping(boolean showNonPopupGroups) {
-      myShowNonPopupGroups = showNonPopupGroups;
-    }
-
-    public static @NotNull GroupMapping createFromText(@ActionText String text, boolean showGroupText) {
-      GroupMapping mapping = new GroupMapping(showGroupText);
-      mapping.addPath(Collections.singletonList(new DefaultActionGroup(text, false)));
-      return mapping;
-    }
-
-    private void addPath(@NotNull List<ActionGroup> path) {
-      myPaths.add(path);
-    }
-
-
-    @Override
-    public int compareTo(@NotNull GroupMapping o) {
-      return Comparing.compare(getFirstGroupName(), o.getFirstGroupName());
-    }
-
-    public @ActionText @Nullable String getBestGroupName() {
-      if (myBestNameComputed) return myBestGroupName;
-      return getFirstGroupName();
-    }
-
-    public @Nullable List<ActionGroup> getFirstGroup() {
-      return ContainerUtil.getFirstItem(myPaths);
-    }
-
-    private @Nls @Nullable String getFirstGroupName() {
-      List<ActionGroup> path = getFirstGroup();
-      return path != null ? getPathName(path) : null;
-    }
-
-    public void updateBeforeShow(@NotNull UpdateSession session) {
-      if (myBestNameComputed) return;
-      myBestNameComputed = true;
-
-      for (List<ActionGroup> path : myPaths) {
-        String name = getActualPathName(path, session);
-        if (name != null) {
-          myBestGroupName = name;
-          return;
-        }
-      }
-    }
-
-    public @NotNull List<String> getAllGroupNames() {
-      return ContainerUtil.map(myPaths, path -> getPathName(path));
-    }
-
-    private @Nls @Nullable String getPathName(@NotNull List<? extends ActionGroup> path) {
-      String name = "";
-      for (ActionGroup group : path) {
-        name = appendGroupName(name, group, group.getTemplatePresentation());
-      }
-      return StringUtil.nullize(name);
-    }
-
-    private @Nls @Nullable String getActualPathName(@NotNull List<? extends ActionGroup> path, @NotNull UpdateSession session) {
-      String name = "";
-      for (ActionGroup group : path) {
-        Presentation presentation = session.presentation(group);
-        if (!presentation.isVisible()) return null;
-        name = appendGroupName(name, group, presentation);
-      }
-      return StringUtil.nullize(name);
-    }
-
-    private @Nls @NotNull String appendGroupName(@NotNull @Nls String prefix, @NotNull ActionGroup group, @NotNull Presentation presentation) {
-      if (group.isPopup() || myShowNonPopupGroups) {
-        String groupName = getActionGroupName(presentation);
-        if (!StringUtil.isEmptyOrSpaces(groupName)) {
-          return prefix.isEmpty()
-                 ? groupName
-                 : prefix + " | " + groupName;
-        }
-      }
-      return prefix;
-    }
-
-    private static @ActionText @Nullable String getActionGroupName(@NotNull Presentation presentation) {
-      String text = presentation.getText();
-      if (text == null) return null;
-
-      Matcher matcher = INNER_GROUP_WITH_IDS.matcher(text);
-      if (matcher.matches()) return matcher.group(1);
-
-      return text;
-    }
   }
 
   public static class ActionWrapper {

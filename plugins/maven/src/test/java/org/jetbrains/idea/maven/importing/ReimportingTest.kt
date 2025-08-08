@@ -13,7 +13,7 @@ import com.intellij.util.io.zipFile
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.junit.Test
-import java.io.File
+import java.nio.file.Paths
 
 class ReimportingTest : MavenMultiVersionImportingTestCase() {
   override fun setUp() = runBlocking {
@@ -45,7 +45,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testAddingNewModule() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -57,7 +57,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    createModulePom("m3", """
+    updateModulePom("m3", """
       <groupId>test</groupId>
       <artifactId>m3</artifactId>
       <version>1</version>
@@ -69,7 +69,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testRemovingObsoleteModule() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -85,7 +85,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDoesNotRemoveObsoleteModuleIfUserSaysNo() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -101,7 +101,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testReimportingWithProfiles() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -137,9 +137,9 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testChangingDependencyTypeToTestJar() = runBlocking {
-    val m1 = createModulePom("m1", createPomXmlWithModuleDependency("jar"))
+    val m1 = updateModulePom("m1", createPomXmlWithModuleDependency("jar"))
 
-    val m2 = createModulePom("m2", """
+    val m2 = updateModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
@@ -150,7 +150,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
     assertNotNull(dep)
     assertFalse(dep!!.isProductionOnTestDependency())
 
-    createModulePom("m1", createPomXmlWithModuleDependency("test-jar"))
+    updateModulePom("m1", createPomXmlWithModuleDependency("test-jar"))
     importProjectsAsync(m1, m2)
     val dep2 = OrderEntryUtil.findModuleOrderEntry(ModuleRootManager.getInstance(getModule("m1")), getModule("m2"))
     assertNotNull(dep2)
@@ -159,7 +159,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testSettingTargetLevel() = runBlocking {
-    createModulePom("m1", """
+    updateModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -167,7 +167,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
     updateAllProjects()
     assertEquals("1.8", CompilerConfiguration.getInstance(project).getBytecodeTargetLevel(getModule("m1")))
 
-    createModulePom("m1", """
+    updateModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -185,7 +185,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
     updateAllProjects()
     assertEquals("1.3", CompilerConfiguration.getInstance(project).getBytecodeTargetLevel(getModule("m1")))
 
-    createModulePom("m1", """
+    updateModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -205,7 +205,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
     assertEquals("1.6", CompilerConfiguration.getInstance(project).getBytecodeTargetLevel(getModule("m1")))
 
     // after configuration/target element delete in maven-compiler-plugin CompilerConfiguration#getBytecodeTargetLevel should be also updated
-    createModulePom("m1", """
+    updateModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -217,7 +217,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testReimportingWhenModuleHaveRootOfTheParent() = runBlocking {
     createProjectSubDir("m1/res")
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -228,7 +228,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    createModulePom("m2",
+    updateModulePom("m2",
                     """
                       <groupId>test</groupId>
                       <artifactId>m2</artifactId>
@@ -247,11 +247,11 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
   fun testMoveModuleWithSystemScopedDependency() = runBlocking {
     zipFile {
       file("a.txt")
-    }.generate(File(projectPath, "lib.jar"))
-    createModulePom("m1", generatePomWithSystemDependency("../lib.jar"))
+    }.generate(projectPath.resolve("lib.jar").toFile())
+    updateModulePom("m1", generatePomWithSystemDependency("../lib.jar"))
     importProjectAsync()
 
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -261,14 +261,13 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
                          <module>m2</module>
                        </modules>
                        """.trimIndent())
-    createModulePom("dir/m1", generatePomWithSystemDependency("../../lib.jar"))
+    updateModulePom("dir/m1", generatePomWithSystemDependency("../../lib.jar"))
     importProjectAsync()
     assertModules("project", "m1", "m2")
   }
 
   @Test
   fun testParentVersionProperty() = runBlocking {
-    if (ignore()) return@runBlocking
     val parentPomTemplate =
 
       """
@@ -295,9 +294,9 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
           </plugins>
         </build>
         """.trimIndent()
-    createProjectPom(String.format(parentPomTemplate, "1.8"))
+    updateProjectPom(String.format(parentPomTemplate, "1.8"))
 
-    createModulePom("m1",
+    updateModulePom("m1",
                     """
                       <parent>
                         <groupId>test</groupId>
@@ -316,7 +315,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
     assertEquals("1.8", compilerConfiguration.getBytecodeTargetLevel(getModule("project")))
     assertEquals("1.8", compilerConfiguration.getBytecodeTargetLevel(getModule(mn("project", "m1"))))
 
-    createProjectPom(String.format(parentPomTemplate, "1.7"))
+    updateProjectPom(String.format(parentPomTemplate, "1.7"))
 
     importProjectAsync()
     assertEquals(LanguageLevel.JDK_1_7, getEffectiveLanguageLevel(getModule("project")))
@@ -327,7 +326,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testParentVersionProperty2() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -339,15 +338,14 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
 
     val m1pomTemplate = """
       <parent>
-        <groupId>${'$'}{my.parent.groupId}</groupId>
+        <groupId>test</groupId>
         <artifactId>project</artifactId>
-        <version>${'$'}{my.parent.version}</version>
+        <version>1</version>
       </parent>
       <artifactId>m1</artifactId>
       <version>${'$'}{my.parent.version}</version>
       <properties>
         <my.parent.version>1</my.parent.version>
-        <my.parent.groupId>test</my.parent.groupId>
       </properties>
       <build>
         <plugins>
@@ -356,25 +354,25 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
             <version>3.1</version>
             <configuration>
               <source>%s</source>
-              <target>%<s</target>
+              <target>%s</target>
             </configuration>
           </plugin>
         </plugins>
       </build>
       """.trimIndent()
-    createModulePom("m1", String.format(m1pomTemplate, "1.8"))
+    updateModulePom("m1", String.format(m1pomTemplate, "1.8", "1.8"))
 
     val compilerConfiguration = CompilerConfiguration.getInstance(project)
 
-    importProjectAsync()
+    updateAllProjects()
     assertEquals(LanguageLevel.JDK_1_8, getEffectiveLanguageLevel(getModule(mn("project", "m1"))))
     assertEquals("1.8", compilerConfiguration.getBytecodeTargetLevel(getModule(mn("project", "m1"))))
 
-    createModulePom("m1", String.format(m1pomTemplate, "1.7"))
+    updateModulePom("m1", String.format(m1pomTemplate, "17", "17"))
 
-    importProjectAsync()
-    assertEquals(LanguageLevel.JDK_1_7, getEffectiveLanguageLevel(getModule(mn("project", "m1"))))
-    assertEquals("1.7", compilerConfiguration.getBytecodeTargetLevel(getModule(mn("project", "m1"))))
+    updateAllProjects()
+    assertEquals(LanguageLevel.JDK_17, getEffectiveLanguageLevel(getModule(mn("project", "m1"))))
+    assertEquals("17", compilerConfiguration.getBytecodeTargetLevel(getModule(mn("project", "m1"))))
   }
 
   private suspend fun getEffectiveLanguageLevel(module: Module): LanguageLevel {

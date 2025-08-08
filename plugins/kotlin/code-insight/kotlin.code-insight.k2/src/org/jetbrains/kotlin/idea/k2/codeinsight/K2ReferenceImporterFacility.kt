@@ -11,7 +11,10 @@ import org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporterFacility
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinImportQuickFixAction
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 
 class K2ReferenceImporterFacility : KotlinReferenceImporterFacility {
@@ -49,34 +52,37 @@ class K2ReferenceImporterFacility : KotlinReferenceImporterFacility {
      *
      * To avoid that, we sacrifice some possible performance, but make sure that the [analyze] call is properly finished instead.
      */
-    override fun createImportFixesForExpression(expression: KtExpression): Sequence<KotlinImportQuickFixAction<*>> {
-        val eagerlyComputedImportFixes = createImportFixesForExpressionLazy(expression).toList()
-
-        return eagerlyComputedImportFixes.asSequence()
-    }
-
     @OptIn(KaExperimentalApi::class)
-    private fun createImportFixesForExpressionLazy(expression: KtExpression): Sequence<KotlinImportQuickFixAction<*>> = sequence {
-        analyze(expression) {
-            val file = expression.containingKtFile
-            if (file.hasUnresolvedImportWhichCanImport(expression)) return@sequence
+    override fun createImportFixesForExpression(expression: KtExpression): Sequence<KotlinImportQuickFixAction<*>> {
+        val file = expression.containingKtFile
 
-            val quickFixService = KotlinQuickFixService.getInstance()
+        analyze(expression) {
+            if (file.hasUnresolvedImportWhichCanImport(expression)) {
+                return emptySequence()
+            }
+
             val diagnostics = expression
                 .diagnostics(KaDiagnosticCheckerFilter.EXTENDED_AND_COMMON_CHECKERS)
                 .filter { it.severity == KaSeverity.ERROR && expression.textRange in it.psi.textRange }
 
-            for (diagnostic in diagnostics) {
-                val importFixes = quickFixService.getImportQuickFixesFor(diagnostic)
-                for (importFix in importFixes) {
-                    val element = importFix.element ?: continue
+            val quickFixService = KotlinQuickFixService.getInstance()
 
-                    // obtained quick fix might be intended for an element different from `useSiteElement`, so we need to check again
-                    if (!file.hasUnresolvedImportWhichCanImport(element)) {
-                        yield(importFix)
+            val importFixes = buildList {
+                for (diagnostic in diagnostics) {
+                    val importQuickFixesForDiagnostic = with(quickFixService) {
+                        getImportQuickFixesFor(diagnostic)
+                    }
+                    for (importFix in importQuickFixesForDiagnostic) {
+                        val element = importFix.element
+                        // Obtained quick fix might be intended for an element different from `useSiteElement`, so we need to check again
+                        if (element != null && !file.hasUnresolvedImportWhichCanImport(element)) {
+                            add(importFix)
+                        }
                     }
                 }
             }
+
+            return importFixes.asSequence()
         }
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.*;
@@ -39,6 +39,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -84,11 +85,11 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
   private static final @NotNull String DEFAULT_TASK_PREFIX = ": ";
   private static final @NotNull String DEFAULT_TASK_POSTFIX = "";
 
-  @NotNull private final ExternalSystemTaskExecutionSettings mySettings;
-  @NotNull private final Project myProject;
-  @NotNull private final ExternalSystemRunConfiguration myConfiguration;
-  @NotNull private final ExecutionEnvironment myEnv;
-  @Nullable private RunContentDescriptor myContentDescriptor;
+  private final @NotNull ExternalSystemTaskExecutionSettings mySettings;
+  private final @NotNull Project myProject;
+  private final @NotNull ExternalSystemRunConfiguration myConfiguration;
+  private final @NotNull ExecutionEnvironment myEnv;
+  private @Nullable RunContentDescriptor myContentDescriptor;
 
   private final int myDebugPort;
   private ServerSocket myForkSocket = null;
@@ -122,8 +123,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     return myDebugPort;
   }
 
-  @Nullable
-  public ServerSocket getForkSocket() {
+  public @Nullable ServerSocket getForkSocket() {
     if (myForkSocket == null && !Boolean.getBoolean("external.system.disable.fork.debugger")) {
       try {
         boolean isRemoteRun = ContainerUtil.exists(
@@ -175,9 +175,8 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     return myConfiguration.isDebugServerProcess();
   }
 
-  @Nullable
   @Override
-  public ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
+  public @Nullable ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
     if (myProject.isDisposed()) return null;
 
     ProjectSystemId externalSystemId = mySettings.getExternalSystemId();
@@ -233,16 +232,14 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     var runnerSettings = myEnv.getRunnerSettings();
     var runConfigurationExtensionManager = ExternalSystemRunConfigurationExtensionManager.getInstance();
     runConfigurationExtensionManager.attachExtensionsToProcess(myConfiguration, processHandler, runnerSettings);
-    ApplicationManager.getApplication().executeOnPooledThread(
-      () -> {
-        var progressIndicator = myEnv.getUserData(PROGRESS_INDICATOR_KEY);
-        if (progressIndicator == null) {
-          progressIndicator = new EmptyProgressIndicator();
-        }
-        executeTask(task, executionName, progressIndicator, processHandler, progressListener, consoleManager, consoleView,
-                    buildDescriptor, customActions, restartActions, contextActions);
+    BackgroundTaskUtil.executeOnPooledThread(processHandler, () -> {
+      var progressIndicator = myEnv.getUserData(PROGRESS_INDICATOR_KEY);
+      if (progressIndicator == null) {
+        progressIndicator = new EmptyProgressIndicator();
       }
-    );
+      executeTask(task, executionName, progressIndicator, processHandler, progressListener, consoleManager, consoleView, buildDescriptor,
+                  customActions, restartActions, contextActions);
+    });
     ExecutionConsole executionConsole = progressListener instanceof ExecutionConsole ? (ExecutionConsole)progressListener : consoleView;
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     if (executionConsole instanceof BuildView) {
@@ -301,7 +298,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     try (BuildEventDispatcher eventDispatcher = new ExternalSystemEventDispatcher(task.getId(), progressListener, false)) {
       ExternalSystemTaskNotificationListener taskListener = new ExternalSystemTaskNotificationListener() {
         @Override
-        public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
+        public void onStart(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
           if (progressListener != null) {
             AnAction rerunTaskAction = new ExternalSystemRunConfiguration.MyTaskRerunAction(progressListener, myEnv, myContentDescriptor);
             BuildViewSettingsProvider viewSettingsProvider =
@@ -335,7 +332,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
         }
 
         @Override
-        public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
+        public void onFailure(@NotNull String projectPath, @NotNull ExternalSystemTaskId id, @NotNull Exception exception) {
           if (progressListener != null) {
             var eventTime = System.currentTimeMillis();
             var eventMessage = BuildBundle.message("build.status.failed");
@@ -343,21 +340,21 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
             var externalSystemId = id.getProjectSystemId();
             var externalProjectPath = mySettings.getExternalProjectPath();
             var dataContext = BuildConsoleUtils.getDataContext(id, progressListener, consoleView);
-            var eventResult = createFailureResult(title, e, externalSystemId, myProject, externalProjectPath, dataContext);
+            var eventResult = createFailureResult(title, exception, externalSystemId, myProject, externalProjectPath, dataContext);
             eventDispatcher.onEvent(id, new FinishBuildEventImpl(id, null, eventTime, eventMessage, eventResult));
           }
           processHandler.notifyProcessTerminated(1);
         }
 
         @Override
-        public void onCancel(@NotNull ExternalSystemTaskId id) {
+        public void onCancel(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
           eventDispatcher.onEvent(id, new FinishBuildEventImpl(id, null, System.currentTimeMillis(),
                                                                BuildBundle.message("build.status.cancelled"), new FailureResultImpl()));
           processHandler.notifyProcessTerminated(1);
         }
 
         @Override
-        public void onSuccess(@NotNull ExternalSystemTaskId id) {
+        public void onSuccess(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
           eventDispatcher.onEvent(id, new FinishBuildEventImpl(
             id, null, System.currentTimeMillis(), BuildBundle.message("build.event.message.successful"), new SuccessResultImpl()));
         }
@@ -377,7 +374,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
         }
 
         @Override
-        public void onEnd(@NotNull ExternalSystemTaskId id) {
+        public void onEnd(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
           final String endDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
           final String farewell = ExternalSystemBundle.message("run.text.ended.task", endDateTime, settingsDescription);
           processHandler.notifyTextAvailable(farewell + "\n", ProcessOutputTypes.SYSTEM);
@@ -415,8 +412,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     }
   }
 
-  @Nullable
-  private String getJvmParametersSetup() throws ExecutionException {
+  private @Nullable String getJvmParametersSetup() throws ExecutionException {
     var extensionsJP = new SimpleJavaParameters();
     var runConfigurationExtensionManager = ExternalSystemRunConfigurationExtensionManager.getInstance();
     runConfigurationExtensionManager.updateVMParameters(myConfiguration, extensionsJP, myEnv.getRunnerSettings(), myEnv.getExecutor());

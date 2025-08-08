@@ -7,9 +7,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.KeyedExtensionCollector
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.serialization.MutableAccessor
 import com.intellij.util.KeyedLazyInstance
 import com.intellij.util.text.nullize
@@ -18,7 +20,9 @@ import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Transient
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
+import java.lang.reflect.Method
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> {
   companion object {
@@ -135,8 +139,25 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
   fun group(): @Nls String? = if (groupKey.isEmpty()) null else findBundle()?.let { BundleBase.message(it, groupKey) }
 
   fun description(): @Nls String? {
+    if (descriptionGetter != null && serviceInstance != null) {
+      descriptionGetter!!.invoke(serviceInstance!!)?.let { if ((it as? String)?.isNotEmpty() == true) return it}
+    }
     val descriptionKey = descriptionKey.ifEmpty { "advanced.setting.${id}.description" }
     return findBundle()?.takeIf { it.containsKey(descriptionKey) }?.let { BundleBase.message(it, descriptionKey) }
+  }
+
+  fun isVisible(): Boolean {
+    if (visibilityCheckMethod != null && serviceInstance != null) {
+      visibilityCheckMethod!!.invoke(serviceInstance!!)?.let { return it as? Boolean ?: true }
+    }
+    return true
+  }
+
+  fun isEnabled(): Boolean {
+    if (enabledCheckMethod != null && serviceInstance != null) {
+      enabledCheckMethod!!.invoke(serviceInstance!!)?.let { return it as? Boolean ?: true }
+    }
+    return true
   }
 
   fun trailingLabel(): @Nls String? {
@@ -191,10 +212,39 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
       }
   }
 
+  private val descriptionGetter: Method? by lazy {
+    if (property.isEmpty())
+      null
+    else
+      serviceInstance?.let { instance ->
+        instance.javaClass.methods.find { it.name == "get" + StringUtil.capitalizeWithJavaBeanConvention(property) + "Description" }
+      }
+  }
+
+  private val visibilityCheckMethod: Method? by lazy {
+    if (property.isEmpty())
+      null
+    else
+      serviceInstance?.let { instance ->
+        instance.javaClass.methods.find { it.name == "is" + StringUtil.capitalizeWithJavaBeanConvention(property) + "Visible" }?.takeIf { it.canAccess(instance) }
+      }
+  }
+
+  private val enabledCheckMethod: Method? by lazy {
+    if (property.isEmpty())
+      null
+    else
+      serviceInstance?.let { instance ->
+        instance.javaClass.methods.find { it.name == "is" + StringUtil.capitalizeWithJavaBeanConvention(property) +  "Enabled" }?.takeIf { it.canAccess(instance) }
+      }
+  }
+
   override fun getKey(): String = id
 
   override fun getInstance(): AdvancedSettingBean = this
 }
+
+private val logger = logger<AdvancedSettingsImpl>()
 
 @State(name = "AdvancedSettings", category = SettingsCategory.TOOLS, exportable = true, storages = [
   Storage("advancedSettings.xml", roamingType = RoamingType.DISABLED),
@@ -202,35 +252,65 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
 ])
 class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithModificationTracker<AdvancedSettingsImpl.AdvancedSettingsState>, Disposable {
   class AdvancedSettingsState {
-    var settings: MutableMap<String, String> = mutableMapOf()
+    var settings: Map<String, String> = mapOf()
   }
 
   private val epCollector = KeyedExtensionCollector<AdvancedSettingBean, String>(AdvancedSettingBean.EP_NAME.name)
-  private var state = mutableMapOf<String, Any>()
-  private var defaultValueCache = mutableMapOf<String, Any>()
+  private val internalState = ConcurrentHashMap<String, Any>()
+  private val unknownValues = ConcurrentHashMap<String, String>()
+  private val defaultValueCache = ConcurrentHashMap<String, Any>()
   private var modificationCount = 0L
 
   init {
     AdvancedSettingBean.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<AdvancedSettingBean> {
+      override fun extensionAdded(extension: AdvancedSettingBean, pluginDescriptor: PluginDescriptor) {
+        logger.info("Extension added ${pluginDescriptor.pluginId}: ${extension.id}")
+        val rawValue = unknownValues.remove(extension.id) ?: return
+        internalState[extension.id] = extension.valueFromString(rawValue)
+      }
+
       override fun extensionRemoved(extension: AdvancedSettingBean, pluginDescriptor: PluginDescriptor) {
+        logger.info("Extension removed ${pluginDescriptor.pluginId}: ${extension.id}")
         defaultValueCache.remove(extension.id)
+        val currentValue = internalState.remove(extension.id) ?: return
+        unknownValues[extension.id] = extension.valueToString(currentValue)
       }
     }, this)
   }
 
   override fun dispose() { }
 
-  override fun getState(): AdvancedSettingsState =
-    AdvancedSettingsState().also { state.map { (k, v) -> k to getOption(k).valueToString(v) }.toMap(it.settings) }
+  override fun getState(): AdvancedSettingsState {
+    if (logger.isDebugEnabled) {
+      logger.debug("Getting advanced settings state: $internalState")
+    }
+    val retval = AdvancedSettingsState()
+    retval.settings = HashMap(unknownValues).apply { putAll(internalState.map { (k, v) -> k to getOption(k).valueToString(v) }.toMap()) }
+    return retval
+  }
 
   override fun loadState(state: AdvancedSettingsState) {
-    this.state.clear()
-    state.settings.mapNotNull { (k, v) -> getOptionOrNull(k)?.let { option -> k to option.valueFromString(v) } }.toMap(this.state)
+    if (logger.isDebugEnabled) {
+      logger.debug("Will load advanced settings state: ${state.settings}. Current state: ${this.internalState}")
+    }
+    this.internalState.clear()
+    state.settings.forEach { (k, v) ->
+      val optionOrNull = getOptionOrNull(k)
+      if (optionOrNull != null) {
+        this.internalState.put(k, optionOrNull.valueFromString(v))
+      }
+      else {
+        unknownValues.put(k, v)
+      }
+    }
   }
 
   override fun getStateModificationCount(): Long = modificationCount
 
   override fun setSetting(id: String, value: Any, expectType: AdvancedSettingType) {
+    if (logger.isDebugEnabled) {
+      logger.debug("Will set advanced setting $id = $value. Current state: $internalState")
+    }
     val option = getOption(id)
     if (option.type() != expectType) {
       throw IllegalArgumentException("Setting type ${option.type()} does not match parameter type $expectType")
@@ -244,11 +324,17 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
     }
 
     val oldValue = getSetting(id)
+    if (logger.isDebugEnabled) {
+      logger.debug("Old value for $id: $oldValue")
+    }
     if (option.defaultValueObject == value) {
-      state.remove(id)
+      if (logger.isDebugEnabled) {
+        logger.debug("new value \"$value\" for $id is the same as default value, removing the setting")
+      }
+      internalState.remove(id)
     }
     else {
-      state.put(id, value)
+      internalState.put(id, value)
     }
     modificationCount++
 
@@ -264,7 +350,7 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
         return it.read(instance)
       }
     }
-    return state[id] ?: defaultValueCache.getOrPut(id) { getOption(id).defaultValueObject }
+    return internalState[id] ?: defaultValueCache.getOrPut(id) { getOption(id).defaultValueObject }
   }
 
   override fun getDefault(id: String): Any =
@@ -273,13 +359,19 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
   private fun getOption(id: String): AdvancedSettingBean =
     getOptionOrNull(id) ?: throw IllegalArgumentException("Can't find advanced setting ${id}")
 
-  private fun getOptionOrNull(id: String): AdvancedSettingBean? =
-    epCollector.findSingle(id)
+  private fun getOptionOrNull(id: String): AdvancedSettingBean? {
+    val bean = epCollector.findSingle(id)
+    if (bean == null) {
+      logger.info("Cannot find advanced setting $id")
+    }
+    return bean
+  }
+
 
   private fun getSettingAndType(id: String): Pair<Any, AdvancedSettingType> =
     getSetting(id) to getOption(id).type()
 
-  fun isNonDefault(id: String): Boolean = id in state
+  fun isNonDefault(id: String): Boolean = internalState.containsKey(id)
 
   @TestOnly
   fun setSetting(id: String, value: Any, revertOnDispose: Disposable) {

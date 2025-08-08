@@ -3,13 +3,11 @@ package com.intellij.java.navigation
 
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.util.gotoByName.GotoActionTest
-import com.intellij.idea.IJIgnore
 import com.intellij.openapi.actionSystem.AbbreviationManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
@@ -27,14 +25,13 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
 
   private var mySearchUI: SearchEverywhereUI? = null
 
-  private lateinit var mixingResultsFlag: SEParam
+  private lateinit var waitForEssentialFlag: SEParam
 
   override fun setUp() {
     super.setUp()
-    mixingResultsFlag = SEParam(
-      { Experiments.getInstance().isFeatureEnabled("search.everywhere.mixed.results") },
-      { Experiments.getInstance().setFeatureEnabled("search.everywhere.mixed.results", it) }
-    )
+    waitForEssentialFlag = SEParam(
+      { AdvancedSettings.getBoolean("search.everywhere.wait.for.contributors") },
+      { AdvancedSettings.setBoolean("search.everywhere.wait.for.contributors", it) })
   }
 
   override fun tearDown() {
@@ -43,7 +40,7 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
         Disposer.dispose(mySearchUI!!)
         mySearchUI = null
       }
-      mixingResultsFlag.reset()
+      waitForEssentialFlag.reset()
     }
     catch (e: Throwable) {
       addSuppressedException(e)
@@ -67,8 +64,6 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   fun `test mixing classes and files`() {
-    mixingResultsFlag.set(true)
-
     val testClass = myFixture.addClass("class TestClass{}")
     val anotherTestClass = myFixture.addClass("class AnotherTestClass{}")
     val testFile = myFixture.addFileToProject("testClass.txt", "")
@@ -91,8 +86,6 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   fun `test mixing results from stub contributors`() {
-    mixingResultsFlag.set(true)
-
     val contributor1 = StubContributor("contributor1", 1)
     val contributor2 = StubContributor("contributor2", 2)
     val contributor3 = StubContributor("contributor3", 3)
@@ -106,9 +99,8 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
     assertEquals(listOf("item8", "item7", "item2", "item5", "item1", "item4", "item6", "item3"), waitForFuture(future, SEARCH_TIMEOUT))
   }
 
-  @IJIgnore(issue = "IDEA-336674")
   fun `test priority for actions with space in pattern`() {
-    mixingResultsFlag.set(true)
+    waitForEssentialFlag.set(false)
 
     val action1 = StubAction("Bravo Charlie")
     val action2 = StubAction("Alpha Bravo Charlie")
@@ -138,9 +130,8 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
     }
   }
 
-  @IJIgnore(issue = "IDEA-336671")
   fun `test top hit priority`() {
-    mixingResultsFlag.set(true)
+    waitForEssentialFlag.set(false)
 
     val action1 = StubAction("Bravo Charlie")
     val action2 = StubAction("Alpha Bravo Charlie")
@@ -168,6 +159,7 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
       var bravoResult = waitForFuture(future, SEARCH_TIMEOUT)
       assert(bravoResult.filter { it in testElements } == listOf(class1, matchedAction1, class2, matchedAction2))
 
+      @Suppress("UnresolvedPluginConfigReference")
       abbreviationManager.register("bravo", "ia2")
       future = ui.findElementsForPattern("bravo")
       bravoResult = waitForFuture(future, SEARCH_TIMEOUT)
@@ -175,6 +167,7 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
     }
     finally {
       actions.forEach { (key, _) -> actionManager.unregisterAction(key) }
+      @Suppress("UnresolvedPluginConfigReference")
       abbreviationManager.removeAllAbbreviations("ia2")
     }
   }
@@ -207,8 +200,6 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   fun `test recent files at the top of results`() {
-    mixingResultsFlag.set(true)
-
     val savedFlag = AdvancedSettings.getBoolean("search.everywhere.recent.at.top")
     AdvancedSettings.setBoolean("search.everywhere.recent.at.top", true)
     try {
@@ -227,14 +218,14 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
         recentFilesContributor
       ))
 
-      var future = ui.findElementsForPattern("appfile")
+      var future = ui.findPsiElementsForPattern("appfile")
       assertEquals(listOf(file2, file1, file4, file3, file6, file5), waitForFuture(future, SEARCH_TIMEOUT))
 
       myFixture.openFileInEditor(file4.originalFile.virtualFile)
       myFixture.openFileInEditor(file3.originalFile.virtualFile)
       myFixture.openFileInEditor(file5.originalFile.virtualFile)
       myFixture.openFileInEditor(wrongFile.originalFile.virtualFile)
-      future = ui.findElementsForPattern("appfile")
+      future = ui.findPsiElementsForPattern("appfile")
       assertEquals(listOf(file4, file3, file5, file2, file1, file6), waitForFuture(future, SEARCH_TIMEOUT))
     } finally {
       AdvancedSettings.setBoolean("search.everywhere.recent.at.top", savedFlag)
@@ -302,8 +293,6 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
     override fun processSelectedItem(selected: Any, modifiers: Int, searchText: String): Boolean = false
 
     override fun getElementsRenderer(): ListCellRenderer<in Any> = DefaultListCellRenderer()
-
-    override fun getDataForItem(element: Any, dataId: String): Any? = null
   }
 
   private class StubAction(text: String) : AnAction(text) {

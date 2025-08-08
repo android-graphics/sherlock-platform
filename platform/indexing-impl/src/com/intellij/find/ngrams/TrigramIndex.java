@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.ngrams;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,26 +7,38 @@ import com.intellij.openapi.util.ThreadLocalCachedIntArray;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.storage.sharding.ShardableIndexExtension;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntCollection;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
+
+import static com.intellij.util.SystemProperties.getIntProperty;
+import static com.intellij.util.indexing.storage.sharding.ShardableIndexExtension.determineShardsCount;
 
 /**
  * Implementation of <a href="https://en.wikipedia.org/wiki/Trigram">trigram index</a> for fast text search.
  * <p>
  * Should not be used directly, please consider {@link com.intellij.find.TextSearchService}
  */
-public final class TrigramIndex extends ScalarIndexExtension<Integer> implements CustomInputsIndexFileBasedIndexExtension<Integer> {
-  public static final ID<Integer,Void> INDEX_ID = ID.create("Trigram.Index");
+public final class TrigramIndex extends ScalarIndexExtension<Integer> implements CustomInputsIndexFileBasedIndexExtension<Integer>,
+                                                                                 ShardableIndexExtension {
+  public static final ID<Integer, Void> INDEX_ID = ID.create("Trigram.Index");
+
+  @Internal
+  public static final int SHARDS = determineShardsCount(getIntProperty("idea.indexes.trigram-index-shards", 0));
 
   @Internal
   public TrigramIndex() {
@@ -35,6 +47,11 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
   @Internal
   public static boolean isEnabled() {
     return TrigramTextSearchService.useIndexingSearchExtensions();
+  }
+
+  @Override
+  public int getCacheSize() {
+    return 64 * super.getCacheSize();
   }
 
   @Internal
@@ -75,8 +92,20 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
   }
 
   @Override
-  public int getVersion() {
+  @Internal
+  public int shardlessVersion() {
     return 4;
+  }
+
+  @Override
+  public int getVersion() {
+    return shardlessVersion() + (SHARDS - 1);
+  }
+
+  @Override
+  @Internal
+  public int shardsCount() {
+    return SHARDS;
   }
 
   @Override
@@ -92,13 +121,14 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
     return new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, @NotNull Collection<Integer> value) throws IOException {
-        final int numberOfValues = value.size();
+        int numberOfValues = value.size();
 
         int[] buffer = SPARE_BUFFER_LOCAL.getBuffer(numberOfValues);
         int ptr = 0;
         if (value instanceof IntCollection intCollection) {
           buffer = intCollection.toArray(buffer);
-        } else {
+        }
+        else {
           for (Integer i : value) {
             buffer[ptr++] = i;
           }
@@ -117,7 +147,7 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
       @Override
       public @NotNull Collection<Integer> read(@NotNull DataInput in) throws IOException {
         int size = DataInputOutputUtil.readINT(in);
-        List<Integer> result = new ArrayList<>(size);
+        IntList result = new IntArrayList(size);
         int prev = 0;
         while (size-- > 0) {
           int l = (int)(DataInputOutputUtil.readLONG(in) + prev);

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
@@ -467,8 +467,6 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
     assertNotEmpty(myFixture.filterAvailableIntentions("Introduce variable"));
   }
 
-  public void _testNullCheckBeforeInstanceof() { doTest(); } // https://youtrack.jetbrains.com/issue/IDEA-113220
-
   public void testConstantConditionsWithAssignmentsInside() { doTest(); }
   public void testIfConditionsWithAssignmentInside() { doTest(); }
   public void testBitwiseNegatedBoxed() { doTest(); }
@@ -603,9 +601,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testRedundantAssignment() {
     doTest();
     UiInterceptors.register(new ChooserInterceptor(List.of("Extract side effect", "Delete assignment completely"), "Extract side effect"));
-    IntentionAction action = myFixture.findSingleIntention("Remove redundant assignment");
-    myFixture.launchAction(action);
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    checkIntentionResult("Remove redundant assignment");
   }
   public void testXorNullity() { doTest(); }
   public void testPrimitiveNull() { doTest(); }
@@ -761,4 +757,9 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testBoxedBooleanMethodWithCast() { doTest(); }
   public void testAssignAndReturnVolatile() { doTest(); }
   public void testQualifiedValueFromConstant() { doTest();}
+  public void testFieldAliasing() { doTest();}
+  public void testFieldLocalNoAliasing() { doTest();}
+  public void testIoContracts() { doTest(); }
+  public void testGetTernary() { doTest(); }
+  public void testClosureInConstructor() { doTest(); }
 }

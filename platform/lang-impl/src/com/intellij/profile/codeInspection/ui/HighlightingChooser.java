@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
@@ -32,6 +32,7 @@ import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.popup.ActionPopupOptions;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,10 +43,12 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public abstract class HighlightingChooser extends ComboBoxAction implements DumbAware {
   public static final Map<TextAttributesKey, Supplier<@Nls String>> ATTRIBUTES_CUSTOM_NAMES = new HashMap<>();
 
@@ -71,7 +74,7 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
       return;
     }
 
-    final var attributes = ColorSettingsUtil.getErrorTextAttributes();
+    List<Pair<TextAttributesKey, @Nls String>> attributes = ColorSettingsUtil.getErrorTextAttributes();
     String displayName = key.getExternalName();
     for (Pair<TextAttributesKey, @Nls String> pair: attributes) {
       if (key.toString().equals(pair.first.toString())) {
@@ -83,8 +86,7 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
     getTemplatePresentation().setText(name);
   }
 
-  @NotNull
-  public static @Nls String stripColorOptionCategory(@NotNull @Nls String displayName) {
+  public static @NotNull @Nls String stripColorOptionCategory(@NotNull @Nls String displayName) {
     final int separatorPos = displayName.indexOf("//");
     final @Nls String name = separatorPos == -1 ? displayName
                                                 : displayName.substring(separatorPos + 2);

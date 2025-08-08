@@ -46,8 +46,7 @@ f:com.intellij.openapi.actionSystem.CompositeDataProvider
 - getData(java.lang.String):java.lang.Object
 com.intellij.openapi.actionSystem.DataContext
 - sf:EMPTY_CONTEXT:com.intellij.openapi.actionSystem.DataContext
-- getData(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
-- a:getData(java.lang.String):java.lang.Object
+- F:getData(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
 f:com.intellij.openapi.actionSystem.DataKey
 - com.intellij.openapi.util.ValueKey
 - sf:Companion:com.intellij.openapi.actionSystem.DataKey$Companion
@@ -58,13 +57,16 @@ f:com.intellij.openapi.actionSystem.DataKey
 - f:is(java.lang.String):Z
 f:com.intellij.openapi.actionSystem.DataKey$Companion
 - f:create(java.lang.String):com.intellij.openapi.actionSystem.DataKey
+com.intellij.openapi.actionSystem.DataMap
+- a:get(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
 com.intellij.openapi.actionSystem.DataProvider
 - a:getData(java.lang.String):java.lang.Object
 com.intellij.openapi.actionSystem.DataSink
 - sf:Companion:com.intellij.openapi.actionSystem.DataSink$Companion
 - a:dataSnapshot(com.intellij.openapi.actionSystem.DataSnapshotProvider):V
-- a:lazy(com.intellij.openapi.actionSystem.DataKey,kotlin.jvm.functions.Function0):V
+- lazy(com.intellij.openapi.actionSystem.DataKey,kotlin.jvm.functions.Function0):V
 - a:lazyNull(com.intellij.openapi.actionSystem.DataKey):V
+- a:lazyValue(com.intellij.openapi.actionSystem.DataKey,kotlin.jvm.functions.Function1):V
 - a:set(com.intellij.openapi.actionSystem.DataKey,java.lang.Object):V
 - a:setNull(com.intellij.openapi.actionSystem.DataKey):V
 - a:uiDataSnapshot(com.intellij.openapi.actionSystem.DataProvider):V
@@ -75,13 +77,13 @@ f:com.intellij.openapi.actionSystem.DataSink$Companion
 - f:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataProvider):V
 - f:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,java.lang.Object):V
 com.intellij.openapi.actionSystem.DataSnapshot
-- a:get(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
+- com.intellij.openapi.actionSystem.DataMap
 com.intellij.openapi.actionSystem.DataSnapshotProvider
 - a:dataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 com.intellij.openapi.actionSystem.EdtNoGetDataProvider
 - com.intellij.openapi.actionSystem.DataProvider
 - com.intellij.openapi.actionSystem.DataSnapshotProvider
-- getData(java.lang.String):java.lang.Object
+- F:getData(java.lang.String):java.lang.Object
 com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - com.intellij.openapi.actionSystem.DataProvider
 - com.intellij.openapi.actionSystem.UiDataProvider
@@ -261,21 +263,6 @@ f:com.intellij.ui.OverlaidOffsetIconsIcon
 f:com.intellij.ui.RightAlignedLabelUI
 - javax.swing.plaf.basic.BasicLabelUI
 - <init>():V
-*f:com.intellij.ui.RoundedIcon
-- com.intellij.util.ui.JBScalableIcon
-- com.intellij.ui.icons.DarkIconProvider
-- com.intellij.ui.icons.IconWithToolTip
-- <init>(java.awt.Image,D):V
-- <init>(java.awt.Image,D,Z):V
-- <init>(javax.swing.Icon,D):V
-- <init>(javax.swing.Icon,D,Z):V
-- equals(java.lang.Object):Z
-- getDarkIcon(Z):javax.swing.Icon
-- getIconHeight():I
-- getIconWidth():I
-- getToolTip(Z):java.lang.String
-- hashCode():I
-- paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
 c:com.intellij.ui.RowIcon
 - com.intellij.util.ui.JBCachingScalableIcon
 - com.intellij.ui.icons.IconWithToolTip
@@ -336,6 +323,7 @@ f:com.intellij.ui.SimpleTextAttributes
 - sf:STYLE_BOLD_DOTTED_LINE:I
 - sf:STYLE_BOLD_UNDERLINE:I
 - sf:STYLE_CLICKABLE:I
+- sf:STYLE_FADED:I
 - sf:STYLE_HOVERED:I
 - sf:STYLE_ITALIC:I
 - sf:STYLE_NO_BORDER:I
@@ -374,6 +362,7 @@ f:com.intellij.ui.SimpleTextAttributes
 - s:merge(com.intellij.ui.SimpleTextAttributes,com.intellij.ui.SimpleTextAttributes):com.intellij.ui.SimpleTextAttributes
 - toTextAttributes():com.intellij.openapi.editor.markup.TextAttributes
 - useEffectColor():Z
+- useFaded():Z
 @:com.intellij.ui.SimpleTextAttributes$StyleAttributeConstant
 - java.lang.annotation.Annotation
 f:com.intellij.ui.TableCell
@@ -519,7 +508,6 @@ com.intellij.util.PlatformIcons
 - sf:CUSTOM_FILE_ICON:javax.swing.Icon
 - sf:DELETE_ICON:javax.swing.Icon
 - sf:DIRECTORY_CLOSED_ICON:javax.swing.Icon
-- sf:DIRECTORY_OPEN_ICON:javax.swing.Icon
 - sf:EDIT:javax.swing.Icon
 - sf:EDIT_IN_SECTION_ICON:javax.swing.Icon
 - sf:ENUM_ICON:javax.swing.Icon

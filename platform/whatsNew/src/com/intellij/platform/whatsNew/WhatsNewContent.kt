@@ -1,40 +1,41 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.whatsNew
 
+import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.l10n.LocalizationStateService
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider
+import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Companion.openEditor
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.JsQueryHandler
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Request.Companion.html
-import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Request.Companion.url
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Version
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
+import com.intellij.platform.whatsNew.WhatsNewAction.Companion.PLACE
 import com.intellij.platform.whatsNew.collectors.WhatsNewCounterUsageCollector
-import com.intellij.util.Urls.newFromEncoded
+import com.intellij.platform.whatsNew.reaction.FUSReactionChecker
+import com.intellij.platform.whatsNew.reaction.ReactionsPanel
+import com.intellij.ui.jcef.JBCefApp
+import com.intellij.util.application
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
-import java.nio.charset.StandardCharsets
 
-internal sealed class WhatsNewContent {
+internal abstract class WhatsNewContent {
   companion object {
-    private val DataContext.project: Project?
-      get() = CommonDataKeys.PROJECT.getData(this)
-
     suspend fun getWhatsNewContent(): WhatsNewContent? {
       return if (WhatsNewInVisionContentProvider.getInstance().isAvailable()) {
         WhatsNewVisionContent(WhatsNewInVisionContentProvider.getInstance().getContent().entities.first())
@@ -42,9 +43,14 @@ internal sealed class WhatsNewContent {
         ExternalProductResourceUrls.getInstance().whatIsNewPageUrl?.toDecodedForm()?.let { WhatsNewUrlContent(it) }
       }
     }
+
+    suspend fun hasWhatsNewContent() = WhatsNewInVisionContentProvider.getInstance().isAvailable()
+                                       || ExternalProductResourceUrls.getInstance().whatIsNewPageUrl != null
+
   }
 
-  // Year and release have to be strings, because this is the ApplicationInfo.xml format. "release" might be a string like "2.1".
+  // Year and release have to be strings, because this is the ApplicationInfo.xml format.
+  // Remember that "release" might be a string like "2.1".
   data class ContentVersion(val year: String, val release: String, val eap: Int?, val hash: String?) : Comparable<ContentVersion> {
 
     companion object {
@@ -80,9 +86,6 @@ internal sealed class WhatsNewContent {
       }
     }
 
-    fun releaseInfoEquals(other: ContentVersion): Boolean =
-      year == other.year && release == other.release && eap == other.eap
-
     override operator fun compareTo(other: ContentVersion): Int {
       val result = compareValuesBy(this, other, { it.year }, { Version.parseVersion(it.release) })
       return when {
@@ -94,111 +97,23 @@ internal sealed class WhatsNewContent {
     }
   }
 
-  abstract fun getRequest(dataContext: DataContext?): HTMLEditorProvider.Request
-  abstract fun getActionWhiteList(): Set<String>
+  abstract suspend fun show(
+    project: Project,
+    dataContext: DataContext?,
+    triggeredByUser: Boolean,
+    reactionChecker: FUSReactionChecker,
+  )
+
   abstract fun getVersion(): ContentVersion?
   abstract suspend fun isAvailable(): Boolean
-
-  protected fun getHandler(dataContext: DataContext?): JsQueryHandler? {
-    dataContext ?: return null
-
-    return object : JsQueryHandler {
-      override suspend fun query(id: Long, request: String): String {
-        val contains = getActionWhiteList().contains(request)
-        if (!contains) {
-          logger.trace { "EapWhatsNew action $request not allowed" }
-          WhatsNewCounterUsageCollector.actionNotAllowed(dataContext.project, request)
-          return "false"
-        }
-
-        if (request.isNotEmpty()) {
-          service<ActionManager>().getAction(request)?.let {
-            withContext(Dispatchers.EDT) {
-              it.actionPerformed(AnActionEvent.createFromAnAction(it, null, WhatsNewAction.PLACE, dataContext))
-              logger.trace { "EapWhatsNew action $request performed" }
-              WhatsNewCounterUsageCollector.actionPerformed(dataContext.project, request)
-            }
-            return "true"
-          } ?: run {
-            logger.trace { "EapWhatsNew action $request not found" }
-            WhatsNewCounterUsageCollector.actionNotFound(dataContext.project, request)
-          }
-        }
-        return "false"
-      }
-    }
-  }
 }
 
 internal class WhatsNewUrlContent(val url: String) : WhatsNewContent() {
   companion object {
     val LOG = logger<WhatsNewUrlContent>()
-    private val actionWhiteList = mutableSetOf("SearchEverywhere", "ChangeLaf", "ChangeIdeScale",
-                                               "SettingsSyncOpenSettingsAction", "BuildWholeSolutionAction",
-                                               "GitLab.Open.Settings.Page",
-                                               "AIAssistant.ToolWindow.ShowOrFocus", "ChangeMainToolbarColor",
-                                               "ShowEapDiagram", "multilaunch.RunMultipleProjects",
-                                               "EfCore.Shared.OpenQuickEfCoreActionsAction",
-                                               "OpenNewTerminalEAP", "CollectionsVisualizerEAP", "ShowDebugMonitoringToolEAP",
-                                               "LearnMoreStickyScrollEAP", "NewRiderProject", "BlazorHotReloadEAP")
   }
 
-  private val linkRegEx = "^https://www\\.jetbrains\\.com/[a-zA-Z]+/whatsnew(-eap)?/(\\d+)-(\\d+)-(\\d+)/$".toRegex()
-
-  private fun parseUrl(link: String): ContentVersion? {
-    val parseResult = linkRegEx.matchEntire(link)?.let {
-      val year = it.groups[it.groups.size - 3]?.value ?: return@let null
-      val release = it.groups[it.groups.size - 2]?.value ?: return@let null
-      val eap = it.groups[it.groups.size - 1]?.value?.toInt() ?: return@let null
-      ContentVersion(year, release, eap, null)
-    }
-
-    if (parseResult == null) {
-      LOG.warn("Cannot parse IDE version for What's New content from URL: \"$link\".")
-    }
-
-    return when {
-      parseResult != null -> parseResult
-      ApplicationInfo.getInstance().isEAP -> null
-      else -> ApplicationInfo.getInstance().let {
-        ContentVersion(it.majorVersion, it.minorVersion, eap = null, hash = null)
-      }
-    }
-  }
-
-  override fun getRequest(dataContext: DataContext?): HTMLEditorProvider.Request {
-    val parameters = HashMap<String, String>()
-    parameters["var"] = "embed"
-    if (StartupUiUtil.isDarkTheme) {
-      parameters["theme"] = "dark"
-    }
-    parameters["lang"] = getCurrentLanguageTag()
-    val request = url(newFromEncoded(url).addParameters(parameters).toExternalForm())
-    try {
-      WhatsNewAction::class.java.getResourceAsStream("whatsNewTimeoutText.html").use { stream ->
-        if (stream != null) {
-          request.withTimeoutHtml(String(stream.readAllBytes(), StandardCharsets.UTF_8).replace("__THEME__",
-                                                                                                if (StartupUiUtil.isDarkTheme) "theme-dark" else "")
-                                    .replace("__TITLE__", IdeBundle.message("whats.new.timeout.title"))
-                                    .replace("__MESSAGE__", IdeBundle.message("whats.new.timeout.message"))
-                                    .replace("__ACTION__", IdeBundle.message("whats.new.timeout.action", url)))
-        }
-      }
-    }
-    catch (e: IOException) {
-      LOG.error(e)
-    }
-    request.withQueryHandler(getHandler(dataContext))
-    return request
-  }
-
-  override fun getActionWhiteList(): Set<String> {
-    return actionWhiteList
-  }
-
-  override fun getVersion(): ContentVersion? {
-    return parseUrl(url)
-  }
+  override fun getVersion(): ContentVersion? = null
 
   override suspend fun isAvailable(): Boolean {
     return checkConnectionAvailable()
@@ -213,7 +128,7 @@ internal class WhatsNewUrlContent(val url: String) : WhatsNewContent() {
         connection.instanceFollowRedirects = false
 
         connection.connect()
-        if (connection.responseCode != 200) {
+        if (connection.responseCode >= 400) {
           LOG.warn("WhatsNew page '$url' not available response code: ${connection.responseCode}")
           false
         }
@@ -227,42 +142,58 @@ internal class WhatsNewUrlContent(val url: String) : WhatsNewContent() {
       }
     }
   }
+
+  override suspend fun show(project: Project, dataContext: DataContext?, triggeredByUser: Boolean, reactionChecker: FUSReactionChecker) {
+    BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url))
+  }
 }
 
 internal class WhatsNewVisionContent(page: WhatsNewInVisionContentProvider.Page) : WhatsNewContent() {
   companion object {
-    private const val THEME_KEY = "\$__VISION_PAGE_SETTINGS_THEME__\$"
+    private const val THEME_KEY = "\$__VISION_PAGE_SETTINGS_THEME__$"
     private const val DARK_THEME = "dark"
     private const val LIGHT_THEME = "light"
 
-    private const val LANG_KEY = "\$__VISION_PAGE_SETTINGS_LANGUAGE_CODE__\$"
+    private const val LANG_KEY = "\$__VISION_PAGE_SETTINGS_LANGUAGE_CODE__$"
+    private const val ZOOM_KEY = "\$__VISION_PAGE_SETTINGS_ZOOM_IN_ACTION__$"
+    private const val GIF_KEY = "\$__VISION_PAGE_SETTINGS_GIF_PLAYER_ACTION__$"
+
+    private const val ZOOM_VALUE = "whatsnew.vision.zoom"
+    private const val GIF_VALUE = "whatsnew.vision.gif"
   }
 
   val content: String
   private val contentHash: String
   private val myActionWhiteList: Set<String>
+  private val visionActionIds = setOf(GIF_VALUE, ZOOM_VALUE)
 
   init {
     var html = page.html
-    if (page.publicVars.singleOrNull { it.value == THEME_KEY } != null) {
-      html = html.replace(THEME_KEY, if (StartupUiUtil.isDarkTheme) { DARK_THEME } else { LIGHT_THEME })
-    }
-    if (page.publicVars.singleOrNull { it.value == LANG_KEY} != null) {
-      html = html.replace(LANG_KEY, getCurrentLanguageTag())
+    val pattern = page.publicVars.distinctBy { it.value }
+      .joinToString("|") { Regex.escape(it.value) }.toRegex()
+    html = html.replace(pattern) {
+      when (it.value) {
+        THEME_KEY -> if (StartupUiUtil.isDarkTheme) {
+          DARK_THEME
+        }
+        else {
+          LIGHT_THEME
+        }
+        LANG_KEY -> getCurrentLanguageTag()
+        ZOOM_KEY -> ZOOM_VALUE
+        GIF_KEY -> GIF_VALUE
+        else -> it.value
+      }
     }
     content = html
     myActionWhiteList = page.actions.map { it.value }.toSet()
     contentHash = DigestUtil.sha1Hex(page.html)
   }
 
-  override fun getRequest(dataContext: DataContext?): HTMLEditorProvider.Request {
+  private fun getRequest(dataContext: DataContext?): HTMLEditorProvider.Request {
     val request = html(content)
     request.withQueryHandler(getHandler(dataContext))
     return request
-  }
-
-  override fun getActionWhiteList(): Set<String> {
-    return myActionWhiteList
   }
 
   override fun getVersion(): ContentVersion {
@@ -278,28 +209,90 @@ internal class WhatsNewVisionContent(page: WhatsNewInVisionContentProvider.Page)
   override suspend fun isAvailable(): Boolean {
     return true
   }
-}
 
-fun getCurrentLanguageTag(): String {
-  val lang = LocalizationStateService.getInstance()?.getSelectedLocale()?.lowercase() ?: run {
-    logger.error("Cannot get a LocalizationStateService instance. Default to en-us locale.")
-    return "en-us"
-  }
-  if (lang.contains('-')) {
-    logger.error("Failed assumption: it is expected that the IDE language tag \"$lang\" doesn't contain \"-\".")
-    return lang
+  private fun getHandler(dataContext: DataContext?): JsQueryHandler? {
+    dataContext ?: return null
+
+    return object : JsQueryHandler {
+      override suspend fun query(id: Long, request: String): String {
+        val contains = myActionWhiteList.contains(request)
+        if (!contains) {
+          if(visionActionIds.contains(request))
+          {
+            WhatsNewCounterUsageCollector.visionActionPerformed(dataContext.project, request)
+            logger.trace { "EapWhatsNew action $request performed" }
+            return "true"
+          }
+          logger.trace { "EapWhatsNew action $request not allowed" }
+          WhatsNewCounterUsageCollector.actionNotAllowed(dataContext.project, request)
+          return "false"
+        }
+
+        if (request.isNotEmpty()) {
+          service<ActionManager>().getAction(request)?.let {
+            withContext(Dispatchers.EDT) {
+              it.actionPerformed(
+                AnActionEvent.createEvent(
+                  it,
+                  dataContext,
+                  /*presentation =*/ null,
+                  PLACE,
+                  ActionUiKind.NONE,
+                  /*event =*/ null
+                )
+              )
+              logger.trace { "EapWhatsNew action $request performed" }
+              WhatsNewCounterUsageCollector.actionPerformed(dataContext.project, request)
+            }
+            return "true"
+          } ?: run {
+            logger.trace { "EapWhatsNew action $request not found" }
+            WhatsNewCounterUsageCollector.actionNotFound(dataContext.project, request)
+          }
+        }
+        return "false"
+      }
+    }
   }
 
-  return when(lang) {
-    "en" -> "en-us"
-    "ja" -> "ja-jp"
-    "zh" -> "zh-cn"
-    "ko" -> "ko-kr"
-    else -> {
-      logger.error("Unknown language tag for What's New: \"$lang\".")
-      lang
+  override suspend fun show(project: Project, dataContext: DataContext?, triggeredByUser: Boolean, reactionChecker: FUSReactionChecker) {
+    if (!JBCefApp.isSupported()) {
+      logger.error("EapWhatsNew: can't be shown. JBCefApp isn't supported")
+    }
+
+    val title = IdeBundle.message("update.whats.new", ApplicationNamesInfo.getInstance().fullProductName)
+    withContext(Dispatchers.EDT) {
+      logger.info("Opening What's New in editor.")
+      val editor = writeIntentReadAction { openEditor(project, title, getRequest(dataContext)) }
+      editor?.let {
+        project.serviceAsync<FileEditorManager>().addTopComponent(it, ReactionsPanel.createPanel(PLACE, reactionChecker))
+        WhatsNewCounterUsageCollector.openedPerformed(project, triggeredByUser)
+
+        WhatsNewContentVersionChecker.saveLastShownContent(this@WhatsNewVisionContent)
+
+        val disposable = Disposer.newDisposable(project)
+        val busConnection = application.messageBus.connect(disposable)
+        busConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+          override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+            if (it.file == file) {
+              WhatsNewCounterUsageCollector.closedPerformed(project)
+              Disposer.dispose(disposable)
+            }
+          }
+        })
+      }
     }
   }
 }
+
+fun getCurrentLanguageTag(): String {
+  return LocalizationStateService.getInstance()?.getSelectedLocale()?.lowercase() ?: run {
+    logger.error("Cannot get a LocalizationStateService instance. Default to en-us locale.")
+    "en-us"
+  }
+}
+
+private val DataContext.project: Project?
+  get() = CommonDataKeys.PROJECT.getData(this)
 
 private val logger = logger<WhatsNewContent>()

@@ -4,7 +4,10 @@ package org.jetbrains.idea.maven.dom
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
@@ -28,7 +31,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
 
   @Test
   fun testGroupIdCompletion() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -44,7 +47,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
 
   @Test
   fun testArtifactIdCompletion() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -61,7 +64,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
 
   @Test
   fun testDoNotCompleteArtifactIdOnUnknownGroup() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -78,7 +81,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
 
   @Test
   fun testVersionCompletion() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -97,7 +100,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
 
   @Test
   fun testDoNotCompleteVersionIfNoGroupIdAndArtifactId() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -113,7 +116,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
 
   @Test
   fun testAddingLocalProjectsIntoCompletion() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>project-group</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -158,14 +161,11 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
 
   @Test
   fun testResolvingPropertiesForLocalProjectsInCompletion() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
-                       <properties>
-                         <module1Name>module1</module1Name>
-                       </properties>
                        <modules>
                         <module>m1</module>
                         <module>m2</module>
@@ -174,8 +174,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
 
     createModulePom("m1",
                     """
-                      <groupId>${'$'}{pom.parent.groupId}</groupId>
-                      <artifactId>${'$'}{module1Name}</artifactId>
+                      <artifactId>module1</artifactId>
                       <parent>
                         <groupId>test</groupId>
                         <artifactId>project</artifactId>
@@ -193,7 +192,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
     importProjectAsync()
     assertModules("project", mn("project", "module1"), "module2")
 
-    createModulePom("m2", """
+    updateModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>module2</artifactId>
       <version>1</version>
@@ -208,7 +207,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
 
     assertCompletionVariants(m, "1")
 
-    createModulePom("m2", """
+    updateModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>module2</artifactId>
       <version>1</version>
@@ -226,7 +225,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
 
   @Test
   fun testChangingExistingProjects() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -252,7 +251,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
                       """.trimIndent())
     importProjectAsync()
 
-    createModulePom("m1", """
+    updateModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -267,21 +266,21 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
     assertCompletionVariants(m1, LOOKUP_STRING, "test:project:1", "test:m1:1", "test:m2:1")
     assertCompletionVariants(m1, RENDERING_TEXT, "project", "m1", "m2")
 
-    createModulePom("m1", """
+    updateModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
       """.trimIndent())
 
-    createModulePom("m2", """
+    updateModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2_new</artifactId>
       <version>1</version>
       """.trimIndent())
 
-    importProjectAsync()
+    updateAllProjects()
 
-    createModulePom("m1", """
+    updateModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -322,7 +321,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
 
     assertCompletionVariants(projectPom, RENDERING_TEXT, "m1")
 
-    createModulePom("m1", "")
+    updateModulePom("m1", "")
     importProjectsWithErrors(projectPom, m)
 
     configureProjectPom("""
@@ -385,7 +384,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
 
   @Test
   fun testResolutionOutsideTheProject() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -398,21 +397,22 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
                        </dependencies>
                        """.trimIndent())
 
-    val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom")
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
-    withContext(Dispatchers.EDT){
-      assertResolved(projectPom, findPsiFile(f))
-    }
+    val filePath = myIndicesFixture!!.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.pom")
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(filePath)
+    assertResolved(projectPom, findPsiFile(f))
   }
 
   @Test
   fun testResolutionParentPathOutsideTheProject() = runBlocking {
-    val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/org/example/example/1.0/example-1.0.pom")
+    val filePath = myIndicesFixture!!.repositoryHelper.getTestData("local1/org/example/example/1.0/example-1.0.pom")
 
-    val relativePathUnixSeparator =
-      FileUtil.getRelativePath(File(projectRoot.getPath()), File(filePath))!!.replace("\\\\".toRegex(), "/")
+    val relativePathUnixSeparator = FileUtil.getRelativePath(
+      projectRoot.getPath(),
+      filePath.toCanonicalPath(),
+      File.separatorChar
+    )!!.replace("\\\\".toRegex(), "/")
 
-    createProjectPom("""<groupId>test</groupId>
+    updateProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
 <parent>
@@ -424,10 +424,8 @@ $relativePathUnixSeparator<caret></relativePath>
 </parent>"""
     )
 
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
-    withContext(Dispatchers.EDT){
-      assertResolved(projectPom, findPsiFile(f))
-    }
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(filePath)
+    assertResolved(projectPom, findPsiFile(f))
   }
 
   @Test
@@ -454,20 +452,18 @@ $relativePathUnixSeparator<caret></relativePath>
                           """.trimIndent())
     importProjectAsync()
 
-    val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom")
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
-    withContext(Dispatchers.EDT){
-      assertResolved(projectPom, findPsiFile(f))
-    }
+    val filePath = myIndicesFixture!!.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.pom")
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(filePath)
+    assertResolved(projectPom, findPsiFile(f))
   }
 
   @Test
   fun testResolveLATESTDependency() = runBlocking {
     val helper = MavenCustomRepositoryHelper(dir, "local1")
-    val repoPath = helper.getTestDataPath("local1")
+    val repoPath = helper.getTestData("local1")
     repositoryPath = repoPath
 
-    importProjectAsync("""
+    updateProjectPom("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -479,8 +475,9 @@ $relativePathUnixSeparator<caret></relativePath>
                       </dependency>
                     </dependencies>
                     """.trimIndent())
+    updateAllProjects()
 
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -493,17 +490,15 @@ $relativePathUnixSeparator<caret></relativePath>
                        </dependencies>
                        """.trimIndent())
 
-    val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom")
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
+    val filePath = myIndicesFixture!!.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.pom")
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(filePath)
 
-    withContext(Dispatchers.EDT){
-      assertResolved(projectPom, findPsiFile(f))
-    }
+    assertResolved(projectPom, findPsiFile(f))
   }
 
   @Test
   fun testResolutionIsTypeBased() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -517,12 +512,10 @@ $relativePathUnixSeparator<caret></relativePath>
                        </dependencies>
                        """.trimIndent())
 
-    val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom")
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
+    val filePath = myIndicesFixture!!.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.pom")
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(filePath)
 
-    withContext(Dispatchers.EDT){
-      assertResolved(projectPom, findPsiFile(f))
-    }
+    assertResolved(projectPom, findPsiFile(f))
   }
 
   @Test
@@ -557,16 +550,14 @@ $relativePathUnixSeparator<caret></relativePath>
                       </dependencies>
                       """.trimIndent())
 
-    withContext(Dispatchers.EDT){
-      assertResolved(m1, findPsiFile(m2))
-    }
+    assertResolved(m1, findPsiFile(m2))
   }
 
   @Test
   fun testResolvingSystemScopeDependencies() = runBlocking {
-    val libPath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar")
+    val libPath = myIndicesFixture!!.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.jar")
 
-    createProjectPom("""<groupId>test</groupId>
+    updateProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
 <dependencies>
@@ -581,15 +572,13 @@ $libPath</systemPath>
 </dependencies>
 """)
 
-    withContext(Dispatchers.EDT){
-      assertResolved(projectPom, findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath)))
-    }
+    assertResolved(projectPom, findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(libPath)))
     checkHighlighting()
   }
 
   @Test
   fun testHighlightInvalidSystemScopeDependencies() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -608,9 +597,9 @@ $libPath</systemPath>
 
   @Test
   fun testDoNotHighlightValidSystemScopeDependencies() = runBlocking {
-    val libPath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar")
+    val libPath = myIndicesFixture!!.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.jar")
 
-    createProjectPom("""<groupId>test</groupId>
+    updateProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
 <dependencies>
@@ -629,9 +618,9 @@ $libPath</systemPath>
 
   @Test
   fun testResolvingSystemScopeDependenciesWithProperties() = runBlocking {
-    val libPath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar")
+    val libPath = myIndicesFixture!!.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.jar")
 
-    createProjectPom("""<groupId>test</groupId>
+    updateProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
 <properties>
@@ -649,22 +638,20 @@ $libPath</depPath>
 </dependencies>
 """)
 
-    withContext(Dispatchers.EDT){
-      assertResolved(projectPom, findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath)))
-    }
+    assertResolved(projectPom, findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(libPath)))
     checkHighlighting()
   }
 
   @Test
   fun testCompletionSystemScopeDependenciesWithProperties() = runBlocking {
-    val libPath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar")
+    val libPath = myIndicesFixture!!.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.jar")
 
-    createProjectPom("""<groupId>test</groupId>
+    updateProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
 <properties>
   <depDir>
-${File(libPath).getParent()}</depDir>
+${libPath.parent}</depDir>
 </properties>
 <dependencies>
   <dependency>
@@ -682,9 +669,9 @@ ${File(libPath).getParent()}</depDir>
 
   @Test
   fun testResolvingSystemScopeDependenciesFromSystemPath() = runBlocking {
-    val libPath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar")
+    val libPath = myIndicesFixture!!.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.jar")
 
-    createProjectPom("""<groupId>test</groupId>
+    updateProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
 <dependencies>
@@ -699,15 +686,13 @@ $libPath<caret></systemPath>
 </dependencies>
 """)
 
-    withContext(Dispatchers.EDT){
-      assertResolved(projectPom, findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath)))
-    }
+    assertResolved(projectPom, findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(libPath)))
     checkHighlighting()
   }
 
   @Test
   fun testChooseFileIntentionForSystemDependency() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -724,8 +709,8 @@ $libPath<caret></systemPath>
     val action = getIntentionAtCaret("Choose File")
     assertNotNull(action)
 
-    val libPath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar")
-    val libFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath)
+    val libPath = myIndicesFixture!!.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.jar")
+    val libFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(libPath)
 
     val intentionAction = IntentionActionDelegate.unwrap(action!!)
     (intentionAction as ChooseFileIntentionAction).setFileChooser { arrayOf(libFile) }
@@ -743,17 +728,17 @@ $libPath<caret></systemPath>
       intentionAction.setFileChooser(null)
     }
 
-    withContext(Dispatchers.EDT) {
+    val expectedValue = readAction {
       val model = MavenDomUtil.getMavenDomProjectModel(project, projectPom)
       val dep = model!!.getDependencies().getDependencies()[0]
-
-      assertEquals(findPsiFile(libFile), dep.getSystemPath().getValue())
+      dep.getSystemPath().getValue()
     }
+    assertEquals(findPsiFile(libFile), expectedValue)
   }
 
   @Test
   fun testNoChooseFileIntentionForNonSystemDependency() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -790,7 +775,7 @@ $libPath<caret></systemPath>
 
   @Test
   fun testDoNotHighlightUnknownType() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -809,7 +794,7 @@ $libPath<caret></systemPath>
 
   @Test
   fun testScopeCompletion() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -825,7 +810,7 @@ $libPath<caret></systemPath>
 
   @Test
   fun testDoNotHighlightUnknownScopes() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -844,7 +829,7 @@ $libPath<caret></systemPath>
 
   @Test
   fun testPropertiesInScopes() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -866,7 +851,7 @@ $libPath<caret></systemPath>
 
   @Test
   fun testDoesNotHighlightCorrectValues() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -884,7 +869,7 @@ $libPath<caret></systemPath>
 
   @Test
   fun testHighlightingVersionIfVersionIsWrong() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -903,7 +888,7 @@ $libPath<caret></systemPath>
 
   @Test
   fun testHighlightingArtifactIdAndVersionIfGroupIsUnknown() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -921,7 +906,7 @@ $libPath<caret></systemPath>
 
   @Test
   fun testHighlightingArtifactAndVersionIfGroupIsEmpty() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -939,7 +924,7 @@ $libPath<caret></systemPath>
 
   @Test
   fun testHighlightingVersionAndArtifactIfArtifactTheyAreFromAnotherGroup() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -957,7 +942,7 @@ $libPath<caret></systemPath>
 
   @Test
   fun testHighlightingVersionIfArtifactIsEmpty() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -975,7 +960,7 @@ $libPath<caret></systemPath>
 
   @Test
   fun testHighlightingVersionIfArtifactIsUnknown() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -993,7 +978,7 @@ $libPath<caret></systemPath>
 
   @Test
   fun testHighlightingVersionItIsFromAnotherGroup() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1011,7 +996,7 @@ $libPath<caret></systemPath>
 
   @Test
   fun testHighlightingCoordinatesWithClosedTags() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1029,7 +1014,7 @@ $libPath<caret></systemPath>
 
   @Test
   fun testHandlingProperties() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1042,7 +1027,7 @@ $libPath<caret></systemPath>
     importProjectAsync()
 
     // properties are taken from loaded project
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1060,7 +1045,7 @@ $libPath<caret></systemPath>
 
   @Test
   fun testHandlingPropertiesWhenProjectIsNotYetLoaded() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1083,7 +1068,7 @@ $libPath<caret></systemPath>
 
   @Test
   fun testDontHighlightProblemsInNonManagedPom1() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1116,7 +1101,7 @@ $libPath<caret></systemPath>
 
   @Test
   fun testDontHighlightProblemsInNonManagedPom2() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1144,7 +1129,7 @@ $libPath<caret></systemPath>
 
   @Test
   fun testExclusionCompletion() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1168,7 +1153,7 @@ $libPath<caret></systemPath>
 
   @Test
   fun testDoNotHighlightUnknownExclusions() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1191,7 +1176,7 @@ $libPath<caret></systemPath>
 
   @Test
   fun testExclusionHighlightingAbsentGroupId() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1213,7 +1198,7 @@ $libPath<caret></systemPath>
 
   @Test
   fun testExclusionHighlightingAbsentArtifactId() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1236,7 +1221,7 @@ $libPath<caret></systemPath>
 
   @Test
   fun testImportDependencyChainedProperty() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1274,11 +1259,14 @@ $libPath<caret></systemPath>
     importProjectAsync()
 
     withContext(Dispatchers.EDT) {
-      val model = MavenDomUtil.getMavenDomModel(project, projectPom, MavenDomProjectModel::class.java)
+      //maybe readacton
+      writeIntentReadAction {
+        val model = MavenDomUtil.getMavenDomModel(project, projectPom, MavenDomProjectModel::class.java)
 
-      val dependency = MavenDependencyCompletionUtil.findManagedDependency(model, project, "org.example", "something")
-      assertNotNull(dependency)
-      assertEquals("42", dependency.getVersion().getStringValue())
+        val dependency = MavenDependencyCompletionUtil.findManagedDependency(model, project, "org.example", "something")
+        assertNotNull(dependency)
+        assertEquals("42", dependency.getVersion().getStringValue())
+      }
     }
   }
 }

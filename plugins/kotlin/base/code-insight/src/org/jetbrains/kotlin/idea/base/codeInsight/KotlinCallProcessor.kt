@@ -166,6 +166,9 @@ object KotlinCallProcessor {
         override val signature: C get() = withValidityAssertion { backingSignature }
         override val dispatchReceiver: KaReceiverValue? get() = withValidityAssertion { null }
         override val extensionReceiver: KaReceiverValue? get() = withValidityAssertion { null }
+
+        @KaExperimentalApi
+        override val contextArguments: List<KaReceiverValue> get() = withValidityAssertion { emptyList() }
         override val token: KaLifetimeToken get() = backingSignature.token
     }
 
@@ -236,8 +239,8 @@ object KotlinCallProcessor {
                         is KaDelegatedConstructorCall -> processCallTarget(FunctionCallTarget(element, call, call.partiallyAppliedSymbol))
                         is KaSimpleFunctionCall -> processCallTarget(FunctionCallTarget(element, call, call.partiallyAppliedSymbol))
                         is KaCompoundVariableAccessCall -> {
-                            processCallTarget(VariableCallTarget(element, call, call.partiallyAppliedSymbol))
-                            processCallTarget(FunctionCallTarget(element, call, call.compoundAccess.operationPartiallyAppliedSymbol))
+                            processCallTarget(VariableCallTarget(element, call, call.variablePartiallyAppliedSymbol))
+                            processCallTarget(FunctionCallTarget(element, call, call.compoundOperation.operationPartiallyAppliedSymbol))
                         }
 
                         is KaSimpleVariableAccessCall -> {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInspection.BatchQuickFix;
@@ -20,20 +20,23 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.SequentialModalProgressTask;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 
+@ApiStatus.Internal
 public final class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
-  private final static Logger LOG = Logger.getInstance(CleanupInspectionUtilImpl.class);
+  private static final Logger LOG = Logger.getInstance(CleanupInspectionUtilImpl.class);
 
   @Override
   public AbstractPerformFixesTask applyFixesNoSort(@NotNull Project project,
                                                    @NlsContexts.DialogTitle @NotNull String presentationText,
-                                                   @NotNull List<? extends ProblemDescriptor> descriptions,
+                                                   @NotNull @Unmodifiable List<? extends ProblemDescriptor> descriptions,
                                                    @Nullable Class<?> quickfixClass,
                                                    boolean startInWriteAction,
                                                    boolean markGlobal) {
@@ -61,7 +64,7 @@ public final class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
   @Override
   public AbstractPerformFixesTask applyFixesNoSort(@NotNull Project project,
                                                    @NotNull String presentationText,
-                                                   @NotNull List<? extends ProblemDescriptor> descriptions,
+                                                   @NotNull @Unmodifiable List<? extends ProblemDescriptor> descriptions,
                                                    @Nullable Class<?> quickfixClass,
                                                    boolean startInWriteAction) {
     return applyFixesNoSort(project, presentationText, descriptions, quickfixClass, startInWriteAction, true);

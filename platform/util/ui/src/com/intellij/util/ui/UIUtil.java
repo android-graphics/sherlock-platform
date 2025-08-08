@@ -2,10 +2,8 @@
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
-import com.intellij.concurrency.ThreadContext;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.*;
@@ -215,7 +213,10 @@ public final class UIUtil {
    * Useful for components that are manually painted over the editor to prevent shortcuts from falling-through to editor
    * <p>
    * Usage: {@code component.putClientProperty(HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, Boolean.TRUE)}
+   *
+   * @deprecated Use {@link com.intellij.openapi.actionSystem.CustomizedDataContext#EXPLICIT_NULL} instead.
    */
+  @Deprecated(forRemoval = true)
   public static final @NonNls String HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY = "AuxEditorComponent";
   public static final @NonNls String CENTER_TOOLTIP_DEFAULT = "ToCenterTooltip";
   public static final @NonNls String CENTER_TOOLTIP_STRICT = "ToCenterTooltip.default";
@@ -314,17 +315,6 @@ public final class UIUtil {
 
   /**
    * @param component a Swing component that may hold a client property value
-   * @param key       the client property key that specifies a return type
-   * @return the property value from the specified component or {@code null}
-   * @deprecated use {@link ClientProperty#get(Component, Object)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static Object getClientProperty(Object component, @NotNull @NonNls Object key) {
-    return component instanceof Component ? ClientProperty.get((Component)component, key) : null;
-  }
-
-  /**
-   * @param component a Swing component that may hold a client property value
    * @return the property value from the specified component or {@code null}
    */
   public static <T> T getClientProperty(Component component, @NotNull Class<T> type) {
@@ -339,7 +329,7 @@ public final class UIUtil {
    * @deprecated use {@link ClientProperty#get(Component, Key)} instead
    */
   @Deprecated
-  public static <T> T getClientProperty(Object component, @NotNull Key<T> key) {
+  public static <T> @Nullable T getClientProperty(Object component, @NotNull Key<T> key) {
     return component instanceof Component ? ClientProperty.get((Component)component, key) : null;
   }
 
@@ -555,6 +545,58 @@ public final class UIUtil {
     }
 
     return ArrayUtilRt.toStringArray(lines);
+  }
+
+  /**
+   * Computes the minimum size the component must have to keep the given number of characters
+   * <p>
+   * Same as {@code computeTextComponentMinimumSize(preferredSize, text, fontMetrics, 4)}.
+   *
+   * @param preferredSize the size of the component needed to keep everything, usually computed by {@link Component#getPreferredSize()}
+   * @param text          the currently set text
+   * @param fontMetrics   the current font metrics
+   * @return the minimum size the component has to have to keep the given number of characters
+   */
+  public static int computeTextComponentMinimumSize(
+    int preferredSize,
+    @Nullable String text,
+    @Nullable FontMetrics fontMetrics
+  ) {
+    return computeTextComponentMinimumSize(preferredSize, text, fontMetrics, 4);
+  }
+
+  /**
+   * Computes the minimum size the component must have to keep the given number of characters
+   * <p>
+   * Intended to be used for simple {@code JLabel}-like text components.
+   * Often they provide the preferred size, but not the minimum size.
+   * This function can be used to roughly compute the minimum size based on the preferred one.
+   * The returned size will be reduced by the difference between the full text width and
+   * the width of the text contracted to just the {@code nCharactersToKeep} first characters plus {@code "..."}
+   * that's usually added by such components when the text doesn't fit.
+   * </p>
+   * <p>
+   * Note that, due to various factors, the result may be off by a few pixels which is enough to gain or lose an extra character.
+   * Because of fractional font metrics, fractional scaling, complicated calculations, rounding errors and other such things
+   * it's hard to make strict guarantees here.
+   * </p>
+   *
+   * @param preferredSize     the size of the component needed to keep everything, usually computed by {@link Component#getPreferredSize()}
+   * @param text              the currently set text
+   * @param fontMetrics       the current font metrics
+   * @param nCharactersToKeep the number of characters the component must keep
+   * @return the minimum size the component has to have to keep the given number of characters
+   */
+  public static int computeTextComponentMinimumSize(
+    int preferredSize,
+    @Nullable String text,
+    @Nullable FontMetrics fontMetrics,
+    int nCharactersToKeep
+  ) {
+    if (text == null || text.length() <= nCharactersToKeep || fontMetrics == null) return preferredSize;
+    var fullTextWidth = fontMetrics.stringWidth(text);
+    var minTextWidth = fontMetrics.stringWidth(text.substring(0, nCharactersToKeep) + "...");
+    return preferredSize - (fullTextWidth - minTextWidth);
   }
 
   public static void setActionNameAndMnemonic(@NotNull @Nls String text, @NotNull Action action) {
@@ -942,14 +984,6 @@ public final class UIUtil {
   }
 
   /**
-   * @deprecated Aqua Look-n-Feel is not supported anymore
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean isUnderAquaLookAndFeel() {
-    return SystemInfoRt.isMac && UIManager.getLookAndFeel().getName().contains("Mac OS X");
-  }
-
-  /**
    * @deprecated Nimbus Look-n-Feel is deprecated and not supported anymore
    */
   @Deprecated(forRemoval = true)
@@ -988,11 +1022,6 @@ public final class UIUtil {
 
   public static boolean isUnderIntelliJLaF() {
     return StartupUiUtil.isUnderIntelliJLaF();
-  }
-
-  @Deprecated(forRemoval = true)
-  public static boolean isUnderGTKLookAndFeel() {
-    return SystemInfoRt.isUnix && !SystemInfoRt.isMac && UIManager.getLookAndFeel().getName().contains("GTK");
   }
 
   public static boolean isGraphite() {
@@ -1419,9 +1448,7 @@ public final class UIUtil {
    */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
-    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
-      EDT.dispatchAllInvocationEvents();
-    }
+    EDT.dispatchAllInvocationEvents();
   }
 
   public static void addAwtListener(@NotNull AWTEventListener listener, long mask, @NotNull Disposable parent) {
@@ -2556,7 +2583,7 @@ public final class UIUtil {
       if (!builder.isEmpty()) {
         builder.append(' ');
       }
-      builder.append(StringUtil.removeHtmlTags(candidate).trim());
+      builder.append(StringUtil.removeHtmlTags(candidate, true).trim());
     }
     if (component instanceof Container) {
       Component[] components = ((Container)component).getComponents();
@@ -3345,28 +3372,5 @@ public final class UIUtil {
   public static boolean isFullScreenSupportedByDefaultGD() {
     GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
     return gd.isFullScreenSupported();
-  }
-
-  private static boolean DISABLE_LAYOUT_IN_TEXT_COMPONENTS = false;
-
-  @ApiStatus.Internal
-  public static void disableLayoutInTextComponents() {
-    DISABLE_LAYOUT_IN_TEXT_COMPONENTS = true;
-  }
-
-  /**
-   * Disables performing text layout for 'complex' text in the document, if configured globally.
-   * Should be called before the document is used for anything, i.e., right after construction.
-   */
-  @ApiStatus.Internal
-  public static void disableTextLayoutIfNeeded(@NotNull Document document) {
-    if (DISABLE_LAYOUT_IN_TEXT_COMPONENTS && document instanceof AbstractDocument ad) {
-      ad.setDocumentProperties(new Hashtable<>(2) {
-        @Override
-        public synchronized Object get(Object key) {
-          return "i18n".equals(key) ? Boolean.FALSE : super.get(key);
-        }
-      });
-    }
   }
 }

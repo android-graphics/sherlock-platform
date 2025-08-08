@@ -27,7 +27,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
@@ -37,21 +36,18 @@ import org.jetbrains.annotations.Nullable;
 public final class PrivateMemberAccessBetweenOuterAndInnerClassInspection extends BaseInspection {
 
   @Pattern(VALID_ID_PATTERN)
-  @NotNull
   @Override
-  public String getID() {
+  public @NotNull String getID() {
     return "SyntheticAccessorCall";
   }
 
-  @Nullable
   @Override
-  public String getAlternativeID() {
+  public @Nullable String getAlternativeID() {
     return "PrivateMemberAccessBetweenOuterAndInnerClass";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
     return InspectionGadgetsBundle.message(
       "private.member.access.between.outer.and.inner.classes.problem.descriptor",
@@ -66,14 +62,14 @@ public final class PrivateMemberAccessBetweenOuterAndInnerClassInspection extend
       return new MakePackagePrivateFix(className, true);
     }
     final PsiMember member = (PsiMember)infos[1];
-    @NonNls final String memberName;
+    final @NonNls String memberName;
     if (member instanceof PsiMethod) {
       memberName = member.getName() + "()";
     }
     else {
       memberName = member.getName();
     }
-    @NonNls final String elementName = className + '.' + memberName;
+    final @NonNls String elementName = className + '.' + memberName;
     return new MakePackagePrivateFix(elementName, false);
   }
 
@@ -88,8 +84,7 @@ public final class PrivateMemberAccessBetweenOuterAndInnerClassInspection extend
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       if (constructor) {
         return InspectionGadgetsBundle.message(
           "private.member.access.between.outer.and.inner.classes.make.constructor.package.local.quickfix",
@@ -100,9 +95,8 @@ public final class PrivateMemberAccessBetweenOuterAndInnerClassInspection extend
         elementName);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("make.package.private.fix.family.name");
     }
 
@@ -247,7 +241,7 @@ public final class PrivateMemberAccessBetweenOuterAndInnerClassInspection extend
     }
 
     private static boolean isInnerClassAccess(PsiExpression reference, PsiClass targetClass) {
-      final PsiClass sourceClass = ClassUtils.getContainingClass(reference);
+      final PsiClass sourceClass = PsiUtil.getContainingClass(reference);
       return sourceClass != null &&
              targetClass != null &&
              sourceClass != targetClass &&

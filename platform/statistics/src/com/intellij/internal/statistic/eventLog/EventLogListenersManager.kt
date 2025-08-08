@@ -1,19 +1,25 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.util.containers.MultiMap
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Service(Service.Level.APP)
-class EventLogListenersManager {
+class EventLogListenersManager(coroutineScope: CoroutineScope) {
+  companion object {
+    private val logger = logger<EventLogListenersManager>()
+  }
+
   private val subscribers = MultiMap.createConcurrent<String, StatisticsEventLogListener>()
   private var listenersFromEP = ConcurrentCollectionFactory.createConcurrentMap<String, StatisticsEventLogListener>()
 
@@ -34,7 +40,7 @@ class EventLogListenersManager {
     if (ApplicationManager.getApplication().extensionArea.hasExtensionPoint(ExternalEventLogListenerProviderExtension.EP_NAME)) {
       ExternalEventLogListenerProviderExtension.EP_NAME.extensionList.forEach { subscribeFromExtension(it) }
 
-      ExternalEventLogListenerProviderExtension.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<ExternalEventLogListenerProviderExtension> {
+      ExternalEventLogListenerProviderExtension.EP_NAME.addExtensionPointListener(coroutineScope, object : ExtensionPointListener<ExternalEventLogListenerProviderExtension> {
         override fun extensionAdded(extension: ExternalEventLogListenerProviderExtension, pluginDescriptor: PluginDescriptor) =
           subscribeFromExtension(extension)
 
@@ -66,8 +72,12 @@ class EventLogListenersManager {
   fun notifySubscribers(recorderId: String, validatedEvent: LogEvent, rawEventId: String?, rawData: Map<String, Any>?, isFromLocalRecorder: Boolean) {
     val listeners = subscribers[recorderId]
     for (listener in listeners) {
-      if (!isFromLocalRecorder || isLocalAllowed(listener)) {
-        listener.onLogEvent(validatedEvent, rawEventId, rawData)
+      try {
+        if (!isFromLocalRecorder || isLocalAllowed(listener)) {
+          listener.onLogEvent(validatedEvent, rawEventId, rawData)
+        }
+      } catch (e: Exception) {
+        logger.warnInProduction(e)
       }
     }
   }

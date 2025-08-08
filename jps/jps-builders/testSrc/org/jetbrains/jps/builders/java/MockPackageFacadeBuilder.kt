@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java
 
 import com.intellij.openapi.util.io.FileUtil
@@ -22,10 +22,11 @@ import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.jetbrains.jps.incremental.ModuleLevelBuilder
 import org.jetbrains.jps.incremental.storage.AbstractStateStorage
-import org.jetbrains.jps.incremental.storage.PathStringDescriptor
+import org.jetbrains.jps.incremental.storage.createPathStringDescriptor
 import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.org.objectweb.asm.ClassReader
 import java.io.File
+import java.nio.file.Path
 import java.util.regex.Pattern
 
 /**
@@ -35,7 +36,7 @@ import java.util.regex.Pattern
  * which references all classes from that package. Package name is derived from 'package <name>;' statement from a file or set to empty
  * if no such statement is found
  */
-class MockPackageFacadeGenerator : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
+internal class MockPackageFacadeGenerator : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
   override fun build(context: CompileContext,
                      chunk: ModuleChunk,
                      dirtyFilesHolder: DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget>,
@@ -49,7 +50,7 @@ class MockPackageFacadeGenerator : ModuleLevelBuilder(BuilderCategory.SOURCE_PRO
     }
 
     val allFilesToCompile = ArrayList(filesToCompile.values())
-    if (allFilesToCompile.isEmpty() && chunk.targets.all { dirtyFilesHolder.getRemovedFiles(it).all { !isCompilable(File(it)) } }) return ModuleLevelBuilder.ExitCode.NOTHING_DONE
+    if (allFilesToCompile.isEmpty() && chunk.targets.all { dirtyFilesHolder.getRemoved(it).all { !isCompilable(it.toFile()) } }) return ModuleLevelBuilder.ExitCode.NOTHING_DONE
 
     if (JavaBuilderUtil.isCompileJavaIncrementally(context)) {
       val logger = context.loggingManager.projectBuilderLogger
@@ -112,7 +113,11 @@ class MockPackageFacadeGenerator : ModuleLevelBuilder(BuilderCategory.SOURCE_PRO
           packagesToGenerate[oldName] = ArrayList()
         }
       }
-      val packagesFromDeletedFiles = dirtyFilesHolder.getRemovedFiles(target).filter { isCompilable(File(it)) }.map { packagesStorage.getState(it) }.filterNotNull()
+      val packagesFromDeletedFiles = dirtyFilesHolder.getRemoved(target)
+        .asSequence()
+        .filter { isCompilable(it.toFile()) }
+        .map { packagesStorage.getState(it.toString()) }
+        .filterNotNull()
       packagesFromDeletedFiles.forEach {
         if (it !in packagesToGenerate) {
           packagesToGenerate[it] = ArrayList()
@@ -157,9 +162,9 @@ class MockPackageFacadeGenerator : ModuleLevelBuilder(BuilderCategory.SOURCE_PRO
 
   companion object {
     private val PACKAGE_CACHE_STORAGE_PROVIDER = object : StorageProvider<AbstractStateStorage<String, String>>() {
-      override fun createStorage(targetDataDir: File): AbstractStateStorage<String, String> {
-        val storageFile = File(targetDataDir, "mockPackageFacade/packages")
-        return object : AbstractStateStorage<String, String>(storageFile, PathStringDescriptor(), EnumeratorStringDescriptor()) {
+      override fun createStorage(targetDataDir: Path): AbstractStateStorage<String, String> {
+        val storageFile = targetDataDir.resolve("mockPackageFacade/packages").toFile()
+        return object : AbstractStateStorage<String, String>(storageFile, createPathStringDescriptor(), EnumeratorStringDescriptor()) {
         }
       }
     }

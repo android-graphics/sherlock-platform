@@ -4,18 +4,13 @@ package org.jetbrains.kotlin.idea.stubindex.resolve
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.lang.LighterASTNode
 import com.intellij.lang.LighterASTTokenNode
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.psi.impl.source.tree.LightTreeUtil
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
 import com.intellij.psi.tree.TokenSet
-import com.intellij.util.indexing.DataIndexer
-import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
-import com.intellij.util.indexing.FileBasedIndexExtension
-import com.intellij.util.indexing.FileContent
-import com.intellij.util.indexing.ID
-import com.intellij.util.indexing.PsiDependentFileContent
+import com.intellij.util.indexing.*
 import com.intellij.util.indexing.impl.CollectionDataExternalizer
 import com.intellij.util.io.EnumeratorStringDescriptor
-import com.intellij.util.text.StringSearcher
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -28,6 +23,12 @@ import org.jetbrains.kotlin.serialization.deserialization.getClassId
 class KotlinShortClassNameFileIndex : FileBasedIndexExtension<String, Collection<String>>() {
     companion object {
         val NAME: ID<String, Collection<String>> = ID.create(KotlinShortClassNameFileIndex::class.java.simpleName)
+    }
+
+    init {
+        if (!isShortNameFilteringEnabled) {
+            throw ExtensionNotApplicableException.create()
+        }
     }
 
     override fun getName(): ID<String, Collection<String>> = NAME

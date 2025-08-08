@@ -7,6 +7,7 @@ import com.intellij.ide.lightEdit.menuBar.getLightEditMainMenuActionGroup
 import com.intellij.ide.lightEdit.project.LightEditFileEditorManagerImpl
 import com.intellij.ide.lightEdit.statusBar.*
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
@@ -16,7 +17,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.project.impl.applyBoundsOrDefault
-import com.intellij.openapi.project.impl.createNewProjectFrameProducer
+import com.intellij.openapi.project.impl.createIdeFrame
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.*
@@ -27,18 +28,18 @@ import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.status.adaptV2Widget
 import com.intellij.platform.ide.menu.installAppMenuIfNeeded
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.mac.MacMainFrameDecorator
 import com.intellij.ui.mac.MacMainFrameDecorator.FSAdapter
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.awt.Component
 import java.awt.Dimension
+import javax.swing.JComponent
 import javax.swing.JFrame
 
 @RequiresEdt
@@ -46,7 +47,7 @@ internal fun allocateLightEditFrame(project: Project, frameInfo: FrameInfo?): Li
   return runWithModalProgressBlocking(project, "") {
     withContext(Dispatchers.EDT) {
       val wrapper = allocateLightEditFrame(project) { frame ->
-        LightEditFrameWrapper(project = project, frame = frame ?: createNewProjectFrameProducer(frameInfo).create())
+        LightEditFrameWrapper(project = project, frame = frame ?: createIdeFrame(frameInfo ?: FrameInfo()))
       } as LightEditFrameWrapper
       (project.serviceAsync<FileEditorManager>() as LightEditFileEditorManagerImpl).internalInit()
       wrapper
@@ -61,12 +62,29 @@ internal class LightEditFrameWrapper(
   private var editPanel: LightEditPanel? = null
   private var frameTitleUpdateEnabled = true
 
+  override fun CoroutineScope.createFrameHeaderHelper(frame: JFrame, frameDecorator: IdeFrameDecorator?, rootPane: IdeRootPane): ProjectFrameCustomHeaderHelper =
+    ProjectFrameCustomHeaderHelper(ApplicationManager.getApplication(), this, frame, frameDecorator, rootPane, true, getLightEditMainMenuActionGroup())
+
   override fun getProject(): Project = project
 
   val lightEditPanel: LightEditPanel
     get() = editPanel!!
 
-  override fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane = LightEditRootPane(frame = frame)
+  override fun createCenterComponent(): JComponent {
+    val panel = LightEditPanel(LightEditUtil.requireProject())
+    editPanel = panel
+    return panel
+  }
+
+  override fun createStatusBar(): IdeStatusBarImpl {
+    return object : IdeStatusBarImpl(parentCs = cs, getProject = { project }, addToolWindowWidget = false) {
+      override fun updateUI() {
+        setUI(LightEditStatusBarUI())
+      }
+
+      override fun getPreferredSize(): Dimension = LightEditStatusBarUI.withHeight(super.getPreferredSize())
+    }
+  }
 
   override suspend fun installDefaultProjectStatusBarWidgets(project: Project) {
     val editorManager = LightEditService.getInstance().editorManager
@@ -119,34 +137,6 @@ internal class LightEditFrameWrapper(
     super.dispose()
   }
 
-  private inner class LightEditRootPane(frame: IdeFrameImpl)
-    : IdeRootPane(frame = frame,
-                  loadingState = null,
-                  mainMenuActionGroup = getLightEditMainMenuActionGroup()), LightEditCompatible {
-    override val isLightEdit: Boolean
-      get() = true
-
-    override fun createCenterComponent(frame: JFrame): Component {
-      val panel = LightEditPanel(LightEditUtil.requireProject())
-      editPanel = panel
-      return panel
-    }
-
-    override fun getToolWindowPane(): ToolWindowPane {
-      throw IllegalStateException("Tool windows are unavailable in LightEdit")
-    }
-
-    override fun createStatusBar(frameHelper: ProjectFrameHelper): IdeStatusBarImpl {
-      return object : IdeStatusBarImpl(frameHelper = frameHelper, addToolWindowWidget = false, coroutineScope = coroutineScope) {
-        override fun updateUI() {
-          setUI(LightEditStatusBarUI())
-        }
-
-        override fun getPreferredSize(): Dimension = LightEditStatusBarUI.withHeight(super.getPreferredSize())
-      }
-    }
-  }
-
   fun setFrameTitleUpdateEnabled(frameTitleUpdateEnabled: Boolean) {
     this.frameTitleUpdateEnabled = frameTitleUpdateEnabled
   }
@@ -156,21 +146,25 @@ internal class LightEditFrameWrapper(
       super.setFrameTitle(text)
     }
   }
+
+  override fun getNorthExtension(key: String): JComponent? = null
 }
 
 /**
  * This method is not used in a normal conditions. Only for light edit.
  */
 private suspend fun allocateLightEditFrame(project: Project,
-                                           projectFrameHelperFactory: (IdeFrameImpl?) -> ProjectFrameHelper): ProjectFrameHelper {
+                                           projectFrameHelperFactory: (IdeFrameImpl?) -> LightEditFrameWrapper): ProjectFrameHelper {
   val windowManager = WindowManager.getInstance() as WindowManagerImpl
   windowManager.getFrameHelper(project)?.let {
     return it
   }
 
   windowManager.removeAndGetRootFrame()?.let { frame ->
-    val frameHelper = projectFrameHelperFactory(frame)
-    windowManager.lightFrameAssign(project, frameHelper)
+    val frameHelper = projectFrameHelperFactory(frame).apply {
+      setupFor(project)
+    }
+    windowManager.assignFrame(frameHelper, project, false)
     return frameHelper
   }
 
@@ -191,7 +185,7 @@ private suspend fun allocateLightEditFrame(project: Project,
       windowManager.defaultFrameInfoHelper.copyFrom(frameInfo)
     }
     frameInfo.bounds?.let {
-      applyBoundsOrDefault(frame.frame, FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(it)?.first)
+      applyBoundsOrDefault(frame.frame, FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(it))
     }
   }
 
@@ -210,7 +204,9 @@ private suspend fun allocateLightEditFrame(project: Project,
     }
   }
 
-  windowManager.lightFrameAssign(project, frame)
+  frame.setupFor(project)
+  windowManager.assignFrame(frame, project, false)
+
   val uiFrame = frame.frame
   if (frameInfo != null) {
     uiFrame.extendedState = frameInfo.extendedState
@@ -227,3 +223,11 @@ private suspend fun allocateLightEditFrame(project: Project,
   }
   return frame
 }
+
+private suspend fun LightEditFrameWrapper.setupFor(project: Project) {
+  setRawProject(project)
+  setProject(project)
+  installDefaultProjectStatusBarWidgets(project)
+  updateTitle(project)
+}
+

@@ -16,6 +16,8 @@ import org.jetbrains.annotations.Nullable;
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/plugin-services.html">Plugin Services</a>
  */
 public final class ServiceDescriptor {
+
+  @ApiStatus.Internal
   public ServiceDescriptor(String serviceInterface,
                            String serviceImplementation,
                            String testServiceImplementation,
@@ -100,6 +102,7 @@ public final class ServiceDescriptor {
    */
   @Attribute public final @Nullable ClientKind client;
 
+  @ApiStatus.Internal
   public @Nullable String getImplementation() {
     if (testServiceImplementation != null && ApplicationManager.getApplication().isUnitTestMode()) {
       return testServiceImplementation;

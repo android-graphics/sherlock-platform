@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.projectView.ProjectViewNode;
@@ -43,9 +43,16 @@ final class ProjectViewNodeVisitor extends AbstractTreeNodeVisitor<PsiElement> {
   /**
    * @return a virtual file corresponding to searching element or {@code null} if it is not set
    */
-  @Nullable
-  public VirtualFile getFile() {
+  public @Nullable VirtualFile getFile() {
     return file;
+  }
+
+  boolean matches(@NotNull AbstractTreeNode<?> node, @NotNull NodeVisitorMatcher<? extends PsiElement> matcher) {
+    return matches(node, matcher.getValue());
+  }
+
+  boolean contains(@NotNull AbstractTreeNode<?> node, @NotNull NodeVisitorMatcher<? extends PsiElement> matcher) {
+    return contains(node, matcher.getValue());
   }
 
   @Override

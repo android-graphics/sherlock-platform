@@ -5,11 +5,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleDescription;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.impl.LoadedModuleDescriptionImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
@@ -18,8 +14,11 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
+
+import static com.intellij.ide.projectView.impl.nodes.ImplKt.moduleDescriptions;
 
 public class PackageViewProjectNode extends AbstractProjectNode {
   public PackageViewProjectNode(@NotNull Project project, ViewSettings viewSettings) {
@@ -43,15 +42,9 @@ public class PackageViewProjectNode extends AbstractProjectNode {
   }
 
   @Override
-  public @NotNull Collection<AbstractTreeNode<?>> getChildren() {
+  public @Unmodifiable @NotNull Collection<AbstractTreeNode<?>> getChildren() {
     if (getSettings().isShowModules()) {
-      List<ModuleDescription> modulesWithSourceRoots = new ArrayList<>();
-      for (Module module : ModuleManager.getInstance(getProject()).getModules()) {
-        if (ModuleRootManager.getInstance(module).getSourceRoots().length > 0) {
-          modulesWithSourceRoots.add(new LoadedModuleDescriptionImpl(module));
-        }
-      }
-      return modulesAndGroups(modulesWithSourceRoots);
+      return modulesAndGroups(moduleDescriptions(myProject));
     }
     else {
       final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);

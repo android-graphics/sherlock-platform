@@ -55,8 +55,7 @@ internal class ConvertToForEachFunctionCallIntention :
     }
 
 
-    context(KaSession)
-    override fun prepareContext(element: KtForExpression): Unit? {
+    override fun KaSession.prepareContext(element: KtForExpression): Unit? {
         val loopRange = element.loopRange ?: return null
 
         val calleeExpression = loopRange.getPossiblyQualifiedCallExpression()?.calleeExpression
@@ -96,7 +95,7 @@ internal class ConvertToForEachFunctionCallIntention :
     private fun KaType.isLoopRangeType(): Boolean {
         fun KaType.fqNameMatches() = (this as? KaUsualClassType)?.classId?.asSingleFqName() in loopRangeTypeFqNames
 
-        return fqNameMatches() || getAllSuperTypes().any { it.fqNameMatches() }
+        return fqNameMatches() || allSupertypes.any { it.fqNameMatches() }
     }
 
     private fun createForEachExpression(element: KtForExpression, psiFactory: KtPsiFactory): KtExpression? {

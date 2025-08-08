@@ -11,9 +11,11 @@ import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.application
 import com.intellij.util.getValue
 import com.intellij.util.setValue
 import kotlinx.coroutines.*
+import org.jetbrains.concurrency.AsyncPromise
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertSame
@@ -25,11 +27,15 @@ import org.junit.jupiter.api.extension.ReflectiveInvocationContext
 import java.lang.Runnable
 import java.lang.reflect.Method
 import java.util.concurrent.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.Result
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 @TestApplication
 @ExtendWith(ThreadContextPropagationTest.Enabler::class)
@@ -279,7 +285,7 @@ class ThreadContextPropagationTest {
   fun `EDT dispatcher does not capture thread context`(): Unit = timeoutRunBlocking {
     blockingContext {
       launch(Dispatchers.EDT) {
-        assertNull(currentThreadContextOrNull())
+        assertNull(currentThreadOverriddenContextOrNull())
       }
     }
   }
@@ -317,4 +323,98 @@ class ThreadContextPropagationTest {
     finished.await()
   }
 
+  class MyIjElement(val eventTracker: AtomicBoolean) : IntelliJContextElement, AbstractCoroutineContextElement(MyIjElement) {
+    companion object Key : CoroutineContext.Key<MyIjElement>
+
+    override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
+    override fun afterChildCompleted(context: CoroutineContext) = eventTracker.set(true)
+  }
+
+  @Test
+  fun `propagation with Asyncthen`(): Unit = timeoutRunBlocking {
+    val tracker = AtomicBoolean(false)
+    withContext(MyIjElement(tracker)) {
+      val promise = AsyncPromise<Int>()
+      promise.then { }
+      promise.setResult(1)
+    }
+    assertTrue(tracker.get())
+  }
+
+  class MyCancellableIjElement(val eventTracker: AtomicBoolean) : IntelliJContextElement, AbstractCoroutineContextElement(MyIjElement) {
+    companion object Key : CoroutineContext.Key<MyIjElement>
+
+    override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
+    override fun childCanceled(context: CoroutineContext) = eventTracker.set(true)
+  }
+
+  @Test
+  fun `cancellation of scheduled task triggers cleanup events`() = timeoutRunBlocking {
+    val service = AppExecutorUtil.createBoundedScheduledExecutorService("Test service", 1);
+    val tracker = AtomicBoolean(false)
+    withContext(MyCancellableIjElement(tracker)) {
+      val future = service.schedule(Callable<Unit> { Assertions.fail() }, 10, TimeUnit.SECONDS) // should never be executed
+      future.cancel(false)
+    }
+    Assertions.assertTrue(tracker.get())
+  }
+
+  @Test
+  fun `expiration of invokeLater triggers cleanup events`() = timeoutRunBlocking {
+    val tracker = AtomicBoolean(false)
+    val expiration = AtomicBoolean(false)
+    withContext(Dispatchers.EDT + MyCancellableIjElement(tracker)) {
+      @Suppress("ForbiddenInSuspectContextMethod")
+      application.invokeLater({ Assertions.fail() }, { expiration.get() })
+      expiration.set(true)
+    }
+    delay(100)
+    Assertions.assertTrue(tracker.get())
+  }
+
+
+  class MyFaultyIjElement1(val e: Throwable) : IntelliJContextElement, AbstractCoroutineContextElement(MyFaultyIjElement1) {
+    companion object Key : CoroutineContext.Key<MyFaultyIjElement1>
+
+    override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement? = throw e
+  }
+
+  @Test
+  fun `faulty produceChildElement`() = timeoutRunBlocking {
+    val tracker = AtomicBoolean(false)
+    val ise = IllegalStateException("Boom")
+    withContext(MyCancellableIjElement(tracker) + MyFaultyIjElement1(ise)) {
+      val exception = Assertions.assertThrows(IllegalStateException::class.java) {
+        application.executeOnPooledThread { Assertions.fail() }
+      }
+      Assertions.assertEquals(ise, exception)
+      Assertions.assertTrue(tracker.get())
+    }
+  }
+
+  class MyFaultyIjElement2(val e: Throwable) : IntelliJContextElement, AbstractCoroutineContextElement(MyFaultyIjElement2) {
+    companion object Key : CoroutineContext.Key<MyFaultyIjElement2>
+
+    override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement? = this
+    override fun beforeChildStarted(context: CoroutineContext) = throw e
+  }
+
+  @Test
+  fun `faulty beforeChildStarted`() = timeoutRunBlocking {
+    val tracker = AtomicBoolean(false)
+    val ise = Exception("Boom")
+    val rootJob = Job()
+    try {
+      withContext(MyIjElement(tracker) + MyFaultyIjElement2(ise) + rootJob) {
+        val exception = Assertions.assertThrows(RuntimeException::class.java) {
+          application.invokeAndWait { Assertions.fail() }
+        }
+        Assertions.assertEquals(ise, exception.cause)
+        Assertions.assertTrue(tracker.get())
+      }
+    }
+    catch (e: Throwable) {
+      Assertions.assertEquals(ise.message, e.message)
+    }
+  }
 }

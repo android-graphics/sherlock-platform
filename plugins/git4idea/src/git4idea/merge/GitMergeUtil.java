@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.merge;
 
 import com.intellij.diff.merge.ConflictType;
@@ -34,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -122,11 +121,10 @@ public final class GitMergeUtil {
     return mergeData;
   }
 
-  @Nullable
-  private static GitRevisionNumber findOriginalRevisionNumber(@NotNull Project project,
-                                                              @NotNull VirtualFile root,
-                                                              @Nullable VcsRevisionNumber yoursRevision,
-                                                              @Nullable VcsRevisionNumber theirsRevision) {
+  private static @Nullable GitRevisionNumber findOriginalRevisionNumber(@NotNull Project project,
+                                                                        @NotNull VirtualFile root,
+                                                                        @Nullable VcsRevisionNumber yoursRevision,
+                                                                        @Nullable VcsRevisionNumber theirsRevision) {
     if (yoursRevision == null || theirsRevision == null) return null;
     try {
       return GitHistoryUtils.getMergeBase(project, root, yoursRevision.asString(), theirsRevision.asString());
@@ -198,11 +196,10 @@ public final class GitMergeUtil {
     }
   }
 
-  @Nullable
-  private static ConflictType getConflictType(boolean isReversed,
-                                              boolean hasOriginal,
-                                              boolean hasYours,
-                                              boolean hasTheirs) {
+  private static @Nullable ConflictType getConflictType(boolean isReversed,
+                                                        boolean hasOriginal,
+                                                        boolean hasYours,
+                                                        boolean hasTheirs) {
     if (hasOriginal && hasYours && hasTheirs) return ConflictType.DEFAULT;
 
     if (hasYours && hasTheirs) {
@@ -250,7 +247,9 @@ public final class GitMergeUtil {
           || (m.startsWith("fatal: Path '") && m.contains("' exists on disk, but not in '"))
           || m.contains("is in the index, but not at stage ")
           || m.contains("bad revision")
-          || m.startsWith("fatal: Not a valid object name")) {
+          || m.startsWith("fatal: Not a valid object name")
+          || m.startsWith("error: cannot read object")) {
+        LOG.warn("Failed to load revision content for %s (stage %d): '%s'\nAssuming missing side".formatted(path, stageNum, m));
         return null; // assume missing side of 'Deleted-Modified', 'Deleted-Deleted', 'Added-Added' conflicts
       }
       else {

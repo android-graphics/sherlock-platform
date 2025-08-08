@@ -18,7 +18,7 @@ interface TerminalPromptModel : Disposable {
 
   /** Values used to build the prompt string */
   @get:RequiresEdt
-  val promptState: TerminalPromptState
+  val promptState: TerminalPromptState?
 
   /** Text and highlightings of the prompt string. Command text is not included there. */
   @get:RequiresEdt
@@ -42,12 +42,7 @@ interface TerminalPromptModel : Disposable {
    * Clears the document modifications history, so it is no more possible to Undo/Redo the changes made before this call.
    */
   @RequiresEdt
-  fun resetUndoRedoStack()
-
-  /**
-   * Updates the prompt string, leaving the command untouched.
-   */
-  fun updatePrompt(state: TerminalPromptState)
+  fun resetChangesHistory()
 
   @RequiresEdt
   fun setErrorDescription(errorDescription: TerminalPromptErrorDescription?)
@@ -59,8 +54,8 @@ interface TerminalPromptModel : Disposable {
   }
 }
 
-internal fun TerminalPromptModel.clearCommandAndResetUndoRedoStack() {
+internal fun TerminalPromptModel.clearCommandAndResetChangesHistory() {
   commandText = ""
   editor.caretModel.moveToOffset(editor.document.textLength)
-  resetUndoRedoStack()
+  resetChangesHistory()
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
 import com.intellij.codeWithMe.ClientId
@@ -9,9 +9,9 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.navigation.NavigationOptions
@@ -48,7 +48,7 @@ object EditSourceOnDoubleClickHandler {
   fun install(treeTable: TreeTable) {
     object : DoubleClickListener() {
       override fun onDoubleClick(e: MouseEvent): Boolean {
-        if (ModalityState.current().dominates(ModalityState.nonModal()) || treeTable.tree.getPathForLocation(e.x, e.y) == null) {
+        if (!ModalityState.current().accepts(ModalityState.nonModal()) || treeTable.tree.getPathForLocation(e.x, e.y) == null) {
           return false
         }
 
@@ -64,7 +64,7 @@ object EditSourceOnDoubleClickHandler {
   fun install(table: JTable) {
     object : DoubleClickListener() {
       override fun onDoubleClick(e: MouseEvent): Boolean {
-        if (ModalityState.current().dominates(ModalityState.nonModal()) ||
+        if (!ModalityState.current().accepts(ModalityState.nonModal()) ||
             table.columnAtPoint(e.point) < 0 ||
             table.rowAtPoint(e.point) < 0) {
           return false
@@ -203,7 +203,7 @@ object EditSourceOnDoubleClickHandler {
           project.serviceAsync<NavigationService>().navigate(asyncContext, options)
           whenPerformed?.let { task ->
             withContext(Dispatchers.EDT) {
-              blockingContext {
+              writeIntentReadAction {
                 task.run()
               }
             }

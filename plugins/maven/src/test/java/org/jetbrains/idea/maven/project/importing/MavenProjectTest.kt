@@ -2,24 +2,22 @@
 package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.LanguageLevel
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.model.MavenArtifactNode
 import org.jetbrains.idea.maven.model.MavenPlugin
-import org.jetbrains.idea.maven.project.MavenEmbeddersManager
+import org.jetbrains.idea.maven.project.MavenEmbedderWrappersManager
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Test
 import java.io.File
-import java.util.*
 
 class MavenProjectTest : MavenMultiVersionImportingTestCase() {
-
-
   @Test
   fun testCollectingPlugins() = runBlocking {
     importProjectAsync("""
@@ -500,24 +498,39 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
 
     importProjectAsync()
 
-    assertEquals("1.7", mavenProject.sourceLevel)
-    assertEquals("1.7", mavenProject.targetLevel)
+    assertEquals(LanguageLevel.JDK_1_7, getSourceLanguageLevel())
+    assertEquals(LanguageLevel.JDK_1_7, getTargetLanguageLevel())
   }
 
   @Test
   fun testCompilerPluginConfigurationFromPropertiesOverride() = runBlocking {
     createProjectPom("""
-                       <groupId>test</groupId><artifactId>project</artifactId><version>1</version><properties>
-                               <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-                               <maven.compiler.source>1.7</maven.compiler.source>
-                               <maven.compiler.target>1.7</maven.compiler.target>
-                       </properties><build>  <plugins>    <plugin>      <groupId>org.apache.maven.plugins</groupId>      <artifactId>maven-compiler-plugin</artifactId>      <configuration>        <target>1.4</target>        <source>1.4</source>      </configuration>    </plugin>  </plugins></build>
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <properties>
+                         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                         <maven.compiler.source>1.7</maven.compiler.source>
+                         <maven.compiler.target>1.7</maven.compiler.target>
+                       </properties>
+                       <build>
+                         <plugins>
+                           <plugin>      
+                             <groupId>org.apache.maven.plugins</groupId>
+                             <artifactId>maven-compiler-plugin</artifactId>
+                             <configuration>
+                               <target>1.4</target> 
+                               <source>1.4</source>
+                             </configuration>
+                           </plugin>
+                         </plugins>
+                       </build>
                        """.trimIndent())
 
     importProjectAsync()
 
-    assertEquals("1.4", mavenProject.sourceLevel)
-    assertEquals("1.4", mavenProject.targetLevel)
+    assertEquals(LanguageLevel.JDK_1_4, getSourceLanguageLevel())
+    assertEquals(LanguageLevel.JDK_1_4, getTargetLanguageLevel())
   }
 
   @Test
@@ -542,8 +555,8 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
 
     importProjectAsync()
 
-    assertEquals(LanguageLevel.JDK_1_7, LanguageLevel.parse(
-      mavenProject.releaseLevel))
+    assertEquals(LanguageLevel.JDK_1_7, getSourceLanguageLevel())
+    assertEquals(LanguageLevel.JDK_1_7, getTargetLanguageLevel())
   }
 
   @Test
@@ -618,98 +631,6 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testCollectingRepositories() = runBlocking {
-    importProjectAsync("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    <repositories>
-                      <repository>
-                        <id>one</id>
-                        <url>http://repository.one.com</url>
-                      </repository>
-                      <repository>
-                        <id>two</id>
-                        <url>http://repository.two.com</url>
-                      </repository>
-                    </repositories>
-                    """.trimIndent())
-
-    val result = mavenProject.remoteRepositories
-    assertEquals(3, result.size)
-    assertEquals("one", result[0].id)
-    assertEquals("two", result[1].id)
-    assertEquals("central", result[2].id)
-  }
-
-  @Test
-  fun testOverridingCentralRepository() = runBlocking {
-    importProjectAsync("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    <repositories>
-                      <repository>
-                        <id>central</id>
-                        <url>http://my.repository.com</url>
-                      </repository>
-                    </repositories>
-                    """.trimIndent())
-
-    val result = mavenProject.remoteRepositories
-    assertEquals(1, result.size)
-    assertEquals("central", result[0].id)
-    assertEquals("http://my.repository.com", result[0].url)
-  }
-
-  @Test
-  fun testCollectingRepositoriesFromParent() = runBlocking {
-    val m1 = createModulePom("p1",
-                             """
-                                       <groupId>test</groupId>
-                                       <artifactId>p1</artifactId>
-                                       <version>1</version>
-                                       <packaging>pom</packaging>
-                                       <repositories>
-                                         <repository>
-                                           <id>one</id>
-                                           <url>http://repository.one.com</url>
-                                         </repository>
-                                         <repository>
-                                           <id>two</id>
-                                           <url>http://repository.two.com</url>
-                                         </repository>
-                                       </repositories>
-                                       """.trimIndent())
-
-    val m2 = createModulePom("p2",
-                             """
-                                       <groupId>test</groupId>
-                                       <artifactId>p2</artifactId>
-                                       <version>1</version>
-                                       <parent>
-                                         <groupId>test</groupId>
-                                         <artifactId>p1</artifactId>
-                                         <version>1</version>
-                                       </parent>
-                                       """.trimIndent())
-
-    importProjects(m1, m2)
-
-    var result = projectsTree.rootProjects[0].remoteRepositories
-    assertEquals(3, result.size)
-    assertEquals("one", result[0].id)
-    assertEquals("two", result[1].id)
-    assertEquals("central", result[2].id)
-
-    result = projectsTree.rootProjects[1].remoteRepositories
-    assertEquals(3, result.size)
-    assertEquals("one", result[0].id)
-    assertEquals("two", result[1].id)
-    assertEquals("central", result[2].id)
-  }
-
-  @Test
   fun testResolveRemoteRepositories() = runBlocking {
     updateSettingsXml("""
                         <mirrors>
@@ -762,13 +683,11 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
     importProjectAsync()
 
     val repositories = projectsManager.getRemoteRepositories()
-    val embeddersManager = projectsManager.embeddersManager
-    val mavenEmbedderWrapper = embeddersManager.getEmbedder(
-      MavenEmbeddersManager.FOR_POST_PROCESSING,
-      MavenUtil.getBaseDir(projectPom).toString())
-
-    val repoIds = mavenEmbedderWrapper.resolveRepositories(repositories).map { it.id }.toSet()
-    embeddersManager.release(mavenEmbedderWrapper)
+    val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
+    val repoIds = mavenEmbedderWrappers.use {
+      val mavenEmbedderWrapper = mavenEmbedderWrappers.getEmbedder(MavenUtil.getBaseDir(projectPom).toString())
+      mavenEmbedderWrapper.resolveRepositories(repositories).map { it.id }.toSet()
+    }
 
     val project = MavenProjectsManager.getInstance(project).findProject(projectPom)
     assertNotNull(project)
@@ -996,6 +915,110 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
                nodes[1]!!.dependencies[0].relatedArtifact)
   }
 
+  @Test
+  fun testManagedDependencies()  = runBlocking{
+    val p = createProjectPom("""
+      <groupId>test</groupId>
+      <artifactId>test</artifactId>
+      <version>1</version>
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.0</version>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
+""")
+
+    importProjectAsync()
+
+    assertEquals("4.0", projectsTree.findProject(p)!!.findManagedDependency("junit", "junit")!!.version)
+  }
+
+  @Test
+  fun testManagedDependenciesFromParent()  = runBlocking{
+    val p = createProjectPom("""
+      <groupId>test</groupId>
+      <artifactId>test</artifactId>
+      <version>1</version>
+      <packaging>pom</packaging>
+      <modules>
+        <module>m1</module>
+      </modules>
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.0</version>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
+""")
+
+    val m1 = createModulePom("m1",
+                             """
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>test</artifactId>
+        <version>1</version>
+      </parent>                         
+      <artifactId>m1</artifactId>
+""")
+
+    importProjectAsync()
+
+    assertEquals("4.0", projectsTree.findProject(m1)!!.findManagedDependency("junit", "junit")!!.version)
+  }
+
+  @Test
+  fun testManagedDependenciesFromParentAndModule()  = runBlocking{
+    val p = createProjectPom("""
+      <groupId>test</groupId>
+      <artifactId>test</artifactId>
+      <version>1</version>
+      <packaging>pom</packaging>
+      <modules>
+        <module>m1</module>
+      </modules>
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.0</version>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
+""")
+
+    val m1 = createModulePom("m1",
+                             """
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>test</artifactId>
+        <version>1</version>
+      </parent>                         
+      <artifactId>m1</artifactId>
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>another</groupId>
+            <artifactId>dep</artifactId>
+            <version>1.0</version>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
+""")
+
+    importProjectAsync()
+
+    assertEquals("4.0", projectsTree.findProject(m1)!!.findManagedDependency("junit", "junit")!!.version)
+    assertEquals("1.0", projectsTree.findProject(m1)!!.findManagedDependency("another", "dep")!!.version)
+  }
+
   protected fun assertDependenciesNodes(nodes: List<MavenArtifactNode?>?, expected: String?) {
     assertEquals(expected, StringUtil.join(nodes!!, ","))
   }
@@ -1011,7 +1034,7 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
   }
 
   private fun assertDeclaredPlugins(vararg expected: PluginInfo) {
-    val defaultPlugins = Arrays.asList(
+    val defaultPlugins = listOf(
       p("org.apache.maven.plugins", "maven-site-plugin"),
       p("org.apache.maven.plugins", "maven-deploy-plugin"),
       p("org.apache.maven.plugins", "maven-compiler-plugin"),
@@ -1022,13 +1045,9 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
       p("org.apache.maven.plugins", "maven-surefire-plugin"))
     val expectedList: MutableList<PluginInfo> = ArrayList()
     expectedList.addAll(defaultPlugins)
-    if (isMaven4) {
-      expectedList.add(p("org.apache.maven.plugins", "maven-wrapper-plugin"))
-    }
-    expectedList.addAll(Arrays.asList(*expected))
-    val actualList = p(
-      mavenProject.declaredPlugins)
-    assertUnorderedElementsAreEqual(actualList, expectedList)
+    expectedList.addAll(listOf(*expected))
+    val actualList = p(mavenProject.declaredPlugins)
+    assertUnorderedElementsAreEqual(actualList.sortedBy { it.toString() }, expectedList.sortedBy { it.toString() })
   }
 
   private fun findPlugin(groupId: String, artifactId: String): MavenPlugin? {

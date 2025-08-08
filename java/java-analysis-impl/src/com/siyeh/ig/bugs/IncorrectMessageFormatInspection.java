@@ -1,37 +1,79 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.bugs.message.MessageFormatUtil;
-import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.format.MessageFormatUtil;
 import com.siyeh.ig.psiutils.ConstructionUtils;
+import com.siyeh.ig.psiutils.MethodMatcher;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
-import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
-
 public final class IncorrectMessageFormatInspection extends AbstractBaseJavaLocalInspectionTool {
 
-  private static final CallMatcher PATTERN_METHODS = anyOf(
-    staticCall("java.text.MessageFormat", "format").parameterCount(2)
-  );
+  public MethodMatcher myMethodMatcher = new MethodMatcher().finishDefault();
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull OptPane getOptionsPane() {
+    return OptPane.pane(
+      myMethodMatcher.getTable(InspectionGadgetsBundle.message(
+        "inspection.incorrect.message.custom.classes.methods")).prefix("myMethodMatcher"));
+  }
+
+  private boolean isCustomPatternMethodCall(@NotNull PsiMethodCallExpression call) {
+    if (!myMethodMatcher.matches(call)) {
+      return false;
+    }
+
+    PsiMethod method = call.resolveMethod();
+    if (method == null) return false;
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    if (parameters.length != 2) {
+      return false;
+    }
+
+    PsiType firstArgType = parameters[0].getType();
+    if (!CommonClassNames.JAVA_LANG_STRING.equals(firstArgType.getCanonicalText())) {
+      return false;
+    }
+
+    PsiParameter secondParameter = parameters[1];
+    if (!secondParameter.isVarArgs()) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  public void readSettings(@NotNull Element element) throws InvalidDataException {
+    super.readSettings(element);
+    myMethodMatcher.readSettings(element);
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element element) throws WriteExternalException {
+    super.writeSettings(element);
+    myMethodMatcher.writeSettings(element);
+  }
+
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
 
       @Override
@@ -64,7 +106,8 @@ public final class IncorrectMessageFormatInspection extends AbstractBaseJavaLoca
 
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
-        if (PATTERN_METHODS.test(call)) {
+        if (MessageFormatUtil.PATTERN_METHODS.test(call) ||
+            isCustomPatternMethodCall(call)) {
           List<MessageFormatUtil.MessageFormatPlaceholder> indexes =
             checkStringFormatAndGetIndexes(call.getArgumentList().getExpressions()[0]);
           if (indexes != null) {
@@ -76,12 +119,15 @@ public final class IncorrectMessageFormatInspection extends AbstractBaseJavaLoca
       private void checkIndexes(@NotNull PsiMethodCallExpression call,
                                 @NotNull List<MessageFormatUtil.MessageFormatPlaceholder> indexes) {
         PsiExpression[] expressions = call.getArgumentList().getExpressions();
+        int count = expressions.length;
+        if (count == 2 && expressions[1].getType() instanceof PsiArrayType) {
+          return;
+        }
         for (PsiExpression expression : expressions) {
           if (expression == null || expression instanceof PsiEmptyExpressionImpl) {
             return;
           }
         }
-        int count = call.getArgumentList().getExpressionCount();
         int argumentNumber = count - 1;
         List<Integer> notFoundArguments = new ArrayList<>();
         Set<Integer> usedArgumentIndexes = new HashSet<>();
@@ -132,8 +178,7 @@ public final class IncorrectMessageFormatInspection extends AbstractBaseJavaLoca
         }
       }
 
-      @Nullable
-      private List<MessageFormatUtil.MessageFormatPlaceholder> checkStringFormatAndGetIndexes(@Nullable PsiExpression expression) {
+      private @Nullable List<MessageFormatUtil.MessageFormatPlaceholder> checkStringFormatAndGetIndexes(@Nullable PsiExpression expression) {
         if (expression == null) {
           return null;
         }
@@ -195,8 +240,7 @@ public final class IncorrectMessageFormatInspection extends AbstractBaseJavaLoca
         return null;
       }
 
-      @Nullable
-      private static String getRelatedText(@NotNull String pattern, @NotNull MessageFormatUtil.MessageFormatError error) {
+      private static @Nullable String getRelatedText(@NotNull String pattern, @NotNull MessageFormatUtil.MessageFormatError error) {
         if (error.fromIndex() < 0 || error.toIndex() > pattern.length() || error.toIndex() < error.fromIndex()) {
           return null;
         }
@@ -233,8 +277,7 @@ public final class IncorrectMessageFormatInspection extends AbstractBaseJavaLoca
         }
       }
 
-      @Nullable
-      private static ProblemHighlightType getCustomHighlightType(@NotNull MessageFormatUtil.MessageFormatErrorType type) {
+      private static @Nullable ProblemHighlightType getCustomHighlightType(@NotNull MessageFormatUtil.MessageFormatErrorType type) {
         if (type.getSeverity() == MessageFormatUtil.ErrorSeverity.WARNING ||
             type.getSeverity() == MessageFormatUtil.ErrorSeverity.WEAK_WARNING) {
           return ProblemHighlightType.WEAK_WARNING;
@@ -244,8 +287,7 @@ public final class IncorrectMessageFormatInspection extends AbstractBaseJavaLoca
     };
   }
 
-  @NotNull
-  public static @Nls String getMessageFormatTemplate(@NotNull MessageFormatUtil.MessageFormatErrorType type, @NotNull String relatedText) {
+  public static @NotNull @Nls String getMessageFormatTemplate(@NotNull MessageFormatUtil.MessageFormatErrorType type, @NotNull String relatedText) {
     return switch (type) {
       case QUOTED_PLACEHOLDER ->
         InspectionGadgetsBundle.message("inspection.incorrect.message.format.quotes.around.parameter", relatedText);

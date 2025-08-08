@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.*
+import org.jetbrains.kotlin.idea.k2.refactoring.getThisQualifier
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.*
@@ -34,7 +35,7 @@ internal object KotlinChangeSignatureUsageSearcher {
                     parameterInfo.oldName != parameterInfo.name ||
                     isDataClass && i != parameterInfo.oldIndex
                 ) {
-                    for (reference in ReferencesSearch.search(oldParam, oldParam.useScope())) {
+                    for (reference in ReferencesSearch.search(oldParam, oldParam.useScope()).asIterable()) {
                         val element = reference.element
                         if (isDataClass &&
                             element is KtSimpleNameExpression &&
@@ -44,7 +45,7 @@ internal object KotlinChangeSignatureUsageSearcher {
                         ) {
                             result.add(KotlinDataClassComponentUsage(element, "component${i + 1}"))
                         } else if ((element is KtSimpleNameExpression || element is KDocName) && element.parent !is KtValueArgumentName) {
-                            result.add(KotlinParameterUsage(element as KtElement, parameterInfo))
+                            result.add(KotlinParameterUsage(element, parameterInfo))
                         }
                     }
                 }
@@ -52,7 +53,7 @@ internal object KotlinChangeSignatureUsageSearcher {
         }
         if (isDataClass && changeInfo is KotlinChangeInfo && !changeInfo.hasAppendedParametersOnly()) {
             ktCallableDeclaration.valueParameters.firstOrNull()?.let {
-                ReferencesSearch.search(it).mapNotNullTo(result) { reference ->
+                ReferencesSearch.search(it).asIterable().mapNotNullTo(result) { reference ->
                     val destructuringEntry = reference.element as? KtDestructuringDeclarationEntry ?: return@mapNotNullTo null
                     KotlinComponentUsageInDestructuring(destructuringEntry)
                 }
@@ -60,6 +61,7 @@ internal object KotlinChangeSignatureUsageSearcher {
         }
         if (ktCallableDeclaration is KtFunction &&
             changeInfo is KotlinChangeInfo &&
+            (changeInfo.oldReceiverInfo == null || changeInfo.newParameters.contains(changeInfo.oldReceiverInfo)) &&
             changeInfo.receiverParameterInfo?.oldIndex != changeInfo.oldReceiverInfo?.oldIndex
         ) {
             findReceiverReferences(ktCallableDeclaration, result, changeInfo)
@@ -81,7 +83,7 @@ internal object KotlinChangeSignatureUsageSearcher {
                         //deleted or changed receiver, must be preserved as simple parameter
                         val parentExpression = expression.parent
                         if (parentExpression is KtThisExpression && parentExpression.parent !is KtDotQualifiedExpression &&
-                            parentExpression.expressionType?.let { originalReceiverType.isEqualTo(it) } == true) {
+                            parentExpression.expressionType?.isSubtypeOf(originalReceiverType) == true) {
                             result.add(
                                 KotlinParameterUsage(parentExpression, originalReceiverInfo!!)
                             )
@@ -100,14 +102,14 @@ internal object KotlinChangeSignatureUsageSearcher {
                                 ?: ((receiverValue as? KaSmartCastedReceiverValue)?.original as? KaExplicitReceiverValue)?.expression
                                 ?: expression
                             if (originalReceiverType != null) {
-                                if (receiverValue.type.isSubTypeOf(originalReceiverType)) {
+                                if (receiverValue.type.isSubtypeOf(originalReceiverType)) {
                                     if (receiverExpression is KtThisExpression) {
                                         val targetLabel = receiverExpression.getTargetLabel()
-                                        if (targetLabel == null || targetLabel.expressionType?.let { originalReceiverType.isEqualTo(it) } == true) {
+                                        if (targetLabel == null || targetLabel.expressionType?.let { originalReceiverType.semanticallyEquals(it) } == true) {
                                             result.add(KotlinParameterUsage(receiverExpression, originalReceiverInfo!!))
                                         }
                                     }
-                                    else if (receiverValue is KaImplicitReceiverValue && partiallyAppliedSymbol.extensionReceiver == null) {
+                                    else if (receiverValue is KaImplicitReceiverValue) {
                                         result.add(KotlinImplicitThisToParameterUsage(receiverExpression, originalReceiverInfo!!))
                                     }
                                 }
@@ -116,8 +118,8 @@ internal object KotlinChangeSignatureUsageSearcher {
                                 if (name != null) {
                                     if (receiverExpression is KtThisExpression) {
                                         result.add(KotlinNonQualifiedOuterThisUsage(receiverExpression, name))
-                                    } else if (receiverValue is KaImplicitReceiverValue && partiallyAppliedSymbol.extensionReceiver == null) {
-                                        result.add(KotlinImplicitThisUsage(receiverExpression, name))
+                                    } else if (receiverValue is KaImplicitReceiverValue && partiallyAppliedSymbol.extensionReceiver == null && receiverExpression is KtNameReferenceExpression) {
+                                        result.add(KotlinImplicitThisUsage(receiverExpression, getThisQualifier(receiverValue)))
                                     }
                                 }
                             }

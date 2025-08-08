@@ -2,15 +2,17 @@
 package org.jetbrains.plugins.gradle.quarantine.setup
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.writeText
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.useProjectAsync
-import com.intellij.testFramework.utils.module.assertModules
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.testFramework.utils.vfs.createFile
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
@@ -64,7 +66,7 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
           assertProjectState(it, projectInfo, linkedProjectInfo)
         }
 
-      openProject("project", wait = false)
+      openProject("project", numProjectSyncs = 0)
         .useProjectAsync {
           assertProjectState(it, projectInfo, linkedProjectInfo)
         }
@@ -87,7 +89,7 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
           assertProjectState(it, projectInfo, linkedProjectInfo)
         }
 
-      importProject(projectInfo, wait = false)
+      importProject(projectInfo, numProjectSyncs = 0)
         .useProjectAsync {
           assertProjectState(it, projectInfo, linkedProjectInfo)
         }
@@ -118,12 +120,54 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
   }
 
   @Test
+  fun `test attach project to Gradle and Maven`() {
+    runBlocking {
+      val projectInfo = getComplexProjectInfo("project")
+      val linkedProjectInfo = getComplexProjectInfo("linked_project")
+      initProject(projectInfo)
+      initProject(linkedProjectInfo)
+
+      edtWriteAction {
+        testRoot.createFile("linked_project/pom.xml")
+          .writeText("""
+            <?xml version="1.0"?>
+            <project xmlns="http://maven.apache.org/POM/4.0.0"
+                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+              <modelVersion>4.0.0</modelVersion>
+              <groupId>test</groupId>
+              <artifactId>maven_project</artifactId>
+              <version>1</version>
+            </project>
+          """.trimIndent())
+      }
+
+      openProject("project")
+        .useProjectAsync { it ->
+          assertProjectState(it, projectInfo)
+
+          attachProject(it, "linked_project")
+          assertProjectState(it, projectInfo, linkedProjectInfo)
+
+          attachMavenProject(it, "linked_project")
+          val existingModuleNames = it.modules.map { it.name }
+          Assertions.assertTrue(existingModuleNames.contains("maven_project"), "Maven linked project not found")
+          val linkedProjects = existingModuleNames.filter { it.contains("linked_project") }
+          Assertions.assertTrue(linkedProjects.isEmpty(),"Unexpected Gradle linked projects found: $linkedProjects")
+
+          attachProject(it, "linked_project")
+          assertProjectState(it, projectInfo, linkedProjectInfo)
+        }
+    }
+  }
+
+  @Test
   fun `test auto-link project without project model`() {
     runBlocking {
       val projectInfo = getSimpleProjectInfo("project")
       initProject(projectInfo)
 
-      writeAction {
+      edtWriteAction {
         testRoot.createFile("project/.idea/compiler.xml")
           .writeText("""
             |<?xml version="1.0" encoding="UTF-8"?>
@@ -149,7 +193,7 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
       val projectInfo = getSimpleProjectInfo("project")
       initProject(projectInfo)
 
-      writeAction {
+      edtWriteAction {
         testRoot.createFile("project/.idea/compiler.xml")
           .writeText("""
             |<?xml version="1.0" encoding="UTF-8"?>
@@ -172,7 +216,7 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
           """.trimMargin())
       }
 
-      openProject("project", wait = false)
+      openProject("project", numProjectSyncs = 0)
         .useProjectAsync { project ->
           val gradleSettings = GradleSettings.getInstance(project)
           Assertions.assertEquals(0, gradleSettings.linkedProjectsSettings.size)
@@ -181,12 +225,13 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
   }
 
   @Test
+  @SystemProperty("intellij.progress.task.ignoreHeadless", "true")
   fun `test auto-link project from new gradle_xml`() {
     runBlocking {
       val projectInfo = getSimpleProjectInfo("project")
       initProject(projectInfo)
 
-      writeAction {
+      edtWriteAction {
         testRoot.createFile("project/project.iml")
           .writeText("""
             |<?xml version="1.0" encoding="UTF-8"?>
@@ -211,11 +256,11 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
           """.trimMargin())
       }
 
-      openProject("project", wait = false)
+      openProject("project",  numProjectSyncs = 0)
         .useProjectAsync { project ->
           assertModules(project, "project")
-          awaitAnyGradleProjectReload {
-            writeAction {
+          awaitProjectConfiguration(project) {
+            edtWriteAction {
               testRoot.createFile("project/.idea/gradle.xml")
                 .writeText("""
                   |<?xml version="1.0" encoding="UTF-8"?>
@@ -251,7 +296,7 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
       val projectInfo = getSimpleProjectInfo("project")
       initProject(projectInfo)
 
-      writeAction {
+      edtWriteAction {
         testRoot.createFile("project/.idea/inspectionProfiles/myInspections.xml")
           .writeText("""
             |<component name="InspectionProjectProfileManager">

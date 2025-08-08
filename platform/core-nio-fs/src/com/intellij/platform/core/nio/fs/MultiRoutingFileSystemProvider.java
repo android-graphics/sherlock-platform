@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.core.nio.fs;
 
 import org.jetbrains.annotations.Contract;
@@ -14,6 +14,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 
 /**
@@ -33,7 +34,7 @@ public final class MultiRoutingFileSystemProvider
    * A production IDE has two VM options file: the bundled one and the user-defined one.
    * The user can only add new options to the user level file, but there's no way to remove a system property
    * defined in the bundled VM options file.
-   *
+   * <p>
    * When it's not possible to unregister a custom file system, this option orders the file system to behave like the default one.
    */
   static final boolean ourForceDefaultFs = Objects.equals(System.getProperty("idea.force.default.filesystem"), "true");
@@ -77,6 +78,7 @@ public final class MultiRoutingFileSystemProvider
   ) {
     if (provider.getClass().getName().equals(MultiRoutingFileSystemProvider.class.getName())) {
       Map<String, Object> arguments = new HashMap<>();
+      arguments.put(KEY_MRFS, Void.TYPE);
       arguments.put(KEY_ROOT, root);
       arguments.put(KEY_PREFIX, isPrefix);
       arguments.put(KEY_CASE_SENSITIVE, caseSensitive);
@@ -96,13 +98,7 @@ public final class MultiRoutingFileSystemProvider
   }
 
   public MultiRoutingFileSystemProvider(FileSystemProvider localFSProvider) {
-    // TODO I wouldn't force using CorePosixFilteringFileSystemProvider at the top level.
-    if (ourForceDefaultFs || localFSProvider.getFileSystem(URI.create("file:///")).supportedFileAttributeViews().contains("posix")) {
-      myLocalProvider = localFSProvider;
-    }
-    else {
-      myLocalProvider = new CorePosixFilteringFileSystemProvider(localFSProvider);
-    }
+    myLocalProvider = localFSProvider;
     myFileSystem = new MultiRoutingFileSystem(this, myLocalProvider.getFileSystem(URI.create("file:///")));
   }
 
@@ -112,14 +108,18 @@ public final class MultiRoutingFileSystemProvider
   }
 
   @Override
-  public @NotNull MultiRoutingFileSystem newFileSystem(Path path, Map<String, ?> env) {
-    return getFileSystem(path.toUri());
+  public @Nullable MultiRoutingFileSystem newFileSystem(Path path, @Nullable Map<String, ?> env) {
+    throw new UnsupportedOperationException(MultiRoutingFileSystemProvider.class.getName() + " doesn't open other files as filesystems");
   }
 
   @Override
   public @Nullable MultiRoutingFileSystem newFileSystem(URI uri, @Nullable Map<String, ?> env) {
-    if (env == null) {
-      return getFileSystem(uri);
+    if (env == null || !env.containsKey(KEY_MRFS)) {
+      throw new UnsupportedOperationException(
+        MultiRoutingFileSystem.class.getName() + " can be created only with `" +
+        MultiRoutingFileSystemProvider.class.getName() + ".computeBackend()`." +
+        " Otherwise, this file system provider behaves as a default file system provider and throws an error."
+      );
     }
 
     String root = Objects.requireNonNull((String)env.get(KEY_ROOT));
@@ -134,6 +134,7 @@ public final class MultiRoutingFileSystemProvider
     return null;
   }
 
+  private static final String KEY_MRFS = "MRFS." + ThreadLocalRandom.current().nextInt(0, Integer.MAX_VALUE);
   private static final String KEY_ROOT = "KEY_ROOT";
   private static final String KEY_PREFIX = "KEY_PREFIX";
   private static final String KEY_CASE_SENSITIVE = "KEY_CASE_SENSITIVE";
@@ -168,7 +169,7 @@ public final class MultiRoutingFileSystemProvider
       path1 = path1.toAbsolutePath();
     }
 
-    FileSystemProvider provider1 = myFileSystem.getBackend(path1.getRoot().toString()).provider();
+    FileSystemProvider provider1 = myFileSystem.getBackend(path1.toString()).provider();
     if (path2 == null) {
       return provider1;
     }
@@ -177,7 +178,7 @@ public final class MultiRoutingFileSystemProvider
       path2 = path2.toAbsolutePath();
     }
 
-    FileSystemProvider provider2 = myFileSystem.getBackend(path2.getRoot().toString()).provider();
+    FileSystemProvider provider2 = myFileSystem.getBackend(path2.toString()).provider();
 
     if (provider1.equals(provider2)) {
       return provider1;
@@ -255,7 +256,7 @@ public final class MultiRoutingFileSystemProvider
 
   @Contract("null -> null; !null -> !null")
   @Override
-  protected @Nullable Path fromDelegatePath(@Nullable Path path) {
+  public @Nullable Path fromDelegatePath(@Nullable Path path) {
     if (path instanceof MultiRoutingFsPath) {
       // `MultiRoutingFsPath` is encapsulated and can't be created outside this package.
       // Tricks with classloaders are not expected here.

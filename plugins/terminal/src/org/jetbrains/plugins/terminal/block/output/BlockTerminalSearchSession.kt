@@ -9,7 +9,6 @@ import com.intellij.find.impl.livePreview.LivePreview
 import com.intellij.find.impl.livePreview.LivePreviewController
 import com.intellij.find.impl.livePreview.LivePreviewPresentation
 import com.intellij.find.impl.livePreview.SearchResults
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.invokeLater
@@ -30,6 +29,7 @@ import com.intellij.ui.util.preferredWidth
 import com.intellij.util.SmartList
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalIcons
@@ -39,14 +39,15 @@ import java.awt.Point
 import java.util.regex.PatternSyntaxException
 import javax.swing.JTextArea
 
-internal class BlockTerminalSearchSession(
+@ApiStatus.Internal
+class BlockTerminalSearchSession(
   private val project: Project,
   private val editor: EditorEx,
   private val model: FindModel,
   private val outputModel: TerminalOutputModel,
   private val selectionModel: TerminalSelectionModel,
-  private val closeCallback: () -> Unit = {}
-) : SearchSession, SearchResults.SearchResultsListener, SearchReplaceComponent.Listener, DataProvider {
+  private val closeCallback: () -> Unit = {},
+) : SearchSession, SearchResults.SearchResultsListener, SearchReplaceComponent.Listener {
   private val disposable = Disposer.newDisposable(BlockTerminalSearchSession::class.java.name)
   private val component: SearchReplaceComponent = createSearchComponent()
   private val searchResults: SearchResults = TerminalSearchResults()
@@ -102,11 +103,10 @@ internal class BlockTerminalSearchSession(
 
   private fun createSearchComponent(): SearchReplaceComponent {
     return SearchReplaceComponent
-      .buildFor(project, editor.contentComponent)
+      .buildFor(project, editor.contentComponent, this)
       .addPrimarySearchActions(StatusTextAction(), PrevOccurrenceAction(), NextOccurrenceAction())
       .addExtraSearchActions(SearchInBlockAction(), ToggleMatchCase(), ToggleRegex())
       .withNewLineButton(false)
-      .withDataProvider(this)
       .withCloseAction(this::close)
       .build().also {
         (it.searchTextComponent as? JTextArea)?.columns = 14  // default is 12
@@ -250,10 +250,6 @@ internal class BlockTerminalSearchSession(
     Disposer.dispose(disposable)
     livePreviewController.dispose()
     closeCallback()
-  }
-
-  override fun getData(dataId: String): Any? {
-    return if (SearchSession.KEY.`is`(dataId)) this else null
   }
 
   private class TerminalSearchPresentation(private val editor: Editor) : LivePreviewPresentation {

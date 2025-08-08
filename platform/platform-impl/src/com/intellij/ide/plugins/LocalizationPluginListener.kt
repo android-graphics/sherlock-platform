@@ -2,14 +2,19 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.LocalizationPluginHelper.isActiveLocalizationPlugin
+import com.intellij.ide.ui.LanguageAndRegionUi
+import com.intellij.l10n.LocalizationStateService
 import com.intellij.openapi.diagnostic.logger
+import java.util.*
 
 internal class LocalizationPluginListener : DynamicPluginListener {
-
-  override fun checkUnloadPlugin(pluginDescriptor: IdeaPluginDescriptor) {
+  override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
     if (isActiveLocalizationPlugin(pluginDescriptor)) {
-      logger<LocalizationPluginListener>().debug("throw CannotUnloadPluginException during unload Localization plugin")
-      throw CannotUnloadPluginException("Localization plugin ${pluginDescriptor.pluginId} cannot be dynamically unloaded because it's selected language")
+      logger<LocalizationPluginListener>().info("[i18n] Language setting was reset to default during unload Localization plugin")
+
+      LocalizationStateService.getInstance()?.setSelectedLocale(Locale.ENGLISH.toLanguageTag())
+
+      LanguageAndRegionUi.showRestartDialog(false)
     }
   }
 }

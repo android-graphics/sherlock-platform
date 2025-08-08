@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui
 
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.*
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.StatusBar
@@ -25,11 +24,10 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.RootPaneUtil
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
-import com.intellij.platform.ide.menu.GlobalMenuLinux
-import com.intellij.platform.ide.menu.LinuxIdeMenuBar.Companion.doBindAppMenuOfParent
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.*
 import com.intellij.ui.mac.screenmenu.Menu
@@ -134,10 +132,6 @@ open class FrameWrapper @JvmOverloads constructor(private val project: Project?,
       frame.removeWindowListener(windowListener)
     }
 
-    if (Registry.`is`("ide.perProjectModality", false)) {
-      frame.isAlwaysOnTop = true
-    }
-
     if (isCloseOnEsc) {
       addCloseOnEsc(frame as RootPaneContainer)
     }
@@ -162,12 +156,6 @@ open class FrameWrapper @JvmOverloads constructor(private val project: Project?,
     else {
       // unwrap the image before setting as frame's icon
       frame.iconImages = images.map { ImageUtil.toBufferedImage(it) }
-    }
-
-    if (SystemInfoRt.isLinux && frame is JFrame && GlobalMenuLinux.isAvailable()) {
-      WindowManager.getInstance().getFrame(project)?.let { parentFrame ->
-        doBindAppMenuOfParent(frame, parentFrame)
-      }
     }
   }
 
@@ -334,9 +322,9 @@ private class MyJFrame(private var owner: FrameWrapper, private val parent: IdeF
     FrameState.setFrameStateListener(this)
     glassPane = IdeGlassPaneImpl(rootPane = getRootPane(), installPainters = true)
     if (SystemInfoRt.isMac && !Menu.isJbScreenMenuEnabled()) {
-      jMenuBar = createMenuBar(coroutineScope = service<CoreUiCoroutineScopeHolder>().coroutineScope.childScope(),
-                               frame = this,
-                               customMenuGroup = null)
+      jMenuBar = RootPaneUtil.createMenuBar(coroutineScope = service<CoreUiCoroutineScopeHolder>().coroutineScope.childScope(),
+                                            frame = this,
+                                            customMenuGroup = null)
     }
     MouseGestureManager.getInstance().add(this)
     focusTraversalPolicy = IdeFocusTraversalPolicy()

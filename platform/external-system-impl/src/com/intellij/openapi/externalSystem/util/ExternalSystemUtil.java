@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.build.*;
@@ -27,7 +27,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
@@ -102,8 +101,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager.createNotification;
@@ -406,7 +405,7 @@ public final class ExternalSystemUtil {
       var taskListener = new ExternalSystemTaskNotificationListener() {
 
         @Override
-        public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
+        public void onStart(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
           if (isPreviewMode) return;
           var buildDescriptor = createSyncDescriptor(
             externalProjectPath, importSpec, resolveProjectTask, processHandler, consoleView, consoleManager
@@ -422,21 +421,21 @@ public final class ExternalSystemUtil {
         }
 
         @Override
-        public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
+        public void onFailure(@NotNull String projectPath, @NotNull ExternalSystemTaskId id, @NotNull Exception exception) {
           finishSyncEventSupplier.set(() -> {
             var eventTime = System.currentTimeMillis();
             var eventMessage = BuildBundle.message("build.status.failed");
             var externalSystemName = externalSystemId.getReadableName();
             var title = ExternalSystemBundle.message("notification.project.refresh.fail.title", externalSystemName, projectName);
             var dataContext = BuildConsoleUtils.getDataContext(id, syncViewManager);
-            var eventResult = createFailureResult(title, e, externalSystemId, project, externalProjectPath, dataContext);
+            var eventResult = createFailureResult(title, exception, externalSystemId, project, externalProjectPath, dataContext);
             return new FinishBuildEventImpl(id, null, eventTime, eventMessage, eventResult);
           });
           processHandler.notifyProcessTerminated(1);
         }
 
         @Override
-        public void onCancel(@NotNull ExternalSystemTaskId id) {
+        public void onCancel(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
           finishSyncEventSupplier.set(() -> {
             var eventTime = System.currentTimeMillis();
             var eventMessage = BuildBundle.message("build.status.cancelled");
@@ -447,7 +446,7 @@ public final class ExternalSystemUtil {
         }
 
         @Override
-        public void onSuccess(@NotNull ExternalSystemTaskId id) {
+        public void onSuccess(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
           finishSyncEventSupplier.set(() -> {
             var eventTime = System.currentTimeMillis();
             var eventMessage = BuildBundle.message("build.status.finished");
@@ -661,19 +660,6 @@ public final class ExternalSystemUtil {
     var eventMessage = BuildBundle.message("build.status.cancelled");
     var eventResult = new FailureResultImpl();
     return new FinishBuildEventImpl(taskId, null, eventTime, eventMessage, eventResult);
-  }
-
-  /**
-   * @deprecated Use {@link ExternalSystemTrustedProjectDialog} instead
-   */
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  public static boolean confirmLinkingUntrustedProject(
-    @NotNull Project project,
-    @NotNull ProjectSystemId systemId,
-    @NotNull Path projectRoot
-  ) {
-    return ExternalSystemTrustedProjectDialog.confirmLinkingUntrustedProject(project, systemId, projectRoot);
   }
 
   /**
@@ -1063,7 +1049,7 @@ public final class ExternalSystemUtil {
   public static @Nullable VirtualFile refreshAndFindFileByIoFile(final @NotNull File file) {
     var app = ApplicationManager.getApplication();
     if (!app.isDispatchThread()) {
-      assert !((ApplicationEx)app).holdsReadLock();
+      assert !app.holdsReadLock();
     }
     return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file.toPath());
   }
@@ -1135,6 +1121,20 @@ public final class ExternalSystemUtil {
   public static boolean isNoBackgroundMode() {
     return (ApplicationManager.getApplication().isUnitTestMode()
             || ApplicationManager.getApplication().isHeadlessEnvironment() && !PlatformUtils.isFleetBackend());
+  }
+
+  @ApiStatus.Internal
+  public static CompletableFuture<Void> requestImport(@NotNull Project project,
+                                                      @NotNull String projectPath,
+                                                      @NotNull ProjectSystemId systemId
+  ) {
+    var future = new CompletableFuture<Void>();
+    ImportSpecImpl spec = new ImportSpecImpl(project, systemId);
+    spec.setProgressExecutionMode(ProgressExecutionMode.IN_BACKGROUND_ASYNC);
+    ImportSpecBuilder.DefaultProjectRefreshCallback defaultCallback = new ImportSpecBuilder.DefaultProjectRefreshCallback(spec);
+    spec.setCallback(new AsyncExternalProjectRefreshCallback(defaultCallback, future));
+    refreshProject(projectPath, spec);
+    return future;
   }
 
   @RequiresBackgroundThread
@@ -1225,6 +1225,35 @@ public final class ExternalSystemUtil {
     @Override
     public void close() {
       Disposer.dispose(this);
+    }
+  }
+
+  private static class AsyncExternalProjectRefreshCallback implements ExternalProjectRefreshCallback {
+
+    private final @NotNull ExternalProjectRefreshCallback delegate;
+    private final @NotNull CompletableFuture<Void> future;
+
+    private AsyncExternalProjectRefreshCallback(@NotNull ExternalProjectRefreshCallback delegate,
+                                                @NotNull CompletableFuture<Void> future) {
+      this.delegate = delegate;
+      this.future = future;
+    }
+
+    @Override
+    public void onSuccess(@Nullable DataNode<ProjectData> externalProject) {
+      try {
+        delegate.onSuccess(externalProject);
+      }
+      catch (Exception e) {
+        future.completeExceptionally(e);
+      }
+      future.complete(null);
+    }
+
+    @Override
+    public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
+      future.completeExceptionally(new RuntimeException(errorMessage));
+      delegate.onFailure(errorMessage, errorDetails);
     }
   }
 }

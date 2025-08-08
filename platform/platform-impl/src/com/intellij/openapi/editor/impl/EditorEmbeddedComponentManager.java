@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -39,7 +38,9 @@ public final class EditorEmbeddedComponentManager {
     return ourInstance;
   }
 
-  public @Nullable Inlay<?> addComponent(@NotNull EditorEx editor, @NotNull JComponent component, @NotNull Properties properties) {
+  public @Nullable Inlay<?> addComponent(@NotNull EditorEx editor,
+                                         @NotNull JComponent component,
+                                         @NotNull Properties properties) {
     ThreadingAssertions.assertEventDispatchThread();
 
     ComponentInlays inlays = getComponentInlaysFor(editor);
@@ -49,7 +50,9 @@ public final class EditorEmbeddedComponentManager {
   }
 
   private static @NotNull ComponentInlays getComponentInlaysFor(@NotNull EditorEx editor) {
-    if (!COMPONENT_INLAYS_KEY.isIn(editor)) COMPONENT_INLAYS_KEY.set(editor, new ComponentInlays(editor));
+    if (!COMPONENT_INLAYS_KEY.isIn(editor)) {
+      COMPONENT_INLAYS_KEY.set(editor, new ComponentInlays(editor));
+    }
     return COMPONENT_INLAYS_KEY.get(editor);
   }
 
@@ -97,18 +100,33 @@ public final class EditorEmbeddedComponentManager {
     final int priority;
     final int offset;
 
-    public Properties(@NotNull ResizePolicy resizePolicy, @Nullable RendererFactory rendererFactory,
-                      boolean relatesToPrecedingText, boolean showAbove, int priority, int offset) {
+    public Properties(@NotNull ResizePolicy resizePolicy,
+                      @Nullable RendererFactory rendererFactory,
+                      boolean relatesToPrecedingText,
+                      boolean showAbove,
+                      int priority,
+                      int offset) {
       this(resizePolicy, rendererFactory, relatesToPrecedingText, showAbove, false, false, priority, offset);
     }
 
-    public Properties(@NotNull ResizePolicy resizePolicy, @Nullable RendererFactory rendererFactory,
-                      boolean relatesToPrecedingText, boolean showAbove, boolean showWhenFolded, int priority, int offset) {
+    public Properties(@NotNull ResizePolicy resizePolicy,
+                      @Nullable RendererFactory rendererFactory,
+                      boolean relatesToPrecedingText,
+                      boolean showAbove,
+                      boolean showWhenFolded,
+                      int priority,
+                      int offset) {
       this(resizePolicy, rendererFactory, relatesToPrecedingText, showAbove, false, false, priority, offset);
     }
 
-    public Properties(@NotNull ResizePolicy resizePolicy, @Nullable RendererFactory rendererFactory,
-                      boolean relatesToPrecedingText, boolean showAbove, boolean showWhenFolded, boolean fullWidth, int priority, int offset) {
+    public Properties(@NotNull ResizePolicy resizePolicy,
+                      @Nullable RendererFactory rendererFactory,
+                      boolean relatesToPrecedingText,
+                      boolean showAbove,
+                      boolean showWhenFolded,
+                      boolean fullWidth,
+                      int priority,
+                      int offset) {
       this.resizePolicy = resizePolicy;
       this.rendererFactory = rendererFactory;
       this.relatesToPrecedingText = relatesToPrecedingText;
@@ -124,7 +142,8 @@ public final class EditorEmbeddedComponentManager {
     }
   }
 
-  private static class MyRenderer extends JPanel implements EditorCustomElementRenderer {
+  @ApiStatus.Internal
+  public static class MyRenderer extends JPanel implements EditorCustomElementRenderer {
     private static final int UNDEFINED = -1;
 
     final ResizePolicy resizePolicy;
@@ -177,7 +196,7 @@ public final class EditorEmbeddedComponentManager {
 
     @Override
     public int calcHeightInPixels(@NotNull Inlay inlay) {
-      return Math.max(getHeight(), 0);
+      return Math.max(getPreferredHeight(), 0);
     }
 
     @Override
@@ -273,7 +292,6 @@ public final class EditorEmbeddedComponentManager {
   }
 
   private static final class ComponentInlays implements Disposable {
-    private static final Logger LOG = Logger.getInstance(ComponentInlays.class);
     private final EditorEx myEditor;
     private final ResizeListener myResizeListener;
 
@@ -285,8 +303,15 @@ public final class EditorEmbeddedComponentManager {
 
 
     @Nullable
-    Inlay<MyRenderer> add(@NotNull JComponent component, @NotNull ResizePolicy policy, @Nullable Properties.RendererFactory rendererFactory,
-                          boolean relatesToPrecedingText, boolean showAbove, boolean showWhenFolded, boolean fullWidth, int priority, int offset) {
+    Inlay<MyRenderer> add(@NotNull JComponent component,
+                          @NotNull ResizePolicy policy,
+                          @Nullable Properties.RendererFactory rendererFactory,
+                          boolean relatesToPrecedingText,
+                          boolean showAbove,
+                          boolean showWhenFolded,
+                          boolean fullWidth,
+                          int priority,
+                          int offset) {
       if (myEditor.isDisposed()) return null;
 
 
@@ -310,7 +335,7 @@ public final class EditorEmbeddedComponentManager {
         }
       });
 
-      renderer.addMouseWheelListener(myEditor.getContentComponent()::dispatchEvent);
+     // renderer.addMouseWheelListener(myEditor.getContentComponent()::dispatchEvent);
 
       renderer.setInlay(inlay);
       myEditor.getContentComponent().add(renderer);
@@ -547,7 +572,7 @@ public final class EditorEmbeddedComponentManager {
         }));
       }
 
-      private boolean isNearTo(int value, int coordinate) {
+      private static boolean isNearTo(int value, int coordinate) {
         return isInside(value, coordinate, coordinate);
       }
 

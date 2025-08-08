@@ -2,8 +2,7 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.debug
@@ -25,10 +24,13 @@ import com.intellij.platform.workspace.storage.query.CollectionQuery
 import com.intellij.platform.workspace.storage.query.StorageQuery
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.serviceContainer.AlreadyDisposedException
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.impl.reactive.WmReactive
+import com.intellij.workspaceModel.ide.isCaseSensitive
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -44,7 +46,7 @@ import kotlin.system.measureTimeMillis
 @ApiStatus.Internal
 open class WorkspaceModelImpl(private val project: Project, private val cs: CoroutineScope) : WorkspaceModelInternal {
   @Volatile
-  var loadedFromCache = false
+  var loadedFromCache: Boolean = false
     protected set
 
   private val reactive = WmReactive(this)
@@ -64,14 +66,14 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   */
   private val updatesFlow = MutableSharedFlow<VersionedStorageChange>(replay = 1)
 
-  private val virtualFileManager: VirtualFileUrlManager = IdeVirtualFileUrlManagerImpl()
+  private val virtualFileManager: VirtualFileUrlManager = IdeVirtualFileUrlManagerImpl(project.isCaseSensitive)
 
   override val currentSnapshot: ImmutableEntityStorage
     get() = entityStorage.current
 
   val entityTracer: EntityTracingLogger = EntityTracingLogger()
 
-  var userWarningLoggingLevel = false
+  var userWarningLoggingLevel: Boolean = false
     @TestOnly set
 
   private val updateModelMethodName = WorkspaceModelImpl::updateProjectModel.name
@@ -82,6 +84,9 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     log.debug { "Loading workspace model" }
     val start = Milliseconds.now()
 
+    if (Registry.`is`("ide.workspace.model.assertions.on.long.listeners", true)) {
+      (project.messageBus as MessageBusImpl).addMessageDeliveryListener(WorkspaceModelMessageDeliveryListener)
+    }
     val initialContent = WorkspaceModelInitialTestContent.pop()
     val cache = WorkspaceModelCache.getInstance(project)?.apply { setVirtualFileUrlManager(virtualFileManager) }
     val (projectEntities, unloadedEntities) = when {
@@ -134,7 +139,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
    * Used only in Rider IDE
    */
   @ApiStatus.Internal
-  open fun prepareModel(project: Project, storage: MutableEntityStorage) = Unit
+  open fun prepareModel(project: Project, storage: MutableEntityStorage): Unit = Unit
 
   fun ignoreCache() {
     loadedFromCache = false
@@ -143,7 +148,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   @OptIn(EntityStorageInstrumentationApi::class)
   @Synchronized
   final override fun updateProjectModel(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
     checkRecursiveUpdate()
 
     val updateTimeMillis: Long
@@ -204,7 +209,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
 
   override suspend fun update(description: String, updater: (MutableEntityStorage) -> Unit) {
     // TODO:: Has to be migrated to the implementation without WA. See IDEA-336937
-    writeAction { updateProjectModel(description, updater) }
+    edtWriteAction { updateProjectModel(description, updater) }
   }
 
   /**
@@ -253,7 +258,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
       updatesCounter.incrementAndGet()
     }
 
-    log.info("Project model updated silently to version ${entityStorage.pointer.version} in $generalTime ms: $description")
+    log.debug("Project model updated silently to version ${entityStorage.pointer.version} in $generalTime ms: $description")
     if (generalTime > 1000) {
       log.info("Project model update details: Updater code: $updateTimeMillis ms, To snapshot: $toSnapshotTimeMillis m")
     }
@@ -322,7 +327,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
 
   @OptIn(EntityStorageInstrumentationApi::class)
   override fun updateUnloadedEntities(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
     if (project.isDisposed) return
 
     val time = measureTimeMillis {
@@ -349,8 +354,8 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   }
 
   @Synchronized
-  final override fun replaceProjectModel(replacement: StorageReplacement): Boolean {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+  final override fun replaceWorkspaceModel(description: @NonNls String, replacement: StorageReplacement): Boolean {
+    ThreadingAssertions.assertWriteAccess()
 
     if (entityStorage.version != replacement.version) return false
 
@@ -358,13 +363,14 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
       val builder = replacement.builder
       this.initializeBridges(replacement.changes, builder)
       entityStorage.replace(builder.toSnapshot(), replacement.changes, this::onBeforeChanged, this::onChanged)
+      log.info("Project model updated to version ${entityStorage.pointer.version}: $description")
     }
     return true
   }
 
   @Synchronized
   fun replaceProjectModel(mainStorageReplacement: StorageReplacement, unloadStorageReplacement: StorageReplacement): Boolean {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
 
     if (entityStorage.version != mainStorageReplacement.version ||
         unloadedEntitiesStorage.version != unloadStorageReplacement.version) return false
@@ -385,11 +391,12 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   override suspend fun <T> flowOfDiff(query: CollectionQuery<T>): Flow<Diff<T>> = reactive.flowOfDiff(query)
 
   private fun initializeBridges(change: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
-    if (project.isDisposed) return
+    if (project.isDisposed) {
+      return
+    }
 
     initializeBridgesTimeMs.addMeasuredTime {
-      BridgeInitializer.EP_NAME.extensionList.forEach { bridgeInitializer ->
+      for (bridgeInitializer in BridgeInitializer.EP_NAME.extensionList) {
         logErrorOnEventHandling {
           if (bridgeInitializer.isEnabled()) {
             bridgeInitializer.initializeBridges(project, change, builder)
@@ -403,7 +410,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
    * Order of events: initialize project libraries, initialize module bridge + module friends, all other listeners
    */
   private fun onBeforeChanged(change: VersionedStorageChange) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
     if (project.isDisposed) return
 
     onBeforeChangedTimeMs.addMeasuredTime {
@@ -414,7 +421,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   }
 
   private fun onChanged(change: VersionedStorageChange) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
     if (project.isDisposed) return
     //it is important to update WorkspaceFileIndex before other listeners are called because they may rely on it
     logErrorOnEventHandling {

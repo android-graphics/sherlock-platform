@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +20,8 @@ public abstract class SchemeExporter<T extends Scheme> {
    * @deprecated use {@link #exportScheme(Project, Scheme, OutputStream)}.
    */
   @SuppressWarnings({"unused", "RedundantThrows"})
-  @Deprecated
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   public void exportScheme(@NotNull T scheme, @NotNull OutputStream outputStream) throws Exception {
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.longLine;
 
 import com.intellij.application.options.CodeStyle;
@@ -10,6 +10,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -17,13 +18,17 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.codeInspection.options.OptPane.settingLink;
 
+@ApiStatus.Internal
 public final class LongLineInspection extends LocalInspectionTool {
+  private static final ExtensionPointName<LongLineInspectionPolicy> POLICY_EP_NAME = ExtensionPointName.create("com.intellij.longLineInspectionPolicy");
+
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(settingLink(LangBundle.message("link.label.edit.code.style.settings"), CodeStyleSchemesConfigurable.CONFIGURABLE_ID));
@@ -78,8 +83,7 @@ public final class LongLineInspection extends LocalInspectionTool {
     };
   }
 
-  @Nullable
-  private static PsiElement findElementInRange(@NotNull PsiFile file, @NotNull TextRange range) {
+  private static @Nullable PsiElement findElementInRange(@NotNull PsiFile file, @NotNull TextRange range) {
     PsiElement left = file.findElementAt(range.getStartOffset());
     if (left == null) return null;
     PsiElement right = file.findElementAt(range.getEndOffset() - 1);
@@ -89,6 +93,6 @@ public final class LongLineInspection extends LocalInspectionTool {
 
   private static boolean ignoreFor(@Nullable PsiElement element) {
     if (element == null) return true;
-    return ContainerUtil.exists(LongLineInspectionPolicy.EP_NAME.getExtensionList(), policy -> policy.ignoreLongLineFor(element));
+    return ContainerUtil.exists(POLICY_EP_NAME.getExtensionList(), policy -> policy.ignoreLongLineFor(element));
   }
 }

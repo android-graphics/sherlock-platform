@@ -33,25 +33,14 @@ class StatusBarWidgetsManager(private val project: Project,
                               private val parentScope: CoroutineScope) : SimpleModificationTracker(), Disposable {
   companion object {
     private val LOG = logger<StatusBarWidgetsManager>()
-
-    internal fun anchorToOrder(anchor: String): LoadingOrder {
-      if (anchor.isEmpty() || anchor.equals("any", ignoreCase = true)) {
-        return LoadingOrder.ANY
-      }
-      else {
-        try {
-          return LoadingOrder(anchor)
-        }
-        catch (e: Throwable) {
-          LOG.error("Cannot parse anchor '${anchor}'", e)
-          return LoadingOrder.ANY
-        }
-      }
-    }
   }
 
   private val widgetFactories = LinkedHashMap<StatusBarWidgetFactory, StatusBarWidget>()
   private val widgetIdMap = HashMap<String, StatusBarWidgetFactory>()
+
+  init {
+    StatusBarActionManager.getInstance()
+  }
 
   @OptIn(ExperimentalCoroutinesApi::class)
   internal val dataContext: WidgetPresentationDataContext = object : WidgetPresentationDataContext {
@@ -186,7 +175,7 @@ class StatusBarWidgetsManager(private val project: Project,
 
     @Suppress("removal", "DEPRECATION")
     StatusBarWidgetProvider.EP_NAME.extensionList.mapTo(pendingFactories) {
-      StatusBarWidgetProviderToFactoryAdapter(project, frame, it) to anchorToOrder(it.anchor)
+      StatusBarWidgetProviderToFactoryAdapter(project, frame, it) to LoadingOrder.anchorToOrder(it.anchor)
     }
 
     pendingFactories.removeAll {  (factory, _) ->

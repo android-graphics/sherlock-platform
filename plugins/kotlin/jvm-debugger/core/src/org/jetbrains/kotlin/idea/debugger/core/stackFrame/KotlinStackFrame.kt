@@ -13,16 +13,15 @@ import com.intellij.xdebugger.frame.XValueChildrenList
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
 import org.jetbrains.kotlin.codegen.AsmUtil
-import org.jetbrains.kotlin.codegen.AsmUtil.THIS
-import org.jetbrains.kotlin.codegen.DESTRUCTURED_LAMBDA_ARGUMENT_VARIABLE_PREFIX
 import org.jetbrains.kotlin.codegen.coroutines.CONTINUATION_VARIABLE_NAME
 import org.jetbrains.kotlin.codegen.coroutines.SUSPEND_FUNCTION_COMPLETION_PARAMETER_NAME
-import org.jetbrains.kotlin.codegen.inline.INLINE_FUN_VAR_SUFFIX
-import org.jetbrains.kotlin.codegen.inline.INLINE_SCOPE_NUMBER_SEPARATOR
 import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
-import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
 import org.jetbrains.kotlin.idea.debugger.base.util.*
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.DESTRUCTURED_LAMBDA_ARGUMENT_VARIABLE_PREFIX
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.INLINE_SCOPE_NUMBER_SEPARATOR
 import org.jetbrains.kotlin.idea.debugger.core.ToggleKotlinVariablesState
+import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.NameUtils.CONTEXT_RECEIVER_PREFIX
 
 @Suppress("EqualsOrHashCode")
@@ -59,7 +58,7 @@ open class KotlinStackFrame(
         variables: List<LocalVariableProxyImpl>
     ) {
         val (thisVariables, otherVariables) = variables
-            .partition { it.nameWithoutScopeNumber() == THIS || it is ThisLocalVariable }
+            .partition { it.nameWithoutScopeNumber() == AsmUtil.THIS || it is ThisLocalVariable }
 
         val existingVariables = ExistingVariables(thisVariables, otherVariables)
 
@@ -191,7 +190,7 @@ open class KotlinStackFrame(
         if (!kotlinVariableViewService.kotlinVariableView) {
             val allVisibleVariables = stackFrameProxy.safeVisibleVariables()
             return allVisibleVariables.map { variable ->
-                if (isFakeLocalVariableForInline(variable.name())) variable.wrapSyntheticInlineVariable() else variable
+                if (JvmAbi.isFakeLocalVariableForInline(variable.name())) variable.wrapSyntheticInlineVariable() else variable
             }
         }
 
@@ -201,14 +200,14 @@ open class KotlinStackFrame(
     private fun List<LocalVariableProxyImpl>.remapInKotlinView(): List<LocalVariableProxyImpl> {
         val (thisVariables, otherVariables) = filter { variable ->
                 val name = variable.nameWithoutScopeNumber()
-                !isFakeLocalVariableForInline(name) &&
+                !JvmAbi.isFakeLocalVariableForInline(name) &&
                     !name.startsWith(DESTRUCTURED_LAMBDA_ARGUMENT_VARIABLE_PREFIX) &&
                     !name.startsWith(AsmUtil.LOCAL_FUNCTION_VARIABLE_PREFIX) &&
                     name != CONTINUATION_VARIABLE_NAME &&
                     name != SUSPEND_FUNCTION_COMPLETION_PARAMETER_NAME
             }.partition { variable ->
-                val name = variable.nameWithoutScopeNumber()
-                name == THIS ||
+            val name = variable.nameWithoutScopeNumber()
+            name == AsmUtil.THIS ||
                     name == AsmUtil.THIS_IN_DEFAULT_IMPLS ||
                     name.startsWith(AsmUtil.LABELED_THIS_PARAMETER) ||
                     name == AsmUtil.INLINE_DECLARATION_SITE_THIS
@@ -218,7 +217,7 @@ open class KotlinStackFrame(
         val mainThis = thisVariables.lastOrNull()
         val otherThis = thisVariables.dropLast(1)
 
-        val remappedMainThis = mainThis?.remapVariableIfNeeded(THIS)
+        val remappedMainThis = mainThis?.remapVariableIfNeeded(AsmUtil.THIS)
         val remappedOtherThis = otherThis.map { it.remapVariableIfNeeded() }
         val remappedOther = otherVariables.map { it.remapVariableIfNeeded() }
         return (remappedOtherThis + listOfNotNull(remappedMainThis) + remappedOther)
@@ -236,8 +235,8 @@ open class KotlinStackFrame(
                 val label = name.drop(AsmUtil.CAPTURED_LABELED_THIS_FIELD.length)
                 clone(customName ?: getThisName(label), label)
             }
-            name == AsmUtil.THIS_IN_DEFAULT_IMPLS -> clone(customName ?: ("$THIS (outer)"), null)
-            name == AsmUtil.RECEIVER_PARAMETER_NAME -> clone(customName ?: ("$THIS (receiver)"), null)
+            name == AsmUtil.THIS_IN_DEFAULT_IMPLS -> clone(customName ?: ("${AsmUtil.THIS} (outer)"), null)
+            name == AsmUtil.RECEIVER_PARAMETER_NAME -> clone(customName ?: ("${AsmUtil.THIS} (receiver)"), null)
             name == AsmUtil.INLINE_DECLARATION_SITE_THIS -> {
                 val label = generateThisLabel(frame.getValue(this)?.type())
                 if (label != null) {

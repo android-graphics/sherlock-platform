@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.RenderingContext
 import org.jetbrains.kotlin.diagnostics.rendering.parameters
+import org.jetbrains.kotlin.idea.base.analysis.injectionRequiresOnlyEssentialHighlighting
 import org.jetbrains.kotlin.idea.base.fe10.highlighting.suspender.KotlinHighlightingSuspender
 import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightErrors
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
@@ -39,9 +40,9 @@ import org.jetbrains.kotlin.resolve.BindingContext
 abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
     private var afterAnalysisVisitor: Array<AfterAnalysisHighlightingVisitor>? = null
     @Volatile
-    private var attempt = 0
+    private var attempt: Int = 0
 
-    override fun suitableForFile(file: PsiFile) = file is KtFile
+    override fun suitableForFile(file: PsiFile): Boolean = file is KtFile
 
     override fun visit(element: PsiElement) {
         afterAnalysisVisitor?.forEach(element::accept)
@@ -49,8 +50,9 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
 
     override fun analyze(psiFile: PsiFile, updateWholeFile: Boolean, holder: HighlightInfoHolder, action: Runnable): Boolean {
         val file = psiFile as? KtFile ?: return false
-        val highlightingLevelManager = HighlightingLevelManager.getInstance(file.project)
-        if (highlightingLevelManager.runEssentialHighlightingOnly(file)) {
+        val project = file.project
+        val highlightingLevelManager = HighlightingLevelManager.getInstance(project)
+        if (highlightingLevelManager.runEssentialHighlightingOnly(file) || psiFile.injectionRequiresOnlyEssentialHighlighting) {
             return true
         }
 
@@ -76,7 +78,7 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
                 }
             }
 
-            if (KotlinHighlightingSuspender.getInstance(file.project).suspend(file.virtualFile)) {
+            if (KotlinHighlightingSuspender.getInstance(project).suspend(file.virtualFile)) {
                 throw unwrappedException
             } else {
                 LOG.warn(unwrappedException)

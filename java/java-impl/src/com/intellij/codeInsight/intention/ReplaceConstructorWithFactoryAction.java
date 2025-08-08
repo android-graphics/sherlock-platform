@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -20,7 +20,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.MethodUtils;
 import one.util.streamex.StreamEx;
@@ -79,7 +78,7 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
   private static String getMinimalAccessLevel(@NotNull PsiMember member,
                                               @NotNull List<@NotNull PsiElement> places) {
     String[] levels = {PsiModifier.PRIVATE, PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED};
-    PsiClass containingClass = member.getContainingClass();
+    PsiClass containingClass = member instanceof PsiClass cls ? cls : member.getContainingClass();
     for (String level : levels) {
       LightModifierList list = new LightModifierList(member.getManager(), JavaLanguage.INSTANCE, level);
       if (ContainerUtil.all(places, place -> JavaResolveUtil.isAccessible(member, containingClass, list, place, null, null))) {
@@ -206,7 +205,7 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
     List<PsiNewExpression> newUsages = new ArrayList<>();
     List<PsiElement> otherUsages = new ArrayList<>();
 
-    for (PsiReference reference : ReferencesSearch.search(constructorOrClass, constructorOrClass.getUseScope(), false)) {
+    for (PsiReference reference : ReferencesSearch.search(constructorOrClass, constructorOrClass.getUseScope(), false).asIterable()) {
       PsiElement element = reference.getElement();
 
       if (element.getParent() instanceof PsiNewExpression newExpression) {
@@ -215,7 +214,8 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
       else if (element.getParent() instanceof PsiAnonymousClass || 
                "super".equals(element.getText()) || "this".equals(element.getText()) ||
                element instanceof PsiMethod method && method.isConstructor() ||
-               element instanceof PsiClass) {
+               element instanceof PsiClass ||
+               element.getParent() instanceof PsiReferenceList) {
         otherUsages.add(element);
       }
     }
@@ -235,7 +235,7 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
       if (!isSuitableClass(containingClass)) return null;
       return method;
     }
-    PsiClass containingClass = ClassUtils.getContainingClass(element);
+    PsiClass containingClass = PsiUtil.getContainingClass(element);
     if (!isSuitableClass(containingClass)) return null;
     PsiElement lBrace = containingClass.getLBrace();
     if (lBrace == null || element.getTextRange().getStartOffset() >= lBrace.getTextRange().getStartOffset()) return null;

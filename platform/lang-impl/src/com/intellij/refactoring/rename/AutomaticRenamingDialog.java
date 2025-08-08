@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.actionSystem.*;
@@ -23,6 +23,7 @@ import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.components.JBBox;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
@@ -114,7 +115,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("AutoRenaming", actionGroup, true);
     toolbar.setTargetComponent(myTable);
     panel.add(toolbar.getComponent(), BorderLayout.EAST);
-    final Box box = Box.createHorizontalBox();
+    final JBBox box = JBBox.createHorizontalBox();
     box.add(panel);
     box.add(Box.createHorizontalGlue());
     return box;
@@ -394,9 +395,8 @@ public class AutomaticRenamingDialog extends DialogWrapper {
           return checkInput(inputString);
         }
 
-        @Nullable
         @Override
-        public String getErrorText(@NlsSafe String inputString) {
+        public @Nullable String getErrorText(@NlsSafe String inputString) {
           final int selectedRow = myTable.getSelectedRow();
           if (!isValidName(inputString, selectedRow)) {
             return RefactoringBundle.message("text.identifier.invalid", inputString);

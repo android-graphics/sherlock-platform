@@ -2,26 +2,19 @@
 package com.intellij.vcsUtil
 
 import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.openapi.ui.popup.JBPopupListener
-import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.ui.awt.RelativePoint
+import com.intellij.openapi.ui.popup.PopupShowOptions
 import java.awt.Component
-import java.awt.Point
 
-fun JBPopup.showAbove(component: Component): Unit = VcsUIUtil.showPopupAbove(this, component)
+fun JBPopup.showAbove(component: Component): Unit = VcsUIUtil.showPopupAbove(this, component, null)
 
 object VcsUIUtil {
   fun showPopupAbove(popup: JBPopup, component: Component) {
-    val northWest = RelativePoint(component, Point())
+    showPopupAbove(popup, component, null)
+  }
 
-    popup.addListener(object : JBPopupListener {
-      override fun beforeShown(event: LightweightWindowEvent) {
-        val location = Point(popup.locationOnScreen).apply { y = northWest.screenPoint.y - popup.size.height }
-
-        popup.setLocation(location)
-        popup.removeListener(this)
-      }
-    })
-    popup.show(northWest)
+  fun showPopupAbove(popup: JBPopup, component: Component, minHeight: Int?) {
+    popup.show(PopupShowOptions.aboveComponent(component)
+                 .withPopupComponentUnscaledGap(4)
+                 .withMinimumHeight(minHeight))
   }
 }

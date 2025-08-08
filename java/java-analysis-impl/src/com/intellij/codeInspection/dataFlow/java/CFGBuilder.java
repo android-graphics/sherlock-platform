@@ -27,6 +27,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,6 +49,7 @@ public class CFGBuilder {
     myAnalyzer = analyzer;
   }
 
+  @Contract("_ -> this")
   private CFGBuilder add(Instruction instruction) {
     myAnalyzer.addInstruction(instruction);
     return this;
@@ -128,8 +130,9 @@ public class CFGBuilder {
    * @param descriptor a {@link DerivedVariableDescriptor} which describes a field to get
    * @return this builder
    */
-  public CFGBuilder unwrap(@NotNull DerivedVariableDescriptor descriptor) {
-    return add(new UnwrapDerivedVariableInstruction(descriptor));
+  @Contract("_ -> this")
+  public @NotNull CFGBuilder unwrap(@NotNull DerivedVariableDescriptor descriptor) {
+    return add(new GetQualifiedValueInstruction(descriptor));
   }
 
   /**
@@ -158,7 +161,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder pushForWrite(DfaVariableValue variable) {
-    return add(new JvmPushInstruction(variable, null, true));
+    return add(new JvmPushForWriteInstruction(variable));
   }
 
   /**
@@ -172,7 +175,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder push(DfaValue value) {
-    return add(new JvmPushInstruction(value, null));
+    return add(new PushInstruction(value, null));
   }
 
   /**
@@ -187,7 +190,18 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder push(DfaValue value, PsiExpression expression) {
-    return add(new JvmPushInstruction(value, expression == null ? null : new JavaExpressionAnchor(expression)));
+    return add(new PushInstruction(value, expression == null ? null : new JavaExpressionAnchor(expression)));
+  }
+
+  /**
+   * Add a custom null-check
+   * 
+   * @param problem a nullcheck to add
+   * @return this builder
+   */
+  public CFGBuilder nullCheck(NullabilityProblemKind.NullabilityProblem<?> problem) {
+    myAnalyzer.addNullCheck(problem);
+    return this;
   }
 
   /**
@@ -946,8 +960,7 @@ public class CFGBuilder {
    * @param type a type of variable to create
    * @return newly created variable
    */
-  @NotNull
-  public DfaVariableValue createTempVariable(@Nullable PsiType type) {
+  public @NotNull DfaVariableValue createTempVariable(@Nullable PsiType type) {
     return myAnalyzer.createTempVariable(type);
   }
 

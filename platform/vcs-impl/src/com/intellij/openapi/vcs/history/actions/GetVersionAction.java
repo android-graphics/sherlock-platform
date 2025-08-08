@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history.actions;
 
 import com.intellij.history.LocalHistory;
@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.VcsActivity;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public class GetVersionAction extends ExtendableAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(GetVersionAction.class);
 
@@ -75,9 +77,9 @@ public class GetVersionAction extends ExtendableAction implements DumbAware {
   }
 
   private static class MyWriteVersionTask extends Task.Backgroundable {
-    @NotNull private final @NlsContexts.Label String myActivityName;
+    private final @NotNull @NlsContexts.Label String myActivityName;
     private final @NotNull List<? extends FileRevisionProvider> myProviders;
-    @Nullable private final Runnable myOnFinished;
+    private final @Nullable Runnable myOnFinished;
 
     MyWriteVersionTask(@NotNull Project project,
                        @NotNull @NlsContexts.Label String activityName,
@@ -211,17 +213,16 @@ public class GetVersionAction extends ExtendableAction implements DumbAware {
   }
 
   private static class VcsFileRevisionProvider implements FileRevisionProvider {
-    @NotNull private final FilePath myFilePath;
-    @NotNull private final VcsFileRevision myRevision;
+    private final @NotNull FilePath myFilePath;
+    private final @NotNull VcsFileRevision myRevision;
 
     private VcsFileRevisionProvider(@NotNull FilePath filePath, @NotNull VcsFileRevision revision) {
       myFilePath = filePath;
       myRevision = revision;
     }
 
-    @NotNull
     @Override
-    public FilePath getFilePath() {
+    public @NotNull FilePath getFilePath() {
       return myFilePath;
     }
 

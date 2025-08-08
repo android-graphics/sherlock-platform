@@ -2,9 +2,7 @@
 package com.intellij.platform.workspace.jps.bridge.impl
 
 import com.intellij.platform.workspace.storage.EntityStorage
-import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
-import org.jetbrains.jps.model.JpsProject
 
 internal class JpsModelBridge(
   projectStorage: EntityStorage, 
@@ -15,7 +13,7 @@ internal class JpsModelBridge(
   private val project: JpsProjectBridge = JpsProjectBridge(this, projectStorage, projectAdditionalData);
   private val global: JpsGlobalBridge = JpsGlobalBridge(this, globalStorage);
 
-  override fun getProject(): JpsProject = project
+  override fun getProject(): JpsProjectBridge = project
 
-  override fun getGlobal(): JpsGlobal = global
+  override fun getGlobal(): JpsGlobalBridge = global
 }

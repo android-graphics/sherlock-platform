@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.logging;
 
 import com.intellij.diagnostic.DiagnosticBundle;
@@ -6,7 +6,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.LogFileOptions;
 import com.intellij.execution.configurations.PredefinedLogFile;
 import com.intellij.execution.configurations.RunConfigurationBase;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileChooser.FileSaverDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.ui.TextComponentAccessor;
@@ -29,8 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public final class LogConfigurationPanel<T extends RunConfigurationBase> extends SettingsEditor<T> {
   private final TableView<LogFileOptions> myFilesTable;
@@ -113,10 +113,10 @@ public final class LogConfigurationPanel<T extends RunConfigurationBase> extends
                myFilesTable.getSelectedObject() != null).disableUpDownActions().createPanel(), BorderLayout.CENTER);
 
     myWholePanel.setPreferredSize(new Dimension(-1, 150));
-    myOutputFile.addBrowseFolderListener(ExecutionBundle.message("choose.file.to.save.console.output"),
-                                         ExecutionBundle.message("console.output.would.be.saved.to.the.specified.file"), null,
-                                         FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor(),
-                                         TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    var descriptor = FileSaverDescriptorFactory.createSingleFileNoJarsDescriptor()
+      .withTitle(ExecutionBundle.message("choose.file.to.save.console.output"))
+      .withDescription(ExecutionBundle.message("console.output.would.be.saved.to.the.specified.file"));
+    myOutputFile.addFileSaverDialog(null, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     myRedirectOutputCb.addActionListener(e -> myOutputFile.setEnabled(myRedirectOutputCb.isSelected()));
   }
 
@@ -208,7 +208,6 @@ public final class LogConfigurationPanel<T extends RunConfigurationBase> extends
 
   @Override
   protected void applyEditorTo(final @NotNull RunConfigurationBase configuration) throws ConfigurationException {
-    myFilesTable.stopEditing();
     configuration.removeAllLogFiles();
     configuration.removeAllPredefinedLogFiles();
 

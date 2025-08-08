@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 object RunConfigurationOptionUsagesCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
-  val GROUP = EventLogGroup("run.configuration.ui.interactions", 15)
+  val GROUP = EventLogGroup("run.configuration.ui.interactions", 21)
 
   val optionId = EventFields.String("option_id", listOf("before.launch.editSettings", "before.launch.openToolWindow", "beforeRunTasks",
                                                         "commandLineParameters", "coverage", "doNotBuildBeforeRun", "environmentVariables",
@@ -47,8 +47,10 @@ object RunConfigurationOptionUsagesCollector : CounterUsagesCollector() {
                                                         "Session_name", "Arguments", "Solution_Configuration", "Executable_file",
                                                         "Default_arguments", "Optional_arguments", "browser.option.after.launch",
                                                         "browser.option.with.javascript.debugger", "browser.option.target.browser",
-                                                        "Use_Hot_Reload", "Roslyn_Target_Project", "Extra_mlaunch_Parameters", // Rider
-                                                        "external.system.vm.parameters.fragment", "Runtime"
+                                                        "Use_Hot_Reload", "Roslyn_Target_Project", "Extra_mlaunch_Parameters",
+                                                        "Project_Configuration", "Launch_profile_group", "Platform_Type", // Rider
+                                                        "external.system.vm.parameters.fragment", "Runtime", "AutoAttachChildren",
+                                                        "DotnetWatch_AutoAttachChildren", "Redirect_Input", "MixedModeDebug" // Rider
   ))  // maven
   private val projectSettingsAvailableField = EventFields.Boolean("projectSettingsAvailable")
   private val useProjectSettingsField = EventFields.Boolean("useProjectSettings")
@@ -135,6 +137,7 @@ object RunConfigurationOptionUsagesCollector : CounterUsagesCollector() {
   }
 }
 
+@ApiStatus.Internal
 class FragmentedStatisticsServiceImpl : FragmentStatisticsService() {
   override fun logOptionModified(project: Project?, optionId: String?, runConfigId: String?, inputEvent: AnActionEvent?) {
     RunConfigurationOptionUsagesCollector.logModifyOption(project, optionId, runConfigId, FusInputEvent.from(inputEvent))

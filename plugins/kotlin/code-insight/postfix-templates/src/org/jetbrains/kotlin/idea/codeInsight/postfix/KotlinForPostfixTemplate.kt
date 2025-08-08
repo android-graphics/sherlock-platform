@@ -7,11 +7,10 @@ import com.intellij.codeInsight.template.impl.MacroCallNode
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
-import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.idea.codeinsight.utils.canBeIterated
 import org.jetbrains.kotlin.idea.liveTemplates.k2.macro.SymbolBasedSuggestVariableNameMacro
-import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.StandardClassIds
 
 internal class KotlinForPostfixTemplate(provider: KotlinPostfixTemplateProvider) : AbstractKotlinForPostfixTemplate("for", provider)
 
@@ -108,7 +107,7 @@ internal abstract class AbstractKotlinForLoopNumbersPostfixTemplate(
     allExpressions(
         ValuedFilter,
         StatementFilter,
-        ExpressionTypeFilter { it is KaClassType && !it.isMarkedNullable && it.classId == INT_CLASS_ID }),
+        ExpressionTypeFilter { it is KaClassType && !it.isMarkedNullable && it.classId == StandardClassIds.Int }),
     /* provider = */ provider
 ) {
     override fun setVariables(template: Template, element: PsiElement) {
@@ -137,29 +136,3 @@ internal class KotlinForLoopReverseNumbersPostfixTemplate(
     "for (\$index$ in \$expr$ downTo 0) {\n    \$END$\n}",
     provider
 )
-
-private val INT_CLASS_ID = ClassId.fromString("kotlin/Int")
-
-private val ITERABLE_CLASS_IDS: Set<ClassId> = setOf(
-    ClassId.fromString("kotlin/Array"),
-    ClassId.fromString("kotlin/collections/Iterable"),
-    ClassId.fromString("kotlin/collections/Map"),
-    ClassId.fromString("kotlin/sequences/Sequence"),
-    ClassId.fromString("java/util/stream/Stream"),
-    DefaultTypeClassIds.CHAR_SEQUENCE
-)
-
-context(KaSession)
-internal fun canBeIterated(type: KaType, checkNullability: Boolean = true): Boolean {
-    return when (type) {
-        is KaFlexibleType -> canBeIterated(type.lowerBoundIfFlexible())
-        is KaIntersectionType -> type.conjuncts.all { canBeIterated(it) }
-        is KaDefinitelyNotNullType -> canBeIterated(type.original, checkNullability = false)
-        is KaTypeParameterType -> type.symbol.upperBounds.any { canBeIterated(it) }
-        is KaClassType -> {
-            (!checkNullability || !type.isMarkedNullable)
-                    && (type.classId in ITERABLE_CLASS_IDS || type.getAllSuperTypes(true).any { canBeIterated(it) })
-        }
-        else -> false
-    }
-}

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection.custom;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -48,7 +48,7 @@ import java.util.List;
 public class CustomRegExpFakeInspection extends LocalInspectionTool {
 
   private static final String GROUP = "RegExp";
-  @NotNull private final RegExpInspectionConfiguration myConfiguration;
+  private final @NotNull RegExpInspectionConfiguration myConfiguration;
 
   public CustomRegExpFakeInspection(@NotNull RegExpInspectionConfiguration configuration) {
     if (configuration.getPatterns().isEmpty()) throw new IllegalArgumentException();
@@ -60,16 +60,13 @@ public class CustomRegExpFakeInspection extends LocalInspectionTool {
     return myConfiguration;
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getDisplayName() {
     return myConfiguration.getName();
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return myConfiguration.getUuid();
   }
 
@@ -86,9 +83,8 @@ public class CustomRegExpFakeInspection extends LocalInspectionTool {
     return ContainerUtil.exists(myConfiguration.getPatterns(), p -> p.replacement() != null);
   }
 
-  @NotNull
   @Override
-  public String getID() {
+  public @NotNull String getID() {
     final HighlightDisplayKey key = HighlightDisplayKey.find(getShortName());
     if (key != null) {
       return key.getID(); // to avoid using a new suppress id before it is registered.
@@ -102,9 +98,8 @@ public class CustomRegExpFakeInspection extends LocalInspectionTool {
     return CustomRegExpInspection.SHORT_NAME;
   }
 
-  @Nullable
   @Override
-  public String getMainToolId() {
+  public @Nullable String getMainToolId() {
     return CustomRegExpInspection.SHORT_NAME;
   }
 
@@ -112,9 +107,8 @@ public class CustomRegExpFakeInspection extends LocalInspectionTool {
     return new String[] {InspectionsBundle.message("group.names.user.defined"), GROUP};
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
   @Override
-  public @NotNull String getGroupDisplayName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getGroupDisplayName() {
     return GROUP;
   }
 
@@ -123,9 +117,8 @@ public class CustomRegExpFakeInspection extends LocalInspectionTool {
     return getGroup();
   }
 
-  @Nullable
   @Override
-  public String getStaticDescription() {
+  public @Nullable String getStaticDescription() {
     final String description = myConfiguration.getDescription();
     if (StringUtil.isEmpty(description)) {
       return RegExpBundle.message("no.description.provided.description");
@@ -252,13 +245,15 @@ public class CustomRegExpFakeInspection extends LocalInspectionTool {
     saveChangesToProfile(list);
   }
 
-  private static void saveChangesToProfile(JList<InspectionPattern> list) {
+  private void saveChangesToProfile(JList<InspectionPattern> list) {
     final InspectionProfileModifiableModel profile = getInspectionProfile(list);
-    if (profile != null) profile.setModified(true);
+    if (profile == null) return;
+    final CustomRegExpInspection inspection = getRegExpInspection(profile);
+    inspection.updateConfiguration(myConfiguration);
+    profile.setModified(true);
   }
 
-  @NotNull
-  private static CustomRegExpInspection getRegExpInspection(@NotNull InspectionProfile profile) {
+  private static @NotNull CustomRegExpInspection getRegExpInspection(@NotNull InspectionProfile profile) {
     final InspectionToolWrapper<?, ?> wrapper = profile.getInspectionTool(CustomRegExpInspection.SHORT_NAME, (Project)null);
     assert wrapper != null;
     return (CustomRegExpInspection)wrapper.getTool();

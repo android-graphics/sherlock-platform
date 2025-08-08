@@ -11,8 +11,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Clock
 import com.intellij.openapi.util.NlsContexts
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
+@ApiStatus.Internal
 open class ChangeList(private val storage: ChangeListStorage) {
   private var changeSetDepth = 0
   private var currentChangeSet: ChangeSet? = null
@@ -28,8 +30,7 @@ open class ChangeList(private val storage: ChangeListStorage) {
     storage.close()
   }
 
-  @Synchronized
-  fun force() = storage.force()
+  fun force(): Unit = storage.force()
 
   @Synchronized
   fun nextId(): Long = storage.nextId()
@@ -142,13 +143,13 @@ open class ChangeList(private val storage: ChangeListStorage) {
     v.finished()
   }
 
-  @Synchronized
   fun purgeObsolete(period: Long) {
     storage.purge(period, intervalBetweenActivities) { changeSet ->
       for (each in changeSet.contentsToPurge) {
         each.release()
       }
     }
+    storage.force()
   }
 
   @TestOnly

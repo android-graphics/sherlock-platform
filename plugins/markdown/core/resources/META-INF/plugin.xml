@@ -17,6 +17,7 @@
     <module name="intellij.markdown.xml"/>
     <module name="intellij.markdown.model"/>
     <module name="intellij.markdown.spellchecker"/>
+    <module name="intellij.markdown.compose.preview"/>
   </content>
 
   <description><![CDATA[
@@ -60,6 +61,9 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="org.intellij.markdown.additionalFenceLanguageSuggester"
                     interface="org.intellij.plugins.markdown.injection.aliases.AdditionalFenceLanguageSuggester"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.markdown.markdownCompatibilityChecker"
+                    interface="org.intellij.plugins.markdown.lang.MarkdownCompatibilityChecker"
                     dynamic="true"/>
   </extensionPoints>
 
@@ -202,6 +206,12 @@
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings" />
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings" />
 
+    <applicationSettings service="org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings"/>
+    <applicationSettings service="org.intellij.plugins.markdown.settings.MarkdownPreviewSettings"/>
+    <applicationSettings service="org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings"/>
+
+    <projectSettings service="org.intellij.plugins.markdown.settings.MarkdownSettings"/>
+
     <lang.psiStructureViewFactory language="Markdown"
                                   implementationClass="org.intellij.plugins.markdown.structureView.MarkdownStructureViewFactory"/>
     <stripTrailingSpacesFilterFactory implementation="org.intellij.plugins.markdown.editor.MarkdownStripTrailingSpacesFilterFactory"/>
@@ -333,7 +343,7 @@
                  defaultValue="true"
                  description="Enables precise scrolling on the document boundaries (direct passing of scroll events from IDE to JCEF preview).
                               Any opened Markdown editors should be manually reopened.
-                              Use 'ide.browser.jcef.osr.wheelRotation.factor' to adjust swing's mouse wheel event multipler."/>
+                              Use 'ide.browser.jcef.osr.wheelRotation.factor' to adjust swing's mouse wheel event multiplier."/>
 
     <registryKey key="markdown.experimental.header.level.inference.enable"
                  defaultValue="false"
@@ -393,12 +403,10 @@
 
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.MathExtension$Provider"/>
 
-    <!--suppress PluginXmlValidity -->
     <markdownExportProvider implementation="org.intellij.plugins.markdown.fileActions.export.MarkdownDocxExportProvider"/>
-    <!--suppress PluginXmlValidity -->
     <markdownExportProvider implementation="org.intellij.plugins.markdown.fileActions.export.MarkdownPdfExportProvider"/>
-    <!--suppress PluginXmlValidity -->
     <markdownExportProvider implementation="org.intellij.plugins.markdown.fileActions.export.MarkdownHtmlExportProvider"/>
+    <markdownCompatibilityChecker implementation="org.intellij.plugins.markdown.lang.DefaultMarkdownCompatibilityChecker"/>
   </extensions>
 
   <actions>
@@ -472,22 +480,22 @@
              class="com.intellij.ide.actions.NonTrivialActionGroup"
              popup="true"
              compact="true">
-        <reference id="Markdown.Table.InsertTableColumn.InsertBefore"/>
-        <reference id="Markdown.Table.InsertTableColumn.InsertAfter"/>
-        <reference id="Markdown.Table.InsertRow.InsertAbove"/>
-        <reference id="Markdown.Table.InsertRow.InsertBelow"/>
+        <reference ref="Markdown.Table.InsertTableColumn.InsertBefore"/>
+        <reference ref="Markdown.Table.InsertTableColumn.InsertAfter"/>
+        <reference ref="Markdown.Table.InsertRow.InsertAbove"/>
+        <reference ref="Markdown.Table.InsertRow.InsertBelow"/>
         <separator/>
         <group id="Markdown.TableColumnActions.ColumnAlignmentActions.Popup"
                class="com.intellij.ide.actions.NonTrivialActionGroup"
                popup="true"
                compact="true">
-          <reference id="Markdown.Table.ColumnAlignmentActions"/>
+          <reference ref="Markdown.Table.ColumnAlignmentActions"/>
         </group>
-        <reference id="Markdown.Table.SwapColumns.SwapWithLeftColumn"/>
-        <reference id="Markdown.Table.SwapColumns.SwapWithRightColumn"/>
+        <reference ref="Markdown.Table.SwapColumns.SwapWithLeftColumn"/>
+        <reference ref="Markdown.Table.SwapColumns.SwapWithRightColumn"/>
         <separator/>
-        <reference id="Markdown.Table.RemoveCurrentColumn"/>
-        <reference id="Markdown.Table.RemoveCurrentRow"/>
+        <reference ref="Markdown.Table.RemoveCurrentColumn"/>
+        <reference ref="Markdown.Table.RemoveCurrentRow"/>
       </group>
     </group>
 
@@ -522,7 +530,7 @@
               icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Code_span">
         <keyboard-shortcut first-keystroke="control shift C" keymap="$default"/>
       </action>
-      <reference id="Markdown.Styling.CreateLink"/>
+      <reference ref="Markdown.Styling.CreateLink"/>
       <separator/>
       <action class="org.intellij.plugins.markdown.ui.actions.styling.CreateOrChangeListPopupAction"
               id="Markdown.Styling.CreateOrChangeList"
@@ -538,13 +546,13 @@
             icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Header_level_up"/>
 
     <!--
-      This group is supposed to override default generate popup.
+      This group is supposed to override the default generate popup.
       Please, make sure to adjust action text for MarkdownActionPlaces.INSERT_POPUP.
     -->
     <group id="Markdown.InsertGroup">
       <!-- Also add all insert actions into default generate popup -->
       <add-to-group group-id="GenerateGroup" anchor="last"/>
-      <reference id="Markdown.Styling.CreateLink"/>
+      <reference ref="Markdown.Styling.CreateLink"/>
       <action id="Markdown.InsertEmptyTable"
               class="org.intellij.plugins.markdown.editor.tables.actions.InsertEmptyTableAction"
               icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Table"/>
@@ -569,8 +577,8 @@
     <group id="Markdown.EditorContextMenuGroup">
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="EditorToggleColumnMode"/>
       <separator/>
-      <reference id="Markdown.TableContextMenuGroup"/>
-      <reference id="Markdown.Insert"/>
+      <reference ref="Markdown.TableContextMenuGroup"/>
+      <reference ref="Markdown.Insert"/>
     </group>
 
     <group id="Markdown.Toolbar.Left" class="com.intellij.openapi.actionSystem.DefaultActionGroup">
@@ -598,13 +606,21 @@
             class="org.intellij.plugins.markdown.extensions.CleanupExtensionsExternalFilesAction"
             icon="AllIcons.Actions.GC"/>
 
-    <group id="Markdown.Preview.FontSize" popup="true" compact="true">
-      <action id="Markdown.Preview.IncreaseFontSize"
-              class="org.intellij.plugins.markdown.ui.actions.ChangeFontSizeAction$Increase"/>
-      <action id="Markdown.Preview.DecreaseFontSize"
-              class="org.intellij.plugins.markdown.ui.actions.ChangeFontSizeAction$Decrease"/>
-      <action id="Markdown.Preview.ResetFontSize"
-              class="org.intellij.plugins.markdown.ui.actions.ChangeFontSizeAction$Reset"/>
+    <action id="Markdown.Preview.IncreaseFontSize"
+            class="org.intellij.plugins.markdown.ui.actions.ChangeFontSizeAction$Increase"
+            use-shortcut-of="ExpandAll"/>
+    <action id="Markdown.Preview.DecreaseFontSize"
+            class="org.intellij.plugins.markdown.ui.actions.ChangeFontSizeAction$Decrease"
+            use-shortcut-of="CollapseAll"/>
+
+    <action id="Markdown.Preview.ResetFontSize"
+            class="org.intellij.plugins.markdown.ui.actions.ResetFontSizeAction"/>
+
+    <group id="Markdown.PreviewGroup">
+      <action id="Markdown.Preview.AdjustFontSize"
+              class="org.intellij.plugins.markdown.ui.actions.AdjustFontSizeAction"/>
+      <action id="Markdown.Preview.Find" class="org.intellij.plugins.markdown.ui.actions.FindInPreviewAction"
+              icon="AllIcons.Actions.Find" use-shortcut-of="Find"/>
     </group>
   </actions>
 </idea-plugin>

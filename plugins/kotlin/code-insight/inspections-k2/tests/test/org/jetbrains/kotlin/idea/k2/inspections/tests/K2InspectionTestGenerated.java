@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.inspections.tests;
 
@@ -370,6 +370,98 @@ public abstract class K2InspectionTestGenerated extends AbstractK2InspectionTest
                 public void testInspections_test() throws Exception {
                     runTest("../../../idea/tests/testData/inspections/unusedSymbol/typeParameter/inspectionData/inspections.test");
                 }
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspections/arrayInDataClass")
+    public abstract static class ArrayInDataClass extends AbstractK2InspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspections/arrayInDataClass/inspectionData")
+        public static class InspectionData extends AbstractK2InspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("inspections.test")
+            public void testInspections_test() throws Exception {
+                runTest("../../../idea/tests/testData/inspections/arrayInDataClass/inspectionData/inspections.test");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspections/publicApiImplicitType")
+    public abstract static class PublicApiImplicitType extends AbstractK2InspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspections/publicApiImplicitType/inspectionData")
+        public static class InspectionData extends AbstractK2InspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("inspections.test")
+            public void testInspections_test() throws Exception {
+                runTest("../../../idea/tests/testData/inspections/publicApiImplicitType/inspectionData/inspections.test");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspections/replaceArrayEqualityOpWithArraysEquals")
+    public abstract static class ReplaceArrayEqualityOpWithArraysEquals extends AbstractK2InspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspections/replaceArrayEqualityOpWithArraysEquals/inspectionData")
+        public static class InspectionData extends AbstractK2InspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("inspections.test")
+            public void testInspections_test() throws Exception {
+                runTest("../../../idea/tests/testData/inspections/replaceArrayEqualityOpWithArraysEquals/inspectionData/inspections.test");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/removeExplicitTypeArguments")
+    public abstract static class RemoveExplicitTypeArguments extends AbstractK2InspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/inspectionData")
+        public static class InspectionData extends AbstractK2InspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("inspections.test")
+            public void testInspections_test() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/inspectionData/inspections.test");
             }
         }
     }

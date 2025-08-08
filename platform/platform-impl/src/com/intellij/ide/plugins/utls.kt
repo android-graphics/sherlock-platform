@@ -1,8 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("PluginUtilsKt")
+@file:ApiStatus.Internal
 
 package com.intellij.ide.plugins
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.environment.EnvironmentService
 import com.intellij.internal.inspector.PropertyBean
 import com.intellij.openapi.components.serviceAsync
@@ -11,6 +13,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Ref
+import org.jetbrains.annotations.ApiStatus
 
 fun getEnableDisabledPluginsDependentConfirmationData(): Int? {
   val ref: Ref<Int?> = Ref(null)
@@ -37,7 +40,7 @@ fun getEnableDisabledPluginsDependentConfirmationData(): Int? {
           exceptionRef.set(e)
         }
       }
-    }, "Fetching predefined settings for disabled plugins", true, null)
+    }, IdeBundle.message("dialog.title.fetching.predefined.settings.for.disabled.plugins"), true, null)
   exceptionRef.get()?.let { throw it }
   return ref.get()
 }

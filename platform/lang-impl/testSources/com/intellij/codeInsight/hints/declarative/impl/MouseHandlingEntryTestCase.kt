@@ -3,9 +3,11 @@ package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
+import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import junit.framework.TestCase
 import org.junit.Test
+import java.awt.event.MouseEvent
 
 class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
   @Test
@@ -173,14 +175,20 @@ class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
     val state = buildState {
       initialStateBuilder()
     }
-    val presentationList = InlayPresentationList(state, HintFormat.default, false, null, javaClass, null, DeclarativeInlayHintsPass.passSourceId)
+    var stateUpdateCallbackInvoked = false
+    val presentationList = InlayPresentationList(
+      createInlayData(state, HintFormat.default),
+      onStateUpdated = {
+        stateUpdateCallbackInvoked = true
+      })
     val beforeClickEntries = presentationList.getEntries().toList()
     assertEquals(beforeClickText, toText(beforeClickEntries))
+    val editor = myFixture.editor
     var occurence = 0
     for (beforeClickEntry in beforeClickEntries) {
       if ((beforeClickEntry as TextInlayPresentationEntry).text == clickPlace) {
         if (occurence == occurenceIndex) {
-          beforeClickEntry.handleClick(myFixture.editor, presentationList, true)
+          beforeClickEntry.simulateClick(editor, presentationList)
           break
         }
         occurence++
@@ -188,10 +196,11 @@ class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
     }
     val afterClickEntries = presentationList.getEntries().toList()
     assertEquals(afterClickText, toText(afterClickEntries))
+    assertTrue(stateUpdateCallbackInvoked)
     val newState = buildState {
       updatedStateBuilder()
     }
-    presentationList.updateState(newState, false, HintFormat.default.withColorKind(HintColorKind.TextWithoutBackground))
+    presentationList.updateModel(createInlayData(newState, HintFormat.default.withColorKind(HintColorKind.TextWithoutBackground)))
     val updatedStateEntries = presentationList.getEntries().toList()
     assertEquals(afterUpdateText, toText(updatedStateEntries))
   }
@@ -249,16 +258,37 @@ class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
     myFixture.configureByText("test.txt", "my text")
     val root = PresentationTreeBuilderImpl.createRoot()
     b(root)
-    val presentationList = InlayPresentationList(root.complete(), HintFormat.default, false, null, javaClass, null, DeclarativeInlayHintsPass.passSourceId)
+    var stateUpdateCallbackInvoked = false
+    val presentationList = InlayPresentationList(
+      createInlayData(root.complete()),
+      onStateUpdated = {
+        stateUpdateCallbackInvoked = true
+      }
+    )
     val beforeClickEntries = presentationList.getEntries().toList()
     TestCase.assertEquals(beforeClick, toText(beforeClickEntries))
-    beforeClickEntries.find { (it as TextInlayPresentationEntry).text == click }!!.handleClick(myFixture.editor, presentationList,
-                                                                                               true)
+    val entry = beforeClickEntries.find { (it as TextInlayPresentationEntry).text == click }!!
+    val editor = myFixture.editor
+    val event = MouseEvent(editor.getContentComponent(), 0, 0, 0, 0, 0, 0, false, 0)
+    entry.handleClick(EditorMouseEvent(editor, event, editor.getMouseEventArea(event)), presentationList, true)
     val afterClickEntries = presentationList.getEntries().toList()
     TestCase.assertEquals(afterClick, toText(afterClickEntries))
+    assertTrue(stateUpdateCallbackInvoked)
   }
 
   private fun toText(entries: List<InlayPresentationEntry>): String {
     return entries.joinToString(separator = "|") { (it as TextInlayPresentationEntry).text }
+  }
+
+  private fun createInlayData(tree: TinyTree<Any?>, hintFormat: HintFormat = HintFormat.default): InlayData {
+    return InlayData(InlineInlayPosition(0, true),
+                     null,
+                     hintFormat,
+                     tree,
+                     "dummyProvider",
+                     false,
+                     null,
+                     javaClass,
+                     DeclarativeInlayHintsPass.passSourceId)
   }
 }

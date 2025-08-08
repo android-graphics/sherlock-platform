@@ -1,35 +1,35 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.searching.usages
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.PsiTreeUtil
-import kotlinx.coroutines.Runnable
-import org.jetbrains.kotlin.analysis.api.*
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.imports.getDefaultImports
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.resolution.KaDelegatedConstructorCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.unwrappedTargets
 import org.jetbrains.kotlin.idea.search.ExpectActualSupport
-import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectedDeclarationIfAny
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectDeclarationIfAny
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isInheritable
 import org.jetbrains.kotlin.idea.search.ReceiverTypeSearcherInfo
@@ -39,12 +39,13 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.util.match
 
-internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
+internal class KotlinK2SearchUsagesSupport(private val project: Project) : KotlinSearchUsagesSupport {
     override fun isInvokeOfCompanionObject(psiReference: PsiReference, searchTarget: KtNamedDeclaration): Boolean {
         if (searchTarget is KtObjectDeclaration && searchTarget.isCompanion() && psiReference is KtReference) {
             analyze(psiReference.element) {
@@ -63,7 +64,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                     }
 
                     return searchTargetContainerSymbol.isInheritorOrSelf(invokeSymbol.containingDeclaration as? KaClassSymbol) ||
-                            searchTargetContainerSymbol.isInheritorOrSelf(invokeSymbol.receiverParameter?.type?.expandedSymbol)
+                            searchTargetContainerSymbol.isInheritorOrSelf(invokeSymbol.receiverParameter?.returnType?.expandedSymbol)
                 }
             }
         }
@@ -96,7 +97,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
             reference.unwrappedTargets.any { target ->
                 if (target is KtDeclaration) {
                     val expectedDeclaration = ExpectActualSupport.getInstance(declaration.project)
-                        .expectedDeclarationIfAny(target)
+                        .expectDeclarationIfAny(target)
                     expectedDeclaration == declaration ||
                             //repeat logic of AbstractKtReference.isReferenceTo for calls on companion objects
                             expectedDeclaration is KtObjectDeclaration && expectedDeclaration.isCompanion() && expectedDeclaration.getNonStrictParentOfType<KtClass>() == declaration
@@ -124,10 +125,10 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                         val targetSymbol = target.symbol as? KaCallableSymbol ?: return@any false
                         val overriddenDeclarationsInCommon = targetSymbol.allOverriddenSymbols.mapNotNull {
                             val originalElement = it.psi?.originalElement as? KtDeclaration
-                            originalElement?.expectedDeclarationIfAny() ?: originalElement
+                            originalElement?.expectDeclarationIfAny() ?: originalElement
                         }
                         //this ignores disabled option `Extracted functions`
-                        (originalDeclaration.expectedDeclarationIfAny() ?: originalDeclaration) in overriddenDeclarationsInCommon
+                        (originalDeclaration.expectDeclarationIfAny() ?: originalDeclaration) in overriddenDeclarationsInCommon
                     }
                 }
                 is PsiMethod -> {
@@ -151,7 +152,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                 val receiverType = declarationSymbol.receiverType
 
                 //do not treat callable with different receivers as overloads
-                if (receiverType != null && candidateReceiverType != null && !receiverType.isEqualTo(candidateReceiverType)) {
+                if (receiverType != null && candidateReceiverType != null && !receiverType.semanticallyEquals(candidateReceiverType)) {
                     return@any false
                 }
 
@@ -258,7 +259,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
     context(KaSession)
     private fun getContainingClassType(symbol: KaCallableSymbol): KaType? {
         val containingSymbol = symbol.containingDeclaration ?: return null
-        val classSymbol = containingSymbol as? KaNamedClassOrObjectSymbol ?: return null
+        val classSymbol = containingSymbol as? KaNamedClassSymbol ?: return null
         return classSymbol.defaultType
     }
 
@@ -270,8 +271,15 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         return false
     }
 
+    override fun findScriptsWithUsages(declaration: KtNamedDeclaration, processor: (KtFile) -> Boolean): Boolean {
+        return true
+    }
+
     override fun getDefaultImports(file: KtFile): List<ImportPath> {
-        return file.getDefaultImports()
+        return KaModuleProvider.getModule(project, file, useSiteModule = null)
+            .targetPlatform.getDefaultImports(project)
+            .defaultImports
+            .map { it.importPath }
     }
 
     override fun forEachKotlinOverride(
@@ -286,7 +294,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                 val iterator = if (searchDeeply) {
                     member.findAllOverridings().filterIsInstance<KtElement>().iterator()
                 } else {
-                    DirectKotlinOverridingCallableSearch.search(member).iterator()
+                    DirectKotlinOverridingCallableSearch.search(member).asIterable().iterator()
                 }
                 for (psiElement in iterator) {
                     if (!processor(member, psiElement)) return false
@@ -336,12 +344,9 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
 
     override fun isInheritable(ktClass: KtClass): Boolean {
         if (ApplicationManager.getApplication().isDispatchThread) {
-            return ProgressManager.getInstance().runProcessWithProgressSynchronously(
-                Runnable { runReadAction { isOverridableBySymbol(ktClass) } },
-                KotlinBundle.message("dialog.title.resolving.inheritable.status"),
-                true,
-                ktClass.project
-            )
+            return ActionUtil.underModalProgress(ktClass.project, KotlinBundle.message("dialog.title.resolving.inheritable.status")) {
+                runReadAction { isOverridableBySymbol(ktClass) }
+            }
         }
         return isOverridableBySymbol(ktClass)
     }
@@ -351,7 +356,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         if (declarationSymbol is KaValueParameterSymbol) {
             declarationSymbol = declarationSymbol.generatedPrimaryConstructorProperty
         }
-        val symbol = declarationSymbol as? KaSymbolWithModality ?: return@analyze false
+        val symbol = declarationSymbol as? KaDeclarationSymbol ?: return@analyze false
         when (symbol.modality) {
             KaSymbolModality.OPEN, KaSymbolModality.SEALED, KaSymbolModality.ABSTRACT -> true
             KaSymbolModality.FINAL -> false

@@ -2,26 +2,35 @@
 
 package org.jetbrains.kotlin.idea.core.overrideImplement
 
+import com.intellij.codeInsight.generation.MemberChooserObject
 import com.intellij.extapi.psi.StubBasedPsiElementBase
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.renderer.base.KaKeywordsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaParameterDefaultValueRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaPropertyAccessorsRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaExpandedTypeRenderingMode
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.insertMembersAfter
 import org.jetbrains.kotlin.idea.core.moveCaretIntoGeneratedElement
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -39,35 +48,38 @@ abstract class KtGenerateMembersHandler(
     final override val toImplement: Boolean
 ) : AbstractGenerateMembersHandler<KtClassMember>() {
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
+    override fun isClassNode(key: MemberChooserObject): Boolean = key is KaClassOrObjectSymbolChooserObject
+
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
     override fun generateMembers(
         editor: Editor,
         classOrObject: KtClassOrObject,
         selectedElements: Collection<KtClassMember>,
         copyDoc: Boolean
     ) {
-        // Using allowAnalysisOnEdt here because we don't want to pre-populate all possible textual overrides before user selection.
-        val (commands, insertedBlocks) = allowAnalysisOnEdt {
-            @OptIn(KaAllowAnalysisFromWriteAction::class)
-            allowAnalysisFromWriteAction {
-                val entryMembers = analyze(classOrObject) {
+        val entryMembers = ActionUtil.underModalProgress(classOrObject.project, KotlinBundle.message("fix.change.signature.prepare")) {
+                analyze(classOrObject) {
                     createMemberEntries(editor, classOrObject, selectedElements, copyDoc)
                 }
-                val insertedBlocks = insertMembersAccordingToPreferredOrder(entryMembers, editor, classOrObject)
-                // Reference shortening is done in a separate analysis session because the session need to be aware of the newly generated
-                // members.
-                val commands = analyze(classOrObject) {
-                    insertedBlocks.mapNotNull { block ->
-                        val declarations = block.declarations.mapNotNull { it.element }
-                        val first = declarations.firstOrNull() ?: return@mapNotNull null
-                        val last = declarations.last()
-                        collectPossibleReferenceShortenings(first.containingKtFile, TextRange(first.startOffset, last.endOffset))
-                    }
-                }
+            }
 
-                commands to insertedBlocks
+        val insertedBlocks = insertMembersAccordingToPreferredOrder(entryMembers, editor, classOrObject)
+
+        // Reference shortening is done in a separate analysis session because the session need to be aware of the newly generated
+        // members.
+        fun collectShortenings(): List<ShortenCommand> = analyze(classOrObject) {
+            insertedBlocks.mapNotNull { block ->
+                val declarations = block.declarations.mapNotNull { it.element }
+                val first = declarations.firstOrNull() ?: return@mapNotNull null
+                val last = declarations.last()
+                collectPossibleReferenceShortenings(first.containingKtFile, TextRange(first.startOffset, last.endOffset))
             }
         }
+
+        val commands = ActionUtil.underModalProgress(classOrObject.project, KotlinBundle.message("fix.change.signature.prepare")) {
+                collectShortenings()
+            }
+
         runWriteAction {
             commands.forEach { it.invokeShortening() }
             val project = classOrObject.project
@@ -293,6 +305,7 @@ private fun getMembersOrderedByRelativePositionsInSuperTypes(
                     updateBatch()
                     currentAnchor = entry.psi
                 }
+
                 is MemberEntry.NewEntry -> {
                     currentBatch += entry.psi
                 }
@@ -300,11 +313,14 @@ private fun getMembersOrderedByRelativePositionsInSuperTypes(
         }
         updateBatch()
 
-        return runWriteAction {
-            insertionBlocks.map { (newDeclarations, anchor) ->
-                InsertedBlock(insertMembersAfter(editor, currentClass, newDeclarations, anchor = anchor))
+        //do not reformat on WA finish automatically, first we need to shorten references
+        return PostprocessReformattingAspect.getInstance(currentClass.project).postponeFormattingInside(Computable {
+            runWriteAction {
+                insertionBlocks.map { (newDeclarations, anchor) ->
+                    InsertedBlock(insertMembersAfter(editor, currentClass, newDeclarations, anchor = anchor))
+                }
             }
-        }
+        })
     }
 
     private class DoublyLinkedNode<T>(val t: T? = null) {
@@ -348,12 +364,28 @@ private fun getMembersOrderedByRelativePositionsInSuperTypes(
     companion object {
         @KaExperimentalApi
         val renderer = KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+            keywordsRenderer = KaKeywordsRenderer.NONE
+
+            returnTypeFilter = KaCallableReturnTypeFilter.ALWAYS
+
+            parameterDefaultValueRenderer = KaParameterDefaultValueRenderer.THREE_DOTS
+
+            typeRenderer = typeRenderer.with {
+                expandedTypeRenderingMode = KaExpandedTypeRenderingMode.RENDER_ABBREVIATED_TYPE_WITH_EXPANDED_TYPE_COMMENT
+            }
+
+            withoutLabel()
+
             annotationRenderer = annotationRenderer.with {
                 annotationFilter = KaRendererAnnotationsFilter.NONE
             }
             modifiersRenderer = modifiersRenderer.with {
-                keywordsRenderer = keywordsRenderer.with { keywordFilter = KaRendererKeywordFilter.onlyWith(KtTokens.OVERRIDE_KEYWORD) }
+                keywordsRenderer = keywordsRenderer.with {
+                    keywordFilter = KaRendererKeywordFilter.onlyWith(KtTokens.VARARG_KEYWORD)
+                }
             }
+
+            propertyAccessorsRenderer = KaPropertyAccessorsRenderer.NONE
         }
     }
 

@@ -174,7 +174,7 @@ public abstract class AbstractBasicJavaTypingTest extends BasePlatformTestCase {
     setLanguageLevel(LanguageLevel.JDK_21_PREVIEW);
     doTest('}');
   }
-  
+
   protected void setLanguageLevel(@NotNull LanguageLevel level) {
     IdeaTestUtil.setProjectLanguageLevel(getProject(), level, myFixture.getTestRootDisposable());
   }

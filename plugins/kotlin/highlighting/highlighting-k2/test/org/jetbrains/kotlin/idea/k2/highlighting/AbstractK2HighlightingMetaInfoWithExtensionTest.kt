@@ -3,10 +3,8 @@ package org.jetbrains.kotlin.idea.k2.highlighting
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -23,8 +21,10 @@ object KotlinCallHighlighterExtensionForTest : KotlinCallHighlighterExtension {
     context(KaSession)
     override fun highlightCall(elementToHighlight: PsiElement, call: KaCall): HighlightInfoType? {
         if (call !is KaCallableMemberCall<*, *>) return null
-        val highlightType = call.partiallyAppliedSymbol.symbol.annotations.firstNotNullOfOrNull { annotation ->
-            HighlightType.values().singleOrNull { it.annotationName == annotation.classId?.shortClassName?.asString() }
+        val annotations = call.partiallyAppliedSymbol.symbol.annotations +
+                (call.partiallyAppliedSymbol.dispatchReceiver?.type?.annotations ?: emptyList())
+        val highlightType = annotations.firstNotNullOfOrNull { annotation ->
+            HighlightType.entries.singleOrNull { it.annotationName == annotation.classId?.shortClassName?.asString() }
         } ?: return null
         return when (highlightType) {
             HighlightType.SUSPEND -> KotlinHighlightInfoTypeSemanticNames.SUSPEND_FUNCTION_CALL

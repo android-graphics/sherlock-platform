@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.autotest;
 
 import com.intellij.codeInsight.lookup.Lookup;
@@ -16,10 +16,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Alarm;
 import com.intellij.util.PsiErrorElementUtil;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -52,18 +50,6 @@ public final class DelayedDocumentWatcher implements AutoTestWatcher {
   private MessageBusConnection myConnection;
   private int myModificationStamp = 0;
 
-  /**
-   * @deprecated Use {@link #DelayedDocumentWatcher(Project, int, AbstractAutoTestManager, Predicate)}
-   */
-  @SuppressWarnings({"DataFlowIssue", "UsagesOfObsoleteApi"})
-  @Deprecated(forRemoval = true)
-  public DelayedDocumentWatcher(@NotNull Project project,
-                                int delayMillis,
-                                @NotNull com.intellij.util.Consumer<? super Integer> modificationStampConsumer,
-                                @Nullable Condition<? super VirtualFile> changedFileFilter) {
-    this(project, delayMillis, it -> modificationStampConsumer.consume(it), null, it -> changedFileFilter.value(it));
-  }
-
   public DelayedDocumentWatcher(@NotNull Project project,
                          int delayMillis,
                          @NotNull AbstractAutoTestManager autoTestManager,
@@ -84,8 +70,7 @@ public final class DelayedDocumentWatcher implements AutoTestWatcher {
     myListener = new MyDocumentAdapter();
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
@@ -113,7 +98,7 @@ public final class DelayedDocumentWatcher implements AutoTestWatcher {
         }
       });
 
-      myAlarm = new SingleAlarm(new MyRunnable(), myDelayMillis, Alarm.ThreadToUse.SWING_THREAD, myDisposable);
+      myAlarm = SingleAlarm.Companion.singleEdtAlarm(myDelayMillis, myDisposable, new MyRunnable());
     }
   }
 

@@ -4,12 +4,14 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.ide.ProjectWindowCustomizerService
-import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.ide.repaintWhenProjectGradientOffsetChanged
+import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.impl.createMenuBar
+import com.intellij.openapi.wm.impl.RootPaneUtil
 import com.intellij.platform.ide.menu.IdeJMenuBar
+import com.intellij.ui.SideBorder
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
@@ -25,13 +27,16 @@ import java.awt.event.MouseEvent
 import javax.swing.*
 import javax.swing.event.ChangeListener
 
+
 private const val ALPHA = (255 * 0.6).toInt()
 
-internal class ExpandableMenu(private val headerContent: JComponent,
-                              coroutineScope: CoroutineScope,
-                              frame: JFrame,
-                              private val shouldBeColored: (() -> Boolean)? = null) {
-  val ideMenu: IdeJMenuBar = createMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = null)
+internal class ExpandableMenu(
+  private val headerContent: JComponent,
+  coroutineScope: CoroutineScope,
+  frame: JFrame,
+  private val shouldBeColored: (() -> Boolean)? = null,
+) {
+  val ideMenu: IdeJMenuBar = RootPaneUtil.createMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = null)
   private val ideMenuHelper = IdeMenuHelper(menu = ideMenu, coroutineScope = null)
   private var expandedMenuBar: JPanel? = null
   private var headerColorfulPanel: HeaderColorfulPanel? = null
@@ -49,7 +54,8 @@ internal class ExpandableMenu(private val headerContent: JComponent,
           hideExpandedMenuBar()
         }
       }
-    } else {
+    }
+    else {
       hideMenu = false
     }
   }
@@ -83,8 +89,8 @@ internal class ExpandableMenu(private val headerContent: JComponent,
     ideMenuHelper.updateUI()
   }
 
-  fun switchState(actionToShow: AnAction? = null) {
-    if (isShowing() && actionToShow == null) {
+  fun switchState(actionMenuToShow: ActionMenu? = null, itemInd: Int = 0) {
+    if (isShowing() && actionMenuToShow == null) {
       hideExpandedMenuBar()
       return
     }
@@ -111,16 +117,15 @@ internal class ExpandableMenu(private val headerContent: JComponent,
 
     // The first menu usage has no selection in the menu. Fix it by invokeLater
     ApplicationManager.getApplication().invokeLater {
-      selectMenu(actionToShow)
+      selectMenu(actionMenu = actionMenuToShow, itemInd = itemInd)
     }
   }
 
-  private fun selectMenu(action: AnAction? = null) {
-    var menu = ideMenu.getMenu(0)
-    if (action != null) {
-      for (i in 0..ideMenu.menuCount - 1) {
-        val m = ideMenu.getMenu(i)
-        if (m.mnemonic == action.templatePresentation.mnemonic) {
+  private fun selectMenu(actionMenu: ActionMenu? = null, itemInd: Int) {
+    var menu = ideMenu.getMenu(itemInd)
+    if (actionMenu != null) {
+      for (m in ideMenu.rootMenuItems) {
+        if (m.mnemonic == actionMenu.mnemonic) {
           menu = m
           break
         }
@@ -128,7 +133,7 @@ internal class ExpandableMenu(private val headerContent: JComponent,
     }
 
     menu ?: return
-    
+
     val subElements = menu.popupMenu.subElements
     if (subElements.isEmpty()) {
       MenuSelectionManager.defaultManager().selectedPath = arrayOf(ideMenu, menu)
@@ -141,6 +146,7 @@ internal class ExpandableMenu(private val headerContent: JComponent,
   fun updateColor() {
     val color = headerContent.background
     headerColorfulPanel?.background = color
+    headerColorfulPanel?.border = SideBorder(color, SideBorder.RIGHT, 1)
     @Suppress("UseJBColor")
     shadowComponent.background = Color(color.red, color.green, color.blue, ALPHA)
   }
@@ -150,7 +156,8 @@ internal class ExpandableMenu(private val headerContent: JComponent,
     val location = SwingUtilities.convertPoint(headerContent, 0, 0, rootPaneCopy)
     if (location == null) {
       headerColorfulPanel?.horizontalOffset = 0
-    } else {
+    }
+    else {
       val insets = headerContent.insets
       headerColorfulPanel?.horizontalOffset = location.x + insets.left
       expandedMenuBar?.let {
@@ -172,7 +179,7 @@ internal class ExpandableMenu(private val headerContent: JComponent,
     }
   }
 
-  private class HeaderColorfulPanel(component: JComponent, private val isColored: Boolean): JPanel() {
+private class HeaderColorfulPanel(component: JComponent, private val isColored: Boolean) : JPanel() {
 
     var horizontalOffset = 0
 
@@ -181,7 +188,13 @@ internal class ExpandableMenu(private val headerContent: JComponent,
       isOpaque = false
       layout = BorderLayout()
       add(component, BorderLayout.CENTER)
+      repaintWhenProjectGradientOffsetChanged(this)
     }
+
+  override fun getPreferredSize(): Dimension? {
+    val size = super.getPreferredSize()
+    return Dimension(size.width + 12, size.height)
+  }
 
     override fun paint(g: Graphics?) {
       g as Graphics2D
@@ -198,7 +211,6 @@ internal class ExpandableMenu(private val headerContent: JComponent,
   }
 
   private inner class ShadowComponent : JComponent() {
-
     init {
       isOpaque = false
 
@@ -210,7 +222,7 @@ internal class ExpandableMenu(private val headerContent: JComponent,
     }
 
     override fun paint(g: Graphics?) {
-      g ?: return
+      if (g !is Graphics2D) return
       g.color = background
       g.fillRect(0, 0, width, height)
     }

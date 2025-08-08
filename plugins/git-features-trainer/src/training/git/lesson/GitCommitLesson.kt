@@ -10,7 +10,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
-import com.intellij.openapi.vcs.VcsNotificationIdsHolder
 import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -23,6 +22,7 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.AbstractCommitWorkflowHandler
 import com.intellij.vcs.commit.CommitActionsPanel
+import com.intellij.vcs.commit.CommitNotification
 import com.intellij.vcs.commit.restoreState
 import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
@@ -42,7 +42,6 @@ import training.git.GitLessonsUtil.resetGitLogWindow
 import training.git.GitLessonsUtil.restoreCommitWindowStateInformer
 import training.git.GitLessonsUtil.showWarningIfCommitWindowClosed
 import training.git.GitLessonsUtil.showWarningIfGitWindowClosed
-import training.git.GitLessonsUtil.showWarningIfModalCommitEnabled
 import training.git.GitLessonsUtil.showWarningIfStagingAreaEnabled
 import training.git.GitLessonsUtil.triggerOnChangeCheckboxShown
 import training.git.GitLessonsUtil.triggerOnNotification
@@ -80,7 +79,6 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       modifyFiles()
     }
 
-    showWarningIfModalCommitEnabled()
     showWarningIfStagingAreaEnabled()
 
     highlightToolWindowStripe(ToolWindowId.COMMIT)
@@ -180,7 +178,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       triggerAndBorderHighlight().component { ui: JBOptionButton ->
         ui.text?.contains(commitButtonText) == true
       }
-      triggerOnNotification { it.displayId == VcsNotificationIdsHolder.COMMIT_FINISHED }
+      triggerOnNotification { it is CommitNotification }
       showWarningIfCommitWindowClosed()
       test {
         ideFrame {
@@ -282,7 +280,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       text(GitLessonsBundle.message("git.commit.amend.commit", strong(amendButtonText)))
       text(GitLessonsBundle.message("git.commit.amend.commit.balloon"),
            LearningBalloonConfig(Balloon.Position.above, width = 0))
-      triggerOnNotification { it.displayId == VcsNotificationIdsHolder.COMMIT_FINISHED }
+      triggerOnNotification { it is CommitNotification }
       showWarningIfCommitWindowClosed()
       test {
         ideFrame {

@@ -2,7 +2,6 @@
 package com.jetbrains.python.packaging;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.ide.IdeBundle;
 import com.intellij.model.SideEffectGuard;
 import com.intellij.notification.Notification;
@@ -19,11 +18,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.packaging.management.PythonPackagesInstaller;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -51,11 +51,6 @@ public final class PyPackageManagerUI {
     myProject = project;
     mySdk = sdk;
     myListener = listener;
-  }
-
-  public void installManagement() {
-    SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.EXEC);
-    ProgressManager.getInstance().run(new InstallManagementTask(myProject, mySdk, myListener));
   }
 
   public void install(final @Nullable List<PyRequirement> requirements, final @NotNull List<String> extraArgs) {
@@ -174,10 +169,14 @@ public final class PyPackageManagerUI {
     }
 
     protected void taskFinished(final @NotNull List<ExecutionException> exceptions) {
-      final Ref<Notification> notificationRef = new Ref<>(null);
       if (exceptions.isEmpty()) {
-        notificationRef.set(new PackagingNotification(PACKAGING_GROUP_ID, getSuccessTitle(), getSuccessDescription(),
-                                                      NotificationType.INFORMATION, null));
+        sendNotification(
+          getSuccessTitle(),
+          getSuccessDescription(),
+          NotificationType.INFORMATION,
+          exceptions,
+          null
+        );
       }
       else {
         final List<Pair<String, String>> requirements =
@@ -210,17 +209,38 @@ public final class PyPackageManagerUI {
             }
           };
           String content = wrapIntoLink(firstLine, "python.packaging.notification.description.details.link");
-          notificationRef.set(new PackagingNotification(PACKAGING_GROUP_ID, getFailureTitle(), content,
-                                                        NotificationType.ERROR, listener));
+
+          sendNotification(
+            getFailureTitle(),
+            content,
+            NotificationType.ERROR,
+            exceptions,
+            listener
+          );
         }
       }
+    }
+
+    private void sendNotification(
+      @NlsSafe @NotNull String title,
+      @NlsSafe @NotNull String content,
+      @NotNull NotificationType type,
+      List<ExecutionException> exceptions,
+      @Nullable NotificationListener listener
+    ) {
       ApplicationManager.getApplication().invokeLater(() -> {
+        Notification notification = new PackagingNotification(
+          PACKAGING_GROUP_ID,
+          title,
+          content,
+          type,
+          listener
+        );
+
+        notification.notify(myProject);
+
         if (myListener != null) {
           myListener.finished(exceptions);
-        }
-        final Notification notification = notificationRef.get();
-        if (notification != null) {
-          notification.notify(myProject);
         }
       });
     }
@@ -260,43 +280,24 @@ public final class PyPackageManagerUI {
     @Override
     protected @NotNull List<ExecutionException> runTask(@NotNull ProgressIndicator indicator) {
       final List<ExecutionException> exceptions = new ArrayList<>();
-      final PyPackageManager manager = PyPackageManagers.getInstance().forSdk(mySdk);
-      if (myRequirements == null) {
-        indicator.setText(PyBundle.message("python.packaging.installing.packages"));
-        indicator.setIndeterminate(true);
-        try {
-          manager.install(null, myExtraArgs);
-        }
-        catch (ExecutionException e) {
-          exceptions.add(e);
-        }
+      if (myProject == null) {
+        // FIXME: proper error
+        return exceptions;
       }
-      else {
-        final int size = myRequirements.size();
-        for (int i = 0; i < size; i++) {
-          final PyRequirement requirement = myRequirements.get(i);
-          indicator.setText(PyBundle.message("python.packaging.progress.text.installing.specific.package",
-                                             requirement.getPresentableText()));
-          if (i == 0) {
-            indicator.setIndeterminate(true);
-          }
-          else {
-            indicator.setIndeterminate(false);
-            indicator.setFraction((double)i / size);
-          }
-          try {
-            manager.install(Collections.singletonList(requirement), myExtraArgs);
-          }
-          catch (RunCanceledByUserException e) {
-            exceptions.add(e);
-            break;
-          }
-          catch (ExecutionException e) {
-            exceptions.add(e);
-          }
-        }
+
+      var result = PythonPackagesInstaller.Companion.installPackages(
+        myProject,
+        mySdk,
+        myRequirements,
+        myExtraArgs,
+        indicator
+      );
+
+      // FIXME: use packaging tool window service for managing error dialog
+      if (result != null) {
+        exceptions.add(result);
       }
-      manager.refresh();
+
       return exceptions;
     }
 
@@ -319,36 +320,6 @@ public final class PyPackageManagerUI {
     }
   }
 
-  private static class InstallManagementTask extends InstallTask {
-
-    InstallManagementTask(@Nullable Project project,
-                          @NotNull Sdk sdk,
-                          @Nullable Listener listener) {
-      super(project, sdk, Collections.emptyList(), Collections.emptyList(), listener);
-    }
-
-    @Override
-    protected @NotNull List<ExecutionException> runTask(@NotNull ProgressIndicator indicator) {
-      final List<ExecutionException> exceptions = new ArrayList<>();
-      final PyPackageManager manager = PyPackageManagers.getInstance().forSdk(mySdk);
-      indicator.setText(PyBundle.message("python.packaging.installing.packaging.tools"));
-      indicator.setIndeterminate(true);
-      try {
-        manager.installManagement();
-      }
-      catch (ExecutionException e) {
-        exceptions.add(e);
-      }
-      manager.refresh();
-      return exceptions;
-    }
-
-    @Override
-    protected @NotNull String getSuccessDescription() {
-      return PyBundle.message("python.packaging.notification.description.installed.python.packaging.tools");
-    }
-  }
-
   private static class UninstallTask extends PackagingTask {
     private final @NotNull List<PyPackage> myPackages;
 
@@ -362,18 +333,23 @@ public final class PyPackageManagerUI {
 
     @Override
     protected @NotNull List<ExecutionException> runTask(@NotNull ProgressIndicator indicator) {
-      final PyPackageManager manager = PyPackageManagers.getInstance().forSdk(mySdk);
-      indicator.setIndeterminate(true);
-      try {
-        manager.uninstall(myPackages);
-        return Collections.emptyList();
+      final List<ExecutionException> exceptions = new ArrayList<>();
+      if (myProject == null) {
+        return exceptions;
       }
-      catch (ExecutionException e) {
-        return Collections.singletonList(e);
+
+      var result = PythonPackagesInstaller.Companion.uninstallPackages(
+        myProject,
+        mySdk,
+        myPackages,
+        indicator
+      );
+
+      if (result != null) {
+        exceptions.add(result);
       }
-      finally {
-        manager.refresh();
-      }
+
+      return exceptions;
     }
 
     @Override

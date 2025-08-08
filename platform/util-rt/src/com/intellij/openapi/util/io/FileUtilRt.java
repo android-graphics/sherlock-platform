@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
@@ -28,7 +28,22 @@ public final class FileUtilRt {
   private static final int DEFAULT_INTELLISENSE_LIMIT = 2500 * KILOBYTE;
 
   public static final int MEGABYTE = KILOBYTE * KILOBYTE;
+
+  /**
+   * File size that is 'big enough' to load.
+   * Used to either skip the file content loading completely, if larger -- or at least to switch from simple
+   * one-chunk loading to more memory-efficient incremental loading
+   * @deprecated Prefer using @link {@link com.intellij.openapi.vfs.limits.FileSizeLimit#getContentLoadLimit}
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public static final int LARGE_FOR_CONTENT_LOADING = Math.max(20 * MEGABYTE, Math.max(getUserFileSizeLimit(), getUserContentLoadLimit()));
+
+  /**
+   * @deprecated Prefer using @link {@link com.intellij.openapi.vfs.limits.FileSizeLimit#getPreviewLimit}
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public static final int LARGE_FILE_PREVIEW_SIZE = Math.min(getLargeFilePreviewSize(), LARGE_FOR_CONTENT_LOADING);
 
   private static final int MAX_FILE_IO_ATTEMPTS = 10;
@@ -706,6 +721,11 @@ public final class FileUtilRt {
     return buffer.toByteArray();
   }
 
+  /**
+   * @deprecated Prefer using @link {@link com.intellij.openapi.vfs.limits.FileSizeLimit#isTooLarge}
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public static boolean isTooLarge(long len) {
     return len > LARGE_FOR_CONTENT_LOADING;
   }
@@ -779,7 +799,8 @@ public final class FileUtilRt {
     deleteRecursively(path, null);
   }
 
-  interface DeleteRecursivelyCallback {
+  @ApiStatus.Internal
+  public interface DeleteRecursivelyCallback {
     void beforeDeleting(Path path);
   }
 
@@ -1062,7 +1083,8 @@ public final class FileUtilRt {
    * Energy-efficient variant of {@link File#toURI()}. Unlike the latter, doesn't check whether a given file is a directory,
    * so URIs never have a trailing slash (but are nevertheless compatible with {@link File#File(URI)}).
    */
-  public static @NotNull URI fileToUri(@NotNull File file) {
+  @NotNull
+  public static URI fileToUri(@NotNull File file) {
     String path = file.getAbsolutePath();
     if (File.separatorChar != '/') path = path.replace(File.separatorChar, '/');
     if (!path.startsWith("/")) path = '/' + path;

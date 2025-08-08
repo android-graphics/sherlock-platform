@@ -49,8 +49,7 @@ internal class InvertIfConditionIntention :
         return element.condition != null && element.then != null
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtIfExpression): Context {
+    override fun KaSession.prepareContext(element: KtIfExpression): Context {
         val rBrace = parentBlockRBrace(element)
         val commentSavingRange = if (rBrace != null)
             PsiChildRange(element, rBrace)
@@ -62,7 +61,7 @@ internal class InvertIfConditionIntention :
         val condition = element.condition!!
         val newCondition = (condition as? KtQualifiedExpression)?.invertSelectorFunction() ?: condition.negate()
 
-        val isParentFunUnit = element.getParentOfType<KtNamedFunction>(true)?.returnType?.isUnit == true
+        val isParentFunUnit = element.getParentOfType<KtNamedFunction>(true)?.returnType?.isUnitType == true
 
         val demorgansLawContext = if (condition is KtBinaryExpression && areAllOperandsBoolean(condition)) {
             getBinaryExpression(newCondition)?.let(::splitBooleanSequence)?.let { operands ->

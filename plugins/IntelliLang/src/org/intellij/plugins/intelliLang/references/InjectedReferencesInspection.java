@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.references;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -27,10 +13,9 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class InjectedReferencesInspection extends LocalInspectionTool {
-  @NotNull
+public final class InjectedReferencesInspection extends LocalInspectionTool {
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new InjectedReferencesVisitor(holder);
   }
 
@@ -51,7 +36,7 @@ public class InjectedReferencesInspection extends LocalInspectionTool {
       PsiReference[] injected = InjectedReferencesContributor.getInjectedReferences(element);
       if (injected != null) {
         for (PsiReference reference : injected) {
-          if (reference.resolve() == null) {
+          if (isUnresolved(reference)) {
             TextRange range = reference.getRangeInElement();
             if (range.isEmpty() && range.getStartOffset() == 1 && "\"\"".equals(element.getText())) {
               String message = ProblemsHolder.unresolvedReferenceMessage(reference);
@@ -65,6 +50,13 @@ public class InjectedReferencesInspection extends LocalInspectionTool {
       }
 
       super.visitElement(element);
+    }
+
+    private static boolean isUnresolved(PsiReference reference) {
+      if (reference instanceof PsiPolyVariantReference polyVariantReference) {
+        return polyVariantReference.multiResolve(false).length == 0;
+      }
+      return reference.resolve() == null;
     }
   }
 }

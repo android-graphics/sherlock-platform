@@ -11,6 +11,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -147,7 +148,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
     return myTableView;
   }
 
-  protected abstract ListTableModel createListModel();
+  protected abstract ListTableModel<T> createListModel();
 
   protected void setModified() {
     setChanged();
@@ -181,7 +182,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
     var downButton = ToolbarDecorator.findDownButton(panel);
 
     Stream.of(addButton, removeButton, editButton, upButton, downButton)
-      .filter(it -> it != null)
+      .filter(Objects::nonNull)
       .forEach(it -> it.addCustomUpdater(e -> myIsEnabled));
 
     if (removeButton != null) {
@@ -262,7 +263,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
     }
   }
 
-  public void setValues(List<? extends T> envVariables) {
+  public void setValues(@Unmodifiable List<? extends T> envVariables) {
     myElements.clear();
     for (T envVariable : envVariables) {
       myElements.add(cloneElement(envVariable));

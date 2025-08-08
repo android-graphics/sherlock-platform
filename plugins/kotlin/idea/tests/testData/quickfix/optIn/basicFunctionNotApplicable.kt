@@ -1,5 +1,4 @@
 // "Propagate 'MyExperimentalAPI' opt-in requirement to 'bar'" "false"
-// IGNORE_K2
 // COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // WITH_STDLIB
 // ACTION: Opt in for 'MyExperimentalAPI' in containing file 'basicFunctionNotApplicable.kt'
@@ -10,6 +9,9 @@
 // ERROR: This declaration needs opt-in. Its usage must be marked with '@MyExperimentalAPI' or '@OptIn(MyExperimentalAPI::class)'
 // ERROR: This declaration needs opt-in. Its usage must be marked with '@MyExperimentalAPI' or '@OptIn(MyExperimentalAPI::class)'
 // ERROR: This annotation is not applicable to target 'member function'
+// K2_AFTER_ERROR: This annotation is not applicable to target 'member function'. Applicable targets: class
+// K2_AFTER_ERROR: This declaration needs opt-in. Its usage must be marked with '@MyExperimentalAPI' or '@OptIn(MyExperimentalAPI::class)'
+// K2_AFTER_ERROR: This declaration needs opt-in. Its usage must be marked with '@MyExperimentalAPI' or '@OptIn(MyExperimentalAPI::class)'
 
 @RequiresOptIn
 @Target(AnnotationTarget.CLASS)

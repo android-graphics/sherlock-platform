@@ -1,12 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.platform.util.io.storages.intmultimaps.DurableIntToMultiIntMap;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage;
 import com.intellij.util.io.ClosedStorageException;
+import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.Unmappable;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -90,6 +92,11 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   private final boolean wasProperlyClosed;
 
   private transient HeaderLayout header;
+  /**
+   * Segments are quite light, but there are queried very frequently, and there are not too many of them, so
+   * cache them instead of allocate each time seems to be a good idea
+   */
+  private final transient Int2ObjectOpenHashMap<HashMapSegmentLayout> segmentsCache = new Int2ObjectOpenHashMap<>();
 
   private final transient HashMapAlgo hashMapAlgo = new HashMapAlgo(0.5f);
 
@@ -280,10 +287,10 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   @Override
   public synchronized void flush() throws IOException {
     if (MARK_SAFELY_CLOSED_ON_FLUSH) {
-      //RC: It seems that since EHMap is non-concurrent (sync-ed), set .fileStatus(PROPERLY_CLOSED) in
-      //    .flush() is safe: nobody could modify EHMap content until .flush() finishes, which creates kind of
+      //RC: Since EHMap is non-concurrent (sync-ed), it seems safe to set .fileStatus(PROPERLY_CLOSED) in
+      //    .flush(): nobody could modify EHMap content until .flush() finishes, which creates kind of
       //    'safepoint'.
-      //    (On the contrary: data structures with concurrent updates doesn't have this property: their
+      //    (On the contrary: data structures with concurrent updates don't have this property: their
       //    content could be modified in between .flush() sets .dirty=false and .fileStatus=PROPERLY_CLOSED)
 
       if (dirty) {
@@ -304,7 +311,9 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
         header.fileStatus(HeaderLayout.FILE_STATUS_PROPERLY_CLOSED);
       }
       storage.close();
+
       //clean all references to mapped ByteBuffers, so it's easier for GC to unmap them:
+      segmentsCache.clear();
       header = null;
       bufferSource = null;
     }
@@ -358,7 +367,13 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
 
     int hash = hash(key);
     int segmentIndex = header.segmentIndexByHash(hash);
-    return new HashMapSegmentLayout(bufferSource, segmentIndex, header.segmentSize());
+
+    HashMapSegmentLayout layout = segmentsCache.get(segmentIndex);
+    if (layout == null) {
+      layout = new HashMapSegmentLayout(bufferSource, segmentIndex, header.segmentSize());
+      segmentsCache.put(segmentIndex, layout);
+    }
+    return layout;
   }
 
   //@GuardedBy(this)
@@ -689,7 +704,14 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     public int segmentIndexByHash(int hash) throws IOException {
       int hashSuffixDepth = globalHashSuffixDepth();
       int segmentSlotIndex = segmentSlotIndex(hash, hashSuffixDepth);
-      return segmentIndex(segmentSlotIndex);
+      int segmentIndex = segmentIndex(segmentSlotIndex);
+      if (segmentIndex < 1) {
+        throw new CorruptedException(
+          "segmentIndex[hash: " + hash + ", suffix: " + hashSuffixDepth + ", slotIndex: " + segmentSlotIndex + "](= " + segmentIndex + ")" +
+          " must be >=1 => .segmentsTable is corrupted"
+        );
+      }
+      return segmentIndex;
     }
 
     public void updateSegmentIndex(int slotIndex,
@@ -726,9 +748,8 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   }
 
   @VisibleForTesting
-  record HashMapSegmentLayout(int segmentIndex,
-                              int segmentSize,
-                              @NotNull ByteBuffer segmentBuffer) implements HashTableData {
+  @ApiStatus.Internal
+  public record HashMapSegmentLayout(int segmentIndex, int segmentSize, @NotNull ByteBuffer segmentBuffer) implements HashTableData {
     //@formatter:off
     private static final int LIVE_ENTRIES_COUNT_OFFSET  =  0; //int32
     private static final int HASH_SUFFIX_OFFSET         =  4; //int32
@@ -739,7 +760,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     private static final int HASHTABLE_SLOTS_OFFSET     = STATIC_HEADER_SIZE; //int32[N]
     //@formatter:on
 
-    HashMapSegmentLayout {
+    public HashMapSegmentLayout {
       if (segmentIndex < 1) {
         throw new IllegalArgumentException("segmentIndex(=" + segmentIndex + ") must be >=1 (0-th segment is a header)");
       }
@@ -862,7 +883,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
         int key = entryKey(i);
         int value = entryValue(i);
         if (key != 0) {
-          sb.append("\t[" + i + "]=(" + key + ", " + value + ")\n");
+          sb.append("\t[").append(i).append("]=(").append(key).append(", ").append(value).append(")\n");
         }
       }
       return sb.toString();

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.find.FindBundle;
@@ -39,7 +39,7 @@ import java.util.List;
  * @author Bas Leijdekkers
  */
 public class DirectoryComboBoxWithButtons extends JPanel {
-  @NotNull private final ComponentWithBrowseButton<ComboBox<String>> myDirectoryComboBox =
+  private final @NotNull ComponentWithBrowseButton<ComboBox<String>> myDirectoryComboBox =
     new ComponentWithBrowseButton<>(new ComboBox<>(200), null);
   private volatile boolean myUpdating = false;
 
@@ -80,7 +80,7 @@ public class DirectoryComboBoxWithButtons extends JPanel {
     }
     comboBox.setMaximumRowCount(8);
 
-    myDirectoryComboBox.addBrowseFolderListener(null, null, project, descriptor, new TextComponentAccessor<>() {
+    myDirectoryComboBox.addBrowseFolderListener(project, descriptor, new TextComponentAccessor<>() {
       @Override
       public String getText(ComboBox comboBox) {
         return comboBox.getEditor().getItem().toString();
@@ -131,8 +131,7 @@ public class DirectoryComboBoxWithButtons extends JPanel {
     myDirectoryComboBox.getChildComponent().setSelectedItem(url);
   }
 
-  @Nullable
-  public VirtualFile getDirectory() {
+  public @Nullable VirtualFile getDirectory() {
     final ComboBox<String> comboBox = myDirectoryComboBox.getChildComponent();
     final String directoryName = (String)comboBox.getSelectedItem();
     if (StringUtil.isEmptyOrSpaces(directoryName)) {
@@ -176,4 +175,3 @@ public class DirectoryComboBoxWithButtons extends JPanel {
     }
   }
 }
-

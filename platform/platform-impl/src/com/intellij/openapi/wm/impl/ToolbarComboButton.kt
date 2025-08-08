@@ -8,11 +8,14 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.ui.JBInsets
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Insets
 import kotlin.properties.Delegates
 
 open class ToolbarComboButton(val model: ToolbarComboButtonModel) : AbstractToolbarCombo() {
   var margin: Insets by Delegates.observable(JBInsets.emptyInsets(), this::fireUpdateEvents)
+
+  internal var preferredHeightSupplier: (() -> Int)? = null
 
   override fun getUIClassID(): String = "ToolbarComboButtonUI"
 
@@ -27,6 +30,7 @@ open class ToolbarComboButton(val model: ToolbarComboButtonModel) : AbstractTool
   override fun getLeftGap(): Int = insets.left + margin.left
 }
 
+@ApiStatus.Internal
 abstract class ListenableToolbarComboButton(model: ToolbarComboButtonModel) : ToolbarComboButton(model) {
 
   private var disposable: Disposable? = null

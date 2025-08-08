@@ -83,7 +83,7 @@ public class PyElementVisitor extends PsiElementVisitor {
   }
 
   public void visitPySetLiteralExpression(@NotNull PySetLiteralExpression node) {
-    visitPyExpression(node);
+    visitPySequenceExpression(node);
   }
 
   public void visitPyListCompExpression(@NotNull PyListCompExpression node) {
@@ -272,6 +272,10 @@ public class PyElementVisitor extends PsiElementVisitor {
 
   public void visitPyAssertStatement(@NotNull PyAssertStatement node) {
     visitPyElement(node);
+  }
+
+  public void visitPyPassStatement(@NotNull PyPassStatement node) {
+    visitPyStatement(node);
   }
 
   public void visitPyNoneLiteralExpression(@NotNull PyNoneLiteralExpression node) {

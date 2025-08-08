@@ -21,15 +21,14 @@ import java.net.URL
 import java.nio.charset.StandardCharsets
 
 
-private val LOG: Logger = logger<Sdks>()
+val LOG: Logger = logger<Sdks>()
 
 
 /**
- * Currently only CPython is supported, PyPy was added to check future structure flexibility.
+ * Currently only CPython is supported
  */
 enum class Product(val title: String) {
   CPython("Python"),
-  PyPy("PyPy"),
   Miniconda("Miniconda"),
   Anaconda("Anaconda");
 }

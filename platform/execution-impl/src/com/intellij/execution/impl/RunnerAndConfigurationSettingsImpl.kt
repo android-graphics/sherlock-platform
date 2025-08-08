@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
+import com.intellij.openapi.components.impl.getProjectPathMacroSubstitutor
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.util.*
@@ -29,6 +30,7 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.text.nullize
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 
@@ -170,7 +172,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   override fun getName(): String {
     val configuration = configuration
     if (isTemplate) {
-      return "<template> of ${factory.id}"
+      return ExecutionBundle.message("runner.and.configuration.settings.from.template", factory.name)
     }
     return configuration.name
   }
@@ -209,7 +211,9 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   }
 
   override fun getFolderName() = folderName
-  fun readExternal(element: Element, isStoredInDotIdeaFolder: Boolean) {
+
+  @JvmOverloads
+  fun readExternal(element: Element, isStoredInDotIdeaFolder: Boolean, configFilePath: String? = null) {
     isTemplate = element.getAttributeBooleanValue(TEMPLATE_FLAG_ATTRIBUTE)
 
     if (isStoredInDotIdeaFolder) {
@@ -236,7 +240,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     _configuration = configuration
     uniqueId = null
 
-    PathMacroManager.getInstance(configuration.project).expandPaths(element)
+    getProjectPathMacroSubstitutor(configuration.project, configFilePath).expandPaths(element)
     if (configuration is ModuleBasedConfiguration<*, *> && configuration.isModuleDirMacroSupported) {
       val moduleName = element.getChild("module")?.getAttributeValue("name")
       if (moduleName != null) {
@@ -623,6 +627,7 @@ private val RunnerAndConfigurationSettings.isNewSerializationAllowed: Boolean
 @set:TestOnly
 var writeDefaultAttributeWithFalseValueInTests: Boolean = true
 
+@ApiStatus.Internal
 fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
   when (configuration) {
     is PersistentStateComponent<*> -> serializeStateInto(configuration, element)
@@ -631,6 +636,7 @@ fun serializeConfigurationInto(configuration: RunConfiguration, element: Element
   }
 }
 
+@ApiStatus.Internal
 fun deserializeConfigurationFrom(configuration: RunConfiguration, element: Element, isTemplate: Boolean = false) {
   when (configuration) {
     is PersistentStateComponent<*> -> deserializeAndLoadState(configuration, element)

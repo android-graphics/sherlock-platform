@@ -1,10 +1,7 @@
 package com.jetbrains.performancePlugin.commands;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.ui.playback.PlaybackContext;
@@ -23,7 +20,7 @@ import java.awt.*;
 import java.util.List;
 
 
-abstract public class ExpandMenuCommand extends AbstractCallbackBasedCommand {
+public abstract class ExpandMenuCommand extends AbstractCallbackBasedCommand {
   public ExpandMenuCommand(@NotNull String text, int line) {
     super(text, line, true);
   }
@@ -40,19 +37,19 @@ abstract public class ExpandMenuCommand extends AbstractCallbackBasedCommand {
       if (!(action instanceof ActionGroup group)) return JBIterable.empty();
       String groupSpanName = ObjectUtils.coalesce(actionManager.getId(group), group.getTemplateText(), group.getClass().getName());
       Span groupSpan = PerformanceTestSpan.TRACER.spanBuilder(groupSpanName).setParent(Context.current().with(totalSpan)).startSpan();
-      List<AnAction> actions = Utils.expandActionGroup(group, new PresentationFactory(), dataContext, getPlace());
+      List<AnAction> actions = Utils.expandActionGroup(
+        group, new PresentationFactory(), dataContext, getPlace(),
+        ActionPlaces.isPopupPlace(getPlace()) ? ActionUiKind.POPUP : ActionUiKind.NONE);
       groupSpan.end();
       return actions;
-    }).withRoots(mainMenu.getChildren(null)).traverse().size();
+    }).withRoots(mainMenu).traverse().size();
     totalSpan.end();
     callback.setDone();
   }
 
-  abstract protected  String getSpanName();
+  protected abstract String getSpanName();
 
-  @NotNull
-  abstract protected String getGroupId();
+  protected abstract @NotNull String getGroupId();
 
-  @NotNull
-  abstract protected String getPlace();
+  protected abstract @NotNull String getPlace();
 }

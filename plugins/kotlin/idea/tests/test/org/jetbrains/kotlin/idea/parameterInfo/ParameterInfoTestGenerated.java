@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.parameterInfo;
 
@@ -121,6 +121,11 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             runTest("testData/parameterInfo/functionCall/Conflicting.kt");
         }
 
+        @TestMetadata("ConstDefaultParameter.kt")
+        public void testConstDefaultParameter() throws Exception {
+            runTest("testData/parameterInfo/functionCall/ConstDefaultParameter.kt");
+        }
+
         @TestMetadata("DataClassComponentFunction.kt")
         public void testDataClassComponentFunction() throws Exception {
             runTest("testData/parameterInfo/functionCall/DataClassComponentFunction.kt");
@@ -216,6 +221,11 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             runTest("testData/parameterInfo/functionCall/InheritedWithCurrentFunctions.kt");
         }
 
+        @TestMetadata("InvalidCandidates.kt")
+        public void testInvalidCandidates() throws Exception {
+            runTest("testData/parameterInfo/functionCall/InvalidCandidates.kt");
+        }
+
         @TestMetadata("Invoke.kt")
         public void testInvoke() throws Exception {
             runTest("testData/parameterInfo/functionCall/Invoke.kt");
@@ -309,6 +319,11 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
         @TestMetadata("NoCandidatesWrongReceiver.kt")
         public void testNoCandidatesWrongReceiver() throws Exception {
             runTest("testData/parameterInfo/functionCall/NoCandidatesWrongReceiver.kt");
+        }
+
+        @TestMetadata("NoDefaultValueForValParameter.kt")
+        public void testNoDefaultValueForValParameter() throws Exception {
+            runTest("testData/parameterInfo/functionCall/NoDefaultValueForValParameter.kt");
         }
 
         @TestMetadata("NoShadowedDeclarations.kt")
@@ -745,6 +760,25 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
         @TestMetadata("useJavaSAMFromLib.kt")
         public void testUseJavaSAMFromLib() throws Exception {
             runTest("testData/parameterInfo/withLib3/useJavaSAMFromLib.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/parameterInfo/withLib4")
+    public static class WithLib4 extends AbstractParameterInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotationWithTypeUse.kt")
+        public void testAnnotationWithTypeUse() throws Exception {
+            runTest("testData/parameterInfo/withLib4/annotationWithTypeUse.kt");
         }
     }
 }

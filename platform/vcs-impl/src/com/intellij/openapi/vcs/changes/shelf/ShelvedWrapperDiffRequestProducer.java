@@ -1,13 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffContentFactoryEx;
+import com.intellij.diff.DiffEditorTitleCustomizer;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
@@ -27,17 +29,21 @@ import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.patch.tool.PatchDiffRequest;
 import com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider.PatchesPreloader;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
+import com.intellij.openapi.diff.impl.DiffTitleWithDetailsCustomizers;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static java.util.Objects.requireNonNull;
 
+@ApiStatus.Internal
 public class ShelvedWrapperDiffRequestProducer implements DiffRequestProducer, ChangeDiffRequestChain.Producer {
   private final Project myProject;
   private final ShelvedWrapper myChange;
@@ -47,14 +53,12 @@ public class ShelvedWrapperDiffRequestProducer implements DiffRequestProducer, C
     myChange = change;
   }
 
-  @NotNull
-  public ShelvedWrapper getWrapper() {
+  public @NotNull ShelvedWrapper getWrapper() {
     return myChange;
   }
 
-  @Nls
   @Override
-  public @NotNull String getName() {
+  public @Nls @NotNull String getName() {
     return myChange.getRequestName();
   }
 
@@ -93,13 +97,10 @@ public class ShelvedWrapperDiffRequestProducer implements DiffRequestProducer, C
     }
   }
 
-  @NotNull
-  private DiffRequest createTextShelveRequest(@NotNull ShelvedChange shelvedChange,
-                                              @NotNull UserDataHolder context,
-                                              @Nullable @Nls String title)
+  private @NotNull DiffRequest createTextShelveRequest(@NotNull ShelvedChange shelvedChange,
+                                                       @NotNull UserDataHolder context,
+                                                       @Nullable @Nls String title)
     throws VcsException {
-    DiffContentFactoryEx factory = DiffContentFactoryEx.getInstanceEx();
-
     PatchesPreloader preloader = PatchesPreloader.getPatchesPreloader(myProject, context);
     Pair<TextFilePatch, CommitContext> pair = preloader.getPatchWithContext(shelvedChange);
     TextFilePatch patch = pair.first;
@@ -109,6 +110,21 @@ public class ShelvedWrapperDiffRequestProducer implements DiffRequestProducer, C
 
     String leftTitle = DiffBundle.message("merge.version.title.base");
     String rightTitle = VcsBundle.message("shelve.shelved.version");
+
+    DiffRequest request = createTextShelveRequest(title, patch, contextFilePath, leftTitle, rightTitle, commitContext);
+
+    Change change = shelvedChange.getChange();
+    List<DiffEditorTitleCustomizer> titleCustomizers = DiffTitleWithDetailsCustomizers.getTitleCustomizers(myProject, change, leftTitle, rightTitle);
+    return DiffUtil.addTitleCustomizers(request, titleCustomizers);
+  }
+
+  private @NotNull DiffRequest createTextShelveRequest(@Nls @Nullable String title,
+                                                       TextFilePatch patch,
+                                                       FilePath contextFilePath,
+                                                       @Nls String leftTitle,
+                                                       @Nls String rightTitle,
+                                                       CommitContext commitContext) {
+    DiffContentFactoryEx factory = DiffContentFactoryEx.getInstanceEx();
 
     if (patch.isDeletedFile() || patch.isNewFile()) {
       DiffContent shelfContent = factory.create(myProject, patch.getSingleHunkPatchText(), contextFilePath);
@@ -145,8 +161,7 @@ public class ShelvedWrapperDiffRequestProducer implements DiffRequestProducer, C
     return myChange.getFileStatus();
   }
 
-  @NotNull
-  private static FilePath getContextFilePath(@NotNull ShelvedChange shelvedChange) {
+  private static @NotNull FilePath getContextFilePath(@NotNull ShelvedChange shelvedChange) {
     Change change = shelvedChange.getChange();
     if (change.getType() == Change.Type.MOVED) {
       FilePath bPath = requireNonNull(ChangesUtil.getBeforePath(change));
@@ -158,8 +173,7 @@ public class ShelvedWrapperDiffRequestProducer implements DiffRequestProducer, C
     return ChangesUtil.getFilePath(change);
   }
 
-  @NotNull
-  private SimpleDiffRequest createBinaryShelveRequest(@NotNull ShelvedBinaryFile binaryFile, @Nullable @Nls String title)
+  private @NotNull SimpleDiffRequest createBinaryShelveRequest(@NotNull ShelvedBinaryFile binaryFile, @Nullable @Nls String title)
     throws DiffRequestProducerException, VcsException, IOException {
     DiffContentFactory factory = DiffContentFactory.getInstance();
     if (binaryFile.AFTER_PATH == null) {

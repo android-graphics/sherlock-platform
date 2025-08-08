@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.popup.TreePopup;
 import com.intellij.openapi.ui.popup.TreePopupStep;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.NextStepHandler;
 import com.intellij.ui.popup.WizardPopup;
@@ -172,7 +173,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
   }
 
   // TODO: not-tested code:
-  private void selectFirstSelectableItem() {
+  protected void selectFirstSelectableItem() {
     for (int i = 0; i < myWizardTree.getRowCount(); i++) {
       TreePath path = myWizardTree.getPathForRow(i);
       if (getTreeStep().isSelectable(path.getLastPathComponent(), extractUserObject(path.getLastPathComponent()))) {
@@ -289,7 +290,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
     }
   }
 
-  private void handleSelect(boolean handleFinalChoices, MouseEvent e) {
+  protected void handleSelect(boolean handleFinalChoices, MouseEvent e) {
     final boolean pathIsAlreadySelected = myShowingChildPath != null && myShowingChildPath.equals(myWizardTree.getSelectionPath());
     if (pathIsAlreadySelected) return;
 
@@ -360,7 +361,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
     myWizardTree.processKeyEvent(aEvent);
   }
 
-  private Object extractUserObject(Object aNode) {
+  protected Object extractUserObject(Object aNode) {
     Object object = ((DefaultMutableTreeNode) aNode).getUserObject();
     if (object instanceof FilteringTreeStructure.FilteringNode) {
       return ((FilteringTreeStructure.FilteringNode) object).getDelegate();
@@ -403,6 +404,13 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
         icon.paintIcon(this, g, x, y);
       }
     }
+
+    @Override
+    protected void configureUiHelper(final TreeUIHelper helper) {
+      if (mySpeedSearch != null) {
+        mySpeedSearch.installSupplyTo(this, false);
+      }
+    }
   }
 
   @Override
@@ -418,6 +426,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
   @Override
   protected void onSpeedSearchPatternChanged() {
     myModel.updateTree(myWizardTree, mySpeedSearch.isHoldingFilter(), null);
+    selectFirstSelectableItem();
   }
 
   @Override

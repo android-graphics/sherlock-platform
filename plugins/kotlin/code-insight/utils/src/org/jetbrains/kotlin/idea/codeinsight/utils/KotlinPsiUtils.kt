@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
@@ -20,11 +21,8 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.parsing.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
@@ -49,8 +47,9 @@ fun KtContainerNode.getControlFlowElementDescription(): String? {
  * TODO: We place this function in kotlin.code-insight.utils because it looks specific for redundant-getter-inspection.
  *       However, if we find some cases later that need this function for a general-purpose, we should move it to kotlin.base.psi.
  */
-fun KtPropertyAccessor.isRedundantGetter(): Boolean {
+fun KtPropertyAccessor.isRedundantGetter(respectComments: Boolean = true): Boolean {
     if (!isGetter) return false
+    if (respectComments && anyDescendantOfType<PsiComment>()) return false
     val expression = bodyExpression ?: return canBeCompletelyDeleted()
     if (expression.isBackingFieldReferenceTo(property)) return true
     if (expression is KtBlockExpression) {
@@ -111,8 +110,9 @@ fun renameToUnderscore(declaration: KtCallableDeclaration) {
 val KtParameter.isSetterParameter: Boolean
     get() = (parent.parent as? KtPropertyAccessor)?.isSetter == true
 
-fun KtPropertyAccessor.isRedundantSetter(): Boolean {
+fun KtPropertyAccessor.isRedundantSetter(respectComments: Boolean = true): Boolean {
     if (!isSetter) return false
+    if (respectComments && anyDescendantOfType<PsiComment>()) return false
     val expression = bodyExpression ?: return canBeCompletelyDeleted()
     if (expression is KtBlockExpression) {
         val statement = expression.statements.singleOrNull() ?: return false
@@ -242,51 +242,20 @@ fun KtTypeReference.isAnnotatedDeep(): Boolean {
     return this.anyDescendantOfType<KtAnnotationEntry>()
 }
 
-/**
- * A best effort way to get the class id of expression's type without resolve.
- */
-fun KtConstantExpression.getClassId(): ClassId? {
-    val convertedText: Any? = when (elementType) {
-        KtNodeTypes.INTEGER_CONSTANT, KtNodeTypes.FLOAT_CONSTANT -> when {
-            hasIllegalUnderscore(text, elementType) -> return null
-            else -> parseNumericLiteral(text, elementType)
-        }
+private fun KtExpression.isIntegerConstantOfValue(value: Int): Boolean {
+    val deparenthesized = KtPsiUtil.deparenthesize(this) as? KtConstantExpression
+        ?: return false
 
-        KtNodeTypes.BOOLEAN_CONSTANT -> parseBoolean(text)
-        else -> null
-    }
-    return when (elementType) {
-        KtNodeTypes.INTEGER_CONSTANT -> when {
-            convertedText !is Long -> null
-            hasUnsignedLongSuffix(text) -> StandardClassIds.ULong
-            hasLongSuffix(text) -> StandardClassIds.Long
-            hasUnsignedSuffix(text) -> if (convertedText.toULong() > UInt.MAX_VALUE || convertedText.toULong() < UInt.MIN_VALUE) {
-                StandardClassIds.ULong
-            } else {
-                StandardClassIds.UInt
-            }
-
-            else -> if (convertedText > Int.MAX_VALUE || convertedText < Int.MIN_VALUE) {
-                StandardClassIds.Long
-            } else {
-                StandardClassIds.Int
-            }
-        }
-
-        KtNodeTypes.FLOAT_CONSTANT -> if (convertedText is Float) StandardClassIds.Float else StandardClassIds.Double
-        KtNodeTypes.CHARACTER_CONSTANT -> StandardClassIds.Char
-        KtNodeTypes.BOOLEAN_CONSTANT -> StandardClassIds.Boolean
-        else -> null
-    }
+    return deparenthesized.elementType == KtStubElementTypes.INTEGER_CONSTANT
+            && deparenthesized.text.toIntOrNull() == value
 }
 
-fun KtExpression.isIntegerConstantOfValue(value: Int): Boolean {
-    val deparenthesized = KtPsiUtil.deparenthesize(this) as? KtConstantExpression ?: return false
-    return deparenthesized.elementType == KtStubElementTypes.INTEGER_CONSTANT && deparenthesized.text.toIntOrNull() == value
-}
+val KtExpression.isZeroIntegerConstant: Boolean
+    get() = isIntegerConstantOfValue(0)
 
-fun KtExpression.isZeroIntegerConstant() = isIntegerConstantOfValue(0)
-fun KtExpression.isOneIntegerConstant() = isIntegerConstantOfValue(1)
+
+val KtExpression.isOneIntegerConstant: Boolean
+    get() = isIntegerConstantOfValue(1)
 
 fun KtPsiFactory.appendSemicolonBeforeLambdaContainingElement(element: PsiElement) {
     val previousElement = KtPsiUtil.skipSiblingsBackwardByPredicate(element) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -25,8 +25,8 @@ public final class AppMode {
   public static final String REMOTE_DEV_MODE_COMMAND = "serverMode";
 
   static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
-  static final String HELP_OPTION = "--help";
-  static final String VERSION_OPTION = "--version";
+  public static final String HELP_OPTION = "--help";
+  public static final String VERSION_OPTION = "--version";
 
   private static final String AWT_HEADLESS = "java.awt.headless";
 
@@ -68,7 +68,7 @@ public final class AppMode {
   public static void setFlags(@NotNull List<String> args) {
     isHeadless = isHeadless(args);
     isCommandLine = isHeadless || (!args.isEmpty() && isGuiCommand(args.get(0)));
-    isLightEdit = Boolean.parseBoolean(System.getProperty("idea.force.light.edit.mode")) || (!isCommandLine && isFileAfterOptions(args));
+    isLightEdit = Boolean.parseBoolean(System.getProperty("idea.force.light.edit.mode")) || (!isCommandLine && !isKnownNonLightEditCommand(args) && isFileAfterOptions(args));
 
     if (isHeadless) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
@@ -92,6 +92,15 @@ public final class AppMode {
         dontReopenProjects = true;
       }
     }
+  }
+
+  /**
+   * Checks whether a known command is present in the args which shouldn't be run in 'light edit' mode. 
+   * This is a temporary workaround for IJPL-161632.
+   */
+  private static boolean isKnownNonLightEditCommand(@NotNull List<String> args) {
+    return !args.isEmpty() &&
+           Arrays.asList("cwmHost", "cwmHostNoLobby", "remoteDevHost", "serverMode", "splitMode", "thinClient").contains(args.get(0));
   }
 
   private static boolean isGuiCommand(String arg) {

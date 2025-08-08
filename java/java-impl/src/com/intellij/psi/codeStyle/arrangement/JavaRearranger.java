@@ -29,8 +29,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.General.*;
@@ -273,7 +273,7 @@ public final class JavaRearranger implements Rearranger<JavaElementArrangementEn
       for (ArrangementEntryDependencyInfo fieldInInitializerInfo : root.getDependentEntriesInfos()) {
         JavaElementArrangementEntry fieldInInitializer = fieldInInitializerInfo.getAnchorEntry();
         if (arrangedFields.indexOf(fieldInInitializer) > anchorEntryIndex ||
-            fieldInInitializerInfo.getDependentEntriesInfos().size() > 0) {
+            !fieldInInitializerInfo.getDependentEntriesInfos().isEmpty()) {
           anchorField.addDependency(fieldInInitializer);
         }
       }
@@ -300,7 +300,7 @@ public final class JavaRearranger implements Rearranger<JavaElementArrangementEn
         return javaSettings.BLANK_LINES_AROUND_INITIALIZER;
       }
       else {
-        return commonSettings.BLANK_LINES_AROUND_FIELD;
+        return target.hasAnnotation() ? javaSettings.BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS : commonSettings.BLANK_LINES_AROUND_FIELD;
       }
     }
     else if (METHOD.equals(target.getType())) {

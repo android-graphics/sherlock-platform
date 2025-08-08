@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.Disposable
@@ -15,7 +15,6 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -25,7 +24,6 @@ import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryId
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener
 import java.util.*
@@ -96,8 +94,8 @@ internal class LibrariesAndSdkContributors(private val project: Project,
     }
 
     val pointer = GlobalLibraryPointer(library)
-    registerLibraryRoots(OrderRootType.CLASSES, WorkspaceFileKind.EXTERNAL, pointer, LibraryRootFileSetData(null, ""))
-    registerLibraryRoots(OrderRootType.SOURCES, WorkspaceFileKind.EXTERNAL_SOURCE, pointer, LibrarySourceRootFileSetData(null, ""))
+    registerLibraryRoots(OrderRootType.CLASSES, WorkspaceFileKind.EXTERNAL, pointer, LibraryRootFileSetData(null))
+    registerLibraryRoots(OrderRootType.SOURCES, WorkspaceFileKind.EXTERNAL_SOURCE, pointer, LibrarySourceRootFileSetData(null))
     (library as? LibraryEx)?.excludedRoots?.forEach {
       if (RootFileValidityChecker.ensureValid(it, library, null)) {
         fileSets.putValue(it, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.EXTERNAL, pointer))
@@ -120,8 +118,8 @@ internal class LibrariesAndSdkContributors(private val project: Project,
     }
 
     val pointer = SdkPointer(sdk)
-    registerSdkRoots(OrderRootType.CLASSES, WorkspaceFileKind.EXTERNAL, pointer, LibraryRootFileSetData(null, ""))
-    registerSdkRoots(OrderRootType.SOURCES, WorkspaceFileKind.EXTERNAL_SOURCE, pointer, LibrarySourceRootFileSetData(null, ""))
+    registerSdkRoots(OrderRootType.CLASSES, WorkspaceFileKind.EXTERNAL, pointer, LibraryRootFileSetData(null))
+    registerSdkRoots(OrderRootType.SOURCES, WorkspaceFileKind.EXTERNAL_SOURCE, pointer, LibrarySourceRootFileSetData(null))
   }
 
   private fun unregisterSdkRoots(sdk: Sdk) {
@@ -195,10 +193,8 @@ internal class LibrariesAndSdkContributors(private val project: Project,
   }
 
   companion object {
-    internal fun getGlobalLibraryId(fileSet: WorkspaceFileSet): LibraryId? {
-      return fileSet.asSafely<WorkspaceFileSetImpl>()?.entityPointer.asSafely<GlobalLibraryPointer>()?.library?.let {
-        findLibraryId(library = it)
-      }
+    internal fun getGlobalLibrary(fileSet: WorkspaceFileSet): Library? {
+      return fileSet.asSafely<WorkspaceFileSetImpl>()?.entityPointer.asSafely<GlobalLibraryPointer>()?.library
     }
 
     internal fun getSdk(fileSet: WorkspaceFileSet): Sdk? {

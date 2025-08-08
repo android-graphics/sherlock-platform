@@ -7,6 +7,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.containers.toArray
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -29,10 +30,7 @@ suspend fun <T> instantiate(
   supportedSignatures: List<MethodType>,
 ): T {
   val (signature, constructor) = findConstructor(instanceClass, supportedSignatures)
-  when (val result = resolveArguments(resolver = resolver,
-                                      parameterTypes = signature.parameterArray(),
-                                      instanceClass = instanceClass,
-                                      round = 0)) {
+  when (val result = resolveArguments(resolver, signature.parameterArray(), instanceClass, round = 0)) {
     is ResolutionResult.UnresolvedParameter -> {
       throw InstantiationException(
         "Signature '$signature' for found in '${instanceClass.name}', but '${resolver}' cannot resolve '${result.parameterType}'"
@@ -57,16 +55,11 @@ private fun findConstructor(instanceClass: Class<*>, signatures: List<MethodType
   val lookup = MethodHandles.privateLookupIn(instanceClass, MethodHandles.lookup())
   for (signature in signatures) {
     try {
-      return Pair(signature, lookup.findConstructor(instanceClass, signature))
+      return signature to lookup.findConstructor(instanceClass, signature)
     }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (_: NoSuchMethodException) {
-    }
-    catch (e: Throwable) {
-      throw e
-    }
+    catch (_: NoSuchMethodException) { }
+    catch (_: IllegalAccessException) { }
+    catch (e: Throwable) { throw e }
   }
   throw InstantiationException("Class '$instanceClass' does not define any of supported signatures '$signatures'")
 }
@@ -135,10 +128,7 @@ private fun <T> findConstructorAndArguments(
   } as List<Constructor<T>>
 
   var roundIndex = 0
-  val roundZero = doFindConstructorAndArguments(resolver = resolver,
-                                                constructors = sortedConstructors,
-                                                round = roundIndex,
-                                                instanceClass = instanceClass)
+  val roundZero = doFindConstructorAndArguments(resolver, sortedConstructors, instanceClass, roundIndex)
   var round = roundZero
   while (true) {
     when (round) {
@@ -155,10 +145,7 @@ private fun <T> findConstructorAndArguments(
           }
           roundIndex < rounds -> {
             roundIndex++
-            round = doFindConstructorAndArguments(resolver = resolver,
-                                                  constructors = sortedConstructors,
-                                                  instanceClass = instanceClass,
-                                                  round = roundIndex)
+            round = doFindConstructorAndArguments(resolver, sortedConstructors, instanceClass, roundIndex)
           }
           else -> {
             // NB reporting unsatisfiable constructors from round zero
@@ -202,10 +189,7 @@ private fun <T> doFindConstructorAndArguments(
       continue
     }
 
-    val arguments = when (val result = resolveArguments(resolver = resolver,
-                                                        parameterTypes = parameterTypes,
-                                                        instanceClass = instanceClass,
-                                                        round = round)) {
+    val arguments = when (val result = resolveArguments(resolver, parameterTypes, instanceClass, round)) {
       is ResolutionResult.UnresolvedParameter -> {
         if (unsatisfiableConstructors == null) {
           unsatisfiableConstructors = ArrayList()
@@ -236,7 +220,6 @@ private fun <T> doFindConstructorAndArguments(
 }
 
 private sealed interface ResolutionResult {
-
   @JvmInline
   value class UnresolvedParameter(val parameterType: Class<*>) : ResolutionResult
 
@@ -244,10 +227,7 @@ private sealed interface ResolutionResult {
   value class Resolved(val arguments: List<Argument>) : ResolutionResult
 }
 
-private fun resolveArguments(resolver: DependencyResolver,
-                             parameterTypes: Array<Class<*>>,
-                             instanceClass: Class<*>,
-                             round: Int): ResolutionResult {
+private fun resolveArguments(resolver: DependencyResolver, parameterTypes: Array<Class<*>>, instanceClass: Class<*>, round: Int): ResolutionResult {
   if (parameterTypes.isEmpty()) {
     return ResolutionResult.Resolved(emptyList())
   }
@@ -258,7 +238,7 @@ private fun resolveArguments(resolver: DependencyResolver,
       arguments.add(Argument.CoroutineScopeMarker)
     }
     else {
-      val dependency = resolver.resolveDependency(parameterType = parameterType, instanceClass = instanceClass, round = round)
+      val dependency = resolver.resolveDependency(parameterType, instanceClass, round)
                        ?: return ResolutionResult.UnresolvedParameter(parameterType)
       arguments.add(Argument.LazyArgument(dependency))
     }
@@ -305,13 +285,25 @@ private suspend fun <T> instantiate(
   // In general, we want initialization to be cancellable, and it must be canceled only on parent scope cancellation,
   // which happens only on project/application shutdown, or on plugin unload.
   Cancellation.withNonCancelableSection().use {
-    // A separate thread-local is required to track cyclic service initialization, because
-    // we don't want it to be captured by lambdas scheduled in the constructor (= context propagation).
-    // Only the context of the owner coroutine should be captured.
-    // TODO Put BlockingJob to bind all computations started in instance constructor to instance scope.
-    installTemporaryThreadContext(currentCoroutineContext()).use {
-      return instantiate(args)
+    return withStoredTemporaryContext(parentScope) {
+      instantiate(args)
     }
+  }
+}
+
+// A separate thread-local is required to track cyclic service initialization, because
+// we don't want it to be captured by lambdas scheduled in the constructor (= context propagation).
+// Only the context of the owner coroutine should be captured.
+// TODO Put BlockingJob to bind all computations started in instance constructor to instance scope.
+@ApiStatus.Internal
+suspend fun <T> withStoredTemporaryContext(parentScope: CoroutineScope, action: () -> T): T {
+  val existingCoroutineContext = currentCoroutineContext()
+  val scopeContext = parentScope.coroutineContext
+  // `temporaryCoroutineContext` belongs to the initialization processes throughout the whole chain of initialization.
+  // We want to prevent the elements that are relevant to `parentScope` from leaking into the nested initialization processes.
+  val curatedContext = scopeContext.fold(existingCoroutineContext) { newCtx, key -> newCtx.minusKey(key.key) }
+  return installTemporaryThreadContext(curatedContext).use {
+    action()
   }
 }
 

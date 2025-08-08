@@ -9,6 +9,9 @@
     <extensionPoint name="vcsRootChecker"
                     interface="com.intellij.openapi.vcs.VcsRootChecker"
                     dynamic="true"/>
+    <extensionPoint name="vcsRootErrorFilter"
+                    interface="com.intellij.openapi.vcs.VcsRootErrorFilter"
+                    dynamic="true"/>
     <extensionPoint name="vcsIgnoreChecker"
                     interface="com.intellij.openapi.vcs.VcsIgnoreChecker"
                     dynamic="true"/>
@@ -53,6 +56,7 @@
       <with attribute="implementationClass" implements="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory"/>
     </extensionPoint>
 
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="openapi.vcs.impl.LocalLineStatusTrackerProvider"
                     interface="com.intellij.openapi.vcs.impl.LocalLineStatusTrackerProvider"
                     dynamic="true"/>
@@ -142,13 +146,16 @@
                     area="IDEA_PROJECT"
                     dynamic="true"/>
 
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider"
                     interface="com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider"
                     dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="openapi.vcs.changes.actions.diff.ChangeDiffViewerWrapperProvider"
                     interface="com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffViewerWrapperProvider"
                     dynamic="true"/>
 
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="openapi.vcs.actions.AnnotateToggleAction.Provider"
                     interface="com.intellij.openapi.vcs.actions.AnnotateToggleAction$Provider" dynamic="true"/>
 
@@ -159,18 +166,27 @@
                     dynamic="true"
                     interface="com.intellij.openapi.vcs.changes.IgnoredFileContentProvider" area="IDEA_PROJECT"/>
 
+    <extensionPoint name="vcsSharedChecker"
+                    dynamic="true"
+                    interface="com.intellij.openapi.vcs.VcsSharedChecker" area="IDEA_PROJECT"/>
+
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="openapi.vcs.history.actions.ShowDiffBeforeWithLocalAction.ExtensionProvider"
                     interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"
                     dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider"
                     interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"
                     dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="openapi.vcs.changes.actions.CreatePatchFromChangesAction.Dialog.ExtensionProvider"
                     interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"
                     dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="openapi.vcs.changes.actions.CreatePatchFromChangesAction.Clipboard.ExtensionProvider"
                     interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"
                     dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="openapi.vcs.history.actions.GetVersionAction.ExtensionProvider"
                     interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"
                     dynamic="true"/>
@@ -181,6 +197,7 @@
     <extensionPoint name="openapi.vcs.changes.vcsPreservingExecutor"
                     interface="com.intellij.openapi.vcs.changes.VcsPreservingExecutor"
                     dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint qualifiedName="com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension"
                     interface="com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension"
                     dynamic="true"/>
@@ -191,6 +208,7 @@
                     interface="com.intellij.openapi.vcs.changes.FilePathIconProvider"
                     dynamic="true"/>
 
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="vcs.actions.ScheduleForAdditionActionExtension"
                     interface="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionActionExtension"
                     dynamic="true"/>
@@ -226,5 +244,19 @@
     <extensionPoint name="vcs.codeVisionLanguageContext" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.VcsCodeVisionLanguageContext"/>
     </extensionPoint>
+
+    <extensionPoint name="vcs.defaultCommitMessagePolicy" interface="com.intellij.vcs.commit.DefaultCommitMessagePolicy" dynamic="true"/>
+
+    <extensionPoint name="vcs.shelveSilentlyTitleProvider"
+                    interface="com.intellij.openapi.vcs.changes.shelf.ShelveSilentlyTitleProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.shelveSilentlyGotItTooltipProvider"
+                    interface="com.intellij.openapi.vcs.changes.shelf.ShelveSilentlyGotItTooltipProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.diffRevisionMetadataProvider"
+                    interface="com.intellij.openapi.diff.impl.DiffRevisionMetadataProvider"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

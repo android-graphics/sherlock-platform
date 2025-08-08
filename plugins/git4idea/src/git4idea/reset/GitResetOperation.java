@@ -31,6 +31,7 @@ import git4idea.repo.GitRepository;
 import git4idea.util.GitPreservingProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -41,7 +42,7 @@ import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operat
 public class GitResetOperation {
 
   private final @NotNull Project myProject;
-  private final @NotNull Map<GitRepository, @NotNull String> myCommits;
+  private final @Unmodifiable @NotNull Map<GitRepository, @NotNull String> myCommits;
   private final @NotNull GitResetMode myMode;
   private final @NotNull ProgressIndicator myIndicator;
   private final @NotNull Git myGit;
@@ -58,7 +59,7 @@ public class GitResetOperation {
   }
 
   public GitResetOperation(@NotNull Project project,
-                           @NotNull Map<GitRepository, @NotNull String> targetCommits,
+                           @NotNull @Unmodifiable Map<GitRepository, @NotNull String> targetCommits,
                            @NotNull GitResetMode mode,
                            @NotNull ProgressIndicator indicator,
                            @NotNull OperationPresentation operationPresentation) {
@@ -85,7 +86,7 @@ public class GitResetOperation {
         Hash startHash = getHead(repository);
 
         GitCommandResult result = myGit.reset(repository, myMode, target, detector);
-        if (!result.success() && detector.wasMessageDetected()) {
+        if (!result.success() && detector.isDetected()) {
           GitCommandResult smartResult = proposeSmartReset(detector, repository, target);
           if (smartResult != null) {
             result = smartResult;
@@ -94,7 +95,8 @@ public class GitResetOperation {
         results.put(repository, result);
 
         updateAndRefreshChangedVfs(repository, startHash);
-        VcsDirtyScopeManager.getInstance(myProject).dirDirtyRecursively(root);
+        VcsDirtyScopeManager.getInstance(myProject).rootDirty(root);
+        repository.getUntrackedFilesHolder().invalidate(); // 'git reset --mixed' may make a file untracked without changing anything else
       }
     }
     notifyResult(results);

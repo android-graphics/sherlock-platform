@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -9,6 +10,7 @@ import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -20,8 +22,7 @@ public final class CreateMissingBooleanPrimitiveBranchesFix extends CreateMissin
     super(block, names);
   }
 
-  @Nullable
-  public static CreateMissingBooleanPrimitiveBranchesFix createFix(@NotNull PsiSwitchBlock block) {
+  public static @Nullable CreateMissingBooleanPrimitiveBranchesFix createFix(@NotNull PsiSwitchBlock block) {
     PsiExpression selectorExpression = block.getExpression();
     if (selectorExpression == null) return null;
     PsiType selectorExpressionType = selectorExpression.getType();
@@ -52,7 +53,11 @@ public final class CreateMissingBooleanPrimitiveBranchesFix extends CreateMissin
       }
     }
     if (missed.isEmpty()) return null;
-    return new CreateMissingBooleanPrimitiveBranchesFix(block, new HashSet<>(missed));
+    return new CreateMissingBooleanPrimitiveBranchesFix(block, new LinkedHashSet<>(missed));
+  }
+
+  public static @Nullable PsiBasedModCommandAction<PsiSwitchBlock> createWithNull(@NotNull PsiSwitchBlock block) {
+    return createWithNull(block, () -> createFix(block));
   }
 
   @Override
@@ -66,7 +71,7 @@ public final class CreateMissingBooleanPrimitiveBranchesFix extends CreateMissin
   }
 
   @Override
-  protected @NotNull Function<PsiSwitchLabelStatementBase, List<String>> getCaseExtractor() {
+  protected @NotNull Function<PsiSwitchLabelStatementBase, @Unmodifiable List<String>> getCaseExtractor() {
     return label -> {
       PsiCaseLabelElementList list = label.getCaseLabelElementList();
       if (list == null) return Collections.emptyList();

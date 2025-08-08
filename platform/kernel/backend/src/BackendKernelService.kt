@@ -1,63 +1,64 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.kernel.backend
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.kernel.KernelService
-import com.intellij.platform.kernel.backend.RemoteApiProvider.RemoteApiDescriptor
-import com.intellij.platform.kernel.util.CommonInstructionSet
-import com.intellij.platform.kernel.util.KernelRpcSerialization
-import com.intellij.platform.kernel.util.ReadTracker
-import com.intellij.platform.kernel.util.withKernel
+import com.intellij.platform.kernel.util.*
+import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.platform.util.coroutines.childScope
-import fleet.kernel.Kernel
-import fleet.kernel.kernel
+import fleet.kernel.change
 import fleet.kernel.rebase.*
-import fleet.kernel.rete.Rete
-import kotlinx.coroutines.*
+import fleet.kernel.transactor
+import fleet.rpc.remoteApiDescriptor
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+
+private val LOG = fileLogger()
 
 @Service
-private class RemoteKernelScopeHolder(coroutineScope: CoroutineScope) {
-  val remoteKernelScope: CoroutineScope = coroutineScope.childScope("RemoteKernelScope", KernelService.kernelCoroutineContext)
+private class RemoteKernelScopeHolder {
+
+  suspend fun createRemoteKernel(): RemoteKernel {
+    val kernelService = KernelService.instance
+    val kernelScope = kernelService.kernelCoroutineScope.await()
+    val kernelCoroutineContext = kernelScope.coroutineContext.kernelCoroutineContext()
+    return RemoteKernelImpl(
+      kernelCoroutineContext.transactor,
+      kernelScope.childScope("RemoteKernelScope", kernelCoroutineContext),
+      CommonInstructionSet.decoder(),
+    )
+  }
 }
 
 internal class RemoteKernelProvider : RemoteApiProvider {
-
-  override fun getApis(): List<RemoteApiDescriptor<*>> {
-    return listOf(RemoteApiDescriptor(RemoteKernel::class) {
-      RemoteKernelImpl(
-        KernelService.instance.kernel,
-        ApplicationManager.getApplication().service<RemoteKernelScopeHolder>().remoteKernelScope,
-        CommonInstructionSet.decoder(),
-        KernelRpcSerialization
-      )
-    })
+  override fun RemoteApiProvider.Sink.remoteApis() {
+    remoteApi(remoteApiDescriptor<RemoteKernel>()) {
+      runBlockingCancellable {
+        ApplicationManager.getApplication().service<RemoteKernelScopeHolder>().createRemoteKernel()
+      }
+    }
   }
 }
 
 internal class BackendKernelService(coroutineScope: CoroutineScope) : KernelService {
 
-  override val kernel: Kernel
-  override val rete: Rete
+  override val kernelCoroutineScope: CompletableDeferred<CoroutineScope> = CompletableDeferred()
 
   init {
-    val kernelDeferred: CompletableDeferred<Kernel> = CompletableDeferred()
-    val reteDeferred : CompletableDeferred<Rete> = CompletableDeferred()
-
-    coroutineScope.launch(start = CoroutineStart.UNDISPATCHED) {
-      withKernel(middleware = LeaderKernelMiddleware(KernelRpcSerialization, CommonInstructionSet.encoder())) {
-        coroutineScope {
-          kernelDeferred.complete(currentCoroutineContext()[Kernel]!!)
-          reteDeferred.complete(currentCoroutineContext()[Rete]!!)
-          kernel().changeSuspend {
-            initWorkspaceClock()
-          }
-          ReadTracker.subscribeForChanges()
-        }
+    LOG.info("Backend started Kernel")
+    coroutineScope.launch {
+      change {
+        initWorkspaceClock()
       }
+      handleEntityTypes(transactor(), this)
+      // Create a supervisor child scope to avoid kernel coroutine getting canceled by exceptions coming under `withKernel`
+      kernelCoroutineScope.complete(this.childScope(name = "KernelCoroutineScope", supervisor = true))
+      updateDbInTheEventDispatchThread()
     }
-    kernel = runBlocking { kernelDeferred.await() }
-    rete = runBlocking { reteDeferred.await() }
   }
 }

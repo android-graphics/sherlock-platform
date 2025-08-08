@@ -12,9 +12,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
- * Provides an ability to preconfigure tasks run by external system and to attach them with debugger.
+ * Provides an ability to preconfigure task execution by an external system and to attach them with debugger.
+ * <p>
+ * The result of {@link #initializationCode(Project, String, String)} can be environment-based and always attached to the execution,
+ * or runtime-parameter based.
+ * If the result of {@link #isAlwaysAttached()} is true, the behavior of {@link #initializationCode(Project, String, String)}
+ * is expected to be idempotent, because all the configuration should be done through the execution environment via the values, provided
+ * by {@link #executionEnvironmentVariables(Project, String)}
  */
 public interface DebuggerBackendExtension {
   ExtensionPointName<DebuggerBackendExtension> EP_NAME = ExtensionPointName.create("com.intellij.externalSystem.debuggerBackend");
@@ -22,8 +29,33 @@ public interface DebuggerBackendExtension {
 
   String id();
 
-  default List<String> initializationCode(@Nullable Project project, @NotNull String dispatchPort, @NotNull String parameters) {
+  /**
+   * @deprecated this is a Gradle specific method.
+   * Use {@link org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension#configureTasks} instead.
+   */
+  @Deprecated
+  default List<String> initializationCode(@Nullable Project project, @Nullable String dispatchPort, @NotNull String parameters) {
     return new ArrayList<>();
+  }
+
+  /**
+   * @deprecated this is a Gradle specific method.
+   * Use {@link org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension#configureTasks} instead.
+   */
+  @Deprecated
+  default @NotNull Map<String, String> executionEnvironmentVariables(@Nullable Project project,
+                                                                     @Nullable String dispatchPort,
+                                                                     @NotNull String parameters) {
+    return Map.of();
+  }
+
+  /**
+   * @deprecated this is a Gradle specific method.
+   * Use {@link org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension#configureTasks} instead.
+   */
+  @Deprecated
+  default boolean isAlwaysAttached() {
+    return false;
   }
 
   RunnerAndConfigurationSettings debugConfigurationSettings(@NotNull Project project,
@@ -31,16 +63,6 @@ public interface DebuggerBackendExtension {
                                                             @NotNull String processParameters);
 
   default HashMap<String, String> splitParameters(@NotNull String processParameters) {
-    HashMap<String, String> result = new HashMap<>();
-
-    final String[] envVars = processParameters.split(ForkedDebuggerHelper.PARAMETERS_SEPARATOR);
-    for (String envVar : envVars) {
-      final int idx = envVar.indexOf('=');
-      if (idx > -1) {
-        result.put(envVar.substring(0, idx), idx < envVar.length() - 1 ? envVar.substring(idx + 1) : "");
-      }
-    }
-
-    return result;
+    return ForkedDebuggerHelper.splitParameters(processParameters);
   }
 }

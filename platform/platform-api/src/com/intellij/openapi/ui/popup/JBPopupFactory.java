@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.ui.popup;
 
@@ -18,6 +18,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.Html;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
@@ -149,20 +150,6 @@ public abstract class JBPopupFactory {
                                                Runnable onYes,
                                                Runnable onNo,
                                                int defaultOptionIndex);
-
-  /**
-   * @deprecated use {@link #createActionsStep(ActionGroup, DataContext, String, boolean, boolean, String, Component, boolean, int, boolean)}
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull ListPopupStep createActionsStep(@NotNull ActionGroup actionGroup,
-                                         @NotNull DataContext dataContext,
-                                         boolean showNumbers,
-                                         boolean showDisabledActions,
-                                         @PopupTitle String title,
-                                         Component component,
-                                         boolean honorActionMnemonics) {
-    return createActionsStep(actionGroup, dataContext, null, showNumbers, showDisabledActions, title, component, honorActionMnemonics, 0, false);
-  }
 
   /**
    * @deprecated use {@link #createActionsStep(ActionGroup, DataContext, String, boolean, boolean, String, Component, boolean, int, boolean)}
@@ -397,7 +384,7 @@ public abstract class JBPopupFactory {
 
   public abstract Point getCenterOf(JComponent container, JComponent content);
 
-  public abstract @NotNull List<JBPopup> getChildPopups(@NotNull Component parent);
+  public abstract @Unmodifiable @NotNull List<JBPopup> getChildPopups(@NotNull Component parent);
 
   public abstract boolean isPopupActive();
 

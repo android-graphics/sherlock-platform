@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
@@ -54,6 +54,10 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testOverrideRecordMethods() {
     addRecordClass();
+    doTest(false);
+  }
+
+  public void testProtectedConstructorInFinalClass() {
     doTest(false);
   }
 
@@ -255,6 +259,38 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
             @Override
             public void foo(Foo2 f) {
                 <caret>
+            }
+        }
+        """);
+  }
+
+  public void testOverrideLong() {
+    myFixture.addClass(
+      """
+        package bar;
+        interface A {
+            Long foo();
+        }
+        """);
+    VirtualFile file = myFixture.addClass(
+      """                                            
+        package bar;
+        class Test implements A {
+            <caret>
+        }
+        """
+    ).getContainingFile().getVirtualFile();
+    myFixture.configureFromExistingVirtualFile(file);
+
+    invokeAction(true);
+
+    myFixture.checkResult(
+      """
+        package bar;
+        class Test implements A {
+            @Override
+            public Long foo() {
+                return 0L;
             }
         }
         """);

@@ -31,7 +31,7 @@ public class LombokLightFieldBuilder extends LightFieldBuilder implements Synthe
     super(manager, name, type);
     myName = name;
     myNameIdentifier = new LombokLightIdentifier(manager, name);
-    myModifierList = new LombokLightModifierList(manager);
+    myModifierList = new LombokLightModifierList(manager).withParent(this);
     setBaseIcon(LombokIcons.Nodes.LombokField);
   }
 
@@ -41,8 +41,7 @@ public class LombokLightFieldBuilder extends LightFieldBuilder implements Synthe
   }
 
   @Override
-  @NotNull
-  public LombokLightModifierList getModifierList() {
+  public @NotNull LombokLightModifierList getModifierList() {
     return myModifierList;
   }
 
@@ -64,9 +63,8 @@ public class LombokLightFieldBuilder extends LightFieldBuilder implements Synthe
     return myModifierList.hasModifierProperty(name);
   }
 
-  @Nullable
   @Override
-  public PsiFile getContainingFile() {
+  public @Nullable PsiFile getContainingFile() {
     PsiClass containingClass = getContainingClass();
     return containingClass != null ? containingClass.getContainingFile() : null;
   }
@@ -96,9 +94,8 @@ public class LombokLightFieldBuilder extends LightFieldBuilder implements Synthe
     return this;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
@@ -109,9 +106,8 @@ public class LombokLightFieldBuilder extends LightFieldBuilder implements Synthe
     return this;
   }
 
-  @NotNull
   @Override
-  public PsiIdentifier getNameIdentifier() {
+  public @NotNull PsiIdentifier getNameIdentifier() {
     return myNameIdentifier;
   }
 
@@ -126,6 +122,7 @@ public class LombokLightFieldBuilder extends LightFieldBuilder implements Synthe
     return myConstantValue;
   }
 
+  @Override
   public String toString() {
     return "LombokLightFieldBuilder: " + getName();
   }

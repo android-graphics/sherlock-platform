@@ -1,21 +1,23 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
  */
 package com.intellij.debugger.jdi;
 
-import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
+import com.intellij.debugger.impl.DebugUtilsKt;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.attach.SAJDWPRemoteConnection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.jdi.ReferenceTypeImpl;
 import com.jetbrains.jdi.ThreadReferenceImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.request.EventRequestManager;
@@ -26,7 +28,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionException;
 
-public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
+public class VirtualMachineProxyImpl extends UserDataHolderBase implements JdiTimer, VirtualMachineProxy {
   private static final Logger LOG = Logger.getInstance(VirtualMachineProxyImpl.class);
   private final DebugProcessImpl myDebugProcess;
   private final VirtualMachine myVirtualMachine;
@@ -35,8 +37,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
   private final Map<String, StringReference> myStringLiteralCache = new HashMap<>();
 
-  @NotNull
-  private final Map<ThreadReference, ThreadReferenceProxyImpl> myAllThreads = new ConcurrentHashMap<>();
+  private final @NotNull Map<ThreadReference, ThreadReferenceProxyImpl> myAllThreads = new ConcurrentHashMap<>();
   private final Map<ThreadGroupReference, ThreadGroupReferenceProxyImpl> myThreadGroups = new HashMap<>();
   private boolean myAllThreadsDirty = true;
   private List<ReferenceType> myAllClasses;
@@ -58,15 +59,13 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     canWatchFieldModification(); // fetch capabilities
 
     if (canBeModified()) { // no need to spend time here for read only sessions
-      // this will cache classes inside JDI and enable faster search of classes later
-      DebuggerUtilsAsync.allCLasses(virtualMachine);
+      DebugUtilsKt.preloadAllClasses(virtualMachine);
     }
 
     virtualMachine.topLevelThreadGroups().forEach(this::threadGroupCreated);
   }
 
-  @NotNull
-  public VirtualMachine getVirtualMachine() {
+  public @NotNull VirtualMachine getVirtualMachine() {
     return myVirtualMachine;
   }
 
@@ -112,9 +111,10 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
         if (!candidates.isEmpty()) {
           // keep only direct nested types
+          // do not traverse all classes in vm, only the candidates list
           final Set<ReferenceType> nested2 = new HashSet<>();
           for (final ReferenceType candidate : candidates) {
-            nested2.addAll(nestedTypes(candidate));
+            addNestedTypes(candidate, candidates, nested2);
           }
           candidates.removeAll(nested2);
         }
@@ -129,6 +129,25 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return nestedTypes;
   }
 
+  /**
+   * Check {@link ReferenceTypeImpl#nestedTypes()}
+   */
+  @ApiStatus.Internal
+  public static void addNestedTypes(ReferenceType base, Collection<ReferenceType> classes, Collection<ReferenceType> nested) {
+    String baseName = base.name();
+    int baseLength = baseName.length();
+    classes.forEach(type -> {
+      String name = type.name();
+      int length = name.length();
+      if (length > baseLength && name.startsWith(baseName)) {
+        char c = name.charAt(baseLength);
+        if (c == '$' || c == '#') {
+          nested.add(type);
+        }
+      }
+    });
+  }
+
   @Override
   public List<ReferenceType> allClasses() {
     List<ReferenceType> allClasses = myAllClasses;
@@ -138,6 +157,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return allClasses;
   }
 
+  @Override
   public String toString() {
     return myVirtualMachine.toString();
   }
@@ -233,7 +253,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   /**
    * @return a list of threadGroupProxies
    */
-  public List<ThreadGroupReferenceProxyImpl> topLevelThreadGroups() {
+  public @Unmodifiable List<ThreadGroupReferenceProxyImpl> topLevelThreadGroups() {
     return ContainerUtil.map(getVirtualMachine().topLevelThreadGroups(), this::getThreadGroupReferenceProxy);
   }
 
@@ -299,8 +319,9 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   /**
-   * Avoid using directly - use {@link com.intellij.debugger.impl.DebuggerUtilsImpl#mirrorOfString} instead
+   * Avoid using directly, as the result may be garbage collected immediately - use {@link com.intellij.debugger.impl.DebuggerUtilsEx#mirrorOfString} instead
    */
+  @ApiStatus.Obsolete
   public StringReference mirrorOf(String s) {
     return myVirtualMachine.mirrorOf(s);
   }
@@ -416,9 +437,8 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myVirtualMachine.name();
   }
 
-  @Nullable
   @Contract("null -> null; !null -> !null")
-  public ThreadReferenceProxyImpl getThreadReferenceProxy(@Nullable ThreadReference thread) {
+  public @Nullable ThreadReferenceProxyImpl getThreadReferenceProxy(@Nullable ThreadReference thread) {
     return getThreadReferenceProxy(thread, false);
   }
 
@@ -429,6 +449,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     }
     ThreadReferenceProxyImpl proxy = myAllThreads.computeIfAbsent(thread, t -> {
       // do not cache virtual threads
+      //noinspection ConstantValue
       if (!forceCache && thread instanceof ThreadReferenceImpl && ((ThreadReferenceImpl)thread).isVirtual()) {
         return null;
       }
@@ -457,11 +478,13 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return proxy;
   }
 
+  @Override
   public boolean equals(Object obj) {
     LOG.assertTrue(obj instanceof VirtualMachineProxyImpl);
     return myVirtualMachine.equals(((VirtualMachineProxyImpl)obj).getVirtualMachine());
   }
 
+  @Override
   public int hashCode() {
     return myVirtualMachine.hashCode();
   }
@@ -484,7 +507,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   @Override
-  public DebugProcess getDebugProcess() {
+  public DebugProcessImpl getDebugProcess() {
     return myDebugProcess;
   }
 
@@ -504,16 +527,6 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
   public boolean isSuspended() {
     return ContainerUtil.exists(allThreads(), thread -> thread.getSuspendCount() != 0);
-  }
-
-  public void logThreads() {
-    if (LOG.isDebugEnabled()) {
-      for (ThreadReferenceProxyImpl thread : allThreads()) {
-        if (!thread.isCollected()) {
-          LOG.debug("suspends " + thread + " " + thread.getSuspendCount() + " " + thread.isSuspended());
-        }
-      }
-    }
   }
 
   public int getModelSuspendCount() {

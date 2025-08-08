@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -23,9 +24,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.WeakReference
 
 
+@ApiStatus.Internal
 enum class ExecutionPositionNavigationMode {
   SCROLL, OPEN,
 }
@@ -60,7 +63,9 @@ internal class ExecutionPositionNavigator(
     EDT.assertIsEdt()
     val effectiveNavigationMode = if (isActiveSourceKind) navigationMode else ExecutionPositionNavigationMode.SCROLL
     val descriptor = getDescriptor()
-    navigateTo(descriptor, effectiveNavigationMode)
+    writeIntentReadAction {
+      navigateTo(descriptor, effectiveNavigationMode)
+    }
   }
 
   private suspend fun invalidate() {

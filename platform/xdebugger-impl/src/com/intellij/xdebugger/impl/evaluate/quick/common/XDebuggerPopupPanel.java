@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.ide.DataManager;
@@ -33,6 +33,7 @@ import java.beans.PropertyChangeListener;
 import java.util.Locale;
 
 @ApiStatus.Experimental
+@ApiStatus.Internal
 public abstract class XDebuggerPopupPanel {
   protected final @NotNull BorderLayoutPanel myContent = JBUI.Panels.simplePanel();
   protected final @NotNull BorderLayoutPanel myMainPanel = JBUI.Panels.simplePanel();
@@ -98,10 +99,9 @@ public abstract class XDebuggerPopupPanel {
     fillContentPanel(content, myToolbar);
   }
 
-  @NotNull
-  private ActionToolbarImpl createToolbar(@NotNull DefaultActionGroup toolbarActions,
-                                          @NotNull String actionsPlace,
-                                          @Nullable Component toolbarActionsDataProvider) {
+  private @NotNull ActionToolbarImpl createToolbar(@NotNull DefaultActionGroup toolbarActions,
+                                                   @NotNull String actionsPlace,
+                                                   @Nullable Component toolbarActionsDataProvider) {
     toolbarActions.add(new Separator());
     DefaultActionGroup wrappedActions = wrapActions(toolbarActions, actionsPlace, toolbarActionsDataProvider);
 
@@ -126,10 +126,9 @@ public abstract class XDebuggerPopupPanel {
       .addToBottom(toolbar);
   }
 
-  @NotNull
-  private DefaultActionGroup wrapActions(@NotNull DefaultActionGroup toolbarActions,
-                                         @NotNull String actionsPlace,
-                                         @Nullable Component toolbarActionsDataProvider) {
+  private @NotNull DefaultActionGroup wrapActions(@NotNull DefaultActionGroup toolbarActions,
+                                                  @NotNull String actionsPlace,
+                                                  @Nullable Component toolbarActionsDataProvider) {
     DefaultActionGroup wrappedActions = new DefaultActionGroup();
     for (AnAction action : toolbarActions.getChildren(ActionManager.getInstance())) {
       ActionWrapper actionLink = new ActionWrapper(action, actionsPlace);

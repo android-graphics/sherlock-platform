@@ -11,11 +11,11 @@ import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.table.TableView
 import com.intellij.util.ui.JBUI
 import com.intellij.execution.multilaunch.design.actions.ManageExecutableAction
-import com.intellij.execution.multilaunch.design.actions.ManageExecutableGroup
 import com.intellij.execution.multilaunch.design.popups.TableSelectorPopupController
 import com.intellij.execution.multilaunch.design.tooltips.TableTooltipsController
 import com.intellij.icons.AllIcons
 import com.jetbrains.rd.util.lifetime.Lifetime
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Cursor
 import java.awt.Point
@@ -25,6 +25,7 @@ import javax.swing.JTable
 
 private const val thirdColumnWidth = 60
 
+@ApiStatus.Internal
 class ExecutablesTable(
   private val project: Project,
   private val viewModel: MultiLaunchConfigurationViewModel,
@@ -109,7 +110,7 @@ class ExecutablesTable(
     val handler = object : PopupHandler() {
       override fun invokePopup(comp: Component?, x: Int, y: Int) {
         val cellInfo = getCellInfo(x, y) ?: return
-        val actions = ActionManager.getInstance().getAction(ManageExecutableGroup.ID) as ActionGroup
+        val actions = ActionManager.getInstance().getAction("multilaunch.ManageExecutableGroup") as ActionGroup
         val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.POPUP, actions)
         popupMenu.setDataContext {
           ManageExecutableAction.createContext(project, viewModel, cellInfo.executionContext, cellInfo.popupMinimalBounds)

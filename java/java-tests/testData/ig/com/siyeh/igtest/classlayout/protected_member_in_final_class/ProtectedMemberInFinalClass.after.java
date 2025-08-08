@@ -50,3 +50,22 @@ final class Test {
   private void bar3() {
   }
 }
+final class UnresolvedTests extends Unresolved {
+  void test() {
+    new Unresolved() {
+      @Override
+      protected void foo() {}
+    };
+  }
+  
+  @Override
+  protected void foo() {}
+}
+
+abstract class AbstractCentral {
+  protected record Listener(String key) {
+    protected Listener {
+      System.out.println("1");
+    }
+  }
+}

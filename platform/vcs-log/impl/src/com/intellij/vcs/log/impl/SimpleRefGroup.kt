@@ -5,7 +5,6 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.RefGroup
 import com.intellij.vcs.log.VcsRef
 import com.intellij.vcs.log.VcsRefType
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 
@@ -50,18 +49,6 @@ class SimpleRefGroup @JvmOverloads constructor(private val name: @Nls String,
         }
       }
       return result
-    }
-
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use buildGroups(List<? extends RefGroup>, MultiMap<VcsRefType, VcsRef>, boolean, boolean) function instead")
-    @JvmStatic
-    fun buildGroups(groupedRefs: MultiMap<VcsRefType, VcsRef>,
-                    compact: Boolean,
-                    showTagNames: Boolean,
-                    result: MutableList<RefGroup>) {
-      val groups = buildGroups(result, groupedRefs, compact, showTagNames)
-      result.clear()
-      result.addAll(groups)
     }
   }
 }

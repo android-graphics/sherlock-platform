@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.actionSystem.*;
@@ -22,8 +22,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.awt.event.InputEvent.ALT_DOWN_MASK;
@@ -37,6 +37,24 @@ public final class KeymapUtil {
   private static RegistryValue ourTooltipKeysProperty;
 
   private KeymapUtil() {
+  }
+
+  /**
+   * Returns the text of some shortcut from the set, giving preference to keyboard shortcuts
+   *
+   * @param set the shortcut set
+   * @return the first keyboard shortcut text, if any, otherwise the first shortcut text, if any, otherwise an empty string
+   */
+  public static @NotNull @NlsSafe String getShortcutText(@NotNull ShortcutSet set) {
+    var keyboardShortcut = getFirstKeyboardShortcutText(set);
+    if (!keyboardShortcut.isEmpty()) {
+      return keyboardShortcut;
+    }
+    var firstShortcut = ArrayUtil.getFirstElement(set.getShortcuts());
+    if (firstShortcut != null) {
+      return getShortcutText(firstShortcut);
+    }
+    return "";
   }
 
   public static @NlsSafe @NotNull String getShortcutText(@NotNull @NonNls String actionId) {
@@ -53,7 +71,7 @@ public final class KeymapUtil {
     return ourDefaultKeymapTextContext.getShortcutText(shortcut);
   }
 
-  public static @NotNull String getMouseShortcutText(@NotNull MouseShortcut shortcut) {
+  public static @NotNull @NlsSafe String getMouseShortcutText(@NotNull MouseShortcut shortcut) {
     return ourDefaultKeymapTextContext.getMouseShortcutText(shortcut);
   }
 
@@ -70,8 +88,16 @@ public final class KeymapUtil {
   }
 
   public static @NotNull ShortcutSet getActiveKeymapShortcuts(@Nullable @NonNls String actionId) {
-    KeymapManager keymapManager = actionId == null ? null : KeymapManager.getInstance();
-    return keymapManager == null ? new CustomShortcutSet(Shortcut.EMPTY_ARRAY) : getActiveKeymapShortcuts(actionId, keymapManager);
+    if (actionId != null) {
+      KeymapManager keymapManager = KeymapManager.getInstance();
+      if (keymapManager != null) {
+        ActionManager actionManager = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
+        if (actionManager != null) {
+          return getActiveKeymapShortcuts(actionId, keymapManager);
+        }
+      }
+    }
+    return new CustomShortcutSet(Shortcut.EMPTY_ARRAY);
   }
 
   @ApiStatus.Internal
@@ -285,6 +311,11 @@ public final class KeymapUtil {
       toolTipText += " (" + shortcutsText + ")";
     }
     return toolTipText;
+  }
+
+  /** @return text representation of the keymap modifiers, like Ctrl+Shift */
+  public static @NotNull String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
+    return ourDefaultKeymapTextContext.getModifiersText(KeymapTextContext.mapNewModifiers(modifiers), false);
   }
 
   /**

@@ -31,7 +31,7 @@
       </action>
 
       <group id="WelcomeScreen.Platform.NewProject">
-        <action id="WelcomeScreen.CreateDirectoryProject"
+        <group id="WelcomeScreen.CreateDirectoryProject"
                 class="com.google.sherlock.newProject.steps.SherlockNewProjectStep"/>
         <reference ref="WelcomeScreen.OpenDirectoryProject"/>
 

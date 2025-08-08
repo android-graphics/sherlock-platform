@@ -2,6 +2,7 @@
   <dependencies>
     <plugin id="org.intellij.groovy"/>
     <plugin id="com.intellij.gradle"/>
+    <module name="kotlin.base.external-build-system"/>
     <module name="kotlin.gradle.gradle-tooling"/>
     <module name="kotlin.gradle.gradle"/>
     <module name="kotlin.gradle.code-insight-common"/>
@@ -43,6 +44,8 @@
             language="Groovy"
             hasStaticDescription="true"
             level="ERROR" key="inspection.gradle.kotlinx.coroutines.deprecation.display.name" bundle="messages.KotlinBundle"/>
+
+    <copyPastePreProcessor implementation="org.jetbrains.kotlin.idea.groovy.GroovyLibraryDependenciesToBuildGradleKtsCopyPastePreprocessor"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">
     <gradleBuildScriptSupport implementation="org.jetbrains.kotlin.idea.groovy.GroovyGradleBuildScriptSupport"/>

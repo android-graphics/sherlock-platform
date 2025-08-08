@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.Language;
@@ -17,9 +17,10 @@ import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesRetriever;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
-import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThreeState;
@@ -51,7 +52,7 @@ import static com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.AFTE
 public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<SerializedStubTree>
   implements CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree> {
   @ApiStatus.Internal
-  static final Logger LOG = Logger.getInstance(StubUpdatingIndex.class);
+  public static final Logger LOG = Logger.getInstance(StubUpdatingIndex.class);
   private static final boolean DEBUG_PREBUILT_INDICES = SystemProperties.getBooleanProperty("debug.prebuilt.indices", false);
 
   public static final boolean USE_SNAPSHOT_MAPPINGS = false; //TODO
@@ -86,8 +87,9 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
         if (parserDefinition == null) return false;
 
         final IFileElementType elementType = parserDefinition.getFileNodeType();
-        if (elementType instanceof IStubFileElementType && ((IStubFileElementType<?>)elementType).shouldBuildStubFor(file.getFile())) {
-          logIfStubTraceEnabled(() -> "Should build stub for " + file.getFileName());
+        LanguageStubDescriptor stubDescriptor = StubElementRegistryService.getInstance().getStubDescriptor(elementType.getLanguage());
+        if (stubDescriptor != null && stubDescriptor.getStubDefinition().shouldBuildStubFor(file.getFile())) {
+          logIfStubTraceEnabled(() -> "Should build stub for " + ((VirtualFileWithId)file.getFile()).getId());
           return true;
         }
 
@@ -122,7 +124,9 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
       return ThreeState.UNSURE;
     }
   };
+
   private final @NotNull StubForwardIndexExternalizer<?> myStubIndexesExternalizer;
+  private final @NotNull SerializationManagerEx mySerializationManager;
 
   @ApiStatus.Internal
   public StubUpdatingIndex() {
@@ -141,7 +145,6 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     IndexedFile indexedFile = new IndexedFileImpl(file, project);
     return INPUT_FILTER.acceptInput(indexedFile);
   }
-  private final @NotNull SerializationManagerEx mySerializationManager;
 
   @Override
   public @NotNull ID<Integer, SerializedStubTree> getName() {
@@ -226,7 +229,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
           }
         } catch (Exception e) {
           if (e instanceof ControlFlowException) ExceptionUtil.rethrowUnchecked(e);
-          ObjectStubSerializer<?, ? extends Stub> stubType = stub.getStubType();
+          ObjectStubSerializer<?, ? extends Stub> stubType = stub.getStubSerializer();
           Class<?> classToBlame = stubType != null ? stubType.getClass() : stub.getClass();
           throw new MapReduceIndexMappingException(e, classToBlame);
         }
@@ -260,9 +263,18 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
   }
 
   private static boolean areStubsSimilar(@NotNull Stub stub, @NotNull Stub stub2) {
-    if (stub.getStubType() != stub2.getStubType()) {
+    ObjectStubSerializer<?, ? extends Stub> serializer1 = stub.getStubSerializer();
+    ObjectStubSerializer<?, ? extends Stub> serializer2 = stub2.getStubSerializer();
+    if (!Objects.equals(serializer1, serializer2)) {
       return false;
     }
+
+    IElementType elementType1 = stub instanceof StubElement ? ((StubElement<?>)stub).getElementType() : null;
+    IElementType elementType2 = stub2 instanceof StubElement ? ((StubElement<?>)stub2).getElementType() : null;
+    if (!Objects.equals(elementType1, elementType2)) {
+      return false;
+    }
+
     List<? extends Stub> stubs = stub.getChildrenStubs();
     List<? extends Stub> stubs2 = stub2.getChildrenStubs();
 
@@ -313,9 +325,11 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
 
   @Override
   @ApiStatus.Internal
-  public @NotNull UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> createIndexImplementation(final @NotNull FileBasedIndexExtension<Integer, SerializedStubTree> extension,
-                                                                                                        @NotNull VfsAwareIndexStorageLayout<Integer, SerializedStubTree> layout)
-    throws StorageException, IOException {
+  public @NotNull UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> createIndexImplementation(
+    @NotNull FileBasedIndexExtension<Integer, SerializedStubTree> extension,
+    @NotNull VfsAwareIndexStorageLayout<Integer, SerializedStubTree> layout
+  ) throws StorageException, IOException {
+
     ((StubIndexEx)StubIndex.getInstance()).initializeStubIndexes();
     checkNameStorage();
     mySerializationManager.initialize();
@@ -380,7 +394,8 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     ((StubIndexEx)StubIndex.getInstance()).initializationFailed(e);
   }
 
-  static @NotNull IndexingStampInfo calculateIndexingStamp(@NotNull FileContent content) {
+  @ApiStatus.Internal
+  public static @NotNull IndexingStampInfo calculateIndexingStamp(@NotNull FileContent content) {
     VirtualFile file = content.getFile();
     boolean isBinary = file.getFileType().isBinary();
     int contentLength = isBinary ? -1 : content.getPsiFile().getTextLength();

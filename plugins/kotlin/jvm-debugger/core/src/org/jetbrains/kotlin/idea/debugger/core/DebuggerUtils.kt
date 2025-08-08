@@ -1,12 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.debugger.SourcePosition
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.PositionManagerImpl
 import com.intellij.debugger.impl.DebuggerUtilsAsync
-import com.intellij.debugger.impl.DebuggerUtilsImpl.getLocalVariableBorders
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
@@ -16,12 +17,12 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.indexing.DumbModeAccessType
 import com.intellij.util.indexing.FileBasedIndex
+import com.jetbrains.jdi.LocalVariableImpl
 import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
 import com.sun.jdi.ReferenceType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -29,10 +30,7 @@ import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils.findFilesW
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
-import org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator
-import org.jetbrains.kotlin.idea.debugger.base.util.FileApplicabilityChecker
-import org.jetbrains.kotlin.idea.debugger.base.util.KotlinSourceMapCache
-import org.jetbrains.kotlin.idea.debugger.base.util.fqnToInternalName
+import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
@@ -56,31 +54,32 @@ object DebuggerUtils {
         scope: GlobalSearchScope,
         className: JvmClassName,
         fileName: String,
-    ): KtFile? {
-        return runReadAction {
-            findSourceFileForClass(
-              project,
-              listOf(scope, KotlinSourceFilterScope.librarySources(GlobalSearchScope.allScope(project), project)),
-              className,
-              fileName,
-              location = null
-            )
-        }
-    }
+    ): KtFile? = ReadAction.nonBlocking<KtFile?> {
+        val scopes = listOf(scope, KotlinSourceFilterScope.librarySources(GlobalSearchScope.allScope(project), project))
+        val files = findSourceFilesForClass(
+            project, scopes, className, fileName,
+            hasLocation = false, classNameResolvesInline = false
+        )
+        files.firstOrNull()
+    }.executeSynchronously()
 
-    fun findSourceFileForClass(
+    internal suspend fun findSourceFileForClass(
         project: Project,
         scopes: List<GlobalSearchScope>,
         className: JvmClassName,
         fileName: String,
         location: Location?
     ): KtFile? {
-        val files = findSourceFilesForClass(project, scopes, className, fileName,
-                                            hasLocation = location != null,
-                                            classNameResolvesInline = false)
+        val files = readAction {
+            findSourceFilesForClass(
+                project, scopes, className, fileName,
+                hasLocation = location != null, classNameResolvesInline = false
+            )
+        }
         return chooseApplicableFile(files, location)
     }
 
+    @RequiresReadLock
     internal fun findSourceFilesForClass(
         project: Project,
         scopes: List<GlobalSearchScope>,
@@ -108,10 +107,8 @@ object DebuggerUtils {
                 return listOf(files.first())
             }
 
-            val singleFile = runReadAction {
-                val matchingFiles = KotlinFileFacadeFqNameIndex[partFqName.asString(), project, scope]
-                PackagePartClassUtils.getFilesWithCallables(matchingFiles).singleOrNull { it.name == fileName }
-            }
+            val matchingFiles = KotlinFileFacadeFqNameIndex[partFqName.asString(), project, scope]
+            val singleFile = PackagePartClassUtils.getFilesWithCallables(matchingFiles).singleOrNull { it.name == fileName }
 
             if (singleFile != null) {
                 return listOf(singleFile)
@@ -123,9 +120,10 @@ object DebuggerUtils {
         return emptyList()
     }
 
-    internal fun chooseApplicableFile(files: List<KtFile>, location: Location?): KtFile? {
+    internal suspend fun chooseApplicableFile(files: List<KtFile>, location: Location?): KtFile? {
         if (files.isEmpty()) return null
         if (location == null || files.size == 1 && !forceRanking) return files.first()
+        DebuggerManagerThreadImpl.assertIsManagerThread()
         return if (Registry.`is`("kotlin.debugger.analysis.api.file.applicability.checker")) {
             FileApplicabilityChecker.chooseMostApplicableFile(files, location)
         } else {
@@ -174,7 +172,7 @@ object DebuggerUtils {
     }
 
     private fun isApplicable(file: KtFile, className: JvmClassName): Boolean {
-        val classNames = ClassNameCalculator.getClassNames(file).values.map { it.fqnToInternalName() }
+        val classNames = ClassNameCalculator.getInstance().getTopLevelNames(file).map(String::fqnToInternalName)
         return className.internalName.isInnerClassOfAny(classNames)
     }
 
@@ -196,8 +194,8 @@ object DebuggerUtils {
         matches(IR_BACKEND_LAMBDA_REGEX)
 
     fun LocalVariable.getBorders(): ClosedRange<Location>? {
-        val range = getLocalVariableBorders(this) ?: return null
-        return range.from..range.to
+        val localVariableImpl = this as? LocalVariableImpl ?: return null
+        return localVariableImpl.scopeStart..localVariableImpl.scopeEnd
     }
 
     @RequiresReadLock
@@ -250,7 +248,7 @@ object DebuggerUtils {
     private fun isCrossInlineArgument(argumentExpression: KtExpression): Boolean {
         val callExpression = KtPsiUtil.getParentCallIfPresent(argumentExpression) ?: return false
 
-        return analyze(callExpression) f@ {
+        return runDumbAnalyze(callExpression, fallback = false) f@ {
             val call = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return@f false
             val parameter = call.argumentMapping[argumentExpression]?.symbol ?: return@f false
             return@f parameter.isCrossinline

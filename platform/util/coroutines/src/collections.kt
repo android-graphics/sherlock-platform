@@ -61,10 +61,17 @@ suspend fun <X> Collection<X>.forEachConcurrent(
     items.size <= concurrency -> {
       // a coroutine per item
       coroutineScope {
+        val scopeJob = coroutineContext.job
         for (item in items) {
           yield()
           launch {
-            action(item)
+            try {
+              action(item)
+            }
+            catch (e: CancellationException) {
+              scopeJob.cancel(e)
+              throw e
+            }
           }
         }
       }
@@ -72,12 +79,19 @@ suspend fun <X> Collection<X>.forEachConcurrent(
     else -> {
       // X=concurrency coroutines processing items
       coroutineScope {
+        val scopeJob = coroutineContext.job
         val ch = items.asChannelIn(this)
         repeat(concurrency) {
           launch {
             for (item in ch) {
               yield()
-              action(item)
+              try {
+                action(item)
+              }
+              catch (e: CancellationException) {
+                scopeJob.cancel(e)
+                throw e
+              }
             }
           }
         }
@@ -129,6 +143,18 @@ suspend fun <T, R> Collection<T>.mapConcurrent(
 ): Collection<R> {
   return transformConcurrent(concurrency) {
     out(action(it))
+  }
+}
+
+/**
+ * Maps each item of [this] collection to another item with [action] concurrently using [transformConcurrent] and collects non-null results.
+ */
+suspend fun <T, R> Collection<T>.mapNotNullConcurrent(
+  concurrency: Int = DEFAULT_CONCURRENCY,
+  action: suspend (T) -> R?
+): Collection<R> {
+  return transformConcurrent(concurrency) { v ->
+    action(v)?.let { mv -> out(mv) }
   }
 }
 

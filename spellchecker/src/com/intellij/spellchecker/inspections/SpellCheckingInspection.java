@@ -9,8 +9,11 @@ import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
@@ -29,7 +32,7 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public final class SpellCheckingInspection extends LocalInspectionTool {
+public final class SpellCheckingInspection extends LocalInspectionTool implements DumbAware {
   public static final String SPELL_CHECKING_INSPECTION_TOOL_NAME = "SpellCheckingInspection";
 
   @Override
@@ -45,8 +48,9 @@ public final class SpellCheckingInspection extends LocalInspectionTool {
   }
 
   private static SpellcheckingStrategy getSpellcheckingStrategy(@NotNull PsiElement element, @NotNull Language language) {
+    DumbService dumbService = DumbService.getInstance(element.getProject());
     for (SpellcheckingStrategy strategy : LanguageSpellchecking.INSTANCE.allForLanguage(language)) {
-      if (strategy.isMyContext(element)) {
+      if (dumbService.isUsableInCurrentContext(strategy) && strategy.isMyContext(element)) {
         return strategy;
       }
     }
@@ -69,8 +73,15 @@ public final class SpellCheckingInspection extends LocalInspectionTool {
   }
 
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
-    if (!Registry.is("spellchecker.inspection.enabled", true)) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    return super.buildVisitor(holder, isOnTheFly);
+  }
+
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
+    if (!Registry.is("spellchecker.inspection.enabled", true) || InspectionProfileManager.hasTooLowSeverity(session, this)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     final SpellCheckerManager manager = SpellCheckerManager.getInstance(holder.getProject());
@@ -122,8 +133,8 @@ public final class SpellCheckingInspection extends LocalInspectionTool {
    * @param language Usually element.getLanguage()
    * @param consumer the consumer of tokens
    */
-  public static void tokenize(@NotNull final PsiElement element,
-                              @NotNull final Language language,
+  public static void tokenize(final @NotNull PsiElement element,
+                              final @NotNull Language language,
                               TokenConsumer consumer, Set<SpellCheckingScope> allowedScopes) {
     SpellcheckingStrategy factoryByLanguage = getSpellcheckingStrategy(element, language);
     if (factoryByLanguage == null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.dependenciesCache;
 
 import com.intellij.openapi.components.Service;
@@ -14,10 +14,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import kotlin.Pair;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -41,11 +38,10 @@ import static com.intellij.util.indexing.roots.IndexableEntityProvider.Indexable
 public final class DependenciesIndexedStatusService {
   private static final Logger LOG = Logger.getInstance(DependenciesIndexedStatusService.class);
   @VisibleForTesting
-  static final Key<Boolean> ENFORCEMENT_USAGE_TEST_MODE_FLAG = new Key<>("enforce.DependenciesIndexedStatusService.usage");
+  public static final Key<Boolean> ENFORCEMENT_USAGE_TEST_MODE_FLAG = new Key<>("enforce.DependenciesIndexedStatusService.usage");
 
 
-  @NotNull
-  public static DependenciesIndexedStatusService getInstance(@NotNull Project project) {
+  public static @NotNull DependenciesIndexedStatusService getInstance(@NotNull Project project) {
     return project.getService(DependenciesIndexedStatusService.class);
   }
 
@@ -56,10 +52,8 @@ public final class DependenciesIndexedStatusService {
 
   private final Object LOCK = new Object();
   private volatile int statusVersionCounter = 0;
-  @NotNull
-  private final Project project;
-  @Nullable
-  private MyStatus lastIndexedStatus;
+  private final @NotNull Project project;
+  private @Nullable MyStatus lastIndexedStatus;
 
   private MyStatus currentlyCollectedStatus;
   private final ThreadLocal<Boolean> listenToStatus = ThreadLocal.withInitial(() -> Boolean.FALSE);
@@ -86,8 +80,7 @@ public final class DependenciesIndexedStatusService {
     }
   }
 
-  @NotNull
-  public StatusMark finishCollectingStatus() {
+  public @NotNull StatusMark finishCollectingStatus() {
     listenToStatus.set(false);
     MyStatus status;
     synchronized (LOCK) {
@@ -122,8 +115,7 @@ public final class DependenciesIndexedStatusService {
   }
 
 
-  @NotNull
-  public List<IndexableFilesIterator> saveLibsAndInstantiateLibraryIterators() {
+  public @Unmodifiable @NotNull List<IndexableFilesIterator> saveLibsAndInstantiateLibraryIterators() {
     LOG.assertTrue(shouldSaveStatus());
     List<SyntheticLibraryDescriptor> libraries = collectAdditionalLibDescriptors(project);
     synchronized (LOCK) {
@@ -132,8 +124,7 @@ public final class DependenciesIndexedStatusService {
     return ContainerUtil.map(libraries, lib -> lib.toIndexableIterator());
   }
 
-  @NotNull
-  private static List<SyntheticLibraryDescriptor> collectAdditionalLibDescriptors(@NotNull Project project) {
+  private static @NotNull List<SyntheticLibraryDescriptor> collectAdditionalLibDescriptors(@NotNull Project project) {
     List<SyntheticLibraryDescriptor> libraries = new ArrayList<>();
     for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
       Set<String> comparisonIds = new HashSet<>();
@@ -150,8 +141,7 @@ public final class DependenciesIndexedStatusService {
     return libraries;
   }
 
-  @NotNull
-  public List<IndexableFilesIterator> saveIndexableSetsAndInstantiateIterators() {
+  public @Unmodifiable @NotNull List<IndexableFilesIterator> saveIndexableSetsAndInstantiateIterators() {
     LOG.assertTrue(shouldSaveStatus());
     @NotNull List<IndexableSetContributorDescriptor> descriptors = IndexableSetContributorDescriptor.collectDescriptors(project);
     synchronized (LOCK) {
@@ -160,8 +150,7 @@ public final class DependenciesIndexedStatusService {
     return ContainerUtil.flatMap(descriptors, descriptor -> descriptor.toIndexableIterators());
   }
 
-  @Nullable
-  public Pair<@NotNull Collection<? extends IndexableIteratorBuilder>, @NotNull StatusMark> getDeltaWithLastIndexedStatus() {
+  public @Nullable Pair<@NotNull Collection<? extends IndexableIteratorBuilder>, @NotNull StatusMark> getDeltaWithLastIndexedStatus() {
     if (!shouldBeUsed()) return null;
     MyStatus statusBefore;
     synchronized (LOCK) {
@@ -176,8 +165,7 @@ public final class DependenciesIndexedStatusService {
     return new Pair<>(iterators, statusAfter);
   }
 
-  @NotNull
-  private MyStatus getCurrentStatus() {
+  private @NotNull MyStatus getCurrentStatus() {
     List<SyntheticLibraryDescriptor> libraries = collectAdditionalLibDescriptors(project);
     List<IndexableSetContributorDescriptor> contributors = IndexableSetContributorDescriptor.collectDescriptors(project);
     List<ExcludePolicyDescriptor> excludePolicies = ExcludePolicyDescriptor.collectDescriptors(project);
@@ -185,10 +173,9 @@ public final class DependenciesIndexedStatusService {
   }
 
 
-  @NotNull
-  private static Collection<? extends IndexableIteratorBuilder> getDependenciesIterators(@NotNull Project project,
-                                                                                         @NotNull MyStatus before,
-                                                                                         @NotNull MyStatus after) {
+  private static @NotNull Collection<? extends IndexableIteratorBuilder> getDependenciesIterators(@NotNull Project project,
+                                                                                                  @NotNull MyStatus before,
+                                                                                                  @NotNull MyStatus after) {
 
     List<IndexableIteratorBuilder> result = new ArrayList<>(
       RescannedRootsUtil.getUnexcludedRootsIteratorBuilders(project, before.libraries, before.excludePolicyDescriptors, after.libraries));
@@ -235,8 +222,7 @@ public final class DependenciesIndexedStatusService {
       return new MyStatus(version, libraries, contributors, newExcludePolicyDescriptors);
     }
 
-    @Nullable
-    private String collectionStatusMessage() {
+    private @Nullable String collectionStatusMessage() {
       String message = "";
       if (libraries == null) {
         message += "No AdditionalLibraries data provided. ";
@@ -250,8 +236,7 @@ public final class DependenciesIndexedStatusService {
       return message.isEmpty() ? null : message;
     }
 
-    @NotNull
-    public MultiMap<AdditionalLibraryRootsProvider, SyntheticLibraryDescriptor> librariesToMap() {
+    public @NotNull MultiMap<AdditionalLibraryRootsProvider, SyntheticLibraryDescriptor> librariesToMap() {
       LOG.assertTrue(libraries != null);
       MultiMap<AdditionalLibraryRootsProvider, SyntheticLibraryDescriptor> result = new MultiMap<>();
       for (SyntheticLibraryDescriptor library : libraries) {
@@ -260,16 +245,14 @@ public final class DependenciesIndexedStatusService {
       return result;
     }
 
-    @NotNull
-    public Map<IndexableSetContributor, IndexableSetContributorDescriptor> contributorsToMap() {
+    public @Unmodifiable @NotNull Map<IndexableSetContributor, IndexableSetContributorDescriptor> contributorsToMap() {
       LOG.assertTrue(contributors != null);
       return ContainerUtil.map2Map(contributors, descriptor -> com.intellij.openapi.util.Pair.create(descriptor.contributor, descriptor));
     }
   }
 
   public interface StatusMark {
-    @Nullable
-    static StatusMark mergeStatus(@Nullable StatusMark one, @Nullable StatusMark another) {
+    static @Nullable StatusMark mergeStatus(@Nullable StatusMark one, @Nullable StatusMark another) {
       if (one == null) return another;
       if (another == null) return one;
       if (((MyStatus)one).version > ((MyStatus)another).version) return one;

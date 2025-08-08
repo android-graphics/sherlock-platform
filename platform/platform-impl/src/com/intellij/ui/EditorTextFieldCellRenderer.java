@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -359,7 +359,8 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       int maxLineWidth = getWidth() - (insets != null ? insets.left + insets.right : 0);
       myDocumentTextBuilder.setLength(0);
 
-      boolean singleLineMode = myForceSingleLine || getHeight() / (float)getEditor().getLineHeight() < 1.1f;
+      // 'a / b < factor' is a flawed approach, but I hesitate to perform a rework. I increase the factor to get rid of the bug
+      boolean singleLineMode = myForceSingleLine || getHeight() / (float)getEditor().getLineHeight() < 1.5f;
       if (singleLineMode) {
         appendAbbreviated(myDocumentTextBuilder, myRawText, 0, myRawText.length(), fontMetrics, maxLineWidth, true, myAppendEllipsis,
                           myReturnSymbol);

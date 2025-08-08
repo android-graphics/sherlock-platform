@@ -1,17 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom
 
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.vfs.LocalFileSystem
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture
 import org.junit.Test
 
 class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   override fun createIndicesFixture(): MavenIndicesTestFixture {
-    return MavenIndicesTestFixture(dir.toPath(), project, testRootDisposable,"plugins")
+    return MavenIndicesTestFixture(dir, project, testRootDisposable,"plugins")
   }
 
   override fun importProjectOnSetup(): Boolean {
@@ -136,10 +134,10 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
     val pluginVersion = getDefaultPluginVersion("org.apache.maven:maven-compiler-plugin")
     val pluginPath =
       "plugins/org/apache/maven/plugins/maven-compiler-plugin/$pluginVersion/maven-compiler-plugin-$pluginVersion.pom"
-    val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath(pluginPath)
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
+    val filePath = myIndicesFixture!!.repositoryHelper.getTestData(pluginPath)
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(filePath)
     assertNotNull("file: $filePath not exists!", f)
-    withContext(Dispatchers.EDT) { assertResolved(projectPom, findPsiFile(f)) }
+    assertResolved(projectPom, findPsiFile(f))
   }
 
 
@@ -160,8 +158,9 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
                        </build>
                        """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      val ref = getReferenceAtCaret(projectPom)
+    val ref = getReferenceAtCaret(projectPom)
+
+    readAction {
       assertNotNull(ref)
       ref!!.resolve() // shouldn't throw;
     }

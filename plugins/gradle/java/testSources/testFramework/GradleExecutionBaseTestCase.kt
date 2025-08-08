@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.testFramework
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.openapi.application.runWriteActionAndWait
-import com.intellij.platform.testFramework.treeAssertion.SimpleTreeAssertion
+import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
 import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.testFramework.utils.vfs.deleteRecursively
 import org.gradle.util.GradleVersion
@@ -81,6 +81,10 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
 
   fun <R> waitForAnyGradleTaskExecution(action: () -> R): R {
     return executionFixture.waitForAnyGradleTaskExecution(action)
+  }
+
+  fun assertSyncViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
+    executionFixture.assertSyncViewTree(assert)
   }
 
   fun assertBuildViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {

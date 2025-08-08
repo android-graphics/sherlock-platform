@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -41,8 +41,8 @@ import static com.intellij.util.ObjectUtils.tryCast;
  *   <li>Inside the read action call {@link #forExpression(PsiExpression)} passing the expression you want to process.</li>
  *   <li>If it returns null, then there's no suitable code block and it cannot be added due to complex control-flow, language limitations, etc.</li>
  *   <li>Otherwise create a write action and call the {@link #surround()}. It's guaranteed to be successful.</li>
- *   <li>Use {@link SurroundResult#getAnchor()} to insert new statement before it. Use {@link SurroundResult#getExpression()} to find the 
- *   copy of original expression that appears in the resulting code. Note that the original expression itself may become invalid after 
+ *   <li>Use {@link SurroundResult#getAnchor()} to insert new statement before it. Use {@link SurroundResult#getExpression()} to find the
+ *   copy of original expression that appears in the resulting code. Note that the original expression itself may become invalid after
  *   the {@link #surround()} call.</li>
  * </ol>
  * Note that {@link #forExpression(PsiExpression)} and {@link #surround()} should be called within the same read action.
@@ -50,7 +50,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public abstract class CodeBlockSurrounder {
   private enum ParentContext {
     /**
-     * The execution will terminate abruptly returning/throwing this expression as a result 
+     * The execution will terminate abruptly returning/throwing this expression as a result
      * (return/yield/throw statement)
      */
     RETURN,
@@ -148,7 +148,7 @@ public abstract class CodeBlockSurrounder {
       // operand should be kept. If the subsequent conditions in else branches are mutually exclusive with this one,
       // then it's still safe to split.
       // TODO: support splitting at other operand, not only at 0
-      if (!(PsiUtil.skipParenthesizedExprDown(myExpression) instanceof PsiPolyadicExpression polyadic) || 
+      if (!(PsiUtil.skipParenthesizedExprDown(myExpression) instanceof PsiPolyadicExpression polyadic) ||
           !polyadic.getOperationTokenType().equals(JavaTokenType.ANDAND)) {
         return ParentContext.UNKNOWN;
       }
@@ -232,10 +232,10 @@ public abstract class CodeBlockSurrounder {
 
   /**
    * Creates a surrounder for given expression.
-   * 
+   *
    * @param expression an expression to surround.
-   * @return a new surrounder that is definitely capable to produce a code block around given expression 
-   * where it's safe to place new statements. Returns null if it's impossible to surround given expression 
+   * @return a new surrounder that is definitely capable to produce a code block around given expression
+   * where it's safe to place new statements. Returns null if it's impossible to surround given expression
    * with a code block.
    */
   public static @Nullable CodeBlockSurrounder forExpression(@NotNull PsiExpression expression) {
@@ -304,7 +304,7 @@ public abstract class CodeBlockSurrounder {
           PsiElement declParent = decl.getParent();
           if (declParent instanceof PsiForStatement forStatement && forStatement.getInitialization() == decl) {
             if (hasNameCollision(decl, declParent.getParent())) {
-              // There's another var with the same name as one declared in for initialization 
+              // There's another var with the same name as one declared in for initialization
               return new SimpleSurrounder(expression, forStatement);
             }
             return forStatement((PsiStatement)declParent, expression);
@@ -317,7 +317,7 @@ public abstract class CodeBlockSurrounder {
       PsiResourceList list = tryCast(parent.getParent(), PsiResourceList.class);
       if (list != null && list.getParent() instanceof PsiTryStatement tryStatement) {
         Iterator<PsiResourceListElement> iterator = list.iterator();
-        if (iterator.hasNext() && iterator.next() == parent && tryStatement.getCatchBlocks().length == 0 
+        if (iterator.hasNext() && iterator.next() == parent && tryStatement.getCatchBlocks().length == 0
             && tryStatement.getFinallyBlock() == null) {
           return forStatement(tryStatement, expression);
         }
@@ -835,6 +835,7 @@ public abstract class CodeBlockSurrounder {
   private static class AndOrToIfSurrounder extends CodeBlockSurrounder {
     private final @NotNull PsiPolyadicExpression myPolyadicExpression;
     private final @NotNull CodeBlockSurrounder myUpstream;
+    private PsiIfStatement myCreatedIf;
 
     AndOrToIfSurrounder(@NotNull PsiExpression expression,
                         @NotNull PsiPolyadicExpression polyadicExpression,
@@ -869,38 +870,43 @@ public abstract class CodeBlockSurrounder {
       return splitReturn(statement, polyadicExpression, lOperands, rOperands, project, factory);
     }
 
-    @NotNull
-    private static PsiStatement splitIf(@NotNull PsiIfStatement outerIf,
-                                        @NotNull PsiPolyadicExpression andChain,
-                                        @NotNull PsiExpression lOperands,
-                                        @NotNull PsiExpression rOperands,
-                                        @NotNull Project project,
-                                        @NotNull PsiElementFactory factory) {
+    private static @NotNull PsiStatement splitIf(@NotNull PsiIfStatement outerIf,
+                                                 @NotNull PsiPolyadicExpression andChain,
+                                                 @NotNull PsiExpression lOperands,
+                                                 @NotNull PsiExpression rOperands,
+                                                 @NotNull Project project,
+                                                 @NotNull PsiElementFactory factory) {
       PsiBlockStatement newThenBranch = (PsiBlockStatement)factory.createStatementFromText("{if(true);}", outerIf);
       PsiStatement thenBranch = Objects.requireNonNull(outerIf.getThenBranch());
       Objects.requireNonNull(((PsiIfStatement)newThenBranch.getCodeBlock().getStatements()[0]).getThenBranch()).replace(thenBranch);
       newThenBranch = (PsiBlockStatement)thenBranch.replace(newThenBranch);
+      // The google-java-format plugin breaks the reformat() contract and returns a wrong element (not the one supplied but its child)
+      // The exact reason is unclear.
+      // See https://youtrack.jetbrains.com/issue/IDEA-340109 and https://github.com/google/google-java-format/issues/1101
+      // A workaround is applied here to find a parent element to avoid exception
       PsiIfStatement innerIf =
-        (PsiIfStatement)CodeStyleManager.getInstance(project).reformat(newThenBranch.getCodeBlock().getStatements()[0]);
+        Objects.requireNonNull(PsiTreeUtil.getNonStrictParentOfType(
+          CodeStyleManager.getInstance(project).reformat(newThenBranch.getCodeBlock().getStatements()[0]),
+          PsiIfStatement.class));
       Objects.requireNonNull(innerIf.getCondition()).replace(rOperands);
       andChain.replace(lOperands);
       return innerIf;
     }
 
-    @NotNull
-    private static PsiStatement splitReturn(@NotNull PsiStatement returnOrYieldStatement,
-                                            @NotNull PsiPolyadicExpression condition,
-                                            @NotNull PsiExpression lOperands,
-                                            @NotNull PsiExpression rOperands,
-                                            @NotNull Project project,
-                                            @NotNull PsiElementFactory factory) {
+    private @NotNull PsiStatement splitReturn(@NotNull PsiStatement returnOrYieldStatement,
+                                              @NotNull PsiPolyadicExpression condition,
+                                              @NotNull PsiExpression lOperands,
+                                              @NotNull PsiExpression rOperands,
+                                              @NotNull Project project,
+                                              @NotNull PsiElementFactory factory) {
       CommentTracker ct = new CommentTracker();
       boolean orChain = condition.getOperationTokenType().equals(JavaTokenType.OROR);
       String keyword = returnOrYieldStatement.getFirstChild().getText();
       String extractedCondition = orChain ? ct.text(lOperands) : BoolUtils.getNegatedExpressionText(lOperands, ct);
       String ifText = "if(" + extractedCondition + ") " + keyword + " " + orChain + ";";
       PsiStatement ifStatement = factory.createStatementFromText(ifText, returnOrYieldStatement);
-      CodeStyleManager.getInstance(project).reformat(returnOrYieldStatement.getParent().addBefore(ifStatement, returnOrYieldStatement));
+      myCreatedIf = (PsiIfStatement)CodeStyleManager.getInstance(project)
+        .reformat(returnOrYieldStatement.getParent().addBefore(ifStatement, returnOrYieldStatement));
       ct.replaceAndRestoreComments(Objects.requireNonNull(condition), rOperands);
       return returnOrYieldStatement;
     }
@@ -930,7 +936,7 @@ public abstract class CodeBlockSurrounder {
         }
       }
       PsiIfStatement ifStatement = tryCast(PsiTreeUtil.skipWhitespacesAndCommentsBackward(anchor), PsiIfStatement.class);
-      if (ifStatement == null) return;
+      if (ifStatement == null || ifStatement != myCreatedIf) return;
       PsiStatement result = collapseIf(ifStatement, "&&", "||");
       if (result == null) return;
       myUpstream.collapse(myUpstream.anchor(result));
@@ -949,8 +955,7 @@ public abstract class CodeBlockSurrounder {
     }
   }
 
-  @Nullable
-  private static PsiStatement collapseIf(PsiIfStatement ifStatement, String... operators) {
+  private static @Nullable PsiStatement collapseIf(PsiIfStatement ifStatement, String... operators) {
     IfConditionalModel model = IfConditionalModel.from(ifStatement, false);
     if (model == null) return null;
     ConditionalExpressionGenerator generator = ConditionalExpressionGenerator.from(model);

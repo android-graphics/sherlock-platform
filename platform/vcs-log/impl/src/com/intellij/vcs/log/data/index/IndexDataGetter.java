@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,9 +23,7 @@ import com.intellij.vcs.log.visible.filters.VcsLogMultiplePatternsTextFilter;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import it.unimi.dsi.fastutil.ints.*;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -40,18 +38,18 @@ import static com.intellij.vcs.log.history.FileHistoryKt.FILE_PATH_HASHING_STRAT
 public final class IndexDataGetter {
   private static final Logger LOG = Logger.getInstance(IndexDataGetter.class);
   private final @NotNull Project myProject;
-  private final @NotNull Map<VirtualFile, VcsLogProvider> myProviders;
+  private final @Unmodifiable @NotNull Map<VirtualFile, VcsLogProvider> myProviders;
   private final @NotNull VcsLogStorageBackend myIndexStorageBackend;
   private final @NotNull VcsLogStorage myLogStorage;
   private final @NotNull VcsLogErrorHandler myErrorHandler;
   private final @NotNull VcsDirectoryRenamesProvider myDirectoryRenamesProvider;
   private final boolean myIsProjectLog;
 
-  public IndexDataGetter(@NotNull Project project,
-                         @NotNull Map<VirtualFile, VcsLogProvider> providers,
-                         @NotNull VcsLogStorageBackend indexStorageBackend,
-                         @NotNull VcsLogStorage logStorage,
-                         @NotNull VcsLogErrorHandler errorHandler) {
+  IndexDataGetter(@NotNull Project project,
+                  @NotNull @Unmodifiable Map<VirtualFile, VcsLogProvider> providers,
+                  @NotNull VcsLogStorageBackend indexStorageBackend,
+                  @NotNull VcsLogStorage logStorage,
+                  @NotNull VcsLogErrorHandler errorHandler) {
     myProject = project;
     myProviders = providers;
     myIndexStorageBackend = indexStorageBackend;
@@ -236,7 +234,7 @@ public final class IndexDataGetter {
                       @NotNull IntConsumer consumer) throws IOException {
     if (candidates == null) {
       myIndexStorageBackend.processMessages((commit, message) -> {
-        if (message != null && condition.test(message)) {
+        if (condition.test(message)) {
           consumer.accept(commit);
         }
         return true;
@@ -262,41 +260,49 @@ public final class IndexDataGetter {
 
     VirtualFile root = getRoot(path);
     if (myProviders.containsKey(root) && root != null) {
-      executeAndCatch(() -> {
-        myIndexStorageBackend.iterateChangesInCommits(root, path, (changes, commit) -> executeAndCatch(() -> {
-          int[] parents = myIndexStorageBackend.getParents(commit);
-          if (parents == null) {
-            throw new CorruptedDataException("No parents for commit " + commit);
-          }
+      List<Exception> corruptedDataExceptions = new ArrayList<>();
+      try {
+        executeAndCatch(() -> {
+          myIndexStorageBackend.iterateChangesInCommits(root, path, (changes, commit) -> {
+            collectCorruptedDataExceptions(corruptedDataExceptions, () -> {
+              int[] parents = myIndexStorageBackend.getParents(commit);
+              if (parents == null) {
+                throw new CorruptedDataException("No parents for commit " + commit);
+              }
 
-          Int2ObjectMap<ChangeKind> changeMap = new Int2ObjectOpenHashMap<>(parents.length);
-          if (parents.length == 0 && !changes.isEmpty()) {
-            changeMap.put(commit, ContainerUtil.getFirstItem(changes));
-          }
-          else {
-            if (parents.length != changes.size()) {
-              throw new CorruptedDataException("Commit " + commit + " has " + parents.length +
-                                               " parents, but " + changes.size() + " changes.");
-            }
-            for (int i = 0, length = parents.length; i < length; i++) {
-              changeMap.put(parents[i], changes.get(i));
-            }
-          }
+              Int2ObjectMap<ChangeKind> changeMap = new Int2ObjectOpenHashMap<>(parents.length);
+              if (parents.length == 0 && !changes.isEmpty()) {
+                changeMap.put(commit, ContainerUtil.getFirstItem(changes));
+              }
+              else {
+                if (parents.length != changes.size()) {
+                  throw new CorruptedDataException("Commit " + commit + " has " + parents.length +
+                                                   " parents, but " + changes.size() + " changes.");
+                }
+                for (int i = 0, length = parents.length; i < length; i++) {
+                  changeMap.put(parents[i], changes.get(i));
+                }
+              }
 
-          affectedCommits.put(commit, changeMap);
-
-          return null;
-        }));
-        return null;
-      });
+              affectedCommits.put(commit, changeMap);
+            });
+          });
+        });
+      } finally {
+        if (!corruptedDataExceptions.isEmpty()) {
+          handleCorruptedData(corruptedDataExceptions);
+        }
+      }
     }
     return affectedCommits;
   }
 
+  @ApiStatus.Internal
   public @NotNull FileHistoryData createFileHistoryData(@NotNull FilePath path) {
     return createFileHistoryData(Collections.singletonList(path));
   }
 
+  @ApiStatus.Internal
   public @NotNull FileHistoryData createFileHistoryData(@NotNull Collection<? extends FilePath> paths) {
     if (paths.size() == 1 && ContainerUtil.getFirstItem(paths).isDirectory()) {
       return new DirectoryHistoryData(ContainerUtil.getFirstItem(paths));
@@ -428,32 +434,59 @@ public final class IndexDataGetter {
     try {
       return computable.compute();
     }
-    catch (IOException | UncheckedIOException | StorageException | CorruptedDataException e) {
-      myIndexStorageBackend.markCorrupted();
-      myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
+    catch (Exception e) {
+      if (e instanceof ProcessCanceledException pce) {
+        throw pce;
+      }
+      else if (isCorruptedDataException(e)) {
+        handleCorruptedData(Collections.singletonList(e));
+      }
+      else {
+        LOG.error("Unknown exception in Vcs Log index processing", e);
+        throw new RuntimeException(e);
+      }
     }
-    catch (RuntimeException e) {
-      processRuntimeException(e);
-    }
+
     return defaultValue;
   }
 
-  private void processRuntimeException(@NotNull RuntimeException e) {
-    if (e instanceof ProcessCanceledException) throw e;
-
-    if (e.getCause() instanceof IOException || e.getCause() instanceof StorageException) {
-      myIndexStorageBackend.markCorrupted();
+  private void handleCorruptedData(List<Exception> exceptions) {
+    for (Exception e : exceptions) {
       myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
     }
-    else {
-      LOG.error("Unknown exception in Vcs Log index processing", e);
-      throw new RuntimeException(e);
-    }
+    myIndexStorageBackend.markCorrupted();
   }
 
   private static final class CorruptedDataException extends RuntimeException {
     CorruptedDataException(@NotNull String message) {
       super(message);
+    }
+  }
+
+  private static boolean isCorruptedDataException(@NotNull Exception e) {
+    if (e instanceof IOException ||
+        e instanceof UncheckedIOException ||
+        e instanceof StorageException ||
+        e instanceof CorruptedDataException) {
+      return true;
+    }
+
+    if (e instanceof RuntimeException) {
+      return e.getCause() instanceof IOException || e.getCause() instanceof StorageException;
+    }
+
+    return false;
+  }
+
+  private static void collectCorruptedDataExceptions(List<Exception> corruptedDataExceptions, Runnable runnable) {
+    try {
+      runnable.run();
+    } catch (Exception e) {
+      if (isCorruptedDataException(e)) {
+        corruptedDataExceptions.add(e);
+      } else {
+        throw e;
+      }
     }
   }
 

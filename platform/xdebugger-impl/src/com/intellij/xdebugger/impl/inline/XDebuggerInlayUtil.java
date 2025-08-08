@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,6 +15,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
@@ -25,15 +26,17 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 public final class XDebuggerInlayUtil {
   public static final String INLINE_HINTS_DELIMETER = ":";
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   public static XDebuggerInlayUtil getInstance(Project project) {
     return project.getService(XDebuggerInlayUtil.class);
@@ -77,10 +80,11 @@ public final class XDebuggerInlayUtil {
 
   public boolean createLineEndInlay(@NotNull XValueNodeImpl valueNode,
                                     @NotNull XDebugSession session,
-                                    @NotNull XSourcePosition position) {
+                                    @NotNull VirtualFile file,
+                                    int line) {
     if (valueNode.getValuePresentation() != null) {
       ApplicationManager.getApplication().invokeLater(() -> {
-        createInlayInt(session, new InlineDebugRenderer(valueNode, position, session));
+        createInlayInt(session, new InlineDebugRenderer(valueNode, file, line, session));
       }, ModalityState.nonModal(), session.getProject().getDisposed());
       return true;
     }

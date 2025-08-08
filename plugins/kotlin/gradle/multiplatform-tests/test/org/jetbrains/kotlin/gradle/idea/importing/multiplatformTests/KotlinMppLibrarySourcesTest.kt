@@ -3,10 +3,10 @@ package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests
 
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.GradleProjectsPublishingTestsFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
-import kotlin.test.Ignore
 import kotlin.test.Test
 
 
@@ -15,7 +15,7 @@ class KotlinMppLibrarySourcesTest : AbstractKotlinMppGradleImportingTest() {
     override fun TestConfigurationDslScope.defaultTestConfiguration() {
         checkLibrarySources = true
         renderLineMarkersTargetIcons = true
-        onlyCheckers(HighlightingChecker)
+        onlyCheckers(HighlightingChecker, GradleProjectsPublishingTestsFeature)
     }
 
     @Test

@@ -2,10 +2,10 @@
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
-import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.appSystemDir
+import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
@@ -20,6 +20,7 @@ import com.intellij.platform.workspace.jps.serialization.impl.JpsAppFileContentW
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.LineSeparator
+import com.intellij.util.asSafely
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl
 import kotlinx.coroutines.coroutineScope
@@ -38,6 +39,10 @@ const val APP_CONFIG: String = "\$APP_CONFIG\$"
 open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWithExtraComponents(), ApplicationStoreJpsContentReader {
   override val storageManager: StateStorageManagerImpl =
     ApplicationStateStorageManager(pathMacroManager = PathMacroManager.getInstance(app), controller = app.getService(SettingsController::class.java))
+
+  @Volatile
+  final override var isStoreInitialized: Boolean = false
+    private set
 
   override val allowSavingWithoutModifications: Boolean
     get() = true
@@ -58,18 +63,18 @@ open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWi
       Macro(ROOT_CONFIG, path),
       Macro(StoragePathMacros.CACHE_FILE, appSystemDir.resolve("app-cache.xml"))
     ))
-
-    if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
-      LoadingState.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
-    }
+    isStoreInitialized = true
   }
 
   final override suspend fun doSave(saveResult: SaveResult, forceSavingAllSettings: Boolean) {
-    (serviceAsync<JpsGlobalModelSynchronizer>() as JpsGlobalModelSynchronizerImpl).saveGlobalEntities()
+    app.asSafely<ApplicationImpl>()
+      ?.getServiceAsyncIfDefined(JpsGlobalModelSynchronizer::class.java)
+      ?.asSafely<JpsGlobalModelSynchronizerImpl>()
+      ?.saveGlobalEntities()
 
     coroutineScope {
       launch {
-        super.doSave(saveResult = saveResult, forceSavingAllSettings = forceSavingAllSettings)
+        super.doSave(saveResult, forceSavingAllSettings)
       }
 
       val projectManager = serviceAsync<ProjectManager>() as ProjectManagerEx
@@ -94,10 +99,7 @@ open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWi
 class ApplicationStateStorageManager(pathMacroManager: PathMacroManager? = null, controller: SettingsController?)
   : StateStorageManagerImpl(rootTagName = "application", pathMacroManager?.createTrackingSubstitutor(), componentManager = null, controller)
 {
-  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String =
-    @Suppress("DEPRECATION")
-    if (component is com.intellij.openapi.util.NamedJDOMExternalizable) "${component.externalFileName}${PathManager.DEFAULT_EXT}"
-    else StoragePathMacros.NON_ROAMABLE_FILE
+  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String = StoragePathMacros.NON_ROAMABLE_FILE
 
   override val isUseXmlProlog: Boolean
     get() = false
@@ -110,7 +112,7 @@ class ApplicationStateStorageManager(pathMacroManager: PathMacroManager? = null,
           Files.deleteIfExists(storage.file)
         }
         else {
-          writer.writeTo(file = storage.file, requestor = null, LineSeparator.LF, isUseXmlProlog)
+          writer.writeTo(storage.file, requestor = null, LineSeparator.LF, isUseXmlProlog)
         }
       }.getOrLogException(LOG)
     }

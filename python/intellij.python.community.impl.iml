@@ -12,17 +12,24 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.python.community" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
     <orderEntry type="module" module-name="intellij.python.pydev" />
+    <orderEntry type="module" module-name="intellij.platform.ide.observable" />
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="intellij.platform.debugger" />
     <orderEntry type="module" module-name="intellij.regexp" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ex" />
+    <orderEntry type="module" module-name="intellij.platform.usageView" />
     <orderEntry type="module" module-name="intellij.platform.testRunner" exported="" />
     <orderEntry type="module" module-name="intellij.platform.smRunner" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
+    <orderEntry type="module" module-name="intellij.platform.ide.codeinsight.inline" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.internal" />
     <orderEntry type="module" module-name="intellij.xml.psi.impl" />
     <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="library" name="gson" level="project" />
@@ -36,10 +43,9 @@
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" name="jsoup" level="project" />
     <orderEntry type="library" name="javax.annotation-api" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="org.codehaus.groovy:groovy" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Ant" level="project" />
     <orderEntry type="module" module-name="intellij.python.psi.impl" exported="" />
-    <orderEntry type="module" module-name="intellij.python.sdk" exported="" />
+    <orderEntry type="module" module-name="intellij.python.sdk" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module-library">
@@ -75,37 +81,8 @@
     <orderEntry type="library" name="jcef" level="project" />
     <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="module" module-name="intellij.toml" />
-    <orderEntry type="module-library">
-      <library name="tuweni-toml" type="repository">
-        <properties maven-id="org.apache.tuweni:tuweni-toml:2.0.0">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/tuweni/tuweni-toml/2.0.0/tuweni-toml-2.0.0.jar">
-              <sha256sum>b7331e02e955b6b962a8fa89eb8d7db0960d0b232880bfc60e8602fb3fed36ad</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4.7.1/antlr4-runtime-4.7.1.jar">
-              <sha256sum>43516d19beae35909e04d06af6c0c58c17bc94e0070c85e8dc9929ca640dc91d</sha256sum>
-            </artifact>
-          </verification>
-          <exclude>
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk7" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
-            <dependency maven-id="com.google.code.findbugs:jsr305" />
-            <dependency maven-id="org.jetbrains:annotations" />
-          </exclude>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/tuweni/tuweni-toml/2.0.0/tuweni-toml-2.0.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4.7.1/antlr4-runtime-4.7.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/tuweni/tuweni-toml/2.0.0/tuweni-toml-2.0.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4.7.1/antlr4-runtime-4.7.1-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="module" module-name="intellij.toml.core" />
+    <orderEntry type="library" name="tuweni-toml" level="project" />
     <orderEntry type="library" name="jsr305" level="project" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
@@ -146,7 +123,30 @@
     <orderEntry type="module" module-name="intellij.platform.ml" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.commandInterface" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.python.community.impl.huggingFace" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.syntax" />
+    <orderEntry type="module" module-name="intellij.platform.ui.jcef" />
+    <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
+    <orderEntry type="module" module-name="intellij.libraries.ktor.client.cio" />
+    <orderEntry type="module" module-name="intellij.platform.util.progress" />
+    <orderEntry type="module" module-name="intellij.platform.feedback" />
+    <orderEntry type="library" name="kotlinx-datetime-jvm" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ide.remote" />
+    <orderEntry type="module" module-name="intellij.platform.ide.ui" />
+    <orderEntry type="library" name="jackson-module-kotlin" level="project" />
+    <orderEntry type="library" name="ap-validation" level="project" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.poetry" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.installer" />
+    <orderEntry type="module" module-name="intellij.platform.eel" />
+    <orderEntry type="module" module-name="intellij.platform.eel.provider" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.venv" />
+    <orderEntry type="module" module-name="intellij.python.community.execService" />
+    <orderEntry type="module" module-name="intellij.python.community.services.systemPython" />
+    <orderEntry type="module" module-name="intellij.python.community.services.internal.impl" />
+    <orderEntry type="library" name="io.github.z4kn4fein.semver.jvm" level="project" />
+    <orderEntry type="module" module-name="intellij.python.pyproject" />
+    <orderEntry type="module" module-name="intellij.python.hatch" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem" />
+    <orderEntry type="library" name="http-client" level="project" />
   </component>
 </module>

@@ -24,6 +24,7 @@ import com.jetbrains.python.packaging.repository.PyPackageRepositories;
 import com.jetbrains.python.packaging.repository.PyPackageRepositoryUtil;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,15 +41,30 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-public class PyPIPackageUtil {
+import static com.jetbrains.python.packaging.PyPackageNameNormalizeUtilKt.normalizePackageName;
+
+
+@ApiStatus.Internal
+public final class PyPIPackageUtil {
   private static final Logger LOG = Logger.getInstance(PyPIPackageUtil.class);
   private static final Gson GSON = new GsonBuilder().create();
 
-  private static final String PYPI_HOST = "https://pypi.python.org";
-  public static final String PYPI_URL = PYPI_HOST + "/pypi";
-  public static final String PYPI_LIST_URL = PYPI_HOST + "/simple";
+  private static final String PYPI_BASE_URL = "https://pypi.org";
+  private static final String PYPI_SIMPLE_REPOSITORY_API = "/simple/";
+  private static final String PYPI_DETAILS_API = "/pypi/";
+  private static final String PYPI_PROJECT_API = "/project/";
+
+  /**
+   * @deprecated Use {@link #buildDetailsUrl(String, String)} instead
+   */
+  @Deprecated
+  public static final String PYPI_URL = PYPI_BASE_URL + "/pypi";
+  public static final String PYPI_LIST_URL = PYPI_BASE_URL + PYPI_SIMPLE_REPOSITORY_API;
 
   public static final PyPIPackageUtil INSTANCE = new PyPIPackageUtil();
+
+  private PyPIPackageUtil() {
+  }
 
   /**
    * Contains cached versions of packages from additional repositories.
@@ -63,8 +79,7 @@ public class PyPIPackageUtil {
         final List<String> repositories = PyPackageService.getInstance().additionalRepositories;
         for (String repository : repositories) {
           try {
-            final String packageUrl = StringUtil.trimEnd(repository, "/") + "/" + key;
-            final List<String> versions = parsePackageVersionsFromArchives(packageUrl, key);
+            final List<String> versions = parsePackageVersionsFromRepository(repository, key);
             if (!versions.isEmpty()) {
               LOG.debug("Found versions " + versions + "of " + key + " at " + repository);
               return Collections.unmodifiableList(versions);
@@ -83,7 +98,7 @@ public class PyPIPackageUtil {
   /**
    * Contains cached packages taken from additional repositories.
    */
-  protected final LoadingCache<String, List<RepoPackage>> myAdditionalPackages = CacheBuilder.newBuilder().build(
+  private final LoadingCache<String, List<RepoPackage>> myAdditionalPackages = CacheBuilder.newBuilder().build(
     new CacheLoader<>() {
       @Override
       public List<RepoPackage> load(@NotNull String key) throws Exception {
@@ -101,7 +116,8 @@ public class PyPIPackageUtil {
       @Override
       public PackageDetails load(@NotNull String key) throws Exception {
         LOG.debug("Fetching details for the package '" + key + "' on PyPI");
-        return HttpRequests.request(PYPI_URL + "/" + key + "/json")
+        final String detailsUrl = buildDetailsUrl(PYPI_LIST_URL, key);
+        return HttpRequests.request(detailsUrl)
           .userAgent(getUserAgent())
           .connect(request -> GSON.fromJson(request.getReader(), PackageDetails.class));
       }
@@ -122,14 +138,14 @@ public class PyPIPackageUtil {
   }
 
   public static boolean isPyPIRepository(@Nullable String repository) {
-    return repository != null && repository.startsWith(PYPI_HOST);
+    return repository != null && repository.startsWith(PYPI_BASE_URL);
   }
 
   public @NotNull List<RepoPackage> getAdditionalPackages(@NotNull List<String> repositories) {
     return StreamEx.of(myAdditionalPackages.getAllPresent(repositories).values()).flatMap(StreamEx::of).toList();
   }
 
-  public void loadAdditionalPackages(@NotNull List<String> repositories, boolean alwaysRefresh) throws IOException {
+  public void loadAdditionalPackages(@NotNull List<String> repositories, boolean alwaysRefresh) {
     var failedToConnect = new ArrayList<String>();
     if (alwaysRefresh) {
       for (String url : repositories) {
@@ -180,7 +196,8 @@ public class PyPIPackageUtil {
     });
   }
 
-  private @NotNull PackageDetails refreshAndGetPackageDetailsFromPyPI(@NotNull String packageName, boolean alwaysRefresh) throws IOException {
+  private @NotNull PackageDetails refreshAndGetPackageDetailsFromPyPI(@NotNull String packageName, boolean alwaysRefresh)
+    throws IOException {
     if (alwaysRefresh) {
       myPackageToDetails.invalidate(packageName);
     }
@@ -209,7 +226,7 @@ public class PyPIPackageUtil {
    * Fetches available package versions using JSON API of PyPI.
    */
   private @NotNull List<String> getPackageVersionsFromPyPI(@NotNull String packageName,
-                                                  boolean force) throws IOException {
+                                                           boolean force) throws IOException {
     final PackageDetails details = refreshAndGetPackageDetailsFromPyPI(packageName, force);
     final List<String> result = details.getReleases();
     result.sort(PyPackageVersionComparator.getSTR_COMPARATOR().reversed());
@@ -231,17 +248,19 @@ public class PyPIPackageUtil {
     return getCachedValueOrRethrowIO(myAdditionalPackagesReleases, packageName);
   }
 
-  private static @NotNull <T> T getCachedValueOrRethrowIO(@NotNull LoadingCache<String, ? extends T> cache, @NotNull String key) throws IOException {
+  private static @NotNull <T> T getCachedValueOrRethrowIO(@NotNull LoadingCache<String, ? extends T> cache, @NotNull String key)
+    throws IOException {
     try {
       return cache.get(key);
     }
-    catch (ExecutionException|UncheckedExecutionException e) {
+    catch (ExecutionException | UncheckedExecutionException e) {
       final Throwable cause = e.getCause();
       throw (cause instanceof IOException ? (IOException)cause : new IOException("Unexpected non-IO error", cause));
     }
   }
 
-  private @Nullable String getLatestPackageVersionFromAdditionalRepositories(@NotNull Project project, @NotNull String packageName) throws IOException {
+  private @Nullable String getLatestPackageVersionFromAdditionalRepositories(@NotNull Project project, @NotNull String packageName)
+    throws IOException {
     final List<String> versions = getPackageVersionsFromAdditionalRepositories(packageName);
     return PyPackagingSettings.getInstance(project).selectLatestVersion(versions);
   }
@@ -261,6 +280,66 @@ public class PyPIPackageUtil {
     return version;
   }
 
+  private static String normalizeRepositoryUrl(@NotNull String repositoryUrl) throws IllegalArgumentException {
+    final String normalizedRepositoryUrl = repositoryUrl.endsWith("/") ? repositoryUrl : repositoryUrl + "/";
+
+    if (!normalizedRepositoryUrl.endsWith(PYPI_SIMPLE_REPOSITORY_API)) {
+      throw new IllegalArgumentException("The Repository URL must end with " + PYPI_SIMPLE_REPOSITORY_API);
+    }
+
+    return normalizedRepositoryUrl;
+  }
+
+  /**
+   * The following constraints are placed on the API:
+   * <ul>
+   *   <li> All URLs which respond with an HTML5 page MUST end with a / and
+   *        the repository SHOULD redirect the URLs without a / to add a / to the end.
+   *   <li> Repositories MAY redirect unnormalized URLs to the canonical normalized URL (e.g. /Foobar/ may redirect to /foobar/),
+   *        however clients MUST NOT rely on this redirection and MUST request the normalized URL.
+   * </ul>
+   *
+   * @see <a href="https://packaging.python.org/en/latest/specifications/simple-repository-api/#base-html-api">Base HTML API</a>
+   * @see <a href="https://packaging.python.org/en/latest/specifications/simple-repository-api/#normalized-names">Normalized Names</a>
+   */
+  public static @NotNull String buildPackageUrl(@NotNull String repositoryUrl, @NotNull String packageName) {
+    final String normalizedPackageName = normalizePackageName(packageName);
+    final String normalizedRepositoryUrl = normalizeRepositoryUrl(repositoryUrl);
+    final String packageUrl = normalizedRepositoryUrl + normalizedPackageName + "/";
+    return packageUrl;
+  }
+
+  /**
+   * Project API uses not normalized names (e.g. /project/Flask is correct, GET /project/flask redirects (HTTP 301) to /project/Flask)
+   */
+  public static @NotNull String buildProjectUrl(@NotNull String packageName) {
+    final String projectUrl = PYPI_BASE_URL + PYPI_PROJECT_API + packageName + "/";
+    return projectUrl;
+  }
+
+  /**
+   * Details API uses normalized names, makes HTTP 301 redirect in case of non-normalized.
+   */
+  public static @NotNull String buildDetailsUrl(@NotNull String repositoryUrl,
+                                                @NotNull String packageName) throws IllegalArgumentException {
+    final String normalizedRepositoryUrl = normalizeRepositoryUrl(repositoryUrl);
+    final String normalizedPackageName = normalizePackageName(packageName);
+
+    final String baseUrl = StringUtil.trimEnd(normalizedRepositoryUrl, PYPI_SIMPLE_REPOSITORY_API);
+    final String detailsUrl = baseUrl + PYPI_DETAILS_API + normalizedPackageName + "/json";
+    return detailsUrl;
+  }
+
+  public static @NotNull List<String> parsePackageVersionsFromRepository(@NotNull String repositoryUrl,
+                                                                         @NotNull String packageName) throws IOException {
+    String packageUrl = buildPackageUrl(repositoryUrl, packageName);
+    return parsePackageVersionsFromArchives(packageUrl, packageName);
+  }
+
+  /**
+   * @deprecated Use {@link #parsePackageVersionsFromRepository} instead
+   */
+  @Deprecated
   public static @NotNull List<String> parsePackageVersionsFromArchives(@NotNull String archivesUrl,
                                                                        @NotNull String packageName) throws IOException {
     return HttpRequests.request(archivesUrl).userAgent(getUserAgent()).connect(request -> {
@@ -410,7 +489,7 @@ public class PyPIPackageUtil {
       @SerializedName("description_content_type")
       private String descriptionContentType = "";
       @SerializedName("project_urls")
-      private Map<String, String>  projectUrls = Collections.emptyMap();
+      private Map<String, String> projectUrls = Collections.emptyMap();
 
       public @NotNull String getVersion() {
         return StringUtil.notNullize(version);

@@ -2,6 +2,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.ModTemplateBuilder;
 import com.intellij.openapi.util.Couple;
@@ -14,11 +15,11 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
-import one.util.streamex.Joining;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -29,20 +30,17 @@ public final class CreateSwitchBranchesUtil {
    * @return a name of the action which creates missing switch branches.
    */
   public static @NotNull @Nls String getActionName(Collection<String> names) {
-    if (names.size() == 1) {
-      return InspectionGadgetsBundle.message("create.missing.switch.branch",
-                                             StreamEx.of(names).collect(Joining.with("").maxChars(50).cutAfterDelimiter()));
-    }
-    return InspectionGadgetsBundle.message("create.missing.switch.branches", formatMissingBranches(names));
+    return InspectionGadgetsBundle.message(names.size() == 1 ? "create.missing.switch.branch" : "create.missing.switch.branches", 
+                                           formatMissingBranches(names));
   }
 
   /**
    * @param names names of individual branches to create (non-empty)
-   * @return a string which contains all the names (probably abbreviated if too long)
+   * @return a string which contains all the names (abbreviated if too long)
    */
   public static String formatMissingBranches(Collection<String> names) {
-    return StreamEx.of(names).map(name -> name.startsWith("'") || name.startsWith("\"") ? name : "'" + name + "'").mapLast("and "::concat)
-      .collect(Joining.with(", ").maxChars(50).cutAfterDelimiter());
+    names = ContainerUtil.map(names, name -> name.startsWith("'") || name.startsWith("\"") ? name : "'" + name + "'");
+    return StringUtil.shortenTextWithEllipsis(NlsMessages.formatAndList(names), 50, 0);
   }
 
   /**
@@ -56,10 +54,10 @@ public final class CreateSwitchBranchesUtil {
    *                      thus some kind of normalization could be necessary.
    * @return a list of created branches
    */
-  public static List<PsiSwitchLabelStatementBase> createMissingBranches(@NotNull PsiSwitchBlock switchBlock,
+  public static @Unmodifiable List<PsiSwitchLabelStatementBase> createMissingBranches(@NotNull PsiSwitchBlock switchBlock,
                                                                         @NotNull List<String> allNames,
-                                                                        @NotNull Collection<String> missingNames,
-                                                                        @NotNull Function<? super PsiSwitchLabelStatementBase, ? extends List<String>> caseExtractor) {
+                                                                        @NotNull @Unmodifiable Collection<String> missingNames,
+                                                                        @NotNull Function<? super PsiSwitchLabelStatementBase, ? extends @Unmodifiable List<String>> caseExtractor) {
     final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(switchBlock.getProject());
     boolean isRuleBasedFormat = SwitchUtils.isRuleFormatSwitch(switchBlock);
     final PsiCodeBlock body = switchBlock.getBody();
@@ -141,6 +139,7 @@ public final class CreateSwitchBranchesUtil {
     List<PsiExpression> elementsToReplace = getElementsToReplace(addedLabels);
     ModTemplateBuilder builder = updater.templateBuilder();
     for (PsiExpression expression : elementsToReplace) {
+      if (!expression.isValid()) continue;
       builder.field(expression, new ConstantNode(expression.getText()));
     }
   }

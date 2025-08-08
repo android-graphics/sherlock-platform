@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.util.Ref;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
-import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,36 +11,53 @@ import java.util.Objects;
 public final class PyTypeVarTupleTypeImpl implements PyTypeVarTupleType {
   private final @NotNull String myName;
   private final @Nullable PyQualifiedNameOwner myScopeOwner;
-  private final @Nullable PyTargetExpression myTarget;
+  private final @Nullable Ref<PyPositionalVariadicType> myDefaultType;
+  private final @Nullable PyQualifiedNameOwner myDeclarationElement;
 
   public PyTypeVarTupleTypeImpl(@NotNull String name) {
-    this(name, null, null);
+    this(name, null, null, null);
   }
 
-  private PyTypeVarTupleTypeImpl(@NotNull String name, @Nullable PyTargetExpression target, @Nullable PyQualifiedNameOwner scopeOwner) {
+  private PyTypeVarTupleTypeImpl(@NotNull String name,
+                                 @Nullable PyQualifiedNameOwner declarationElement,
+                                 @Nullable Ref<PyPositionalVariadicType> defaultType,
+                                 @Nullable PyQualifiedNameOwner scopeOwner) {
     myName = name;
-    myTarget = target;
+    myDeclarationElement = declarationElement;
+    myDefaultType = defaultType;
     myScopeOwner = scopeOwner;
   }
 
-  @NotNull
-  public PyTypeVarTupleTypeImpl withScopeOwner(@Nullable PyQualifiedNameOwner scopeOwner) {
-    return new PyTypeVarTupleTypeImpl(myName, myTarget, scopeOwner);
+  public @NotNull PyTypeVarTupleTypeImpl withScopeOwner(@Nullable PyQualifiedNameOwner scopeOwner) {
+    return new PyTypeVarTupleTypeImpl(myName, myDeclarationElement, myDefaultType, scopeOwner);
   }
 
-  public PyTypeVarTupleTypeImpl withTargetExpression(@Nullable PyTargetExpression targetExpression) {
-    return new PyTypeVarTupleTypeImpl(myName, targetExpression, myScopeOwner);
+  public @NotNull PyTypeVarTupleTypeImpl withDeclarationElement(@Nullable PyQualifiedNameOwner declarationElement) {
+    return new PyTypeVarTupleTypeImpl(myName, declarationElement, myDefaultType, myScopeOwner);
   }
 
-  @NotNull
+  public @NotNull PyTypeVarTupleTypeImpl withDefaultType(@Nullable Ref<PyPositionalVariadicType> defaultType) {
+    return new PyTypeVarTupleTypeImpl(myName, myDeclarationElement, defaultType, myScopeOwner);
+  }
+
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "*" + myName;
   }
 
   @Override
   public @Nullable PyQualifiedNameOwner getScopeOwner() {
     return myScopeOwner;
+  }
+
+  @Override
+  public @Nullable Ref<PyPositionalVariadicType> getDefaultType() {
+    return myDefaultType;
+  }
+
+  @Override
+  public @Nullable PyQualifiedNameOwner getDeclarationElement() {
+    return myDeclarationElement;
   }
 
   @Override
@@ -63,6 +80,11 @@ public final class PyTypeVarTupleTypeImpl implements PyTypeVarTupleType {
   @Override
   public String toString() {
     String scopeName = myScopeOwner != null ? Objects.requireNonNullElse(myScopeOwner.getQualifiedName(), myScopeOwner.getName()) : null;
-    return "PyGenericVariadicType: " + (scopeName != null ? scopeName + ":" : "") + myName;
+    return "PyTypeVarTupleType: " + (scopeName != null ? scopeName + ":" : "") + myName;
+  }
+
+  @Override
+  public <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
+    return visitor.visitPyTypeVarTupleType(this);
   }
 }

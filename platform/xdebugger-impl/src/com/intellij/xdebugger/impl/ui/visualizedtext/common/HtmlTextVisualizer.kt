@@ -1,6 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.visualizedtext.common
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBScrollPane
@@ -13,10 +16,9 @@ import javax.swing.JComponent
 import javax.swing.JEditorPane
 
 internal class HtmlTextVisualizer : TextValueVisualizer {
+
   override fun visualize(value: @NlsSafe String): List<VisualizedContentTab> {
-    // Somehow try to verify that the input resembles HTML: contains tags and starts with '<'.
-    if (!value.contains(Helper.htmlTagsRegex) ||
-        value.firstOrNull { !it.isWhitespace() } != '<') {
+    if (!isHtml(value)) {
       return emptyList()
     }
 
@@ -28,7 +30,7 @@ internal class HtmlTextVisualizer : TextValueVisualizer {
       override val contentTypeForStats
         get() = TextVisualizerContentType.HTML
 
-      override fun createComponent(project: Project): JComponent {
+      override fun createComponent(project: Project, parentDisposable: Disposable): JComponent {
         val editor = JEditorPane()
         editor.isEditable = false
         editor.contentType = "text/html"
@@ -37,6 +39,19 @@ internal class HtmlTextVisualizer : TextValueVisualizer {
       }
     })
   }
+
+  override fun detectFileType(value: @NlsSafe String): FileType? =
+    if (isHtml(value)) htmlFileType else null
+
+  private fun isHtml(value: @NlsSafe String): Boolean =
+    // Try to somehow verify that the input resembles HTML: contains tags and starts with '<'.
+    value.contains(Helper.htmlTagsRegex) && value.firstOrNull { !it.isWhitespace() } == '<'
+
+  private val htmlFileType
+    get() =
+      // Right now we don't want to have an explicit static dependency here.
+      // In an ideal world, this class would be part of the optional module of the debugger plugin with a dependency on intellij.xml.psi.impl.
+      FileTypeManager.getInstance().getStdFileType("HTML")
 }
 
 private object Helper {

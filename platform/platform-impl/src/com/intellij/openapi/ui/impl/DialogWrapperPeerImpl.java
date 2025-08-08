@@ -4,6 +4,7 @@ package com.intellij.openapi.ui.impl;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -17,7 +18,6 @@ import com.intellij.openapi.command.CommandProcessorEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.DialogWrapperPeer;
@@ -47,6 +47,7 @@ import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
@@ -91,18 +92,19 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
       WindowManagerEx windowManager = getWindowManager();
       if (windowManager != null) {
-        if (project == null && LoadingState.COMPONENTS_LOADED.isOccurred()) {
-          //noinspection deprecation
-          project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+        Window curWindow = ObjectUtils.chooseNotNull(
+          windowManager.getMostRecentFocusedWindow(),
+          KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow());
+        if (project == null && curWindow != null) {
+          project = ProjectUtil.getProjectForWindow(curWindow);
         }
 
         myProject = project;
 
         window = windowManager.suggestParentWindow(project);
         if (window == null) {
-          Window focusedWindow = windowManager.getMostRecentFocusedWindow();
-          if (focusedWindow instanceof IdeFrameImpl) {
-            window = focusedWindow;
+          if (curWindow instanceof IdeFrameImpl) {
+            window = curWindow;
           }
         }
         if (window == null) {
@@ -167,9 +169,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     if (!headless) {
       Dialog.ModalityType modalityType = DialogWrapper.IdeModalityType.IDE.toAwtModality();
-      if (Registry.is("ide.perProjectModality", false)) {
-        modalityType = ideModalityType.toAwtModality();
-      }
       myDialog.setModalityType(modalityType);
     }
   }
@@ -428,18 +427,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @SuppressWarnings("deprecation") boolean changeModalityState = appStarted && myDialog.isModal() && !isProgressDialog();
     Project project = myProject;
 
-    boolean perProjectModality = changeModalityState &&
-                                 project != null &&
-                                 !ProjectManagerEx.IS_PER_PROJECT_INSTANCE_ENABLED &&
-                                 Registry.is("ide.perProjectModality", false);
     if (changeModalityState) {
       commandProcessor.enterModal();
-      if (perProjectModality) {
-        LaterInvocator.enterModal(project, myDialog.getWindow());
-      }
-      else {
-        LaterInvocator.enterModal(myDialog);
-      }
+      LaterInvocator.enterModal(myDialog);
     }
 
     if (appStarted) {
@@ -463,20 +453,14 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     CompletableFuture<Void> result = new CompletableFuture<>();
     SplashManagerKt.hideSplash();
     try (
-      AccessToken ignore = SlowOperations.startSection(SlowOperations.RESET);
-      AccessToken ignore2 = ThreadContext.resetThreadContext()
+      AccessToken ignore = SlowOperations.startSection(SlowOperations.RESET)
     ) {
       myDialog.show();
     }
     finally {
       if (changeModalityState) {
         commandProcessor.leaveModal();
-        if (perProjectModality) {
-          LaterInvocator.leaveModal(project, myDialog.getWindow());
-        }
-        else {
-          LaterInvocator.leaveModal(myDialog);
-        }
+        LaterInvocator.leaveModal(myDialog);
       }
 
       myDialog.getFocusManager().doWhenFocusSettlesDown(() -> result.complete(null));
@@ -728,9 +712,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       return actualSize;
     }
 
-    @NotNull
     @Override
-    public Rectangle getBounds() { // just delegate to the above
+    public @NotNull Rectangle getBounds() { // just delegate to the above
       return new Rectangle(getLocation(), getSize());
     }
 
@@ -884,7 +867,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         LOG.warn("The dialog wrapper for " + dialogWrapper.getTitle() + " is already disposed");
         return;
       }
-      super.show();
+      try (AccessToken ignore = ThreadContext.resetThreadContext()) {
+        super.show();
+      }
     }
 
     private void logMonitorConfiguration() {
@@ -948,7 +933,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @Override
     @SuppressWarnings("deprecation")
     public void hide() {
-      super.hide();
+      try (@NotNull AccessToken ignored = ThreadContext.resetThreadContext()) {
+        super.hide();
+      }
     }
 
     @Override
@@ -1224,7 +1211,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
   @Override
   public void setContentPane(JComponent content) {
-    myDialog.setContentPane(IdeFrameDecorator.Companion.isCustomDecorationActive() && !isHeadlessEnv()
+    boolean undecorated = myDialog.getWindow() != null && myDialog.getWindow().isUndecorated();
+    myDialog.setContentPane(IdeFrameDecorator.Companion.isCustomDecorationActive() && !undecorated && !isHeadlessEnv()
                             ? CustomFrameDialogContent.Companion.getCustomContentHolder(getWindow(), content, false)
                             : content);
   }

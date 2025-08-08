@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -23,7 +23,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.migration.TryWithIdenticalCatchesInspection;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TrackingEquivalenceChecker;
 import one.util.streamex.StreamEx;
@@ -41,8 +40,7 @@ public final class RedundantMethodOverrideInspection extends BaseInspection {
   public boolean ignoreDelegates = true;
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     boolean delegatesToSuperMethod = (boolean)infos[0];
     return delegatesToSuperMethod
            ? InspectionGadgetsBundle.message("redundant.method.override.delegates.to.super.problem.descriptor")
@@ -136,8 +134,7 @@ public final class RedundantMethodOverrideInspection extends BaseInspection {
   private static class RedundantMethodOverrideFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("redundant.method.override.quickfix");
     }
 
@@ -219,7 +216,7 @@ public final class RedundantMethodOverrideInspection extends BaseInspection {
         @Override
         protected PsiClass getQualifierTarget(PsiReferenceExpression ref) {
           PsiClass target = super.getQualifierTarget(ref);
-          if (target == method.getContainingClass() && target == ClassUtils.getContainingClass(ref)) {
+          if (target == method.getContainingClass() && target == PsiUtil.getContainingClass(ref)) {
             return finalSuperMethod.getContainingClass();
           }
           return target;
@@ -331,7 +328,7 @@ public final class RedundantMethodOverrideInspection extends BaseInspection {
         }
         final Query<PsiReference> search = ReferencesSearch.search(method, scope);
         final PsiClass containingClass = method.getContainingClass();
-        for (PsiReference reference : search) {
+        for (PsiReference reference : search.asIterable()) {
           if (!PsiTreeUtil.isAncestor(containingClass, reference.getElement(), true)) {
             return false;
           }

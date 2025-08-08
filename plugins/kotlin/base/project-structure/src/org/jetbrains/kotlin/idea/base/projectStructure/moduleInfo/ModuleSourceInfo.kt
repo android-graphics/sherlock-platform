@@ -4,22 +4,26 @@ package org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.serviceContainer.AlreadyDisposedException
 import org.jetbrains.kotlin.analyzer.ModuleSourceInfoBase
 import org.jetbrains.kotlin.analyzer.TrackableModuleInfo
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinModificationTrackerProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo as OldModuleSourceInfo
 
+@K1ModeProjectStructureApi
 interface ModuleSourceInfo : OldModuleSourceInfo, IdeaModuleInfo, TrackableModuleInfo, ModuleSourceInfoBase {
     override val module: Module
 
     override val expectedBy: List<ModuleSourceInfo>
 
-    override val displayedName get() = module.name
+    override val displayedName: @NlsSafe String get() = module.name
 
     override val moduleOrigin: ModuleOrigin
         get() = ModuleOrigin.MODULE
@@ -40,6 +44,8 @@ interface ModuleSourceInfo : OldModuleSourceInfo, IdeaModuleInfo, TrackableModul
     override fun checkValidity() {
         module.checkValidity()
     }
+
+    val sourceModuleKind: KaSourceModuleKind
 }
 
 fun Module.checkValidity() {

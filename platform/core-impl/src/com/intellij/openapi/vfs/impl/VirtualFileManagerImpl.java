@@ -176,8 +176,8 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
 
   @Override
   public void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener, @NotNull Disposable parentDisposable) {
-    virtualFileManagerListeners.add(listener);
     Disposer.register(parentDisposable, () -> removeVirtualFileManagerListener(listener));
+    virtualFileManagerListeners.add(listener);
   }
 
   @Override
@@ -187,13 +187,17 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
 
   @Override
   public void addAsyncFileListener(@NotNull AsyncFileListener listener, @NotNull Disposable parentDisposable) {
-    asyncFileListeners.add(listener);
     Disposer.register(parentDisposable, () -> asyncFileListeners.remove(listener));
+    asyncFileListeners.add(listener);
   }
 
   @ApiStatus.Internal
-  public @NotNull @Unmodifiable List<AsyncFileListener> withAsyncFileListeners(@NotNull @Unmodifiable List<AsyncFileListener> listeners) {
-    return ContainerUtil.concat(listeners, asyncFileListeners);
+  public @NotNull @Unmodifiable List<AsyncFileListener> withAsyncFileListeners(@NotNull @Unmodifiable List<? extends AsyncFileListener> listeners) {
+    // copy to avoid modification during iteration later
+    List<AsyncFileListener> result = new ArrayList<>(listeners.size() + asyncFileListeners.size());
+    result.addAll(listeners);
+    result.addAll(asyncFileListeners);
+    return result;
   }
 
   @Override

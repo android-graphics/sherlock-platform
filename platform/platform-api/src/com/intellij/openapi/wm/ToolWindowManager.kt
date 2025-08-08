@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -172,6 +173,8 @@ abstract class ToolWindowManager {
    */
   open fun getLocationIcon(id: String, fallbackIcon: Icon): Icon = fallbackIcon
 
+  open fun getShowInFindToolWindowIcon(): Icon = AllIcons.General.OpenInToolWindow
+
   open fun isStripeButtonShow(toolWindow: ToolWindow): Boolean = false
 }
 
@@ -196,18 +199,18 @@ class RegisterToolWindowTaskBuilder @PublishedApi internal constructor(private v
 
   @PublishedApi
   internal fun build(): RegisterToolWindowTask {
-    val result = RegisterToolWindowTask(id = id,
-                                        anchor = anchor,
-                                        component = null,
-                                        sideTool = sideTool,
-                                        canCloseContent = canCloseContent,
-                                        shouldBeAvailable = shouldBeAvailable,
-                                        contentFactory = contentFactory,
-                                        icon = icon,
-                                        stripeTitle = stripeTitle)
-
-    result.hideOnEmptyContent = hideOnEmptyContent
-    return result
+    return RegisterToolWindowTask(RegisterToolWindowTaskData(
+      id = id,
+      anchor = anchor,
+      component = null,
+      sideTool = sideTool,
+      canCloseContent = canCloseContent,
+      shouldBeAvailable = shouldBeAvailable,
+      contentFactory = contentFactory,
+      icon = icon,
+      stripeTitle = stripeTitle,
+      hideOnEmptyContent = hideOnEmptyContent,
+    ))
   }
 }
 

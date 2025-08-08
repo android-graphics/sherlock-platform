@@ -1,11 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
+import com.intellij.codeInsight.daemon.impl.DaemonListeners;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.SilentChangeVetoer;
 import com.intellij.codeInsight.daemon.impl.analysis.IncreaseLanguageLevelFix;
 import com.intellij.codeInsight.daemon.impl.analysis.UpgradeSdkFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
@@ -28,9 +31,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.request.CreateConstructorFromUsage;
 import com.intellij.lang.java.request.CreateMethodFromUsage;
-import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -39,6 +40,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -58,10 +60,12 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.siyeh.ig.controlflow.UnnecessaryDefaultInspection;
 import com.siyeh.ig.fixes.*;
+import com.siyeh.ipp.imports.ReplaceOnDemandImportIntention;
 import com.siyeh.ipp.modifiers.ChangeModifierIntention;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -196,6 +200,12 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public @NotNull IntentionAction createAddExceptionToThrowsFix(@NotNull PsiElement element) {
     return new AddExceptionToThrowsFix(element).asIntention();
+  }
+
+  @Override
+  public @NotNull IntentionAction createAddExceptionToThrowsFix(@NotNull PsiElement element, 
+                                                                @NotNull Collection<PsiClassType> exceptionsToAdd) {
+    return new AddExceptionToThrowsFix(element, exceptionsToAdd).asIntention();
   }
 
   @Override
@@ -586,11 +596,11 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull IntentionAction createOptimizeImportsFix(final boolean onTheFly, @NotNull PsiFile file) {
+  public @NotNull IntentionAction createOptimizeImportsFix(final boolean fixOnTheFly, @NotNull PsiFile file) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     VirtualFile virtualFile = file.getVirtualFile();
     boolean isInContent = virtualFile != null && (ModuleUtilCore.projectContainsFile(file.getProject(), virtualFile, false) || ScratchUtil.isScratch(virtualFile));
-    return new OptimizeImportsFix(onTheFly, isInContent, virtualFile == null ? ThreeState.UNSURE : SilentChangeVetoer.extensionsAllowToChangeFileSilently(file.getProject(), virtualFile));
+    return new OptimizeImportsFix(fixOnTheFly, isInContent, virtualFile == null ? ThreeState.UNSURE : SilentChangeVetoer.extensionsAllowToChangeFileSilently(file.getProject(), virtualFile));
   }
 
   private static final class OptimizeImportsFix implements IntentionAction {
@@ -742,7 +752,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public @NotNull IntentionAction createAddMissingRequiredAnnotationParametersFix(final @NotNull PsiAnnotation annotation,
                                                                                   final PsiMethod @NotNull [] annotationMethods,
                                                                                   final @NotNull Collection<String> missedElements) {
-    return new AddMissingRequiredAnnotationParametersFix(annotation, annotationMethods, missedElements).asIntention();
+    return new AddMissingRequiredAnnotationParametersFix(annotation, missedElements).asIntention();
   }
 
   @Override
@@ -774,7 +784,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull List<IntentionAction> createAddAnnotationAttributeNameFixes(@NotNull PsiNameValuePair pair) {
+  public @Unmodifiable @NotNull List<IntentionAction> createAddAnnotationAttributeNameFixes(@NotNull PsiNameValuePair pair) {
     return AddAnnotationAttributeNameFix.createFixes(pair);
   }
 
@@ -803,7 +813,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     //noinspection UnnecessaryLocalVariable
     boolean hasErrorsBesideUnresolvedImports = !DaemonCodeAnalyzerEx
       .processHighlights(document, file.getProject(), HighlightSeverity.ERROR, 0, document.getTextLength(), error -> {
-        if (error.type instanceof LocalInspectionsPass.InspectionHighlightInfoType) return true;
+        if (error.type.isInspectionHighlightInfoType()) return true;
         int infoStart = error.getActualStartOffset();
         int infoEnd = error.getActualEndOffset();
 
@@ -869,14 +879,33 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public @NotNull IntentionAction createAddMissingSealedClassBranchesFix(@NotNull PsiSwitchBlock switchBlock,
-                                                                         @NotNull Set<String> missingCases,
+                                                                         @NotNull @Unmodifiable Set<String> missingCases,
                                                                          @NotNull List<String> allNames) {
     return new CreateSealedClassMissingSwitchBranchesFix(switchBlock, missingCases, allNames).asIntention();
   }
 
   @Override
+  public @Nullable IntentionAction createAddMissingSealedClassBranchesFixWithNull(@NotNull PsiSwitchBlock switchBlock,
+                                                                                  @NotNull Set<String> missingCases,
+                                                                                  @NotNull List<String> allNames) {
+    PsiBasedModCommandAction<PsiSwitchBlock> withNull =
+      CreateSealedClassMissingSwitchBranchesFix.createWithNull(switchBlock, missingCases, allNames);
+    if (withNull == null) {
+      return null;
+    }
+    return withNull.asIntention();
+  }
+
+  @Override
   public @Nullable IntentionAction createAddMissingBooleanPrimitiveBranchesFix(@NotNull PsiSwitchBlock block) {
     CreateMissingBooleanPrimitiveBranchesFix fix = CreateMissingBooleanPrimitiveBranchesFix.createFix(block);
+    if (fix == null) return null;
+    return fix.asIntention();
+  }
+
+  @Override
+  public @Nullable IntentionAction createAddMissingBooleanPrimitiveBranchesFixWithNull(@NotNull PsiSwitchBlock block) {
+    @Nullable PsiBasedModCommandAction<PsiSwitchBlock> fix = CreateMissingBooleanPrimitiveBranchesFix.createWithNull(block);
     if (fix == null) return null;
     return fix.asIntention();
   }
@@ -944,7 +973,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public @NotNull IntentionAction createMoveClassToPackageFix(@NotNull PsiClass classToMove, @NotNull String packageName) {
-    return new MoveToPackageFix(classToMove.getContainingFile(), packageName);
+    return new MoveToPackageFix(classToMove, packageName);
   }
 
   @Override
@@ -1018,7 +1047,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull IntentionAction createDeleteDefaultFix(@NotNull PsiFile file, @NotNull PsiElement defaultElement) {
+  public @NotNull IntentionAction createDeleteDefaultFix(@Nullable PsiFile file, @NotNull PsiElement defaultElement) {
     return new UnnecessaryDefaultInspection.DeleteDefaultFix().asIntention();
   }
 
@@ -1119,5 +1148,30 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public @NotNull IntentionAction createAddMainMethodFix(@NotNull PsiImplicitClass implicitClass) {
     return new AddMainMethodFix(implicitClass).asIntention();
+  }
+
+  @Override
+  public @NotNull ModCommandAction createReplaceOnDemandImport(@NotNull PsiImportModuleStatement importModuleStatement, @NotNull @Nls String text) {
+    return new ReplaceOnDemandImportAction(importModuleStatement, text);
+  }
+
+  private static class ReplaceOnDemandImportAction extends PsiUpdateModCommandAction<PsiImportModuleStatement> {
+    @NlsSafe private final String text;
+
+    private ReplaceOnDemandImportAction(PsiImportModuleStatement element, @NlsSafe String text) {
+      super(element);
+      this.text = text;
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return text;
+    }
+
+    @Override
+    protected void invoke(@NotNull ActionContext context, @NotNull PsiImportModuleStatement element, @NotNull ModPsiUpdater updater) {
+      element = updater.getWritable(element);
+      ReplaceOnDemandImportIntention.replaceOnDemand(element);
+    }
   }
 }

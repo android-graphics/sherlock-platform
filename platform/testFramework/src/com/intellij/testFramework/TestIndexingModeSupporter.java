@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.testFramework.DumbModeTestUtils.EternalTaskShutdownToken;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -54,7 +55,10 @@ public interface TestIndexingModeSupporter {
 
       @Override
       public void ensureIndexingStatus(@NotNull Project project) {
-        new UnindexedFilesScanner(project, INDEXING_REASON).queue();
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          // if not invoked from EDT scanning will be queued asynchronously
+          new UnindexedFilesScanner(project, INDEXING_REASON).queue();
+        });
         IndexingTestUtil.waitUntilIndexesAreReady(project);
       }
     }, DUMB_RUNTIME_ONLY_INDEX {
@@ -86,8 +90,10 @@ public interface TestIndexingModeSupporter {
 
     private static void onlyAllowOwnTasks(@NotNull Project project, @NotNull Disposable testRootDisposable) {
       UnindexedFilesScannerExecutorImpl.getInstance(project)
-        .setTaskFilterInTest(testRootDisposable, task -> Strings.areSameInstance(task.getIndexingReason(), INDEXING_REASON));
-      UnindexedFilesScannerExecutorImpl.getInstance(project).cancelAllTasksAndWait();
+        .setTaskFilterInTest(testRootDisposable, task -> Strings.areSameInstance(task.getIndexingReasonBlocking(), INDEXING_REASON));
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        UnindexedFilesScannerExecutorImpl.getInstance(project).cancelAllTasksAndWait();
+      });
     }
 
     public static final class ShutdownToken {
@@ -138,9 +144,19 @@ public interface TestIndexingModeSupporter {
 
   @NotNull IndexingMode getIndexingMode();
 
+  static void addAllTests(@NotNull Class<? extends TestIndexingModeSupporter> aClass, @NotNull TestSuite parentSuite) {
+    addTest(aClass, new FullIndexSuite(), parentSuite);
+    addTest(aClass, new RuntimeOnlyIndexSuite(), parentSuite);
+    if (Registry.is("ide.dumb.mode.check.awareness")) {
+      addTest(aClass, new EmptyIndexSuite(), parentSuite);
+    }
+  }
+
   static void addTest(@NotNull Class<? extends TestIndexingModeSupporter> aClass,
                       @NotNull TestIndexingModeSupporter.IndexingModeTestHandler handler,
                       @NotNull TestSuite parentSuite) {
+    if (handler.getIndexingMode() == DUMB_EMPTY_INDEX &&
+        !Registry.is("ide.dumb.mode.check.awareness")) return;
     if (handler.shouldIgnore(aClass)) return;
     try {
       TestSuite suite = handler.createTestSuite();

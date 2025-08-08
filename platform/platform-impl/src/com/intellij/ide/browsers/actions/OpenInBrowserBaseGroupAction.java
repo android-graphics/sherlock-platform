@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.actions;
 
 import com.intellij.icons.AllIcons;
@@ -7,12 +7,16 @@ import com.intellij.ide.browsers.WebBrowser;
 import com.intellij.ide.browsers.WebBrowserManager;
 import com.intellij.ide.browsers.WebBrowserXmlService;
 import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -85,7 +89,7 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
     return ActionUpdateThread.BGT;
   }
 
-  private static boolean hasLocalBrowser() {
+  public static boolean hasLocalBrowser() {
     return JBCefApp.isSupported() && Registry.is("ide.web.preview.enabled", true);
   }
 
@@ -95,7 +99,7 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
     }
   }
 
-  public static final class OpenInBrowserEditorContextBarGroupAction extends OpenInBrowserBaseGroupAction {
+  public static class OpenInBrowserEditorContextBarGroupAction extends OpenInBrowserBaseGroupAction {
     public OpenInBrowserEditorContextBarGroupAction() {
       super(false);
     }
@@ -105,11 +109,19 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
       Editor editor = e.getData(CommonDataKeys.EDITOR);
       final WebBrowserManager browserManager = WebBrowserManager.getInstance();
       PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
-      boolean needShowOnHover = psiFile != null && WebBrowserXmlService.getInstance().isXmlLanguage(psiFile.getViewProvider().getBaseLanguage())
+      Language language = psiFile != null ? psiFile.getViewProvider().getBaseLanguage() : null;
+      if (language == null || language == Language.ANY || language == PlainTextLanguage.INSTANCE) {
+        VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
+        if (virtualFile != null && virtualFile.getFileType() instanceof LanguageFileType fileType) {
+          language = fileType.getLanguage();
+        }
+      }
+
+      boolean needShowOnHover = language != null && WebBrowserXmlService.getInstance().isXmlLanguage(language)
               ? browserManager.isShowBrowserHoverXml()
               : browserManager.isShowBrowserHover();
       boolean enabled = needShowOnHover &&
-                        (!browserManager.getActiveBrowsers().isEmpty() || OpenInBrowserBaseGroupAction.hasLocalBrowser())
+                        (!browserManager.getActiveBrowsers().isEmpty() || hasLocalBrowser())
                         && editor != null && !DiffUtil.isDiffEditor(editor);
       e.getPresentation().setEnabledAndVisible(enabled);
     }

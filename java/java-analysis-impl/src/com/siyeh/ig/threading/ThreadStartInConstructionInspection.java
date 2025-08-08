@@ -17,24 +17,22 @@ package com.siyeh.ig.threading;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public final class ThreadStartInConstructionInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "CallToThreadStartDuringObjectConstruction";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "thread.start.in.construction.problem.descriptor");
   }
@@ -75,7 +73,7 @@ public final class ThreadStartInConstructionInspection extends BaseInspection {
 
         final PsiReferenceExpression methodExpression =
           expression.getMethodExpression();
-        @NonNls final String methodName =
+        final @NonNls String methodName =
           methodExpression.getReferenceName();
         if (!"start".equals(methodName)) {
           return;
@@ -96,7 +94,7 @@ public final class ThreadStartInConstructionInspection extends BaseInspection {
           return;
         }
         final PsiClass containingClass =
-          ClassUtils.getContainingClass(expression);
+          PsiUtil.getContainingClass(expression);
         if (containingClass == null ||
             containingClass.hasModifierProperty(
               PsiModifier.FINAL)) {

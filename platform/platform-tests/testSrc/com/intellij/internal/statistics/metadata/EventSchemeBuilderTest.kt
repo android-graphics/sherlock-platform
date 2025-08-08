@@ -4,6 +4,8 @@ package com.intellij.internal.statistics.metadata
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.ObjectEventField
+import com.intellij.internal.statistic.eventLog.events.ObjectListEventField
 import com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilder
 import com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilder.buildEventsScheme
 import com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilder.pluginInfoFields
@@ -84,6 +86,11 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
     assertTrue(descriptors.any { x -> x.plugin.id == "com.intellij" })
   }
 
+  fun `test generate fileName`() {
+    val group = buildGroupDescription()
+    assertEquals("EventSchemeBuilderTest.kt", group.fileName)
+  }
+
   fun `test generate descriptions`() {
     val groupDescription = "Test group description"
     val eventDescription = "Description of test event"
@@ -101,6 +108,26 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
     assertEquals(fieldDescription, eventDescriptor.fields.first().description)
   }
 
+  /**
+   * Test that the object array property ("parent.middle") of the event is present
+   * in case there are object lists in the path to the field "parent.middle.child.count"
+   */
+  fun `test object arrays fields`() {
+    val eventLogGroup = EventLogGroup("test.group.id", 1, "FUS" , "test group")
+    eventLogGroup.registerEvent("event.id", ObjectEventField(
+      "parent", ObjectListEventField("middle",
+                                     ObjectEventField("child",
+                                                      EventFields.Int("count")))
+    ))
+    val collector = EventsSchemeBuilder.FeatureUsageCollectorInfo(TestCounterCollector(eventLogGroup), PluginSchemeDescriptor("testPlugin"))
+    val groups = EventsSchemeBuilder.collectGroupsFromExtensions("count", listOf(collector), "FUS")
+
+    val event = groups.first().schema.first().objectArrays
+    assertNotNull("Object arrays should be not null", event)
+    assertEquals(1, event!!.size)
+    assertEquals("parent.middle", event.first())
+  }
+
   private fun doFieldTest(eventField: EventField<*>, expectedValues: Set<String>) {
     val group = buildGroupDescription(eventField)
     val event = group.schema.first()
@@ -113,9 +140,11 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
     assertSameElements(event.fields, expectedValues)
   }
 
-  private fun buildGroupDescription(eventField: EventField<*>): GroupDescriptor {
+  private fun buildGroupDescription(eventField: EventField<*>? = null): GroupDescriptor {
     val eventLogGroup = EventLogGroup("test.group.id", 1)
-    eventLogGroup.registerEvent("test_event", eventField)
+    if (eventField != null) {
+      eventLogGroup.registerEvent("test_event", eventField)
+    }
     val collector = EventsSchemeBuilder.FeatureUsageCollectorInfo(TestCounterCollector(eventLogGroup), PluginSchemeDescriptor("testPlugin"))
     val groups = EventsSchemeBuilder.collectGroupsFromExtensions("count", listOf(collector), "FUS")
     assertSize(1, groups)
@@ -124,8 +153,10 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
 
   enum class TestEnum { FOO, BAR }
 
-  @Suppress("StatisticsCollectorNotRegistered")
   class TestCounterCollector(private val eventLogGroup: EventLogGroup) : CounterUsagesCollector() {
+    init {
+      forceCalculateFileName()
+    }
     override fun getGroup(): EventLogGroup = eventLogGroup
   }
 

@@ -11,6 +11,7 @@ import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper;
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue;
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValueType;
 import com.intellij.java.navigation.ChooseByNameTest;
+import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,6 +26,7 @@ import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
+import org.assertj.core.api.SoftAssertions;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -34,8 +36,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiPredicate;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   private static final DataKey<Boolean> SHOW_HIDDEN_KEY = DataKey.create("GotoActionTest.DataKey");
@@ -292,25 +292,22 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testNavigableSettingsOptionsAppearInResults() {
-    SearchEverywhereContributor<?> contributor = createActionContributor(getProject(), getTestRootDisposable());
-    List<String> patterns = List.of("support screen readers", "show line numbers", "tab placement");
-
-    List<Object> errors = new ArrayList<>();
-    for (String pattern : patterns) {
-      List<?> elements = ChooseByNameTest.calcContributorElements(contributor, pattern);
-      boolean result = false;
-      for (Object t : elements) {
-        if (isNavigableOption(((MatchedValue)t).value)) {
-          result = true;
-          break;
+    SoftAssertions.assertSoftly(softly -> {
+      SearchEverywhereContributor<?> contributor = createActionContributor(getProject(), getTestRootDisposable());
+      for (String pattern : List.of("support screen readers", "show line numbers", "tab placement")) {
+        List<?> elements = ChooseByNameTest.calcContributorElements(contributor, pattern);
+        boolean result = false;
+        for (Object t : elements) {
+          if (isNavigableOption(((MatchedValue)t).value)) {
+            result = true;
+            break;
+          }
+        }
+        if (!result) {
+          softly.fail("Failure for pattern '" + pattern + "' - " + elements);
         }
       }
-      if (!result) {
-        errors.add("Failure for pattern '" + pattern + "' - " + elements);
-      }
-    }
-
-    assertThat(errors).isEmpty();
+    });
   }
 
   public void testUseUpdatedPresentationForMatching() {
@@ -336,6 +333,12 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
       List<?> result = ChooseByNameTest.calcContributorElements(contributor, "UpdatedActionName");
       assertEquals(1, result.size());
     });
+  }
+
+  public void testSearchWorks() {
+    SearchEverywhereContributor<?> contributor = createActionContributor(getProject(), getTestRootDisposable());
+    List<?> list = contributor.search("sea", new MockProgressIndicator(), 10).getItems();
+    assertEquals(10, list.size());
   }
 
   private static boolean isNavigableOption(Object o) {

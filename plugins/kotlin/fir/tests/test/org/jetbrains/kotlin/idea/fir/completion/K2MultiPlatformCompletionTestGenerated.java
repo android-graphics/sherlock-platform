@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.completion;
 
@@ -18,40 +18,136 @@ import org.junit.runner.RunWith;
 @TestRoot("fir/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../completion/testData/multiPlatform")
-public class K2MultiPlatformCompletionTestGenerated extends AbstractK2MultiPlatformCompletionTest {
-    @java.lang.Override
-    @org.jetbrains.annotations.NotNull
-    public final KotlinPluginMode getPluginMode() {
-        return KotlinPluginMode.K2;
+public abstract class K2MultiPlatformCompletionTestGenerated extends AbstractK2MultiPlatformCompletionTest {
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../completion/testData/multiPlatform/actualDeclaration")
+    public static class ActualDeclaration extends AbstractK2MultiPlatformCompletionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("actualClassInIntermediateModule")
+        public void testActualClassInIntermediateModule() throws Exception {
+            runTest("../../completion/testData/multiPlatform/actualDeclaration/actualClassInIntermediateModule/");
+        }
+
+        @TestMetadata("actualClassInNonLeafModule")
+        public void testActualClassInNonLeafModule() throws Exception {
+            runTest("../../completion/testData/multiPlatform/actualDeclaration/actualClassInNonLeafModule/");
+        }
+
+        @TestMetadata("actualClassNotInNonLeafModule")
+        public void testActualClassNotInNonLeafModule() throws Exception {
+            runTest("../../completion/testData/multiPlatform/actualDeclaration/actualClassNotInNonLeafModule/");
+        }
+
+        @TestMetadata("actualFun")
+        public void testActualFun() throws Exception {
+            runTest("../../completion/testData/multiPlatform/actualDeclaration/actualFun/");
+        }
+
+        @TestMetadata("actualFunInIntermediateModule")
+        public void testActualFunInIntermediateModule() throws Exception {
+            runTest("../../completion/testData/multiPlatform/actualDeclaration/actualFunInIntermediateModule/");
+        }
+
+        @TestMetadata("actualFunInNonLeafModule")
+        public void testActualFunInNonLeafModule() throws Exception {
+            runTest("../../completion/testData/multiPlatform/actualDeclaration/actualFunInNonLeafModule/");
+        }
+
+        @TestMetadata("actualFunNotInNonLeafModule")
+        public void testActualFunNotInNonLeafModule() throws Exception {
+            runTest("../../completion/testData/multiPlatform/actualDeclaration/actualFunNotInNonLeafModule/");
+        }
+
+        @TestMetadata("actualKeywordFromSeveralFiles")
+        public void testActualKeywordFromSeveralFiles() throws Exception {
+            runTest("../../completion/testData/multiPlatform/actualDeclaration/actualKeywordFromSeveralFiles/");
+        }
+
+        @TestMetadata("actualKeywordFun")
+        public void testActualKeywordFun() throws Exception {
+            runTest("../../completion/testData/multiPlatform/actualDeclaration/actualKeywordFun/");
+        }
+
+        @TestMetadata("actualKeywordModuleTargetIsNotVisibleInAnotherModule")
+        public void testActualKeywordModuleTargetIsNotVisibleInAnotherModule() throws Exception {
+            runTest("../../completion/testData/multiPlatform/actualDeclaration/actualKeywordModuleTargetIsNotVisibleInAnotherModule/");
+        }
+
+        @TestMetadata("actualKeywordVal")
+        public void testActualKeywordVal() throws Exception {
+            runTest("../../completion/testData/multiPlatform/actualDeclaration/actualKeywordVal/");
+        }
+
+        @TestMetadata("actualKeywordWithSamePackage")
+        public void testActualKeywordWithSamePackage() throws Exception {
+            runTest("../../completion/testData/multiPlatform/actualDeclaration/actualKeywordWithSamePackage/");
+        }
+
+        @TestMetadata("actualVal")
+        public void testActualVal() throws Exception {
+            runTest("../../completion/testData/multiPlatform/actualDeclaration/actualVal/");
+        }
     }
 
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../completion/testData/multiPlatform/classDeclaration")
+    public static class ClassDeclaration extends AbstractK2MultiPlatformCompletionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("classInCommon")
+        public void testClassInCommon() throws Exception {
+            runTest("../../completion/testData/multiPlatform/classDeclaration/classInCommon/");
+        }
+
+        @TestMetadata("classInCommonNonImported")
+        public void testClassInCommonNonImported() throws Exception {
+            runTest("../../completion/testData/multiPlatform/classDeclaration/classInCommonNonImported/");
+        }
+
+        @TestMetadata("classInPlatform")
+        public void testClassInPlatform() throws Exception {
+            runTest("../../completion/testData/multiPlatform/classDeclaration/classInPlatform/");
+        }
     }
 
-    @TestMetadata("classInCommon")
-    public void testClassInCommon() throws Exception {
-        runTest("../../completion/testData/multiPlatform/classInCommon/");
-    }
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../completion/testData/multiPlatform/functionDeclaration")
+    public static class FunctionDeclaration extends AbstractK2MultiPlatformCompletionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
-    @TestMetadata("classInCommonNonImported")
-    public void testClassInCommonNonImported() throws Exception {
-        runTest("../../completion/testData/multiPlatform/classInCommonNonImported/");
-    }
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
-    @TestMetadata("classInPlatform")
-    public void testClassInPlatform() throws Exception {
-        runTest("../../completion/testData/multiPlatform/classInPlatform/");
-    }
+        @TestMetadata("functionInCommon")
+        public void testFunctionInCommon() throws Exception {
+            runTest("../../completion/testData/multiPlatform/functionDeclaration/functionInCommon/");
+        }
 
-    @TestMetadata("functionInCommon")
-    public void testFunctionInCommon() throws Exception {
-        runTest("../../completion/testData/multiPlatform/functionInCommon/");
-    }
-
-    @TestMetadata("functionInPlatform")
-    public void testFunctionInPlatform() throws Exception {
-        runTest("../../completion/testData/multiPlatform/functionInPlatform/");
+        @TestMetadata("functionInPlatform")
+        public void testFunctionInPlatform() throws Exception {
+            runTest("../../completion/testData/multiPlatform/functionDeclaration/functionInPlatform/");
+        }
     }
 }

@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -17,20 +16,22 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.Consumer
-import com.intellij.util.ExceptionUtil
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.text.VersionComparatorUtil
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.importing.MavenAnnotationProcessorConfiguratorUtil.getProcessorArtifactInfos
+import org.jetbrains.idea.maven.importing.MavenImportUtil.annotationProcessorOptions
+import org.jetbrains.idea.maven.importing.MavenImportUtil.declaredAnnotationProcessors
+import org.jetbrains.idea.maven.importing.MavenImportUtil.compilerConfigsForCompilePhase
+import org.jetbrains.idea.maven.importing.MavenImportUtil.getAnnotationProcessorDirectory
+import org.jetbrains.idea.maven.importing.MavenImportUtil.procMode
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator.*
 import org.jetbrains.idea.maven.model.MavenArtifactInfo
 import org.jetbrains.idea.maven.model.MavenId
-import org.jetbrains.idea.maven.project.*
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
-import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectsTree
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl
 import org.jetbrains.jps.util.JpsPathUtil
@@ -50,14 +51,14 @@ val MAVEN_BSC_DEFAULT_ANNOTATION_PROFILE: String = MavenAnnotationProcessorConfi
 private val ANNOTATION_PROCESSOR_MODULE_NAMES = Key.create<MutableMap<MavenProject, MutableList<String>>>(
   "ANNOTATION_PROCESSOR_MODULE_NAMES")
 
-@ApiStatus.Internal
-class MavenAnnotationProcessorConfigurator : MavenImporter("org.apache.maven.plugins",
-                                                           "maven-compiler-plugin"), MavenWorkspaceConfigurator {
-  override fun isApplicable(mavenProject: MavenProject): Boolean {
-    return true
-  }
+private const val PLUGIN_GROUP_ID = "org.apache.maven.plugins"
 
-  override fun isMigratedToConfigurator(): Boolean {
+private const val PLUGIN_ARTIFACT_ID = "maven-compiler-plugin"
+
+@ApiStatus.Internal
+class MavenAnnotationProcessorConfigurator : MavenApplicableConfigurator(PLUGIN_GROUP_ID,
+                                                                         PLUGIN_ARTIFACT_ID), MavenWorkspaceConfigurator {
+  override fun isApplicable(mavenProject: MavenProject): Boolean {
     return true
   }
 
@@ -68,7 +69,7 @@ class MavenAnnotationProcessorConfigurator : MavenImporter("org.apache.maven.plu
       mavenProjectToModuleNamesCache[each.mavenProject.mavenId] = moduleNames
     }
 
-    val changedOnlyProjects = context.mavenProjectsWithModules.mapNotNull { if (it.changes.hasChanges()) it.mavenProject else null }
+    val changedOnlyProjects = context.mavenProjectsWithModules.mapNotNull { if (it.hasChanges) it.mavenProject else null }
 
     val map = HashMap<MavenProject, MutableList<String>>()
     collectProcessorModuleNames(changedOnlyProjects.asIterable(),
@@ -77,45 +78,22 @@ class MavenAnnotationProcessorConfigurator : MavenImporter("org.apache.maven.plu
     ANNOTATION_PROCESSOR_MODULE_NAMES[context] = map
   }
 
-  override fun process(modifiableModelsProvider: IdeModifiableModelsProvider,
-                       module: Module,
-                       rootModel: MavenRootModelAdapter,
-                       mavenModel: MavenProjectsTree,
-                       mavenProject: MavenProject,
-                       changes: MavenProjectChanges,
-                       mavenProjectToModuleName: Map<MavenProject, String>,
-                       postTasks: List<MavenProjectsProcessorTask>) {
-    val config = getConfig(mavenProject, "annotationProcessorPaths")
-    if (config == null) return
-
-    val annotationTargetDir = mavenProject.getAnnotationProcessorDirectory(false)
-    // directory must exist before compilation start to be recognized as source root
-    File(rootModel.toPath(annotationTargetDir).path).mkdirs()
-    rootModel.addGeneratedJavaSourceFolder(annotationTargetDir, JavaSourceRootType.SOURCE, false)
-
-    val map = ANNOTATION_PROCESSOR_MODULE_NAMES[modifiableModelsProvider, HashMap()]
-    collectProcessorModuleNames(java.util.List.of(mavenProject),
-                                { mavenId: MavenId? ->
-                                  val mavenArtifact = mavenModel.findProject(mavenId)
-                                  if (mavenArtifact == null) return@collectProcessorModuleNames null
-                                  val moduleName = mavenProjectToModuleName[mavenArtifact]
-                                  if (moduleName == null) return@collectProcessorModuleNames null
-                                  java.util.List.of(moduleName)
-                                },
-                                map)
-    ANNOTATION_PROCESSOR_MODULE_NAMES[modifiableModelsProvider] = map
-  }
-
-  private fun collectProcessorModuleNames(projects: Iterable<MavenProject>,
-                                          moduleNameByProjectId: Function<MavenId, List<String>?>,
-                                          result: MutableMap<MavenProject, MutableList<String>>) {
+  private fun collectProcessorModuleNames(
+    projects: Iterable<MavenProject>,
+    moduleNameByProjectId: Function<MavenId, List<String>?>,
+    result: MutableMap<MavenProject, MutableList<String>>,
+  ) {
     for (mavenProject in projects) {
       if (!shouldEnableAnnotationProcessors(mavenProject)) continue
 
-      val config = getConfig(mavenProject, "annotationProcessorPaths")
-      if (config == null) continue
+      val infos = ArrayList<MavenArtifactInfo>()
 
-      for (info in getProcessorArtifactInfos(config)) {
+      mavenProject.compilerConfigsForCompilePhase()
+        .mapNotNull { MavenJDOMUtil.findChildByPath(it, "annotationProcessorPaths") }
+        .forEach { infos.addAll(getProcessorArtifactInfos(it, mavenProject)) }
+
+
+      for (info in infos) {
         val mavenId = MavenId(info.groupId, info.artifactId, info.version)
 
         val processorModuleNames = moduleNameByProjectId.apply(mavenId)
@@ -126,6 +104,7 @@ class MavenAnnotationProcessorConfigurator : MavenImporter("org.apache.maven.plu
     }
   }
 
+
   override fun afterModelApplied(context: AppliedModelContext) {
     val nameToModuleCache: MutableMap<String, Module> = HashMap()
     for (each in context.mavenProjectsWithModules.asIterable()) {
@@ -134,11 +113,12 @@ class MavenAnnotationProcessorConfigurator : MavenImporter("org.apache.maven.plu
         nameToModuleCache[module.name] = module
       }
     }
+
     val moduleByName = Function { moduleName: String -> nameToModuleCache[moduleName] }
 
     val perProjectProcessorModuleNames: Map<MavenProject, MutableList<String>> = ANNOTATION_PROCESSOR_MODULE_NAMES[context, java.util.Map.of()]
 
-    val changedOnly = context.mavenProjectsWithModules.filter { it: MavenProjectWithModules<Module> -> it.changes.hasChanges() }
+    val changedOnly = context.mavenProjectsWithModules.filter { it: MavenProjectWithModules<Module> -> it.hasChanges }
     val projectWithModules = changedOnly.map { it: MavenProjectWithModules<Module> ->
       val processorModuleNames = perProjectProcessorModuleNames.getOrDefault(it.mavenProject, listOf())
       MavenProjectWithProcessorModules(it.mavenProject, it.modules, processorModuleNames)
@@ -150,80 +130,19 @@ class MavenAnnotationProcessorConfigurator : MavenImporter("org.apache.maven.plu
                       moduleByName)
   }
 
-  override fun postProcess(module: Module,
-                           mavenProject: MavenProject,
-                           changes: MavenProjectChanges,
-                           modifiableModelsProvider: IdeModifiableModelsProvider) {
-    val processorModuleNames =
-      ANNOTATION_PROCESSOR_MODULE_NAMES[modifiableModelsProvider, java.util.Map.of()].getOrDefault(mavenProject, listOf())
 
-    val moduleWithType: ModuleWithType<Module> = object : ModuleWithType<Module> {
-      override val module: Module
-        get() = module
+  private class MavenProjectWithProcessorModules(
+    val mavenProject: MavenProject,
+    val mavenProjectModules: List<ModuleWithType<Module>>,
+    val processorModuleNames: List<String>,
+  )
 
-      override val type: MavenModuleType
-        get() = StandardMavenModuleType.SINGLE_MODULE
-    }
-    val projectWithModules = MavenProjectWithProcessorModules(mavenProject,
-                                                              listOf(moduleWithType),
-                                                              processorModuleNames)
-    configureProfiles(module.project,
-                      MavenProjectsManager.getInstance(module.project).projectsTree,
-                      java.util.List.of(projectWithModules)
-    ) { moduleName: String? ->
-      modifiableModelsProvider.findIdeModule(
-        moduleName!!)
-    }
-  }
-
-
-  private class MavenProjectWithProcessorModules(val mavenProject: MavenProject,
-                                                 val mavenProjectModules: List<ModuleWithType<Module>>,
-                                                 val processorModuleNames: List<String>)
-
-  @Throws(MavenProcessCanceledException::class)
-  fun resolve(project: Project,
-              mavenProject: MavenProject,
-              nativeMavenProject: NativeMavenProjectHolder,
-              embedder: MavenEmbedderWrapper) {
-    val config = getConfig(mavenProject, "annotationProcessorPaths")
-    if (config == null) return
-
-    val artifactsInfo = getProcessorArtifactInfos(config)
-    if (artifactsInfo.isEmpty()) {
-      return
-    }
-
-    val externalArtifacts: MutableList<MavenArtifactInfo> = ArrayList()
-    val mavenProjectsManager = MavenProjectsManager.getInstance(project)
-    val tree = mavenProjectsManager.projectsTree
-    for (info in artifactsInfo) {
-      val mavenArtifact = tree.findProject(MavenId(info.groupId, info.artifactId, info.version))
-      if (mavenArtifact == null) {
-        externalArtifacts.add(info)
-      }
-    }
-
-    try {
-      val annotationProcessors = embedder
-        .resolveArtifactTransitively(ArrayList(externalArtifacts), ArrayList(mavenProject.remoteRepositories))
-      if (annotationProcessors.problem != null) {
-        MavenResolveResultProblemProcessor.notifySyncForProblem(project, annotationProcessors.problem!!)
-      }
-      else {
-        mavenProject.addAnnotationProcessors(annotationProcessors.mavenResolvedArtifacts)
-      }
-    }
-    catch (e: Exception) {
-      val message = if (e.message != null) e.message else ExceptionUtil.getThrowableText(e)
-      MavenProjectsManager.getInstance(project).syncConsole.addWarning(SyncBundle.message("maven.sync.annotation.processor.problem"), message!!)
-    }
-  }
-
-  private fun configureProfiles(project: Project,
-                                tree: MavenProjectsTree,
-                                projectsWithModules: Iterable<MavenProjectWithProcessorModules>,
-                                moduleByName: Function<String, Module?>) {
+  private fun configureProfiles(
+    project: Project,
+    tree: MavenProjectsTree,
+    projectsWithModules: Iterable<MavenProjectWithProcessorModules>,
+    moduleByName: Function<String, Module?>,
+  ) {
     val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
 
     for (it in projectsWithModules) {
@@ -250,10 +169,12 @@ class MavenAnnotationProcessorConfigurator : MavenImporter("org.apache.maven.plu
     }
   }
 
-  private fun createOrUpdateProfile(mavenProject: MavenProject,
-                                    module: Module,
-                                    processorModules: List<Module>,
-                                    compilerConfiguration: CompilerConfigurationImpl): Pair<ProcessorConfigProfile, Boolean>? {
+  private fun createOrUpdateProfile(
+    mavenProject: MavenProject,
+    module: Module,
+    processorModules: List<Module>,
+    compilerConfiguration: CompilerConfigurationImpl,
+  ): Pair<ProcessorConfigProfile, Boolean>? {
     val processors = mavenProject.declaredAnnotationProcessors
     val options = mavenProject.annotationProcessorOptions
 
@@ -261,7 +182,7 @@ class MavenAnnotationProcessorConfigurator : MavenImporter("org.apache.maven.plu
     val annotationProcessorDirectory: String
     val testAnnotationProcessorDirectory: String
 
-    if (MavenImportUtil.isMainOrTestSubmodule(module.name)) {
+    if (MavenImportUtil.isMainOrTestModule(module)) {
       outputRelativeToContentRoot = false
       annotationProcessorDirectory = getAnnotationsDirectoryRelativeTo(mavenProject, false, mavenProject.outputDirectory)
       testAnnotationProcessorDirectory = getAnnotationsDirectoryRelativeTo(mavenProject, true, mavenProject.testOutputDirectory)
@@ -313,13 +234,15 @@ class MavenAnnotationProcessorConfigurator : MavenImporter("org.apache.maven.plu
     return Pair.pair(moduleProfile, isDefault)
   }
 
-  private fun getModuleProfile(module: Module,
-                               mavenProject: MavenProject,
-                               compilerConfiguration: CompilerConfigurationImpl,
-                               moduleProfileName: String,
-                               outputRelativeToContentRoot: Boolean,
-                               annotationProcessorDirectory: String,
-                               testAnnotationProcessorDirectory: String): ProcessorConfigProfile? {
+  private fun getModuleProfile(
+    module: Module,
+    mavenProject: MavenProject,
+    compilerConfiguration: CompilerConfigurationImpl,
+    moduleProfileName: String,
+    outputRelativeToContentRoot: Boolean,
+    annotationProcessorDirectory: String,
+    testAnnotationProcessorDirectory: String,
+  ): ProcessorConfigProfile? {
     var moduleProfile = compilerConfiguration.findModuleProcessorProfile(moduleProfileName)
 
     if (moduleProfile == null) {
@@ -362,8 +285,10 @@ class MavenAnnotationProcessorConfigurator : MavenImporter("org.apache.maven.plu
     return true
   }
 
-  private fun getAnnotationProcessorPath(mavenProject: MavenProject,
-                                         processorModules: List<Module>): String {
+  private fun getAnnotationProcessorPath(
+    mavenProject: MavenProject,
+    processorModules: List<Module>,
+  ): String {
     val annotationProcessorPath = StringJoiner(File.pathSeparator)
 
     val resultAppender = Consumer { path: String? ->
@@ -386,11 +311,13 @@ class MavenAnnotationProcessorConfigurator : MavenImporter("org.apache.maven.plu
     return annotationProcessorPath.toString()
   }
 
-  private fun cleanAndMergeModuleProfiles(rootProject: MavenProject,
-                                          compilerConfiguration: CompilerConfigurationImpl,
-                                          moduleProfile: ProcessorConfigProfile?,
-                                          isDefault: Boolean,
-                                          module: Module) {
+  private fun cleanAndMergeModuleProfiles(
+    rootProject: MavenProject,
+    compilerConfiguration: CompilerConfigurationImpl,
+    moduleProfile: ProcessorConfigProfile?,
+    isDefault: Boolean,
+    module: Module,
+  ) {
     val profiles: List<ProcessorConfigProfile> = ArrayList(compilerConfiguration.moduleProcessorProfiles)
     for (p in profiles) {
       if (p !== moduleProfile) {
@@ -473,17 +400,28 @@ object MavenAnnotationProcessorConfiguratorUtil {
     return PROFILE_PREFIX + moduleName
   }
 
-  fun getProcessorArtifactInfos(config: Element): List<MavenArtifactInfo> {
+  private fun getProcessorVersion(groupId: String?, artifactId: String?, version: String?, project: MavenProject): String? {
+    if (version != null) return version
+    val pluginVersion = project.findPlugin(PLUGIN_GROUP_ID, PLUGIN_ARTIFACT_ID)?.version ?: return null
+
+    if (VersionComparatorUtil.compare(pluginVersion, "3.12.0") >= 0 && groupId != null && artifactId != null) {
+      return project.findManagedDependency(groupId, artifactId)?.version
+    }
+    return null
+  }
+
+  fun getProcessorArtifactInfos(config: Element, mavenProject: MavenProject): List<MavenArtifactInfo> {
     val artifacts: MutableList<MavenArtifactInfo> = ArrayList()
     val addToArtifacts = Consumer { path: Element ->
       val groupId = path.getChildTextTrim("groupId")
       val artifactId = path.getChildTextTrim("artifactId")
       val version = path.getChildTextTrim("version")
+      val resolvedVersion = getProcessorVersion(groupId, artifactId, version, mavenProject)
 
       val classifier = path.getChildTextTrim("classifier")
 
       //String type = path.getChildTextTrim("type");
-      artifacts.add(MavenArtifactInfo(groupId, artifactId, version, "jar", classifier))
+      artifacts.add(MavenArtifactInfo(groupId, artifactId, resolvedVersion, "jar", classifier))
     }
 
     for (path in config.getChildren("path")) {

@@ -25,9 +25,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.performancePlugin.CreateMavenProjectCommand.Companion.getNewProject
 import org.jetbrains.idea.maven.performancePlugin.CreateMavenProjectCommand.Companion.runNewProject
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.performanceTesting.dto.NewGradleProjectDto
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.javaGradleData
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.nio.file.Path
 
@@ -87,7 +87,7 @@ class CreateGradleProjectCommand(text: String, line: Int) : PerformanceCommandCo
               ?.getExternalProjectStructure()
               ?.data
           }
-          javaGradleData?.gradleDsl = GradleNewProjectWizardStep.GradleDsl.valueOf(newGradleProjectDto.gradleDSL)
+          javaGradleData?.gradleDsl = GradleDsl.valueOf(newGradleProjectDto.gradleDSL)
           javaBuildSystemData?.buildSystem = "Gradle"
         }
 

@@ -1,4 +1,5 @@
 #  Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+import io
 import numpy as np
 
 TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
@@ -7,67 +8,101 @@ MAX_COLWIDTH = 100000
 ONE_DIM, TWO_DIM, WITH_TYPES = range(3)
 NP_ROWS_TYPE = "int64"
 
+CSV_FORMAT_SEPARATOR = '~'
+
 is_pd = False
 try:
     import pandas as pd
-    version = pd.__version__
-    majorVersion = int(version[0])
-    pd.set_option('display.max_colwidth', None)
-    is_pd = majorVersion>=1
     is_pd = True
 except:
     pass
 
 
-def get_type(arr):
+def get_type(table):
     # type: (np.ndarray) -> str
-    return str(type(arr))
+    return str(type(table))
 
 
-def get_shape(arr):
+def get_shape(table):
     # type: (np.ndarray) -> str
-    if arr.ndim == 1:
-        return str((arr.shape[0], 1))
+    if table.dtype.names is not None:
+        return str((table.shape[0], len(table.dtype.names)))
+    if table.ndim == 1:
+        return str((table.shape[0], 1))
+    elif table.ndim == 0:
+        return str((0, 0))
     else:
-        return str((arr.shape[0], arr.shape[1]))
+        return str((table.shape[0], table.shape[1]))
 
 
-def get_head(arr):
+def get_head(table):
     # type: (np.ndarray) -> str
+    column_names = table.dtype.names
+    if column_names:
+        return TABLE_TYPE_NEXT_VALUE_SEPARATOR.join([str(column_names[i]) for i in range(len(column_names))])
     return "None"
 
 
-def get_column_types(arr):
+def get_column_types(table):
     # type: (np.ndarray) -> str
-    table = _create_table(arr[:1])
-    cols_types = [str(t) for t in table.dtypes] if is_pd else table.get_cols_types()
+    if table.ndim == 0:
+        return ""
+    table = __create_table(table[:1])
+    try:
+        cols_types = [str(t) for t in table.dtypes] if is_pd else table.get_cols_types()
+    except AttributeError:
+        cols_types = table.get_cols_types()
 
     return NP_ROWS_TYPE + TABLE_TYPE_NEXT_VALUE_SEPARATOR + \
         TABLE_TYPE_NEXT_VALUE_SEPARATOR.join(cols_types)
 
 
-def get_data(arr, start_index=None, end_index=None):
+def get_data(table, use_csv_serialization, start_index=None, end_index=None, format=None):
     # type: (Union[np.ndarray, dict], int, int) -> str
-    def convert_data_to_html(data, max_cols):
-        return repr(_create_table(data, start_index, end_index).to_html(notebook=True, max_cols=max_cols))
+    def convert_data_to_html(data, format):
+        return repr(__create_table(data, start_index, end_index, format).to_html(notebook=True))
 
-    return _compute_data(arr, convert_data_to_html)
+    def convert_data_to_csv(data, format):
+        return repr(__create_table(data, start_index, end_index, format).to_csv(na_rep ="None", float_format=format, sep=CSV_FORMAT_SEPARATOR))
+
+    if use_csv_serialization:
+        computed_data = __compute_data(table, convert_data_to_csv, format)
+    else:
+        computed_data = __compute_data(table, convert_data_to_html, format)
+    return computed_data
 
 
-def display_data(arr, start_index=None, end_index=None):
+def display_data_html(table, start_index=None, end_index=None):
     # type: (np.ndarray, int, int) -> None
-    def ipython_display(data, max_cols):
+    def ipython_display(data, format):
         from IPython.display import display, HTML
-        display(HTML(_create_table(data, start_index, end_index).to_html(notebook=True, max_cols=max_cols)))
+        display(HTML(__create_table(data, start_index, end_index).to_html(notebook=True)))
 
-    _compute_data(arr, ipython_display)
+    __compute_data(table, ipython_display)
+
+
+def display_data_csv(table, start_index=None, end_index=None):
+    # type: (np.ndarray, int, int) -> None
+    def ipython_display(data, format):
+        print(repr(__create_table(data, start_index, end_index).to_csv(na_rep ="None", sep=CSV_FORMAT_SEPARATOR, float_format=format)))
+
+    __compute_data(table, ipython_display)
+
+
+def remove_nones_values(array_part, na_rep):
+    if np.issubdtype(array_part.dtype, np.number):
+        array_part_without_nones = np.where(array_part == None, np.nan, array_part)
+    else:
+        array_part_without_nones = np.where(array_part == None, na_rep, array_part)
+    return array_part_without_nones
 
 
 class _NpTable:
-    def __init__(self, np_array):
+    def __init__(self, np_array, format=None):
         self.array = np_array
         self.type = self.get_array_type()
         self.indexes = None
+        self.format = format
 
     def get_array_type(self):
         col_type = self.array.dtype
@@ -94,55 +129,108 @@ class _NpTable:
         # [[1, 2], [3, 4]] -> [int, int]
         return [str(col_type) for _ in range(len(self.array[0]))]
 
-    def head(self):
+    def head(self, num_rows):
         if self.array.shape[0] < 6:
             return self
 
         return _NpTable(self.array[:5]).sort()
 
-    def to_html(self, notebook, max_cols):
+    def to_html(self, notebook):
         html = ['<table class="dataframe">\n']
 
         # columns names
         html.append('<thead>\n'
                     '<tr style="text-align: right;">\n'
                     '<th></th>\n')
-        html += self._collect_cols_names()
+        html += self.__collect_cols_names()
         html.append('</tr>\n'
                     '</thead>\n')
 
         # tbody
-        html += self._collect_values(max_cols)
+        html += self.__collect_values(None)
 
         html.append('</table>\n')
 
         return "".join(html)
 
-    def _collect_cols_names(self):
+    def __collect_cols_names(self):
         if self.type == ONE_DIM:
             return ['<th>0</th>\n']
 
         if self.type == WITH_TYPES:
-            return ['<th>{}</th>\n'.format(name) for name in self.array.dtype.names]
+            columns_names = self.array.dtype.names
+            return ['<th>{}</th>\n'.format(str(columns_names[i])) for i in range(len(columns_names))]
 
         return ['<th>{}</th>\n'.format(i) for i in range(len(self.array[0]))]
 
-    def _collect_values(self, max_cols):
+    def __collect_values(self, max_cols):
         html = ['<tbody>\n']
         rows = self.array.shape[0]
         for row_num in range(rows):
             html.append('<tr>\n')
             html.append('<th>{}</th>\n'.format(int(self.indexes[row_num])))
             if self.type == ONE_DIM:
-                html.append('<td>{}</td>\n'.format(self.array[row_num]))
+                if self.format is not None and self.array[row_num] is not None and self.array[row_num] == self.array[row_num]:
+                    try:
+                        value = self.format % self.array[row_num]
+                    except Exception as _:
+                        value = self.array[row_num]
+                else:
+                    value = self.array[row_num]
+                html.append('<td>{}</td>\n'.format(value))
             else:
                 cols = len(self.array[0])
                 max_cols = cols if max_cols is None else min(max_cols, cols)
                 for col_num in range(max_cols):
-                    html.append('<td>{}</td>\n'.format(self.array[row_num][col_num]))
+                    if self.format is not None and self.array[row_num][col_num] is not None and self.array[row_num][col_num] == self.array[row_num][col_num]:
+                        try:
+                            value = self.format % self.array[row_num][col_num]
+                        except Exception as _:
+                            value = self.array[row_num][col_num]
+                    else:
+                        value = self.array[row_num][col_num]
+                    html.append('<td>{}</td>\n'.format(value))
             html.append('</tr>\n')
         html.append('</tbody>\n')
         return html
+
+    def to_csv(self, na_rep="None", float_format=None, sep=CSV_FORMAT_SEPARATOR):
+        csv_stream = io.StringIO()
+        if self.array.dtype.names is not None:
+            np_array_without_nones = []
+            for field in self.array.dtype.names:
+                np_array_without_nones.append(remove_nones_values(self.array[str(field)], na_rep))
+            np_array_without_nones = np.column_stack(np_array_without_nones)
+        else:
+            np_array_without_nones = remove_nones_values(self.array, na_rep)
+        if float_format is None or float_format == 'null':
+            float_format = "%s"
+
+        np.savetxt(csv_stream, np_array_without_nones, delimiter=sep, fmt=float_format)
+        csv_string = csv_stream.getvalue()
+        csv_rows_with_index = self.__insert_index_at_rows_begging_csv(csv_string)
+
+        col_names = self.__collect_col_names_csv()
+        return col_names + "\n" + csv_rows_with_index
+
+    def __insert_index_at_rows_begging_csv(self, csv_string):
+        # type: (str) -> str
+        csv_rows = csv_string.split('\n')
+        csv_rows_with_index = []
+        for row_index in range(self.array.shape[0]):
+            csv_rows_with_index.append(str(row_index) + CSV_FORMAT_SEPARATOR + csv_rows[row_index])
+        return "\n".join(csv_rows_with_index)
+
+    def __collect_col_names_csv(self):
+        if self.type == ONE_DIM:
+            return '{}0'.format(CSV_FORMAT_SEPARATOR)
+
+        if self.type == WITH_TYPES:
+            return CSV_FORMAT_SEPARATOR + CSV_FORMAT_SEPARATOR.join(['{}'.format(name) for name in self.array.dtype.names])
+
+        # TWO_DIM
+        return CSV_FORMAT_SEPARATOR + CSV_FORMAT_SEPARATOR.join(['{}'.format(i) for i in range(self.array.shape[1])])
+
 
     def slice(self, start_index=None, end_index=None):
         if end_index is not None and start_index is not None:
@@ -158,7 +246,7 @@ class _NpTable:
 
         cols, orders = sort_keys
         if 0 in cols:
-            return self._sort_by_index(True in orders)
+            return self.__sort_by_index(True in orders)
 
         if self.type == ONE_DIM:
             extended = np.column_stack((self.indexes, self.array))
@@ -195,7 +283,7 @@ class _NpTable:
         self.array = extended[:, 1:]
         return self
 
-    def _sort_by_index(self, order):
+    def __sort_by_index(self, order):
         if order:
             return self
         self.array = self.array[::-1]
@@ -203,7 +291,7 @@ class _NpTable:
         return self
 
 
-def _sort_df(dataframe, sort_keys):
+def __sort_df(dataframe, sort_keys):
     if sort_keys is None:
         return dataframe
 
@@ -216,7 +304,7 @@ def _sort_df(dataframe, sort_keys):
     return dataframe.sort_values(by=sort_by, ascending=orders)
 
 
-def _create_table(command, start_index=None, end_index=None):
+def __create_table(command, start_index=None, end_index=None, format=None):
     sort_keys = None
 
     if type(command) is dict:
@@ -226,63 +314,92 @@ def _create_table(command, start_index=None, end_index=None):
         np_array = command
 
     if is_pd:
-        sorting_arr = _sort_df(pd.DataFrame(np_array), sort_keys)
+        sorted_df = __sort_df(pd.DataFrame(np_array), sort_keys)
         if start_index is not None and end_index is not None:
-            return sorting_arr.iloc[start_index:end_index]
-        return sorting_arr
+            sorted_df_slice = sorted_df.iloc[start_index:end_index]
+            # to apply "format" we should not have None inside DFs
+            try:
+                import warnings
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    sorted_df_slice = sorted_df_slice.fillna("None")
+            except Exception as _:
+                pass
+            return sorted_df_slice
+        return sorted_df
 
-    return _NpTable(np_array).sort(sort_keys).slice(start_index, end_index)
+    return _NpTable(np_array, format=format).sort(sort_keys).slice(start_index,
+                                                                   end_index)
 
 
-def _compute_data(arr, fun):
+def __compute_data(arr, fun, format=None):
     is_sort_command = type(arr) is dict
     data = arr['data'] if is_sort_command else arr
 
-    jb_max_cols, jb_max_colwidth, jb_max_rows = None, None, None
+    jb_max_cols, jb_max_colwidth, jb_max_rows, jb_float_options = None, None, None, None
     if is_pd:
-        jb_max_cols, jb_max_colwidth, jb_max_rows = _set_pd_options()
+        jb_max_cols, jb_max_colwidth, jb_max_rows, jb_float_options = __set_pd_options(format)
 
     if is_sort_command:
         arr['data'] = data
         data = arr
 
-    data = fun(data, None)
+    format = pd.get_option('display.float_format') if is_pd else format
+
+    data = fun(data, format)
 
     if is_pd:
-        _reset_pd_options(jb_max_cols, jb_max_colwidth, jb_max_rows)
+        __reset_pd_options(jb_max_cols, jb_max_colwidth, jb_max_rows, jb_float_options)
 
     return data
 
 
 def __get_tables_display_options():
     # type: () -> Tuple[None, Union[int, None], None]
-    import sys
-    if sys.version_info < (3, 0):
-        return None, MAX_COLWIDTH, None
     try:
         import pandas as pd
+        # In pandas versions earlier than 1.0, max_colwidth must be set as an integer
         if int(pd.__version__.split('.')[0]) < 1:
-            return None, MAX_COLWIDTH_PYTHON_2, None
-    except ImportError:
+            return None, MAX_COLWIDTH, None
+    except Exception:
         pass
     return None, None, None
 
 
-def _set_pd_options():
+def __set_pd_options(format):
     max_cols, max_colwidth, max_rows = __get_tables_display_options()
+    _jb_float_options = None
 
     _jb_max_cols = pd.get_option('display.max_columns')
     _jb_max_colwidth = pd.get_option('display.max_colwidth')
     _jb_max_rows = pd.get_option('display.max_rows')
+    if format is not None:
+        _jb_float_options = pd.get_option('display.float_format')
 
     pd.set_option('display.max_columns', max_cols)
     pd.set_option('display.max_rows', max_rows)
     pd.set_option('display.max_colwidth', max_colwidth)
+    format_function = __define_format_function(format)
+    if format_function is not None:
+        pd.set_option('display.float_format', format_function)
 
-    return _jb_max_cols, _jb_max_colwidth, _jb_max_rows
+    return _jb_max_cols, _jb_max_colwidth, _jb_max_rows, _jb_float_options
 
 
-def _reset_pd_options(max_cols, max_colwidth, max_rows):
+def __reset_pd_options(max_cols, max_colwidth, max_rows, float_format):
     pd.set_option('display.max_columns', max_cols)
     pd.set_option('display.max_colwidth', max_colwidth)
     pd.set_option('display.max_rows', max_rows)
+    if float_format is not None:
+        pd.set_option('display.float_format', float_format)
+
+
+def __define_format_function(format):
+    # type: (Union[None, str]) -> Union[Callable, None]
+    if format is None or format == 'null':
+        return None
+
+    if type(format) == str and format.startswith("%"):
+        return lambda x: format % x
+    else:
+        return None

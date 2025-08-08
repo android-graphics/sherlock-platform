@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.actions;
 
@@ -165,6 +165,16 @@ public abstract class K2AddImportActionTestGenerated extends AbstractK2AddImport
         @TestMetadata("Nullable3.kt")
         public void testNullable3() throws Exception {
             runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/Nullable3.kt");
+        }
+
+        @TestMetadata("operatorGetValueAndSetValueExtension.kt")
+        public void testOperatorGetValueAndSetValueExtension() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/operatorGetValueAndSetValueExtension.kt");
+        }
+
+        @TestMetadata("operatorGetValueExtension.kt")
+        public void testOperatorGetValueExtension() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/operatorGetValueExtension.kt");
         }
 
         @TestMetadata("OverloadsPresent.kt")

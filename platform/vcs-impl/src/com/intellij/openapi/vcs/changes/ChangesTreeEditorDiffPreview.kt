@@ -5,10 +5,10 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
-import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.ExpandableItemsHandler
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.Processor
@@ -46,8 +46,7 @@ abstract class ChangesTreeEditorDiffPreview(
   protected open fun isOpenPreviewWithSingleClickEnabled(): Boolean = false
   protected open fun isOpenPreviewWithSingleClick(): Boolean {
     if (!isOpenPreviewWithSingleClickEnabled()) return false
-    if (ToolWindowManager.getInstance(project).isEditorComponentActive) return false
-    if (tree != IdeFocusManager.getInstance(tree.project).focusOwner) return false
+    if (!VcsConfiguration.getInstance(project).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) return false
     return true
   }
 
@@ -67,7 +66,11 @@ abstract class ChangesTreeEditorDiffPreview(
 
   override fun handleEscapeKey() {
     closePreview()
-    returnFocusToTree()
+    // closing the diff preview editor schedules focus switch to "some" other editor in JBTabsImpl
+    // we can't disable that, so we have to manually override the focus
+    getApplication().invokeLater {
+      returnFocusToTree()
+    }
   }
 
   protected open fun returnFocusToTree() = Unit

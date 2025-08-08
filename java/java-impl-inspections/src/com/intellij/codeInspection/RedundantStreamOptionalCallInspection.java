@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
@@ -127,7 +127,7 @@ public final class RedundantStreamOptionalCallInspection extends AbstractBaseJav
           PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
           if (STREAM_MAP.test(qualifierCall) && qualifierCall.getMethodExpression().getTypeParameters().length == 0 &&
               !isIdentityMapping(qualifierCall.getArgumentList().getExpressions()[0], false)) {
-            String message = JavaBundle.message("inspection.redundant.stream.optional.call.message", name) +
+            String message = JavaBundle.message("inspection.call.message", name) +
                              ": " + JavaBundle.message("inspection.redundant.stream.optional.call.explanation.map.flatMap");
             holder.registerProblem(call, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, getRange(call),
                                    new RemoveCallFix(name, "map"));
@@ -284,15 +284,14 @@ public final class RedundantStreamOptionalCallInspection extends AbstractBaseJav
         String methodName = Objects.requireNonNull(call.getMethodExpression().getReferenceName());
         String message = explanation != null
                          ? JavaBundle.message("inspection.redundant.stream.optional.call.message.with.explanation", methodName, explanation)
-                         : JavaBundle.message("inspection.redundant.stream.optional.call.message", methodName);
+                         : JavaBundle.message("inspection.call.message", methodName);
         holder.registerProblem(call, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, getRange(call),
                                ArrayUtil.prepend(new RemoveCallFix(methodName), additionalFixes));
       }
     };
   }
 
-  @Nullable
-  private static PsiMethodCallExpression findCallThatSpoilsSorting(@NotNull PsiMethodCallExpression call) {
+  private static @Nullable PsiMethodCallExpression findCallThatSpoilsSorting(@NotNull PsiMethodCallExpression call) {
     PsiMethodCallExpression furtherCall = call;
     do {
       furtherCall = findSubsequentCall(furtherCall, o ->
@@ -339,8 +338,7 @@ public final class RedundantStreamOptionalCallInspection extends AbstractBaseJav
     return InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_SET);
   }
 
-  @NotNull
-  static TextRange getRange(PsiMethodCallExpression call) {
+  static @NotNull TextRange getRange(PsiMethodCallExpression call) {
     PsiReferenceExpression expression = call.getMethodExpression();
     PsiElement nameElement = expression.getReferenceNameElement();
     LOG.assertTrue(nameElement != null);
@@ -418,20 +416,16 @@ public final class RedundantStreamOptionalCallInspection extends AbstractBaseJav
       myBindPreviousCall = bindPreviousCall;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       if (myBindPreviousCall != null) {
         return JavaBundle.message("inspection.redundant.stream.optional.call.fix.bind.name", myMethodName, myBindPreviousCall);
       }
       return JavaBundle.message("inspection.redundant.stream.optional.call.fix.name", myMethodName);
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.redundant.stream.optional.call.fix.family.name");
     }
 
@@ -477,10 +471,8 @@ public final class RedundantStreamOptionalCallInspection extends AbstractBaseJav
   }
 
   private static class CollectToOrderedSetFix extends PsiUpdateModCommandQuickFix {
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.redundant.stream.optional.call.fix.collect.to.ordered.family.name");
     }
 

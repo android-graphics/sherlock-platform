@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -25,6 +25,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
@@ -91,7 +92,7 @@ final class VariableExtractor {
     }
     PsiExpression initializer = RefactoringUtil.unparenthesizeExpression(newExpr);
     final SmartTypePointer selectedType = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(
-      mySettings.getSelectedType());
+      PsiTypesUtil.removeExternalAnnotations(mySettings.getSelectedType()));
     initializer = IntroduceVariableBase.simplifyVariableInitializer(initializer, selectedType.getType());
     CommentTracker commentTracker = new CommentTracker();
     commentTracker.markUnchanged(initializer);
@@ -208,8 +209,7 @@ final class VariableExtractor {
                          : declaration);
   }
 
-  @NotNull
-  private PsiElement createDeclaration(@NotNull PsiType type, @NotNull String name, PsiExpression initializer) {
+  private @NotNull PsiElement createDeclaration(@NotNull PsiType type, @NotNull String name, PsiExpression initializer) {
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     if (myAnchor instanceof PsiInstanceOfExpression && initializer instanceof PsiTypeCastExpression) {
       PsiTypeElement castType = Objects.requireNonNull(((PsiTypeCastExpression)initializer).getCastType());
@@ -315,10 +315,9 @@ final class VariableExtractor {
     return type.annotate(TypeAnnotationProvider.EMPTY);
   }
 
-  @NotNull
-  private static PsiElement correctAnchor(@NotNull PsiExpression expr,
-                                          @NotNull PsiElement anchor,
-                                          PsiExpression @NotNull [] occurrences) {
+  private static @NotNull PsiElement correctAnchor(@NotNull PsiExpression expr,
+                                                   @NotNull PsiElement anchor,
+                                                   PsiExpression @NotNull [] occurrences) {
     if (!expr.isPhysical()) {
       expr = ObjectUtils.tryCast(expr.getUserData(ElementToWorkOn.PARENT), PsiExpression.class);
       if (expr == null) return anchor;
@@ -437,13 +436,12 @@ final class VariableExtractor {
     return child;
   }
 
-  @Nullable
-  public static PsiVariable introduce(final @NotNull Project project,
-                                      final @NotNull PsiExpression expr,
-                                      final @Nullable Editor editor,
-                                      final @NotNull PsiElement anchorStatement,
-                                      final PsiExpression @NotNull [] occurrences,
-                                      final @NotNull IntroduceVariableSettings settings) {
+  public static @Nullable PsiVariable introduce(final @NotNull Project project,
+                                                final @NotNull PsiExpression expr,
+                                                final @Nullable Editor editor,
+                                                final @NotNull PsiElement anchorStatement,
+                                                final PsiExpression @NotNull [] occurrences,
+                                                final @NotNull IntroduceVariableSettings settings) {
     Computable<SmartPsiElementPointer<PsiVariable>> computation =
       new VariableExtractor(project, expr, editor, anchorStatement, occurrences, settings)::extractVariable;
     PsiFile file = expr.getContainingFile();

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.lang.PsiBuilder;
@@ -10,11 +10,13 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.AbstractBasicJavaDocElementTypeFactory;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 public final class BasicJavaDocParser {
@@ -36,7 +38,8 @@ public final class BasicJavaDocParser {
   private static final String PARAM_TAG = "@param";
   private static final String VALUE_TAG = "@value";
   private static final String SNIPPET_TAG = "@snippet";
-  private static final Set<String> REFERENCE_TAGS = ContainerUtil.immutableSet("@throws", "@exception", "@provides", "@uses");
+  private static final Set<String> REFERENCE_TAGS =
+    Collections.unmodifiableSet(new HashSet<>(Arrays.asList("@throws", "@exception", "@provides", "@uses")));
 
   private static final Key<Integer> BRACE_SCOPE_KEY = Key.create("Javadoc.Parser.Brace.Scope");
 
@@ -162,6 +165,9 @@ public final class BasicJavaDocParser {
         parseSimpleTagValue(builder, javaDocElementTypeContainer);
       }
     }
+    else if (tokenType == JavaDocTokenType.DOC_INLINE_CODE_FENCE) {
+      parseInlineCodeBlock(builder, javaDocElementTypeContainer);
+    }
     else if (tokenType == JavaDocTokenType.DOC_CODE_FENCE) {
       parseCodeBlock(builder, javaDocElementTypeContainer);
     }
@@ -171,6 +177,33 @@ public final class BasicJavaDocParser {
     else {
       remapAndAdvance(builder);
     }
+  }
+
+  private static void parseInlineCodeBlock(PsiBuilder builder,
+                                           @NotNull AbstractBasicJavaDocElementTypeFactory.JavaDocElementTypeContainer javaDocElementTypeContainer) {
+    PsiBuilder.Marker tag = builder.mark();
+    IElementType stopElementType = findInlineToken(builder, JavaDocTokenType.DOC_INLINE_CODE_FENCE);
+    int endOffset = builder.getCurrentOffset();
+    tag.rollbackTo();
+
+
+    if (stopElementType != JavaDocTokenType.DOC_INLINE_CODE_FENCE) {
+      // Bail out, no end
+      builder.advanceLexer();
+      return;
+    }
+
+    tag = builder.mark();
+    builder.advanceLexer();
+    while (builder.getCurrentOffset() < endOffset && !builder.eof()) {
+      builder.remapCurrentToken(JavaDocTokenType.DOC_COMMENT_DATA);
+      builder.advanceLexer();
+    }
+    if(!builder.eof()) {
+      builder.advanceLexer();
+    }
+
+    tag.done(javaDocElementTypeContainer.DOC_MARKDOWN_CODE_BLOCK);
   }
 
   private static void parseCodeBlock(PsiBuilder builder,
@@ -201,7 +234,8 @@ public final class BasicJavaDocParser {
   }
 
   /** Ensure a reference link is good before parsing it */
-  private static void parseMarkdownReferenceChecked(PsiBuilder builder, @NotNull AbstractBasicJavaDocElementTypeFactory.JavaDocElementTypeContainer javaDocElementTypeContainer) {
+  private static void parseMarkdownReferenceChecked(PsiBuilder builder,
+                                                    @NotNull AbstractBasicJavaDocElementTypeFactory.JavaDocElementTypeContainer javaDocElementTypeContainer) {
     boolean hasLabel = true;
     PsiBuilder.Marker tag = builder.mark();
 
@@ -302,14 +336,19 @@ public final class BasicJavaDocParser {
       builder.advanceLexer();
       builder.remapCurrentToken(JavaDocTokenType.DOC_TAG_VALUE_TOKEN);
 
-      // A method only has parenthesis and a single comment data token
+      // A method only has parenthesis and a few comment data, separated by commas
       builder.advanceLexer();
       if (builder.getTokenType() == JavaDocTokenType.DOC_LPAREN) {
         builder.advanceLexer();
         PsiBuilder.Marker subValue = builder.mark();
 
-        if (getTokenType(builder) == JavaDocTokenType.DOC_COMMENT_DATA) {
-          builder.remapCurrentToken(javaDocElementTypeContainer.DOC_TYPE_HOLDER);
+        while(!builder.eof()) {
+          IElementType type = getTokenType(builder);
+          if (type == JavaDocTokenType.DOC_COMMENT_DATA) {
+            builder.remapCurrentToken(javaDocElementTypeContainer.DOC_TYPE_HOLDER);
+          } else if (type != JavaDocTokenType.DOC_COMMA) {
+            break;
+          }
           builder.advanceLexer();
         }
 
@@ -328,9 +367,16 @@ public final class BasicJavaDocParser {
     refStart.drop();
   }
 
+
+  private static @Nullable IElementType findInlineToken(@NotNull PsiBuilder builder, IElementType needle) {
+    return findInlineToken(builder, needle, null, false);
+  }
+
   /**
    * Look for the token provided by `needle`, taking into account markdown line break rules
-   * @param travelToken The token that is either allowed or disallowed to encounter while looking for the `needle`
+   *
+   * @param travelToken             The token that is either allowed or disallowed to encounter while looking for the `needle`
+   *                                When `null`, no check is performed
    * @param isTravelTokenDisallowed When `true`, the `travelToken` will abort the search
    *                                When `false`, encountering something other than `travelToken` or `needle` will abort the search
    * @return The last token encountered during the search.
@@ -338,24 +384,24 @@ public final class BasicJavaDocParser {
   @Contract(mutates = "param1")
   private static @Nullable IElementType findInlineToken(@NotNull PsiBuilder builder,
                                                         IElementType needle,
-                                                        IElementType travelToken,
+                                                        @Nullable IElementType travelToken,
                                                         boolean isTravelTokenDisallowed) {
     IElementType token = null;
     IElementType previousToken;
     while (!builder.eof()) {
       builder.advanceLexer();
       previousToken = token;
-      token = getTokenType(builder);
+      token = getTokenType(builder, false);
       if (token == needle) {
         return token;
       }
       boolean travelTokenFound = travelToken == token;
-      if ((isTravelTokenDisallowed && travelTokenFound) || (!isTravelTokenDisallowed && !travelTokenFound)) {
+      if ((travelToken != null) && ((isTravelTokenDisallowed && travelTokenFound) || (!isTravelTokenDisallowed && !travelTokenFound))) {
         break;
       }
 
       // Markdown specific, check for EOL
-      if (token == JavaDocTokenType.DOC_SPACE && previousToken == JavaDocTokenType.DOC_SPACE) {
+      if (token == TokenType.WHITE_SPACE && previousToken == TokenType.WHITE_SPACE) {
         break;
       }
     }
@@ -560,12 +606,15 @@ public final class BasicJavaDocParser {
     tagData.done(javaDocElementTypeContainer.DOC_TAG_VALUE_ELEMENT);
   }
 
-  @Nullable
-  private static IElementType getTokenType(PsiBuilder builder) {
+  private static @Nullable IElementType getTokenType(PsiBuilder builder) {
+    return getTokenType(builder, true);
+  }
+
+  private static @Nullable IElementType getTokenType(PsiBuilder builder, boolean skipWhitespace) {
     IElementType tokenType;
     while ((tokenType = builder.getTokenType()) == JavaDocTokenType.DOC_SPACE) {
       builder.remapCurrentToken(TokenType.WHITE_SPACE);
-      builder.advanceLexer();
+      if (skipWhitespace) builder.advanceLexer();
     }
     return tokenType;
   }

@@ -3,8 +3,8 @@ package com.intellij.execution.wsl
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.IoTestUtil
+import com.intellij.testFramework.ensureCorrectVersion
 import org.junit.Assume.assumeTrue
-import org.junit.jupiter.api.Assumptions
 import org.junit.rules.ExternalResource
 import java.io.IOException
 import kotlin.io.path.exists
@@ -27,6 +27,13 @@ class WslRule(private val assume: Boolean = true) : ExternalResource() {
   override fun before() {
     delegate = WslFixture.create(assume)
   }
+
+  override fun after() {
+    val service = WslIjentManager.getInstance()
+    if (service is ProductionWslIjentManager) {
+      service.dropCache()
+    }
+  }
 }
 
 class WslFixture private constructor(val vms: List<WSLDistribution>) {
@@ -35,21 +42,6 @@ class WslFixture private constructor(val vms: List<WSLDistribution>) {
 
   companion object {
     private val LOG = logger<WslFixture>()
-
-    fun ensureCorrectVersion(wsl: WSLDistribution) {
-      System.getenv("WSL_VERSION")?.let {
-        if (it.toInt() != wsl.version) {
-          val error = """
-        Variable provided by environment claims WSL is $it.
-        But wsl is ${wsl.version}.
-        Hence, environment provides wrong information.
-        With all of that, test can't continue. Fix your environment.
-      """.trimIndent()
-          logger<WslRule>().warn(error)
-          Assumptions.abort<Nothing>(error)
-        }
-      }
-    }
 
     @JvmStatic
     fun create(assume: Boolean = true): WslFixture {
@@ -62,9 +54,7 @@ class WslFixture private constructor(val vms: List<WSLDistribution>) {
       if (assume || WSLUtil.isSystemCompatible() && WSLDistribution.findWslExe() != null) {
         val candidates = WslDistributionManager.getInstance().installedDistributions
         vms = candidates.filter {
-          it !is WSLDistributionLegacy
-          && IoTestUtil.reanimateWslDistribution(it.id)
-          && fileSystemWorks(it)
+          IoTestUtil.reanimateWslDistribution(it.id) && fileSystemWorks(it)
         }
         if (assume) {
           assumeTrue("No alive WSL WMs among ${candidates.map(WSLDistribution::getId)}", vms.isNotEmpty())

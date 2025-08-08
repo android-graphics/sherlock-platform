@@ -1,8 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.core;
 
 import com.intellij.DynamicBundle;
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
+import com.intellij.codeInsight.multiverse.CodeInsightContextProvider;
+import com.intellij.codeInsight.multiverse.MultiverseEnabler;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginDescriptorLoader;
@@ -27,6 +29,7 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeExtension;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.util.ClassExtension;
@@ -44,8 +47,7 @@ import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.PsiReferenceServiceImpl;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
-import com.intellij.psi.stubs.CoreStubTreeLoader;
-import com.intellij.psi.stubs.StubTreeLoader;
+import com.intellij.psi.stubs.*;
 import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.graph.GraphAlgorithms;
 import com.intellij.util.graph.impl.GraphAlgorithmsImpl;
@@ -78,12 +80,10 @@ public class CoreApplicationEnvironment {
 
     PluginEnabler.HEADLESS.setIgnoredDisabledPlugins(true);
 
+    application = createApplication(parentDisposable);
+    ApplicationManager.setApplication(application, parentDisposable);
     myFileTypeRegistry = new CoreFileTypeRegistry();
-
-    application = createApplication(myParentDisposable);
-    ApplicationManager.setApplication(application,
-                                      () -> myFileTypeRegistry,
-                                      myParentDisposable);
+    FileTypeRegistry.setInstanceSupplier(() -> myFileTypeRegistry, parentDisposable);
     myLocalFileSystem = createLocalFileSystem();
     myJarFileSystem = createJarFileSystem();
     myJrtFileSystem = createJrtFileSystem();
@@ -99,6 +99,9 @@ public class CoreApplicationEnvironment {
     // fake EP for cleaning resources after area disposing (otherwise KeyedExtensionCollector listener will be copied to the next area)
     registerApplicationExtensionPoint(new ExtensionPointName<>("com.intellij.virtualFileSystem"), KeyedLazyInstanceEP.class);
 
+    registerApplicationExtensionPoint(new ExtensionPointName<>("com.intellij.multiverseEnabler"), MultiverseEnabler.class);
+    registerApplicationExtensionPoint(new ExtensionPointName<>("com.intellij.multiverse.codeInsightContextProvider"), CodeInsightContextProvider.class);
+
     registerApplicationService(EncodingManager.class, new CoreEncodingRegistry());
     registerApplicationService(VirtualFilePointerManager.class, createVirtualFilePointerManager());
     registerApplicationService(DefaultASTFactory.class, new DefaultASTFactoryImpl());
@@ -111,6 +114,9 @@ public class CoreApplicationEnvironment {
     registerApplicationService(CodeFoldingSettings.class, new CodeFoldingSettings());
     registerApplicationService(CommandProcessor.class, new CoreCommandProcessor());
     registerApplicationService(GraphAlgorithms.class, new GraphAlgorithmsImpl());
+
+    registerApplicationExtensionPoint(StubElementRegistryServiceImplKt.STUB_REGISTRY_EP, StubRegistryExtension.class);
+    registerApplicationService(StubElementRegistryService.class, new StubElementRegistryServiceImpl());
 
     application.registerService(ApplicationInfo.class, ApplicationInfoImpl.class);
 

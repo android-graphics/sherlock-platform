@@ -4,9 +4,11 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.serviceContainer.BaseKeyedLazyInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 public final class ChangesGroupingPolicyFactoryEPBean extends BaseKeyedLazyInstance<ChangesGroupingPolicyFactory> {
+  @ApiStatus.Internal
   public static final int DEFAULT_WEIGHT = 100;
 
   @RequiredElement
@@ -23,6 +25,11 @@ public final class ChangesGroupingPolicyFactoryEPBean extends BaseKeyedLazyInsta
   @Attribute("implementationClass")
   public String implementationClass;
 
+  @ApiStatus.Internal
+  public ChangesGroupingPolicyFactoryEPBean() {
+  }
+
+  @ApiStatus.Internal
   @Override
   protected @Nullable String getImplementationClassName() {
     return implementationClass;

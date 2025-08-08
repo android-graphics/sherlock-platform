@@ -39,6 +39,7 @@ internal class ConvertLambdaToReferenceIntention :
         val newElement: SmartPsiElementPointer<KtElement>,
         val renderedPropertyType: String?,
         val renderedTypeArguments: String?,
+        val redundantTypeArgumentList: Boolean = false
     )
 
     override fun getFamilyName(): String =
@@ -67,9 +68,8 @@ internal class ConvertLambdaToReferenceIntention :
         }
     }
 
-    context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    override fun prepareContext(element: KtLambdaExpression): Context? {
+    override fun KaSession.prepareContext(element: KtLambdaExpression): Context? {
         val singleStatement = element.singleStatementOrNull() ?: return null
         when (singleStatement) {
             is KtCallExpression -> {
@@ -139,12 +139,15 @@ internal class ConvertLambdaToReferenceIntention :
                 appendFixedText(")")
             }
 
-            outerCallExpression.typeArgumentList?.let {
-                if (areTypeArgumentsRedundant(it)) {
-                    it.delete()
-                }
-            }
-            return Context(newArgumentList.createSmartPointer(), null, renderedTypeArguments)
+            val isOuterCallExpressionTypeArgumentListRedundant = outerCallExpression.typeArgumentList?.let {
+                areTypeArgumentsRedundant(it, approximateFlexible = false)
+            } ?: false
+            return Context(
+                newArgumentList.createSmartPointer(),
+                null,
+                renderedTypeArguments,
+                isOuterCallExpressionTypeArgumentListRedundant
+            )
         }
     }
 
@@ -165,9 +168,13 @@ internal class ConvertLambdaToReferenceIntention :
 
         val outerCallExpression = parent.getStrictParentOfType<KtCallExpression>()
         if (outerCallExpression != null) {
-            elementContext.renderedTypeArguments?.let {
-                addTypeArguments(outerCallExpression, it, actionContext.project)
-                outerCallExpression.typeArgumentList?.let(::shortenReferences)
+            if (elementContext.redundantTypeArgumentList) {
+                outerCallExpression.typeArgumentList?.delete()
+            } else {
+                elementContext.renderedTypeArguments?.let {
+                    addTypeArguments(outerCallExpression, it, actionContext.project)
+                    outerCallExpression.typeArgumentList?.let(::shortenReferences)
+                }
             }
         }
 
@@ -225,7 +232,7 @@ private fun buildReferenceText(lambdaExpression: KtLambdaExpression): String? {
             when (receiver) {
                 is KtNameReferenceExpression -> {
                     val receiverSymbol = receiver.resolveToCall()?.singleVariableAccessCall()?.partiallyAppliedSymbol?.symbol ?: return null
-                    val lambdaValueParameters = lambdaExpression.functionLiteral.getAnonymousFunctionSymbol().valueParameters
+                    val lambdaValueParameters = lambdaExpression.functionLiteral.symbol.valueParameters
                     if (receiverSymbol is KaValueParameterSymbol && receiverSymbol == lambdaValueParameters.firstOrNull()) {
                         val originalReceiverType = receiverSymbol.returnType
                         val receiverText = originalReceiverType.render(position = Variance.IN_VARIANCE)
@@ -351,7 +358,7 @@ private fun isConvertibleCallInLambdaByAnalyze(
         if (property != null && property.initializer?.let(KtPsiUtil::safeDeparenthesize) != lambdaExpression) return false
     }
 
-    val lambdaValueParameterSymbols = lambdaExpression.functionLiteral.getAnonymousFunctionSymbol().valueParameters
+    val lambdaValueParameterSymbols = lambdaExpression.functionLiteral.symbol.valueParameters
 
     if (explicitReceiver != null && explicitReceiver !is KtSimpleNameExpression &&
         explicitReceiver.anyDescendantOfType<KtSimpleNameExpression> {
@@ -404,7 +411,7 @@ private fun KaNamedFunctionSymbol.overloadedFunctions(lambdaArgument: KtLambdaEx
         else -> lambdaArgument.containingKtFile.scopeContext(lambdaArgument).compositeScope()
     }
 
-    val symbols = scope.getCallableSymbols(name).filterIsInstance<KaNamedFunctionSymbol>().toList()
+    val symbols = scope.callables(name).filterIsInstance<KaNamedFunctionSymbol>().toList()
 
     val function = psi ?: return symbols
     if (!function.isPhysical) {

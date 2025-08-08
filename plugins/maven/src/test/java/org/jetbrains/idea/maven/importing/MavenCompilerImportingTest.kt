@@ -6,6 +6,7 @@ import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration
+import com.intellij.idea.TestFor
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings
@@ -16,7 +17,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.junit.Test
 
-open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
+class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   private lateinit var ideCompilerConfiguration: CompilerConfigurationImpl
 
   private lateinit var javacCompiler: BackendCompiler
@@ -63,7 +64,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  open fun testLanguageLevel() = runBlocking {
+  fun testLanguageLevel() = runBlocking {
     importProjectAsync(("<groupId>test</groupId>" +
                    "<artifactId>project</artifactId>" +
                    "<version>1</version>" +
@@ -83,7 +84,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  open fun testLanguageLevelFromDefaultCompileExecutionConfiguration() = runBlocking {
+  fun testLanguageLevelFromDefaultCompileExecutionConfiguration() = runBlocking {
     importProjectAsync(("<groupId>test</groupId>" +
                    "<artifactId>project</artifactId>" +
                    "<version>1</version>" +
@@ -103,12 +104,13 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
                    "    </plugin>" +
                    "  </plugins>" +
                    "</build>"))
-    assertModules("project")
-    TestCase.assertEquals(LanguageLevel.JDK_1_8, getLanguageLevelForModule())
+    assertModules("project", "project.main", "project.test")
+    TestCase.assertEquals(LanguageLevel.JDK_1_8, LanguageLevelUtil.getCustomLanguageLevel(getModule("project.main")))
+    TestCase.assertEquals(LanguageLevel.JDK_1_8, LanguageLevelUtil.getCustomLanguageLevel(getModule("project.test")))
   }
 
   @Test
-  open fun testLanguageLevel6() = runBlocking {
+  fun testLanguageLevel6() = runBlocking {
     importProjectAsync(("<groupId>test</groupId>" +
                    "<artifactId>project</artifactId>" +
                    "<version>1</version>" +
@@ -128,36 +130,38 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  open fun testLanguageLevelX() = runBlocking {
-    importProjectAsync(("<groupId>test</groupId>" +
-                   "<artifactId>project</artifactId>" +
-                   "<version>1</version>" +
-                   "<build>" +
-                   "  <plugins>" +
-                   "    <plugin>" +
-                   "      <groupId>org.apache.maven.plugins</groupId>" +
-                   "      <artifactId>maven-compiler-plugin</artifactId>" +
-                   "      <configuration>" +
-                   "        <source>99</source>" +
-                   "      </configuration>" +
-                   "    </plugin>" +
-                   "  </plugins>" +
-                   "</build>"))
+  fun testLanguageLevelX() = runBlocking {
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+              <source>99</source>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    """.trimIndent())
     assertModules("project")
-    TestCase.assertEquals(LanguageLevel.HIGHEST, getLanguageLevelForModule())
+    assertEquals(defaultLanguageLevel, getLanguageLevelForModule())
   }
 
   @Test
-  open fun testLanguageLevelWhenCompilerPluginIsNotSpecified() = runBlocking {
+  fun testLanguageLevelWhenCompilerPluginIsNotSpecified() = runBlocking {
     importProjectAsync(("<groupId>test</groupId>" +
                    "<artifactId>project</artifactId>" +
                    "<version>1</version>"))
     assertModules("project")
-    TestCase.assertEquals(getDefaultLanguageLevel(), getLanguageLevelForModule())
+    assertEquals(defaultLanguageLevel, getLanguageLevelForModule())
   }
 
   @Test
-  open fun testLanguageLevelWhenConfigurationIsNotSpecified() = runBlocking {
+  fun testLanguageLevelWhenConfigurationIsNotSpecified() = runBlocking {
     importProjectAsync(("<groupId>test</groupId>" +
                    "<artifactId>project</artifactId>" +
                    "<version>1</version>" +
@@ -170,12 +174,12 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
                    "  </plugins>" +
                    "</build>"))
     assertModules("project")
-    TestCase.assertEquals(getDefaultLanguageLevel(), getLanguageLevelForModule())
+    assertEquals(defaultLanguageLevel, getLanguageLevelForModule())
   }
 
 
   @Test
-  open fun testLanguageLevelFromPluginManagementSection() = runBlocking {
+  fun testLanguageLevelFromPluginManagementSection() = runBlocking {
     importProjectAsync(("<groupId>test</groupId>" +
                    "<artifactId>project</artifactId>" +
                    "<version>1</version>" +
@@ -197,7 +201,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  open fun testLanguageLevelFromParentPluginManagementSection() = runBlocking {
+  fun testLanguageLevelFromParentPluginManagementSection() = runBlocking {
     createModulePom("parent",
                     ("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
@@ -230,7 +234,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  open fun testOverridingLanguageLevelFromPluginManagementSection() = runBlocking {
+  fun testOverridingLanguageLevelFromPluginManagementSection() = runBlocking {
     importProjectAsync(("<groupId>test</groupId>" +
                    "<artifactId>project</artifactId>" +
                    "<version>1</version>" +
@@ -261,7 +265,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  open fun testPreviewLanguageLevelProperty() = runBlocking {
+  fun testPreviewLanguageLevelProperty() = runBlocking {
     val feature = LanguageLevel.HIGHEST.toJavaVersion().feature
     importProjectAsync(("<groupId>test</groupId>" +
                    "<artifactId>project</artifactId>" +
@@ -287,22 +291,22 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  open fun testPreviewLanguageLevelParameter() = runBlocking {
+  fun testPreviewLanguageLevelParameter() = runBlocking {
     doTestPreviewConfigurationParameter("<enablePreview>true</enablePreview>")
   }
 
   @Test
-  open fun testPreviewLanguageLevelOneLine() = runBlocking {
+  fun testPreviewLanguageLevelOneLine() = runBlocking {
     doTestPreviewConfigurationParameter("<compilerArgs>--enable-preview</compilerArgs>")
   }
 
   @Test
-  open fun testPreviewLanguageLevelArg() = runBlocking {
+  fun testPreviewLanguageLevelArg() = runBlocking {
     doTestPreviewConfigurationParameter("<compilerArgs><arg>--enable-preview</arg></compilerArgs>")
   }
 
   @Test
-  open fun testPreviewLanguageLevelCompilerArg() = runBlocking {
+  fun testPreviewLanguageLevelCompilerArg() = runBlocking {
     doTestPreviewConfigurationParameter("<compilerArgs><compilerArg>--enable-preview</compilerArg></compilerArgs>")
   }
 
@@ -330,7 +334,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  open fun testInheritingLanguageLevelFromPluginManagementSection() = runBlocking {
+  fun testInheritingLanguageLevelFromPluginManagementSection() = runBlocking {
     importProjectAsync(("<groupId>test</groupId>" +
                    "<artifactId>project</artifactId>" +
                    "<version>1</version>" +
@@ -365,7 +369,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  open fun testSettingTargetLevel() = runBlocking {
+  fun testSettingTargetLevel() = runBlocking {
     JavacConfiguration.getOptions(project,
                                   JavacConfiguration::class.java).ADDITIONAL_OPTIONS_STRING = "-Xmm500m -Xms128m -target 1.5"
     importProjectAsync(("<groupId>test</groupId>" +
@@ -388,7 +392,8 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  open fun testSettingTargetLevelFromDefaultCompileExecutionConfiguration() = runBlocking {
+  fun testSettingTargetLevelFromDefaultCompileExecutionConfiguration() = runBlocking {
+
     importProjectAsync(("<groupId>test</groupId>" +
                    "<artifactId>project</artifactId>" +
                    "<version>1</version>" +
@@ -408,13 +413,15 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
                    "    </plugin>" +
                    "  </plugins>" +
                    "</build>"))
-    assertModules("project")
+    assertModules("project", "project.main", "project.test")
     TestCase.assertEquals(LanguageLevel.JDK_1_9, LanguageLevel.parse(
-      ideCompilerConfiguration.getBytecodeTargetLevel(getModule("project"))))
+      ideCompilerConfiguration.getBytecodeTargetLevel(getModule("project.main"))))
+    TestCase.assertEquals(defaultLanguageLevel, LanguageLevel.parse(
+      ideCompilerConfiguration.getBytecodeTargetLevel(getModule("project.test"))))
   }
 
   @Test
-  open fun testSettingTargetLevelFromParent() = runBlocking {
+  fun testSettingTargetLevelFromParent() = runBlocking {
     createProjectPom(("<groupId>test</groupId>" +
                       "<artifactId>project</artifactId>" +
                       "<packaging>pom</packaging>" +
@@ -462,7 +469,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  open fun testOverrideLanguageLevelFromParentPom() = runBlocking {
+  fun testOverrideLanguageLevelFromParentPom() = runBlocking {
     createProjectPom(("<groupId>test</groupId>" +
                       "<artifactId>project</artifactId>" +
                       "<packaging>pom</packaging>" +
@@ -509,7 +516,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  open fun testReleaseHasPriorityInParentPom() = runBlocking {
+  fun testReleaseHasPriorityInParentPom() = runBlocking {
     createProjectPom(("<groupId>test</groupId>" +
                       "<artifactId>project</artifactId>" +
                       "<packaging>pom</packaging>" +
@@ -556,7 +563,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  open fun testReleasePropertyNotSupport() = runBlocking {
+  fun testReleasePropertyNotSupport() = runBlocking {
 
     createProjectPom(("<groupId>test</groupId>" +
                       "<artifactId>project</artifactId>" +
@@ -605,7 +612,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  open fun testCompilerPluginExecutionBlockProperty() = runBlocking {
+  fun testCompilerPluginExecutionBlockProperty() = runBlocking {
     createProjectPom(("<groupId>test</groupId>" +
                       "<artifactId>project</artifactId>" +
                       "<version>1</version>" +
@@ -704,7 +711,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
     importProjectAsync()
     TestCase.assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
 
-    createProjectPom(javacPom)
+    updateProjectPom(javacPom)
     importProjectAsync()
 
     TestCase.assertEquals("Javac", ideCompilerConfiguration.defaultCompiler.id)
@@ -733,7 +740,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
     importProjectAsync()
     TestCase.assertEquals("Javac", ideCompilerConfiguration.defaultCompiler.id)
 
-    createProjectPom(eclipsePom)
+    updateProjectPom(eclipsePom)
     importProjectAsync()
 
     TestCase.assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
@@ -794,7 +801,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  open fun testCompilerPluginConfigurationCompilerArguments() = runBlocking {
+  fun testCompilerPluginConfigurationCompilerArguments() = runBlocking {
     importProjectAsync(("<groupId>test</groupId>" +
                    "<artifactId>project</artifactId>" +
                    "<version>1</version>" +
@@ -819,7 +826,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  open fun testCompilerPluginConfigurationCompilerArgumentsParameters() = runBlocking {
+  fun testCompilerPluginConfigurationCompilerArgumentsParameters() = runBlocking {
     importProjectAsync(("<groupId>test</groupId>" +
                    "<artifactId>project</artifactId>" +
                    "<version>1</version>" +
@@ -839,7 +846,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  open fun testCompilerPluginConfigurationCompilerArgumentsParametersFalse() = runBlocking {
+  fun testCompilerPluginConfigurationCompilerArgumentsParametersFalse() = runBlocking {
     importProjectAsync(("<groupId>test</groupId>" +
                    "<artifactId>project</artifactId>" +
                    "<version>1</version>" +
@@ -859,7 +866,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  open fun testCompilerPluginConfigurationCompilerArgumentsParametersPropertyOverride() = runBlocking {
+  fun testCompilerPluginConfigurationCompilerArgumentsParametersPropertyOverride() = runBlocking {
     importProjectAsync(("<groupId>test</groupId>" +
                    "<artifactId>project</artifactId>" +
                    "<version>1</version>" +
@@ -882,7 +889,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  open fun testCompilerPluginConfigurationCompilerArgumentsParametersPropertyOverride1() = runBlocking {
+  fun testCompilerPluginConfigurationCompilerArgumentsParametersPropertyOverride1() = runBlocking {
     importProjectAsync(("<groupId>test</groupId>" +
                    "<artifactId>project</artifactId>" +
                    "<version>1</version>" +
@@ -905,7 +912,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  open fun testCompilerPluginConfigurationCompilerArgumentsParametersProperty() = runBlocking {
+  fun testCompilerPluginConfigurationCompilerArgumentsParametersProperty() = runBlocking {
     importProjectAsync(("<groupId>test</groupId>" +
                    "<artifactId>project</artifactId>" +
                    "<version>1</version>" +
@@ -925,7 +932,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  open fun testCompilerPluginConfigurationCompilerArgumentsParametersPropertyFalse() = runBlocking {
+  fun testCompilerPluginConfigurationCompilerArgumentsParametersPropertyFalse() = runBlocking {
     importProjectAsync(("<groupId>test</groupId>" +
                    "<artifactId>project</artifactId>" +
                    "<version>1</version>" +
@@ -945,7 +952,84 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  open fun testCompilerPluginConfigurationUnresolvedCompilerArguments() = runBlocking {
+  fun testImportDifferentCompilationPropertiesForMainAndTest() = runBlocking{
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.0</version>
+                <executions>
+                    <execution>
+                        <id>default-compile</id>
+                        <phase>none</phase>
+                    </execution>
+                    <execution>
+                        <id>default-testCompile</id>
+                        <phase>none</phase>
+                    </execution>
+                    <execution>
+                        <id>default-source-compile</id>
+                        <phase>compile</phase>
+                        <configuration>
+                            <compilerArgs>
+                                <arg>-parameters</arg>
+                            </compilerArgs>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>default-test-compile</id>
+                        <phase>test-compile</phase>
+                        <configuration>
+                            <compilerArgs>
+                                <arg>-verbose</arg>
+                            </compilerArgs>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+""")
+
+    assertModules("project", "project.main", "project.test")
+    assertUnorderedElementsAreEqual(ideCompilerConfiguration.getAdditionalOptions(getModule("project.main")), "-parameters")
+    assertUnorderedElementsAreEqual(ideCompilerConfiguration.getAdditionalOptions(getModule("project.test")), "-verbose")
+  }
+
+  @Test
+  fun testDifferentJavaLevelsInElementConfiguration() = runBlocking {
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>11</source>
+                    <target>11</target>
+                    <testSource>1.8</testSource>
+                    <testTarget>1.8</testTarget>
+                </configuration>
+            </plugin>
+        </plugins>
+      </build>
+""")
+    assertModules("project", "project.main", "project.test")
+    assertEquals(LanguageLevel.JDK_11, LanguageLevelUtil.getCustomLanguageLevel(getModule("project.main")))
+    assertEquals(LanguageLevel.JDK_1_8, LanguageLevelUtil.getCustomLanguageLevel(getModule("project.test")))
+
+  }
+
+  @Test
+  fun testCompilerPluginConfigurationUnresolvedCompilerArguments() = runBlocking {
     importProjectAsync(("<groupId>test</groupId>" +
                    "<artifactId>project</artifactId>" +
                    "<version>1</version>" +
@@ -974,38 +1058,139 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
                                     "-myArg", "-d", "path/with/braces_\${")
   }
 
-  // commenting the test as the errorProne module is not available to IJ community project
-  // TODO move the test to the errorProne module
-  //public void stestCompilerPluginErrorProneConfiguration() {
-  //  importProjectAsync("<groupId>test</groupId>" +
-  //                "<artifactId>project</artifactId>" +
-  //                "<version>1</version>" +
-  //
-  //                "<build>" +
-  //                "  <plugins>" +
-  //                "    <plugin>" +
-  //                "      <groupId>org.apache.maven.plugins</groupId>" +
-  //                "      <artifactId>maven-compiler-plugin</artifactId>" +
-  //                "      <configuration>" +
-  //                "        <compilerId>javac-with-errorprone</compilerId>" +
-  //                "        <compilerArgs>" +
-  //                "          <arg>-XepAllErrorsAsWarnings</arg>" +
-  //                "        </compilerArgs>" +
-  //                "      </configuration>" +
-  //                "    </plugin>" +
-  //                "  </plugins>" +
-  //                "</build>");
-  //
-  //  CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
-  //  assertEquals("error-prone", compilerConfiguration.getDefaultCompiler().getId());
-  //  assertUnorderedElementsAreEqual(compilerConfiguration.getAdditionalOptions(getModule("project")), "-XepAllErrorsAsWarnings");
-  //
-  //  importProjectAsync("<groupId>test</groupId>" +
-  //                "<artifactId>project</artifactId>" +
-  //                "<version>1</version>");
-  //
-  //  assertEquals("Javac", compilerConfiguration.getDefaultCompiler().getId());
-  //  assertEmpty(compilerConfiguration.getAdditionalOptions(getModule("project")));
-  //}
+
+  @Test
+  fun testCompilerArgumentsShouldBeSetForMainAndTest() = runBlocking {
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      <build>  
+        <plugins>
+          <plugin>   
+             <groupId>org.apache.maven.plugins</groupId>  
+             <artifactId>maven-compiler-plugin</artifactId>      
+             <configuration>        
+               <compilerArguments>          
+                 <Averbose>true</Averbose>          
+                 <parameters></parameters>          
+                 <bootclasspath>rt.jar_path_here</bootclasspath>        
+               </compilerArguments>   
+               <testCompilerArguments>
+                  <parameters></parameters>
+               </testCompilerArguments>
+             </configuration>    
+          </plugin>
+        </plugins>
+      </build>""".trimIndent())
+
+    assertModules("project", "project.main", "project.test")
+
+    assertEquals("Javac", ideCompilerConfiguration.defaultCompiler.id)
+    assertUnorderedElementsAreEqual(ideCompilerConfiguration.getAdditionalOptions(getModule("project.main")),
+                                    "-Averbose=true", "-parameters", "-bootclasspath", "rt.jar_path_here")
+    assertUnorderedElementsAreEqual(
+      ideCompilerConfiguration.getAdditionalOptions(getModule("project.test")),
+      "-parameters",
+    )
+  }
+
+  @Test
+  fun testCompilerArgumentsShouldBeTakeFromMainIfTestIsEmpty() = runBlocking {
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      <build>  
+        <plugins>
+          <plugin>   
+             <groupId>org.apache.maven.plugins</groupId>  
+             <artifactId>maven-compiler-plugin</artifactId>      
+             <configuration>
+               <source>11</source>
+               <target>11</target>
+               <testSource>1.8</testSource>
+               <testTarget>1.8</testTarget>
+               <compilerArguments>          
+                 <Averbose>true</Averbose>          
+                 <parameters></parameters>          
+                 <bootclasspath>rt.jar_path_here</bootclasspath>        
+               </compilerArguments>   
+             </configuration>    
+          </plugin>
+        </plugins>
+      </build>""".trimIndent())
+
+    assertModules("project", "project.main", "project.test")
+
+    assertEquals("Javac", ideCompilerConfiguration.defaultCompiler.id)
+    assertUnorderedElementsAreEqual(ideCompilerConfiguration.getAdditionalOptions(getModule("project.main")),
+                                    "-Averbose=true", "-parameters", "-bootclasspath", "rt.jar_path_here")
+
+    assertUnorderedElementsAreEqual(ideCompilerConfiguration.getAdditionalOptions(getModule("project.test")),
+                                    "-Averbose=true", "-parameters", "-bootclasspath", "rt.jar_path_here")
+
+  }
+
+  @Test
+  @TestFor(issues = ["IDEA-371005"])
+  fun repetitiveCompilerArguments() = runBlocking {
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      <build>  
+        <plugins>
+          <plugin> 
+             <groupId>org.apache.maven.plugins</groupId>
+             <artifactId>maven-compiler-plugin</artifactId>
+             <version>3.12.1</version>
+             <configuration>
+               <compilerArgs>
+                   <arg>--add-exports</arg>
+                   <arg>java.base/sun.reflect.annotation=ALL-UNNAMED</arg>
+                   <arg>--add-exports</arg>
+                   <arg>java.base/sun.nio.ch=ALL-UNNAMED</arg>
+               </compilerArgs>
+             </configuration>
+          </plugin>
+        </plugins>
+      </build> """.trimIndent())
+    assertModules("project")
+    assertOrderedElementsAreEqual(ideCompilerConfiguration.getAdditionalOptions(getModule("project")),
+                                  "--add-exports", "java.base/sun.reflect.annotation=ALL-UNNAMED", "--add-exports", "java.base/sun.nio.ch=ALL-UNNAMED")
+  }
+
+  @Test
+  @TestFor(issues = ["IDEA-371747"])
+  fun testCompilerArgumentsWithWeirdNames() = runBlocking {
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      <build>  
+        <plugins>
+          <plugin> 
+             <groupId>org.apache.maven.plugins</groupId>
+             <artifactId>maven-compiler-plugin</artifactId>
+             <version>3.12.1</version>
+             <configuration>
+                <release>17</release>
+                <encoding>UTF-8</encoding>
+                <source>17</source>
+                <compilerArgs>
+                    <myWeirdName>-blablabla</myWeirdName>
+                    <anotherWeirdname>-qwerty</anotherWeirdname>
+                </compilerArgs>
+             </configuration>
+          </plugin>
+        </plugins>
+      </build> """.trimIndent())
+
+    assertModules("project")
+    assertOrderedElementsAreEqual(ideCompilerConfiguration.getAdditionalOptions(getModule("project")),
+                                  "-blablabla", "-qwerty")
+
+  }
 
 }

@@ -1,10 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.completion;
 
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.completion.InsertHandler;
-import com.intellij.codeInsight.completion.PrioritizedLookupElement;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
@@ -12,6 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElementRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,6 +19,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
@@ -32,6 +32,7 @@ import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyExportedModuleAttributeIndex;
@@ -40,10 +41,7 @@ import com.jetbrains.python.pyi.PyiFileType;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -67,6 +65,25 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
 
   @Override
   protected void doFillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
+    result.restartCompletionWhenNothingMatches();
+    var remainingResults = result.runRemainingContributors(parameters, true);
+
+    if (parameters.isExtendedCompletion() || remainingResults.isEmpty() || containsOnlyElementUnderTheCaret(remainingResults, parameters)) {
+      fillCompletionVariantsImpl(parameters, result);
+    }
+  }
+
+  private static boolean containsOnlyElementUnderTheCaret(@NotNull Set<CompletionResult> remainingResults,
+                                                          @NotNull CompletionParameters parameters) {
+    PsiElement position = parameters.getOriginalPosition();
+    if (remainingResults.size() == 1 && position != null) {
+      var lookup = ContainerUtil.getFirstItem(remainingResults);
+      return lookup.getLookupElement().getLookupString().equals(position.getText());
+    }
+    return false;
+  }
+
+  private void fillCompletionVariantsImpl(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     boolean isExtendedCompletion = parameters.isExtendedCompletion();
     if (!PyCodeInsightSettings.getInstance().INCLUDE_IMPORTABLE_NAMES_IN_BASIC_COMPLETION && !isExtendedCompletion) {
       return;
@@ -152,7 +169,9 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
       LOG.debug(counters + " computed for prefix '" + result.getPrefixMatcher().getPrefix() + "' in " + duration + " ms");
       if (TRACING_WITH_SPUTNIK_ENABLED) {
         //noinspection UseOfSystemOutOrSystemErr
-        System.out.println("\1h('Importable names completion','%d')".formatted((duration / 10) * 10));
+        System.out.printf("\1h('Importable names completion','%d')%n", (duration / 10) * 10);
+        //noinspection UseOfSystemOutOrSystemErr
+        System.out.printf("\1Hi(%d)%n", duration);
       }
     });
   }
@@ -160,7 +179,17 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
   private static void forEachPublicNameFromIndex(@NotNull GlobalSearchScope scope, @NotNull Processor<String> processor) {
     StubIndex stubIndex = StubIndex.getInstance();
     if (!RECURSIVE_INDEX_ACCESS_ALLOWED) {
-      for (String allKey : stubIndex.getAllKeys(PyExportedModuleAttributeIndex.KEY, Objects.requireNonNull(scope.getProject()))) {
+      Project project = Objects.requireNonNull(scope.getProject());
+      CachedValuesManager manager = CachedValuesManager.getManager(project);
+
+      var cachedAllNames = manager.getCachedValue(project, () -> {
+        StubIndex index = StubIndex.getInstance();
+        Collection<String> keys = index.getAllKeys(PyExportedModuleAttributeIndex.KEY, project);
+        ModificationTracker modificationTracker = index.getPerFileElementTypeModificationTracker(PyFileElementType.INSTANCE);
+        return CachedValueProvider.Result.create(keys, modificationTracker);
+      });
+
+      for (String allKey : cachedAllNames) {
         if (!processor.process(allKey)) {
           return;
         }
@@ -176,7 +205,11 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
                                                         @NotNull TypeEvalContext context) {
     if (PyTypingTypeProvider.isInsideTypeHint(position, context)) {
       // Not all names from typing.py are defined as classes
-      return definition instanceof PyClass || ArrayUtil.contains(fqn.getFirstComponent(), "typing", "typing_extensions");
+      return (
+        definition instanceof PyClass ||
+        definition instanceof PyTypeAliasStatement ||
+        ArrayUtil.contains(fqn.getFirstComponent(), "typing", "typing_extensions")
+      );
     }
     if (PsiTreeUtil.getParentOfType(position, PyPattern.class, false) != null) {
       return definition instanceof PyClass;
@@ -211,8 +244,7 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
     return ContainerUtil.exists(fqn.getComponents(), c -> c.startsWith("_"));
   }
 
-  @NotNull
-  private static GlobalSearchScope createScope(@NotNull PsiFile originalFile) {
+  private static @NotNull GlobalSearchScope createScope(@NotNull PsiFile originalFile) {
     class HavingLegalImportPathScope extends QualifiedNameFinder.QualifiedNameBasedScope {
       private HavingLegalImportPathScope(@NotNull Project project) {
         super(project);
@@ -229,7 +261,18 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
     return PySearchUtilBase.defaultSuggestionScope(originalFile)
       .intersectWith(GlobalSearchScope.notScope(pyiStubsScope))
       .intersectWith(GlobalSearchScope.notScope(GlobalSearchScope.fileScope(originalFile)))
+      // Some types in typing.py are defined as functions, causing inserting them with parentheses. It's better to rely on typing.pyi.
+      .intersectWith(GlobalSearchScope.notScope(fileScope("typing", originalFile, false)))
+      .uniteWith(fileScope("typing", originalFile, true))
       .intersectWith(new HavingLegalImportPathScope(project));
+  }
+
+  private static @NotNull GlobalSearchScope fileScope(@NotNull String fqn, @NotNull PsiFile anchor, boolean pyiStub) {
+    var context = pyiStub ? PyResolveImportUtil.fromFoothold(anchor) : PyResolveImportUtil.fromFoothold(anchor).copyWithoutStubs();
+    var files = ContainerUtil.filterIsInstance(PyResolveImportUtil.resolveQualifiedName(QualifiedName.fromDottedString(fqn), context),
+                                               PsiFile.class);
+    if (files.isEmpty()) return GlobalSearchScope.EMPTY_SCOPE;
+    return GlobalSearchScope.filesWithLibrariesScope(anchor.getProject(), ContainerUtil.map(files, PsiFile::getVirtualFile));
   }
 
   private @NotNull InsertHandler<LookupElement> getInsertHandler(@NotNull PyElement exported,

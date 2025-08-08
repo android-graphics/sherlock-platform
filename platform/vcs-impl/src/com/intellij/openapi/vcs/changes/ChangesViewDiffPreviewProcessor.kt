@@ -18,6 +18,7 @@ import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.EditedCommitDetails
 import com.intellij.vcs.commit.EditedCommitNode
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 private fun wrap(project: Project,
@@ -62,7 +63,7 @@ private inline fun <reified T : ChangesBrowserNode<*>> findNodeOfType(node: Chan
   return null
 }
 
-private class ChangesViewDiffPreviewProcessor(private val panel: ChangesViewManager.ChangesViewToolWindowPanel,
+internal class ChangesViewDiffPreviewProcessor(private val panel: ChangesViewManager.ChangesViewToolWindowPanel,
                                               changesView: ChangesListView,
                                               private val isInEditor: Boolean)
   : TreeHandlerDiffRequestProcessor(if (isInEditor) DiffPlaces.DEFAULT else DiffPlaces.CHANGES_VIEW, changesView,
@@ -83,8 +84,6 @@ private class ChangesViewDiffPreviewProcessor(private val panel: ChangesViewMana
   override fun shouldAddToolbarBottomBorder(toolbarComponents: FrameDiffTool.ToolbarComponents): Boolean {
     return !isInEditor || super.shouldAddToolbarBottomBorder(toolbarComponents)
   }
-
-  override fun showAllChangesForEmptySelection(): Boolean = false
 
   override fun forceKeepCurrentFileWhileFocused(): Boolean = true
 
@@ -113,6 +112,8 @@ private class ChangesViewDiffPreviewProcessor(private val panel: ChangesViewMana
 }
 
 internal object ChangesViewDiffPreviewHandler : ChangesTreeDiffPreviewHandler() {
+  override val isShowAllChangesForEmptySelection: Boolean get() = false
+
   override fun iterateSelectedChanges(tree: ChangesTree): JBIterable<Wrapper> {
     val changesView = tree as? ChangesListView ?: return JBIterable.empty()
     return wrap(tree.project, changesView.selectedChangesNodes, changesView.selectedUnversionedFiles)
@@ -161,6 +162,7 @@ private class ChangeListWrapper(override val userObject: ChangeList) : ChangesVi
   override fun toString(): String = userObject.name
 }
 
+@ApiStatus.Internal
 interface ChangesViewUserObjectTag : ChangesBrowserNode.Tag {
   val userObject: Any
 }

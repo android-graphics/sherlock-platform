@@ -603,7 +603,7 @@ public final class DnDManagerImpl extends DnDManager {
           pair = Pair.create(EMPTY_IMAGE, new Point(0, 0));
         }
 
-        if (SystemInfo.isMac && true) {
+        if (SystemInfo.isMac) {
           Image mrImage = MultiResolutionImageProvider.convertFromJBImage(pair.first);
           if (mrImage != null) pair = new Pair<>(mrImage, pair.second);
         }
@@ -659,7 +659,7 @@ public final class DnDManagerImpl extends DnDManager {
 
     @Override
     public void dragDropEnd(DragSourceDropEvent dsde) {
-      mySource.dragDropEnd();
+      mySource.dragDropEnd(myCurrentEvent, dsde);
       final DnDTarget target = getLastProcessedTarget();
       if (target != null) {
         target.cleanUpOnLeave();

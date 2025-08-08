@@ -60,7 +60,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticPara
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
-import org.jetbrains.plugins.groovy.lang.psi.util.*;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.refactoring.convertToJava.invocators.CustomMethodInvocator;
 
@@ -395,7 +398,7 @@ public class ExpressionGenerator extends Generator {
    * x.putAt(a, 4) [4]
    */
   @Override
-  public void visitAssignmentExpression(@NotNull final GrAssignmentExpression expression) {
+  public void visitAssignmentExpression(final @NotNull GrAssignmentExpression expression) {
     final GrExpression lValue = expression.getLValue();
     final GrExpression rValue = expression.getRValue();
 
@@ -516,8 +519,7 @@ public class ExpressionGenerator extends Generator {
    * returns rValue         for lValue =  expr
    * lValue+Rvalue  for lValue += rValue
    */
-  @Nullable
-  private GrExpression getRValue(GrAssignmentExpression expression) {
+  private @Nullable GrExpression getRValue(GrAssignmentExpression expression) {
     GrExpression rValue = expression.getRValue();
     if (rValue == null) return null;
 
@@ -868,36 +870,33 @@ public class ExpressionGenerator extends Generator {
     }
 
     final String text = literal.getText();
-    final String value = GrStringUtil.unescapeString(GrStringUtil.removeQuotes(text));
-    if (text.startsWith("'''") || text.startsWith("\"\"\"")) {
-      if (com.intellij.psi.util.PsiUtil.isAvailable(JavaFeature.TEXT_BLOCKS, literal)) {
-        String content = PsiLiteralUtil.escapeTextBlockCharacters(StringUtil.escapeStringCharacters(value));
-        if (!content.endsWith("\n") && PsiLiteralUtil.getTextBlockIndent(content.split("\n", -1)) > 0) {
-          builder.append("\"\"\"\n").append(content).append("\\\n").append("\"\"\"");
+    Object value = literal.getValue();
+    if (value instanceof String str) {
+      if (text.startsWith("'''") || text.startsWith("\"\"\"")) {
+        if (com.intellij.psi.util.PsiUtil.isAvailable(JavaFeature.TEXT_BLOCKS, literal)) {
+          String content = PsiLiteralUtil.escapeTextBlockCharacters(StringUtil.escapeStringCharacters(str));
+          if (!content.endsWith("\n") && PsiLiteralUtil.getTextBlockIndent(content.split("\n", -1)) > 0) {
+            builder.append("\"\"\"\n").append(content).append("\\\n").append("\"\"\"");
+          }
+          else {
+            builder.append("\"\"\"\n").append(content).append("\"\"\"");
+          }
         }
         else {
-          builder.append("\"\"\"\n").append(content).append("\"\"\"");
+          String content = StringUtil.escapeStringCharacters(str).replaceAll("\\\\n([^\"])", "\\\\n\" +\n \"$1");
+          builder.append('"').append(content).append('"');
+        }
+      }
+      else if (text.startsWith("\"") || text.startsWith("'")) {
+        if (isChar) {
+          builder.append('\'').append(StringUtil.escapeCharCharacters(str)).append('\'');
+        }
+        else {
+          builder.append('"').append(StringUtil.escapeStringCharacters(str)).append('"');
         }
       }
       else {
-        String content = StringUtil.escapeStringCharacters(value).replaceAll("\\\\n([^\"])", "\\\\n\" +\n \"$1");
-        builder.append('"').append(content).append('"');
-      }
-    }
-    else if (text.startsWith("'")) {
-      if (isChar) {
-        builder.append(text);
-      }
-      else {
-        builder.append('"').append(StringUtil.escapeStringCharacters(value)).append('"');
-      }
-    }
-    else if (text.startsWith("\"")) {
-      if (isChar) {
-        builder.append('\'').append(StringUtil.escapeCharCharacters(value)).append('\'');
-      }
-      else {
-        builder.append('"').append(StringUtil.escapeStringCharacters(value)).append('"');
+        builder.append('"').append(StringUtil.escapeStringCharacters(str)).append('"');
       }
     }
     else {
@@ -1040,7 +1039,7 @@ public class ExpressionGenerator extends Generator {
             ((GrExpression)nameElement).accept(this);
           }
           else if (nameElement != null) {
-            builder.append(nameElement.toString());
+            builder.append(nameElement);
           }
         }
       }
@@ -1374,8 +1373,7 @@ public class ExpressionGenerator extends Generator {
     builder.append(')');
   }
 
-  @Nullable
-  private static PsiType inferCastType(@NotNull GrExpression caller, @NotNull PsiMethod method, @NotNull GroovyPsiElement context) {
+  private static @Nullable PsiType inferCastType(@NotNull GrExpression caller, @NotNull PsiMethod method, @NotNull GroovyPsiElement context) {
     final PsiType type = caller.getType();
     if (type instanceof PsiIntersectionType) {
       final PsiType[] conjuncts = ((PsiIntersectionType)type).getConjuncts();
@@ -1472,7 +1470,7 @@ public class ExpressionGenerator extends Generator {
       insertion.append(varName).append(".put(");
       final String stringKey = arg.getLabelName();
       if (stringKey != null) {
-        insertion.append('"').append(stringKey).append('"');
+        insertion.append('"').append(StringUtil.escapeStringCharacters(stringKey)).append('"');
       }
       else {
         final GrArgumentLabel label = arg.getLabel();

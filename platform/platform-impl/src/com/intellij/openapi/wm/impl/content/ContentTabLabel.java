@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.icons.AllIcons;
@@ -12,6 +12,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ActiveIcon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.impl.content.tabActions.ContentTabAction;
 import com.intellij.ui.EngravedTextGraphics;
 import com.intellij.ui.Gray;
@@ -19,7 +20,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtilities;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class ContentTabLabel extends ContentLabel {
   private static final int MAX_WIDTH = JBUIScale.scale(400);
@@ -59,6 +59,11 @@ public class ContentTabLabel extends ContentLabel {
         }
       }
     }
+  }
+
+  @Override
+  boolean showLabelText(@NotNull Content content) {
+    return !Boolean.FALSE.equals(content.getUserData(ToolWindow.SHOW_CONTENT_TAB_LABEL_TEXT));
   }
 
   @Override
@@ -93,14 +98,14 @@ public class ContentTabLabel extends ContentLabel {
       //noinspection ConstantConditions
       if (myContent != null && !(myContent instanceof SingleContentLayout.SubContent) && !Disposer.isDisposed(myContent) && !textUpdateScheduled) {
         textUpdateScheduled = true;
-        EdtScheduledExecutorService.getInstance().schedule(() -> {
+        EdtScheduler.getInstance().schedule(50, () -> {
           textUpdateScheduled = false;
           Container parent = getParent();
           if (parent != null) {
             parent.revalidate();
             parent.repaint();
           }
-        }, 50, TimeUnit.MILLISECONDS);
+        });
       }
     }
   }

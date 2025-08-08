@@ -42,6 +42,8 @@ import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.*;
 
+import static com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollectionUtil.collectionToString;
+
 @ApiStatus.Internal
 public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
 
@@ -81,17 +83,14 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       .reportMessage(project);
   }
 
-  @NotNull
-  private static List<File> collectProjectTaskArtifacts(@NotNull Project project, @NotNull ModelBuilderContext context) {
+  private static @NotNull List<File> collectProjectTaskArtifacts(@NotNull Project project, @NotNull ModelBuilderContext context) {
     List<File> taskArtifacts = new ArrayList<>();
     GradleCollectionVisitor.accept(project.getTasks().withType(Jar.class), new GradleCollectionVisitor<Jar>() {
 
       @Override
       public void visit(Jar element) {
         File archiveFile = GradleTaskUtil.getTaskArchiveFile(element);
-        if (archiveFile != null) {
-          taskArtifacts.add(archiveFile);
-        }
+        taskArtifacts.add(archiveFile);
       }
 
       @Override
@@ -129,11 +128,9 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
 
       @Override
       public void visit(Jar element) {
-        File archiveFile = GradleTaskUtil.getTaskArchiveFile(element);
-        if (archiveFile != null) {
-          if (isShadowJar(element) || containsPotentialClasspathElements(element, project)) {
-            additionalArtifacts.add(archiveFile);
-          }
+        if (isShadowJar(element) || containsPotentialClasspathElements(element, project)) {
+          File archiveFile = GradleTaskUtil.getTaskArchiveFile(element);
+          additionalArtifacts.add(archiveFile);
         }
       }
 
@@ -216,7 +213,8 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       @Override
       public void visit(AbstractArchiveTask element) {
         if (containsAllSourceSetOutput(element, sourceSet)) {
-          sourceSetArtifacts.add(GradleTaskUtil.getTaskArchiveFile(element));
+          File archiveFile = GradleTaskUtil.getTaskArchiveFile(element);
+          sourceSetArtifacts.add(archiveFile);
         }
       }
 
@@ -494,8 +492,8 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       JavaCompile javaCompile = (JavaCompile)javaCompileTask;
       externalSourceSet.setJavaToolchainHome(getJavaToolchainHome(project, javaCompile));
       externalSourceSet.setSourceCompatibility(javaCompile.getSourceCompatibility());
-      externalSourceSet.setPreview(javaCompile.getOptions().getCompilerArgs().contains("--enable-preview"));
       externalSourceSet.setTargetCompatibility(javaCompile.getTargetCompatibility());
+      externalSourceSet.setCompilerArguments(collectionToString(javaCompile.getOptions().getAllCompilerArgs()));
     }
     if (externalSourceSet.getSourceCompatibility() == null) {
       externalSourceSet.setSourceCompatibility(sourceSetResolutionContext.projectSourceCompatibility);

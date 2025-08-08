@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
@@ -38,9 +37,10 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.project.stateStore
-import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.indexing.EntityIndexingService
+import com.intellij.util.indexing.ProjectEntityIndexingService
 import com.intellij.util.indexing.roots.WorkspaceIndexingRootsBuilder
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
@@ -48,8 +48,8 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.impl.PlatformInternalWorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.lang.Runnable
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -65,6 +65,7 @@ private val WATCHED_ROOTS_PROVIDER_EP_NAME = ExtensionPointName<WatchedRootsProv
 /**
  * ProjectRootManager extended with the ability to watch events.
  */
+@ApiStatus.Internal
 open class ProjectRootManagerComponent(
   project: Project,
   coroutineScope: CoroutineScope
@@ -208,11 +209,10 @@ open class ProjectRootManagerComponent(
       postCollect(newDisposable, oldDisposable, watchRoots)
     }
     else {
-      @Suppress("UsagesOfObsoleteApi")
-      (project as ComponentManagerEx).getCoroutineScope().launch {
+      coroutineScope.launch {
         val job = launch(start = CoroutineStart.LAZY) {
           val watchRoots = readAction { collectWatchRoots(newDisposable) }
-          postCollect(newDisposable, oldDisposable, watchRoots)
+          postCollect(newDisposable = newDisposable, oldDisposable = oldDisposable, watchRoots = watchRoots)
         }
         collectWatchRootsJob.getAndSet(job)?.cancelAndJoin()
         job.start()
@@ -262,19 +262,20 @@ open class ProjectRootManagerComponent(
     finally {
       isFiringEvent = false
     }
-    EntityIndexingService.getInstance().indexChanges(project, indexingInfos)
+    ProjectEntityIndexingService.getInstance(project).indexChanges(indexingInfos)
     addRootsToWatch()
   }
 
+  @RequiresReadLock
   private fun collectWatchRoots(disposable: Disposable): Pair<Set<String>, Set<String>> {
-    ThreadingAssertions. assertReadAccess()
     val recursivePaths = CollectionFactory.createFilePathSet()
     val flatPaths = CollectionFactory.createFilePathSet()
     WATCH_ROOTS_LOG.trace { "watch roots for ${project}}" }
 
     val store = project.stateStore
     val projectFilePath = store.projectFilePath
-    if (Project.DIRECTORY_STORE_FOLDER != projectFilePath.parent.fileName?.toString()) {
+    val directoryStorePath = store.directoryStorePath
+    if (directoryStorePath == null || !projectFilePath.startsWith(directoryStorePath)) {
       flatPaths += projectFilePath.invariantSeparatorsPathString
       flatPaths += store.workspacePath.invariantSeparatorsPathString
       WATCH_ROOTS_LOG.trace { "  project store: ${flatPaths}" }

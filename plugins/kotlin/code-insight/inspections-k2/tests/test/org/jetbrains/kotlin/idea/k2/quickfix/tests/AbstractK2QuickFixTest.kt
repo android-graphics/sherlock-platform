@@ -4,11 +4,14 @@ package org.jetbrains.kotlin.idea.k2.quickfix.tests
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.runInEdtAndWait
+import org.jetbrains.kotlin.idea.fir.K2DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.actionsListDirectives
+import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 abstract class AbstractK2QuickFixTest : AbstractQuickFixTest() {
@@ -32,20 +35,27 @@ abstract class AbstractK2QuickFixTest : AbstractQuickFixTest() {
     override val inspectionFileName: String
         get() = ".k2Inspection"
 
-    override fun checkForUnexpectedErrors() {}
+    override fun checkUnexpectedErrors(mainFile: File, ktFile: KtFile, fileText: String) {
+        K2DirectiveBasedActionUtils.checkForErrorsAfter(mainFile, ktFile, fileText)
+    }
 
     override fun checkAvailableActionsAreExpected(actions: List<IntentionAction>) {
         DirectiveBasedActionUtils.checkAvailableActionsAreExpected(
-            dataFile(), actions, actionsToExclude = ACTIONS_NOT_IMPLEMENTED + ACTIONS_DIFFERENT_FROM_K1,
+            file,
+            dataFile(), actions,
+            actionsToExclude = ACTIONS_NOT_IMPLEMENTED + ACTIONS_DIFFERENT_FROM_K1,
+            actionsListDirectives = pluginMode.actionsListDirectives
         )
     }
 
     override fun getAfterFileName(beforeFileName: String): String {
-        val firAfterFile = File(dataFilePath(beforeFileName.replace(".kt", ".fir.kt.after")))
-        return if (firAfterFile.exists()) {
-            firAfterFile.name
+        val afterFile = File(dataFilePath(beforeFileName.replace(".kt", ".k2.kt.after")))
+        return if (afterFile.exists()) {
+            afterFile.name
         } else {
             super.getAfterFileName(beforeFileName)
         }
     }
+
+    override val actionPrefix: String? = "K2_ACTION:"
 }

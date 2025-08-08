@@ -14,7 +14,10 @@ import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.service.execution.TestUnknownSdkResolver;
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
 import com.intellij.openapi.externalSystem.test.JavaExternalSystemImportingTestCase;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -31,7 +34,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.testFramework.io.ExternalResourcesChecker;
@@ -48,8 +51,8 @@ import org.gradle.wrapper.WrapperConfiguration;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl;
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder;
-import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GroovyDslGradleSettingScriptBuilder;
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
@@ -75,10 +78,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
@@ -107,6 +107,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   private final Ref<Couple<String>> deprecationError = Ref.create();
   private final StringBuilder deprecationTextBuilder = new StringBuilder();
   private int deprecationTextLineCount = 0;
+  private @NotNull Path originalGradleUserHome;
 
   private @Nullable Disposable myTestDisposable = null;
 
@@ -119,6 +120,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
 
     WriteAction.runAndWait(this::configureJdkTable);
     System.setProperty(ExternalSystemExecutionSettings.REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, String.valueOf(GRADLE_DAEMON_TTL_MS));
+    setUpGradleVmOptions();
 
     ExtensionTestUtil.maskExtensions(UnknownSdkResolver.EP_NAME, List.of(TestUnknownSdkResolver.INSTANCE), getTestDisposable());
     setRegistryPropertyForTest("unknown.sdk.auto", "false");
@@ -127,6 +129,8 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     cleanScriptsCacheIfNeeded();
 
     installGradleJvmConfigurator();
+    installExecutionDeprecationChecker();
+    originalGradleUserHome = getGradleUserHome();
   }
 
   protected void installGradleJvmConfigurator() {
@@ -159,6 +163,33 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     for (Sdk jdk : jdks) {
       ProjectJdkTable.getInstance().addJdk(jdk);
     }
+  }
+
+  protected void configureGradleVmOptions(@NotNull Set<String> options) {
+    if (isGradleAtLeast("7.0") && !isWarningsAllowed()) {
+      options.add("-Dorg.gradle.warning.mode=fail");
+    }
+  }
+
+  private @NotNull Set<String> getGradleVmOptions() {
+    Set<String> options = new HashSet<>();
+    configureGradleVmOptions(options);
+    return options;
+  }
+
+  private void setUpGradleVmOptions() {
+    GradleSystemSettings settings = GradleSystemSettings.getInstance();
+    String defaultVmOptions = Objects.requireNonNullElse(settings.getGradleVmOptions(), "");
+
+    Set<String> requiredVmOptions = getGradleVmOptions();
+    String effectiveVmOptions = String.format("%s %s", defaultVmOptions, Strings.join(requiredVmOptions, " ")).trim();
+
+    settings.setGradleVmOptions(effectiveVmOptions);
+  }
+
+  private static void tearDownGradleVmOptions() {
+    GradleSystemSettings settings = GradleSystemSettings.getInstance();
+    settings.setGradleVmOptions("");
   }
 
   private Sdk createJdkFromJavaHome() {
@@ -236,17 +267,12 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     return myProjectRoot;
   }
 
-  protected void assumeTestJavaRuntime(@NotNull JavaVersion javaRuntimeVersion) {
-  }
-
   @NotNull
   private String requireRealJdkHome() {
     if (myWSLDistribution != null) {
       return requireWslJdkHome(myWSLDistribution);
     }
-    JavaVersion javaRuntimeVersion = JavaVersion.current();
-    assumeTestJavaRuntime(javaRuntimeVersion);
-    return findJdkPath();
+    return requireJdkHome();
   }
 
   private static String requireWslJdkHome(@NotNull WSLDistribution distribution) {
@@ -257,12 +283,14 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     return distribution.getWindowsPath(jdkPath);
   }
 
-  public static @NotNull String requireJdkHome(@NotNull GradleVersion gradleVersion) {
-    return requireJdkHome(gradleVersion, JavaVersionRestriction.NO);
+  public @NotNull String requireJdkHome() {
+    return requireJdkHome(getCurrentGradleVersion(), myTargetJavaVersionWatcher.getRestriction());
   }
 
-  public static @NotNull String requireJdkHome(@NotNull GradleVersion gradleVersion,
-                                               @NotNull JavaVersionRestriction javaVersionRestriction) {
+  public static @NotNull String requireJdkHome(
+    @NotNull GradleVersion gradleVersion,
+    @NotNull JavaVersionRestriction javaVersionRestriction
+  ) {
     if (GradleJvmSupportMatrix.isSupported(gradleVersion, JavaVersion.current()) &&
         !javaVersionRestriction.isRestricted(gradleVersion, JavaVersion.current())) {
       return IdeaTestUtil.requireRealJdkHome();
@@ -270,10 +298,6 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     // fix exception of FJP at JavaHomeFinder.suggestHomePaths => ... => EnvironmentUtil.getEnvironmentMap => CompletableFuture.<clinit>
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
     return GradleJvmResolver.resolveGradleJvmHomePath(gradleVersion, javaVersionRestriction);
-  }
-
-  public String findJdkPath() {
-    return requireJdkHome(getCurrentGradleVersion(), myTargetJavaVersionWatcher.getRestriction());
   }
 
   protected void collectAllowedRoots(final List<String> roots, PathAssembler.LocalDistribution distribution) {
@@ -306,12 +330,9 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
         TestDialogManager.setTestDialog(TestDialog.DEFAULT);
         CompilerTestUtil.deleteBuildSystemDirectory(myProject);
       },
-      () -> {
-        deprecationError.set(null);
-        if (isGradleAtLeast("7.0")) {
-          GradleSystemSettings.getInstance().setGradleVmOptions("");
-        }
-      },
+      () -> deprecationError.set(null),
+      () -> tearDownGradleVmOptions(),
+      () -> resetGradleUserHomeIfNeeded(),
       () -> Disposer.dispose(getTestDisposable()),
       () -> super.tearDown()
     );
@@ -358,30 +379,15 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     importProject();
   }
 
-  protected void importProjectUsingSingeModulePerGradleProject(@NonNls String config, Boolean skipIndexing)
-    throws IOException {
-    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
-    importProject(config, skipIndexing);
-  }
-
   protected void importProjectUsingSingeModulePerGradleProject(@NonNls String config) throws IOException {
-    importProjectUsingSingeModulePerGradleProject(config, null);
+    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
+    importProject(config);
   }
 
   @Override
   protected void importProject(@NotNull String config, @Nullable Boolean skipIndexing) throws IOException {
     if (UsefulTestCase.IS_UNDER_TEAMCITY) {
       config = injectRepo(config);
-    }
-    if (isGradleAtLeast("7.0") && !isWarningsAllowed()) {
-      String failOnWarning = "-Dorg.gradle.warning.mode=fail";
-      String originalVmOptions = GradleSystemSettings.getInstance().getGradleVmOptions();
-      if (StringUtil.isEmpty(originalVmOptions)) {
-        GradleSystemSettings.getInstance().setGradleVmOptions(failOnWarning);
-      }
-      else {
-        GradleSystemSettings.getInstance().setGradleVmOptions("%s %s".formatted(originalVmOptions, failOnWarning));
-      }
     }
     super.importProject(config, skipIndexing);
     handleDeprecationError(deprecationError.get());
@@ -392,21 +398,26 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     handleImportFailure(errorInfo.first, errorInfo.second);
   }
 
-  @Override
-  protected void printOutput(@NotNull String text, boolean stdOut) {
-    if (text.contains("This is scheduled to be removed in Gradle")
-    || text.contains("Deprecated Gradle features were used in this build")) {
-      deprecationTextLineCount = 30;
-    }
-    if (deprecationTextLineCount > 0) {
-      deprecationTextBuilder.append(text);
-      deprecationTextLineCount--;
-      if (deprecationTextLineCount == 0) {
-        deprecationError.set(Couple.of("Deprecation warning from Gradle", deprecationTextBuilder.toString()));
-        deprecationTextBuilder.setLength(0);
+  private void installExecutionDeprecationChecker() {
+    var notificationManager = ExternalSystemProgressNotificationManager.getInstance();
+    var notificationListener = new ExternalSystemTaskNotificationListener() {
+      @Override
+      public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+        if (text.contains("This is scheduled to be removed in Gradle")
+            || text.contains("Deprecated Gradle features were used in this build")) {
+          deprecationTextLineCount = 30;
+        }
+        if (deprecationTextLineCount > 0) {
+          deprecationTextBuilder.append(text);
+          deprecationTextLineCount--;
+          if (deprecationTextLineCount == 0) {
+            deprecationError.set(Couple.of("Deprecation warning from Gradle", deprecationTextBuilder.toString()));
+            deprecationTextBuilder.setLength(0);
+          }
+        }
       }
-    }
-    super.printOutput(text, stdOut);
+    };
+    notificationManager.addNotificationListener(notificationListener, getTestDisposable());
   }
 
   @Override
@@ -434,9 +445,13 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   public @NotNull String settingsScript(@NotNull Consumer<GradleSettingScriptBuilder<?>> configure) {
-    var builder = new GroovyDslGradleSettingScriptBuilder();
+    var builder = GradleSettingScriptBuilder.create(getCurrentGradleVersion(), GradleDsl.GROOVY);
     configure.accept(builder);
     return builder.generate();
+  }
+
+  public @Nullable String getGradleJdkHome() {
+    return myJdkHome;
   }
 
   @Override
@@ -455,7 +470,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
         allprojects {
             repositories {
                 maven {
-                    url 'https://repo.labs.intellij.net/repo1'
+                    url = 'https://repo.labs.intellij.net/repo1'
                 }
             }
         }
@@ -550,7 +565,12 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   protected void enableGradleDebugWithSuspend() {
-    GradleSystemSettings.getInstance().setGradleVmOptions("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005");
+    GradleSystemSettings settings = GradleSystemSettings.getInstance();
+    String options = String.format("%s %s",
+                                   Objects.requireNonNullElse(settings.getGradleVmOptions(), ""),
+                                   "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"
+    );
+    settings.setGradleVmOptions(options);
   }
 
   protected Boolean isWarningsAllowed() {
@@ -569,6 +589,14 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     GradleSettings.getInstance(myProject).setServiceDirectoryPath(gradleUserHome);
   }
 
+  protected void resetGradleUserHomeIfNeeded() {
+    if (!originalGradleUserHome.equals(getGradleUserHome())) {
+      String normalizedOldGradleUserHome = originalGradleUserHome.normalize().toString();
+      String canonicalOldGradleUserHome = FileUtil.toCanonicalPath(normalizedOldGradleUserHome);
+      GradleSettings.getInstance(myProject).setServiceDirectoryPath(canonicalOldGradleUserHome);
+    }
+  }
+
   @Nullable
   private static File findGradleDistributionInCache(String gradleCachedFolderName) {
     Path pathToGradleWrapper = StartParameter.DEFAULT_GRADLE_USER_HOME.toPath().resolve("wrapper/dists/" + gradleCachedFolderName);
@@ -577,5 +605,9 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
       return gradleWrapperFile;
     }
     return null;
+  }
+
+  protected String convertToLibraryName(VirtualFile fsRoot) {
+    return "Gradle: " + fsRoot.getName();
   }
 }

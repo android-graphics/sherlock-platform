@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.refactoring.inline.codeInliner
 
 import com.intellij.openapi.util.Key
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline.Companion.PARAMETER_USAGE_KEY
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline.Companion.TYPE_PARAMETER_USAGE_KEY
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.resolve.ImportPath
 
 /**
  * Represents code to be inlined to replace usages of particular callable.
@@ -29,6 +30,7 @@ class CodeToInline(
         val PARAMETER_USAGE_KEY: Key<Name> = Key("PARAMETER_USAGE")
         val TYPE_PARAMETER_USAGE_KEY: Key<Name> = Key("TYPE_PARAMETER_USAGE")
         val SIDE_RECEIVER_USAGE_KEY: Key<Unit> = Key("SIDE_RECEIVER_USAGE")
+        val DELETE_RECEIVER_USAGE_KEY: Key<Unit> = Key("DELETE_RECEIVER_USAGE")
 
         // hack to fix Java resolve (KTIJ-245)
         val FAKE_SUPER_CALL_KEY: Key<Unit> = Key("FAKE_SUPER_CALL")

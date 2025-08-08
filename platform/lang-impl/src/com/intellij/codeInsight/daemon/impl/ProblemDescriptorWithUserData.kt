@@ -14,24 +14,36 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 
 val RELATED_LOCATIONS = Key.create<List<ProblemRelatedLocation>>("RELATED_LOCATIONS")
 val RELATED_PROBLEMS_ROOT_HASH = Key.create<String>("RELATED_PROBLEMS_ROOT_HASH")
 val RELATED_PROBLEMS_CHILD_HASH = Key.create<String>("RELATED_PROBLEMS_CHILD_HASH")
+val PROBLEM_DESCRIPTOR_TAG = Key.create<List<String>>("PROBLEM_DESCRIPTOR_TAG")
 
-class ProblemRelatedLocation(startElement: PsiElement,
-                             endElement: PsiElement,
-                             @InspectionMessage message: String) {
-  private val problemDescriptor: ProblemDescriptorBase = ProblemDescriptorBase(
-    startElement,
-    endElement,
-    message,
-    emptyArray(),
-    ProblemHighlightType.INFORMATION,
-    false,
-    null,
-    false,
-    false)
+class ProblemRelatedLocation {
+  private val problemDescriptor: ProblemDescriptorBase
+
+  constructor(startElement: PsiElement,
+              endElement: PsiElement,
+              @InspectionMessage message: String) {
+    problemDescriptor = ProblemDescriptorBase(
+      startElement,
+      endElement,
+      message,
+      emptyArray(),
+      ProblemHighlightType.INFORMATION,
+      false,
+      null,
+      false,
+      false
+    )
+  }
+
+  @ApiStatus.Internal
+  constructor(problemDescriptor: ProblemDescriptorBase) {
+    this.problemDescriptor = problemDescriptor
+  }
 
   fun getRange(): TextRange? = problemDescriptor.textRange
   fun getPsiElement(): PsiElement? = problemDescriptor.psiElement
@@ -47,6 +59,7 @@ fun ProblemDescriptor.withRelatedLocations(locations: List<ProblemRelatedLocatio
   withUserData { putUserData(RELATED_LOCATIONS, locations) }
 
 
+@ApiStatus.Internal
 class ProblemDescriptorBaseWithUserData(
   private val pd: ProblemDescriptorBase,
   userData: UserDataHolderEx
@@ -95,6 +108,7 @@ class ProblemDescriptorBaseWithUserData(
   override fun getDescriptorForPreview(target: PsiFile): ProblemDescriptor = pd.getDescriptorForPreview(target)
 }
 
+@ApiStatus.Internal
 class ProblemDescriptorWithUserData(private val pd: ProblemDescriptor, userData: UserDataHolderEx)
   : ProblemDescriptor by pd, UserDataHolderEx by userData {
 
@@ -103,6 +117,7 @@ class ProblemDescriptorWithUserData(private val pd: ProblemDescriptor, userData:
   override fun getDescriptorForPreview(target: PsiFile): ProblemDescriptor = pd.getDescriptorForPreview(target)
 }
 
+@ApiStatus.Internal
 class CommonProblemDescriptorWithUserData(cpd: CommonProblemDescriptor, userData: UserDataHolderEx) :
   CommonProblemDescriptor by cpd, UserDataHolderEx by userData
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.actions.impl;
 
 import com.intellij.diff.tools.util.DiffDataKeys;
@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,17 +27,19 @@ import java.util.List;
 import java.util.function.Supplier;
 
 public class SetEditorSettingsActionGroup extends ActionGroup implements DumbAware {
-  @NotNull private final TextDiffSettings myTextSettings;
+  private final @NotNull TextDiffSettings myTextSettings;
   private final @NotNull Supplier<? extends List<? extends Editor>> myEditors;
-  @Nullable private SyncScrollSupport.Support mySyncScrollSupport;
+  private @Nullable SyncScrollSupport.Support mySyncScrollSupport;
 
   protected final AnAction @NotNull [] myActions;
 
+  @ApiStatus.Internal
   public SetEditorSettingsActionGroup(@NotNull TextDiffSettings settings,
                                       @NotNull List<? extends Editor> editors) {
     this(settings, () -> editors);
   }
 
+  @ApiStatus.Internal
   public SetEditorSettingsActionGroup(@NotNull TextDiffSettings settings,
                                       @NotNull Supplier<? extends List<? extends Editor>> editors) {
     super(DiffBundle.message("editor.settings"), null, AllIcons.General.GearPlain);
@@ -273,7 +276,7 @@ public class SetEditorSettingsActionGroup extends ActionGroup implements DumbAwa
     }
 
     private class OptionAction extends ToggleAction implements DumbAware {
-      @NotNull private final HighlightingLevel myLayer;
+      private final @NotNull HighlightingLevel myLayer;
 
       OptionAction(@NotNull HighlightingLevel layer) {
         super(layer.getText(), null, layer.getIcon());
@@ -317,7 +320,7 @@ public class SetEditorSettingsActionGroup extends ActionGroup implements DumbAwa
     }
 
     private class OptionAction extends ToggleAction implements DumbAware {
-      @NotNull private final BreadcrumbsPlacement myOption;
+      private final @NotNull BreadcrumbsPlacement myOption;
 
       OptionAction(@NotNull BreadcrumbsPlacement option) {
         ActionUtil.copyFrom(this, option.getActionId());

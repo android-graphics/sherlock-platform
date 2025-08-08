@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.kotlin;
 
 import com.intellij.openapi.diagnostic.Logger;
-import kotlinx.metadata.KmClass;
-import kotlinx.metadata.KmDeclarationContainer;
-import kotlinx.metadata.KmTypeAlias;
+import kotlin.metadata.KmClass;
+import kotlin.metadata.KmDeclarationContainer;
+import kotlin.metadata.KmTypeAlias;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.java.*;
 
@@ -18,7 +18,7 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.dependency.kotlin.KotlinSourceOnlyDifferentiateStrategy");
 
   @Override
-  public boolean differentiate(DifferentiateContext context, Iterable<Node<?, ?>> nodesBefore, Iterable<Node<?, ?>> nodesAfter) {
+  public boolean differentiate(DifferentiateContext context, Iterable<Node<?, ?>> nodesBefore, Iterable<Node<?, ?>> nodesAfter, Iterable<Node<?, ?>> nodesWithErrors) {
     Delta delta = context.getDelta();
     if (!delta.isSourceOnly()) {
       return true;
@@ -26,12 +26,12 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
 
     Graph graph = context.getGraph();
     Set<NodeSource> baseSources = delta.getBaseSources();
-    Utils present = new Utils(context.getGraph(), context.getParams().belongsToCurrentCompilationChunk());
+    Utils present = new Utils(context.getGraph(), DifferentiateParameters.affectableInCurrentChunk(context.getParams()));
     Set<Usage> affectedUsages = new HashSet<>();
+    Set<JvmNodeReferenceID> affectedSealedClasses = new HashSet<>();
     Set<JvmNodeReferenceID> baseNodes = new HashSet<>();
 
     for (JvmClass cls : flat(map(baseSources, s -> graph.getNodes(s, JvmClass.class)))) {
-
       if (!cls.isPrivate()) {
         for (ReferenceID id : present.withAllSubclasses(cls.getReferenceID())) {
           if (id instanceof JvmNodeReferenceID) {
@@ -45,6 +45,7 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
       if (container != null) {
         if (container instanceof KmClass) {
           baseNodes.add(cls.getReferenceID());
+          appendSealedClasses(cls, present, affectedSealedClasses);
         }
         
         List<KmTypeAlias> typeAliases = container.getTypeAliases();
@@ -75,20 +76,14 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
     }
 
     // sealed classes check should be done on both base and affected sources
-    Set<JvmNodeReferenceID> affectedSealedClasses = new HashSet<>();
-    for (JvmClass cls : flat(map(flat(baseSources, affectedSources), s -> graph.getNodes(s, JvmClass.class)))) {
-      KmDeclarationContainer container = KJvmUtils.getDeclarationContainer(cls);
-      if (container instanceof KmClass) {
-        Iterable<ReferenceID> candidates = unique(flat(map(KJvmUtils.withAllSubclassesIfSealed(present, cls.getReferenceID()), present::allDirectSupertypes)));
-        for (JvmClass sealedCls : filter(flat(map(candidates, id -> present.getNodes(id, JvmClass.class))), KJvmUtils::isSealed)) {
-          affectedSealedClasses.add(sealedCls.getReferenceID());
-        }
-      }
+    for (JvmClass cls : flat(map(affectedSources, s -> graph.getNodes(s, JvmClass.class)))) {
+      appendSealedClasses(cls, present, affectedSealedClasses);
     }
 
     for (NodeSource src : affectedSources) {
       context.affectNodeSource(src);
     }
+
     if (!affectedSealedClasses.isEmpty()) {
       for (NodeSource src : filter(unique(flat(map(flat(map(affectedSealedClasses, id -> KJvmUtils.withAllSubclassesIfSealed(present, id))), present::getNodeSources))), s -> !baseSources.contains(s))) {
         LOG.debug("Sealed class or subclass of a sealed class is about to be recompiled => sealed classes should be always compiled together with all its subclasses. Affecting  " + src);
@@ -97,6 +92,16 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
     }
 
     return true;
+  }
+
+  private static void appendSealedClasses(JvmClass cls, Utils utils, Set<JvmNodeReferenceID> acc) {
+    KmDeclarationContainer container = KJvmUtils.getDeclarationContainer(cls);
+    if (container instanceof KmClass) {
+      Iterable<ReferenceID> candidates = unique(flat(map(KJvmUtils.withAllSubclassesIfSealed(utils, cls.getReferenceID()), utils::allDirectSupertypes)));
+      for (JvmClass sealedCls : filter(flat(map(candidates, id -> utils.getNodes(id, JvmClass.class))), KJvmUtils::isSealed)) {
+        acc.add(sealedCls.getReferenceID());
+      }
+    }
   }
 
 }

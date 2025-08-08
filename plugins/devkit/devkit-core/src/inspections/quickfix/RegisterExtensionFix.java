@@ -45,9 +45,8 @@ public class RegisterExtensionFix extends IntentionAndQuickFixAction {
     myEPCandidates = epCandidates;
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return DevKitBundle.message("register.extension.fix.name");
   }
 
@@ -56,9 +55,8 @@ public class RegisterExtensionFix extends IntentionAndQuickFixAction {
     return getText();
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
@@ -83,7 +81,7 @@ public class RegisterExtensionFix extends IntentionAndQuickFixAction {
       final BaseListPopupStep<ExtensionPointCandidate> popupStep =
         new BaseListPopupStep<>(DevKitBundle.message("register.extension.fix.popup.title"), new ArrayList<>(myEPCandidates)) {
           @Override
-          public PopupStep onChosen(ExtensionPointCandidate selectedValue, boolean finalChoice) {
+          public PopupStep<?> onChosen(ExtensionPointCandidate selectedValue, boolean finalChoice) {
             registerExtension(element, selectedValue, extensionClass);
             return FINAL_CHOICE;
           }
@@ -119,8 +117,7 @@ public class RegisterExtensionFix extends IntentionAndQuickFixAction {
     PsiNavigateUtil.navigate(navTarget);
   }
 
-  @NonNls
-  private static final Map<String, String> KEY_MAP = Map.of(
+  private static final @NonNls Map<String, String> KEY_MAP = Map.of(
     KeyedFactoryEPBean.class.getName(), "key",
     KeyedLazyInstanceEP.class.getName(), "key",
     FileTypeExtensionPoint.class.getName(), "filetype",

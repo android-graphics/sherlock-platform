@@ -16,11 +16,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.TriConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
@@ -98,7 +96,7 @@ class HighlightVisitorRunner {
                       int chunkSize,
                       boolean myUpdateAll,
                       @NotNull Supplier<? extends HighlightInfoHolder> infoHolderProducer,
-                      @NotNull TriConsumer<Object, ? super PsiElement, ? super List<? extends HighlightInfo>> resultSink) {
+                      @NotNull ResultSink resultSink) {
     List<? extends VisitorInfo> visitorInfos = ContainerUtil.map(visitors, v -> new VisitorInfo(v, new HashSet<>(), infoHolderProducer.get()));
     // first, run all visitors in parallel on all visible elements, then run all visitors in parallel on all invisible elements
     List<PsiElement> elements = ContainerUtil.concat(elements1, elements2);
@@ -151,13 +149,16 @@ class HighlightVisitorRunner {
                                                  @NotNull PsiElement fakePsiElement,
                                                  @NotNull HighlightInfoHolder holder,
                                                  @NotNull HighlightVisitor visitor,
-                                                 @NotNull TriConsumer<Object, ? super PsiElement, ? super List<? extends HighlightInfo>> resultSink) {
+                                                 @NotNull ResultSink resultSink) {
     List<HighlightInfo> newInfos;
     if (holder.size() > fromIndex) {
       newInfos = new ArrayList<>(holder.size() - fromIndex);
+      Class<? extends @NotNull HighlightVisitor> toolId = visitor.getClass();
       for (int i = fromIndex; i < holder.size(); i++) {
         HighlightInfo info = holder.get(i);
         newInfos.add(info);
+        info.toolId = toolId;
+        info.setGroup(HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP);
       }
     }
     else {
@@ -175,7 +176,7 @@ class HighlightVisitorRunner {
                                   @NotNull HighlightInfoHolder holder,
                                   boolean forceHighlightParents,
                                   @NotNull HighlightVisitor visitor,
-                                  @NotNull TriConsumer<Object, ? super PsiElement, ? super List<? extends HighlightInfo>> resultSink) {
+                                  @NotNull ResultSink resultSink) {
     boolean failed = false;
     int nextLimit = chunkSize;
     List<HighlightInfo> infos = new ArrayList<>();
@@ -193,7 +194,10 @@ class HighlightVisitorRunner {
         try {
           visitor.visit(psiElement);
         }
-        catch (ProcessCanceledException | IndexNotReadyException | AlreadyDisposedException e) {
+        catch (IndexNotReadyException e) {
+          break;
+        }
+        catch (ProcessCanceledException e) {
           throw e;
         }
         catch (Exception e) {
@@ -213,11 +217,8 @@ class HighlightVisitorRunner {
             }
             //myErrorFound = true;
           }
-          // if this highlight info range is contained inside the current element range we are visiting
-          // that means we can clear this highlight as soon as visitors won't produce any highlights during visiting the same range next time.
-          // We also know that we can remove a syntax error element.
-          info.setVisitingTextRange(psiFile, psiFile.getFileDocument(), ranges.getLong(i));
           info.toolId = toolId;
+          info.setGroup(HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP);
           infos.add(info);
         }
       }

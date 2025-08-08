@@ -43,6 +43,7 @@ import git4idea.util.GitPreservingProcess;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -64,7 +65,7 @@ public final class GitUpdateProcess {
   private final @NotNull Project myProject;
   private final @NotNull Git myGit;
 
-  private final @NotNull List<GitRepository> myRepositories;
+  private final @Unmodifiable @NotNull List<GitRepository> myRepositories;
   private final @NotNull Map<GitRepository, GitSubmodule> mySubmodulesInDetachedHead;
   private final boolean myCheckRebaseOverMergeProblem;
   private final boolean myCheckForTrackedBranchExistence;
@@ -78,7 +79,7 @@ public final class GitUpdateProcess {
 
   public GitUpdateProcess(@NotNull Project project,
                           @Nullable ProgressIndicator progressIndicator,
-                          @NotNull Collection<GitRepository> repositories,
+                          @NotNull @Unmodifiable Collection<GitRepository> repositories,
                           @NotNull UpdatedFiles updatedFiles,
                           @Nullable Map<GitRepository, GitBranchPair> updateConfig,
                           boolean checkRebaseOverMergeProblem,
@@ -96,15 +97,20 @@ public final class GitUpdateProcess {
 
     GitUtil.updateRepositories(repositories);
 
-    mySubmodulesInDetachedHead = new LinkedHashMap<>();
-    for (GitRepository repository : myRepositories) {
-      if (!repository.isOnBranch()) {
-        GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
-        if (submodule != null) {
-          mySubmodulesInDetachedHead.put(repository, submodule);
-        }
+    mySubmodulesInDetachedHead = collectDetachedSubmodules(myRepositories);
+  }
+
+  private static @NotNull Map<GitRepository, GitSubmodule> collectDetachedSubmodules(@NotNull @Unmodifiable List<GitRepository> repositories) {
+    Map<GitRepository, GitSubmodule> detachedSubmodules = new LinkedHashMap<>();
+    for (GitRepository repository : repositories) {
+      if (repository.isOnBranch()) continue;
+
+      GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
+      if (submodule != null) {
+        detachedSubmodules.put(repository, submodule);
       }
     }
+    return detachedSubmodules;
   }
 
   /**
@@ -306,10 +312,14 @@ public final class GitUpdateProcess {
       }
     }
 
-    for (GitRepository repository : mySubmodulesInDetachedHead.keySet()) {
-      GitUpdater updater = new GitSubmoduleUpdater(myProject, myGit, mySubmodulesInDetachedHead.get(repository).getParent(), repository,
+    for (GitSubmodule submodule : mySubmodulesInDetachedHead.values()) {
+      GitRepository submoduleRepository = submodule.getRepository();
+      GitRepository parentRepository = submodule.getParent();
+      if (mySubmodulesInDetachedHead.containsKey(parentRepository)) continue; // updated recursively
+
+      GitUpdater updater = new GitSubmoduleUpdater(myProject, myGit, parentRepository, submoduleRepository,
                                                    myProgressIndicator, myUpdatedFiles);
-      updaters.put(repository, updater);
+      updaters.put(submoduleRepository, updater);
     }
 
     LOG.info("Updaters: " + updaters);

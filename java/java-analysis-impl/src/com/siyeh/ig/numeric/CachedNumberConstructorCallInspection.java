@@ -29,7 +29,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,8 +53,7 @@ public final class CachedNumberConstructorCallInspection extends BaseInspection 
   public boolean reportOnlyWhenDeprecated = true;
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "cached.number.constructor.call.problem.descriptor");
   }
@@ -96,14 +94,12 @@ public final class CachedNumberConstructorCallInspection extends BaseInspection 
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", className + ".valueOf()");
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", ".valueOf()");
     }
 
@@ -134,7 +130,7 @@ public final class CachedNumberConstructorCallInspection extends BaseInspection 
       if (!cachedNumberTypes.contains(canonicalText)) {
         return;
       }
-      final PsiClass aClass = ClassUtils.getContainingClass(expression);
+      final PsiClass aClass = PsiUtil.getContainingClass(expression);
       if (aClass != null) {
         String qualifiedName = aClass.getQualifiedName();
         if (qualifiedName != null && cachedNumberTypes.contains(qualifiedName)) {

@@ -16,31 +16,31 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
+import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.CondaEnvResult
+import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.InputData
+import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.Source
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
-import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.PythonSdkUpdater
-import com.jetbrains.python.sdk.add.PyAddNewCondaEnvFromFilePanel
-import com.jetbrains.python.sdk.add.target.conda.createCondaSdkAlongWithNewEnv
-import com.jetbrains.python.sdk.add.target.conda.suggestCondaPath
-import com.jetbrains.python.sdk.associateWithModule
+import com.jetbrains.python.sdk.add.v1.PyAddNewCondaEnvFromFilePanel
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
-import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.CondaEnvResult
-import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.InputData
-import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.Source
+import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
+import com.jetbrains.python.sdk.conda.suggestCondaPath
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.flavors.listCondaEnvironments
+import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.sdk.showSdkExecutionException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -54,16 +54,15 @@ import javax.swing.JPanel
  * This class only supports local, not remote target.
  * TODO: Support remote target (ie \\wsl)
  */
-class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
-
+internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
   private val LOGGER = Logger.getInstance(PyEnvironmentYmlSdkConfiguration::class.java)
-
+  @RequiresBackgroundThread
   override fun createAndAddSdkForConfigurator(module: Module): Sdk? = createAndAddSdk(module, Source.CONFIGURATOR)
 
   override fun getIntention(module: Module): @IntentionName String? = getEnvironmentYml(module)?.let {
     PyCharmCommunityCustomizationBundle.message("sdk.create.condaenv.suggestion")
   }
-
+  @RequiresBackgroundThread
   override fun createAndAddSdkForInspection(module: Module): Sdk? = createAndAddSdk(module, Source.INSPECTION)
 
   private fun getEnvironmentYml(module: Module) = PyUtil.findInRoots(module, "environment.yml")
@@ -120,15 +119,12 @@ class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
     val basePath = module.basePath
 
     ApplicationManager.getApplication().invokeAndWait {
-      if (shared) {
-        LOGGER.debug("Adding conda environment: ${sdk.homePath}")
-      }
-      else {
-        LOGGER.debug("Adding associated conda environment: ${sdk.homePath}, $basePath")
+      LOGGER.debug("Adding conda environment: ${sdk.homePath}, associated ${shared}}, module path ${basePath})")
+      if (!shared) {
+        sdk.setAssociationToModule(module)
       }
 
       SdkConfigurationUtil.addSdk(sdk)
-      if (!shared) sdk.associateWithModule(module, null)
     }
 
     return sdk

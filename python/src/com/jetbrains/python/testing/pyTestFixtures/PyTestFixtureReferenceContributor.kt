@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing.pyTestFixtures
 
 import com.intellij.openapi.util.Ref
@@ -20,14 +20,11 @@ class PyTestFixtureReference(pyElement: PsiElement, fixture: PyTestFixture, priv
   private val functionRef = fixture.function?.let { SmartPointerManager.createPointer(it) }
   private val resolveRef = fixture.resolveTarget?.let { SmartPointerManager.createPointer(it) }
 
-  @Deprecated("Use new constructor")
-  constructor(namedParameter: PyNamedParameter, fixture: PyTestFixture) : this(namedParameter, fixture, null)
+  override fun resolve(): PyElement? = resolveRef?.element
 
-  override fun resolve() = resolveRef?.element
+  fun getFunction(): PyFunction? = functionRef?.element
 
-  fun getFunction() = functionRef?.element
-
-  override fun isSoft() = importElement == null
+  override fun isSoft(): Boolean = importElement == null
 
   override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> {
     val resultList = mutableListOf<ResolveResult>()

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
@@ -22,6 +22,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.ProgressRunner;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.DumbService;
@@ -437,25 +439,43 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
   private void configureProject(@NotNull Path projectPath, @NotNull Project project, @NotNull AnalysisScope scope) {
 
-    for (CommandLineInspectionProjectConfigurator configurator : CommandLineInspectionProjectConfigurator.EP_NAME.getIterable()) {
+    List<CommandLineInspectionProjectConfigurator> configurators = CommandLineInspectionProjectConfigurator.EP_NAME.getExtensionList();
+    List<CommandLineInspectionProjectConfigurator> enabledConfigurators =
+      isActivityBasedConfigurationEnabled()
+      ? ContainerUtil.filter(configurators, configurator -> configurator.shouldBeInvokedAlongsideActivityTracking())
+      : configurators;
+
+    for (CommandLineInspectionProjectConfigurator configurator : enabledConfigurators) {
       CommandLineInspectionProjectConfigurator.ConfiguratorContext context = configuratorContext(projectPath, scope);
       configurator.preConfigureProject(project, context);
     }
 
-    for (CommandLineInspectionProjectConfigurator configurator : CommandLineInspectionProjectConfigurator.EP_NAME.getIterable()) {
+    for (CommandLineInspectionProjectConfigurator configurator : enabledConfigurators) {
       CommandLineInspectionProjectConfigurator.ConfiguratorContext context = configuratorContext(projectPath, scope);
       if (configurator.isApplicable(context)) {
         configurator.configureProject(project, context);
       }
     }
+
+
     ApplicationManager.getApplication().invokeAndWait(() -> PatchProjectUtil.patchProject(project));
+
+    if (isActivityBasedConfigurationEnabled()) {
+      ActivityUtilsKt.configureProjectWithActivities(project, configuratorContext(projectPath, scope));
+    }
+
     waitForInvokeLaterActivities();
   }
 
   private static void waitForInvokeLaterActivities() {
     for (int i = 0; i < 3; i++) {
-      ApplicationManager.getApplication().invokeAndWait(() -> { }, ModalityState.any());
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+      }, ModalityState.any());
     }
+  }
+
+  private static boolean isActivityBasedConfigurationEnabled() {
+    return Registry.is("ide.inspect.activity.based.inspections.enabled", false);
   }
 
   private void runAnalysis(Project project,
@@ -495,7 +515,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
         List<File> results = ContainerUtil.map(inspectionsResults, Path::toFile);
         reportConverter.convert(resultsDataPath.toString(), myOutPath, context.getTools(),
                                 results);
-        InspectResultsConsumer.runConsumers(context.getTools(), results, project);
+        InspectResultsConsumerEP.runConsumers(context.getTools(), results, project);
         if (myOutPath != null) {
           reportConverter.projectData(project, Paths.get(myOutPath).resolve(PROJECT_STRUCTURE_DIR));
         }
@@ -665,19 +685,27 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
                                 @NotNull AnalysisScope scope,
                                 @NotNull Path resultsDataPath,
                                 @NotNull List<? super Path> inspectionsResults) {
-    ProgressManager.getInstance().runProcess(() -> {
-      configureProject(projectPath, project, scope);
+    Task.Backgroundable task = new Task.Backgroundable(project, "") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        configureProject(projectPath, project, scope);
 
-      if (!GlobalInspectionContextUtil.canRunInspections(project, false, () -> {
-      })) {
-        onFailure(InspectionsBundle.message("inspection.application.cannot.configure.project.to.run.inspections"));
+        if (!GlobalInspectionContextUtil.canRunInspections(project, false, () -> {
+        })) {
+          onFailure(InspectionsBundle.message("inspection.application.cannot.configure.project.to.run.inspections"));
+        }
+        context.launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
+        reportMessage(1, "\n" + InspectionsBundle.message("inspection.capitalized.done") + "\n");
+        if (!myErrorCodeRequired) {
+          closeProject(project);
+        }
       }
-      context.launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
-      reportMessage(1, "\n" + InspectionsBundle.message("inspection.capitalized.done") + "\n");
-      if (!myErrorCodeRequired) {
-        closeProject(project);
-      }
-    }, createProgressIndicator());
+    };
+    new ProgressRunner<>(task)
+      .onThread(ProgressRunner.ThreadToUse.POOLED)
+      .withProgress(createProgressIndicator())
+      .sync()
+      .submitAndGet();
   }
 
   private @NotNull ProgressIndicatorBase createProgressIndicator() {
@@ -761,7 +789,8 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       public @Nullable InspectionProfileImpl loadProfileByPath(@NotNull String profilePath) {
         InspectionProfileImpl inspectionProfileFromYaml = tryLoadProfileFromYaml(profilePath,
                                                                                  InspectionToolRegistrar.getInstance(),
-                                                                                 (BaseInspectionProfileManager)InspectionProjectProfileManager.getInstance(project));
+                                                                                 (BaseInspectionProfileManager)InspectionProjectProfileManager.getInstance(
+                                                                                   project));
         if (inspectionProfileFromYaml != null) return inspectionProfileFromYaml;
 
         try {
@@ -910,7 +939,8 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       super.setText(text);
       if (text == null) return;
       switch (myVerboseLevel) {
-        case 0 -> { }
+        case 0 -> {
+        }
         case 1 -> {
           String prefix = getPrefix(text);
           if (prefix.equals(lastPrefix)) {

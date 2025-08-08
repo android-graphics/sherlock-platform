@@ -9,18 +9,16 @@ import com.intellij.ide.actions.JavaCreateTemplateInPackageAction
 import com.intellij.ide.fileTemplates.FileTemplate
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults
+import com.intellij.ide.fileTemplates.impl.BundledFileTemplate
 import com.intellij.ide.fileTemplates.ui.CreateFromTemplateDialog
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.project.DumbAware
@@ -29,22 +27,21 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.InputValidatorEx
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.util.IncorrectOperationException
-import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.base.projectStructure.*
+import org.jetbrains.kotlin.idea.base.projectStructure.NewKotlinFileHook
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.configuration.BuildSystemType
-import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
-import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
-import org.jetbrains.kotlin.idea.configuration.buildSystemType
 import org.jetbrains.kotlin.idea.statistics.KotlinCreateFileFUSCollector
 import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -53,7 +50,6 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import java.util.concurrent.Callable
 import javax.swing.Icon
 
 internal class NewKotlinFileAction : AbstractNewKotlinFileAction(), DumbAware {
@@ -97,7 +93,6 @@ internal class NewKotlinFileAction : AbstractNewKotlinFileAction(), DumbAware {
         builder
             .addKind(KotlinFileTemplate.Annotation)
             .addKind(KotlinFileTemplate.Script)
-            .addKind(KotlinFileTemplate.Worksheet)
             .addKind(KotlinFileTemplate.Object)
 
         builder.setValidator(NewKotlinFileNameValidator)
@@ -148,19 +143,10 @@ internal abstract class AbstractNewKotlinFileAction : CreateFileFromTemplateActi
         }
     }
 
-    override fun startInWriteAction() = false
+    override fun startInWriteAction(): Boolean = false
 
-    override fun createFileFromTemplate(name: String, template: FileTemplate, dir: PsiDirectory): PsiFile? {
-        val targetTemplate = if (KotlinFileTemplate.Worksheet.fileName != template.name) {
-            template
-        } else {
-            object : FileTemplate by template {
-                override fun getExtension(): String = KOTLIN_WORKSHEET_EXTENSION
-            }
-        }
-
-        return createFileFromTemplateWithStat(name, targetTemplate, dir)
-    }
+    override fun createFileFromTemplate(name: String, template: FileTemplate, dir: PsiDirectory): PsiFile? =
+        createFileFromTemplateWithStat(name, template, dir)
 }
 
 @ApiStatus.Internal
@@ -227,19 +213,24 @@ private fun List<String>.cutExistentPath(targetDir: PsiDirectory): List<String> 
 
 const val KOTLIN_WORKSHEET_EXTENSION: String = "ws.kts"
 
-private fun removeKotlinExtensionIfPresent(name: String): String = when {
-    name.endsWith(".$KOTLIN_WORKSHEET_EXTENSION") -> name.removeSuffix(".$KOTLIN_WORKSHEET_EXTENSION")
-    name.endsWith(".$STD_SCRIPT_SUFFIX") -> name.removeSuffix(".$STD_SCRIPT_SUFFIX")
-    name.endsWith(".${KotlinFileType.EXTENSION}") -> name.removeSuffix(".${KotlinFileType.EXTENSION}")
-    else -> name
-}
+private val KOTLIN_KNOWS_SUFFIXES = arrayOf(
+    ".$KOTLIN_WORKSHEET_EXTENSION",
+    ".gradle.$STD_SCRIPT_SUFFIX",
+    ".main.$STD_SCRIPT_SUFFIX",
+    ".$STD_SCRIPT_SUFFIX",
+    ".${KotlinFileType.EXTENSION}"
+)
+
+private fun removeKotlinExtensionIfPresent(name: String): String =
+    KOTLIN_KNOWS_SUFFIXES.firstOrNull { name.endsWith(it) }?.let { name.removeSuffix(it) } ?: name
 
 private fun createKotlinFileFromTemplate(dir: PsiDirectory, fileName: String, template: FileTemplate): PsiFile? {
     val project = dir.project
+    val extraExtension = template.name.substringAfterLast('.', "").takeIf { it.isNotEmpty() }?.let { ".$it" } ?: ""
     val className = fileName.substringBefore('.')
     val attributesDefaults = AttributesDefaults(className).withFixedName(true)
     val defaultProperties = FileTemplateManager.getInstance(project).defaultProperties.apply {
-        put(FileTemplate.ATTRIBUTE_FILE_NAME, fileName)
+        put(FileTemplate.ATTRIBUTE_FILE_NAME, fileName + extraExtension)
     }
     val element = try {
         CreateFromTemplateDialog(
@@ -262,15 +253,34 @@ private val FQNAME_SEPARATORS: CharArray = charArrayOf('/', '\\', '.')
 
 internal fun createFileFromTemplateWithStat(name: String, template: FileTemplate, dir: PsiDirectory): PsiFile? {
     KotlinJ2KOnboardingFUSCollector.logFirstKtFileCreated(dir.project) // implementation checks if it is actually the first
-    KotlinCreateFileFUSCollector.logFileTemplate(template.name)
+    KotlinCreateFileFUSCollector.logFileTemplate(template.correctName())
     return createKotlinFileFromTemplate(name, template, dir)
 }
 
+/*
+    Kotlin Script file templates have '.kts' extension instead of ".main.kts" or ".gradle.kts"
+    That leads to incorrect template naming such as 'Kotlin Script MainKts.main'
+    //TODO enumify template names
+ */
+private fun FileTemplate.correctName(): @NlsSafe String {
+    if (this !is BundledFileTemplate) return name
+    if (extension != "kts") return name
+
+    return when (qualifiedName) {
+        "Kotlin Script MainKts.main.kts" -> "Kotlin Script MainKts"
+        "Kotlin Script Gradle.gradle.kts" -> "Kotlin Script Gradle"
+        else -> name
+    }
+}
+
 fun createKotlinFileFromTemplate(name: String, template: FileTemplate, dir: PsiDirectory): PsiFile? {
-    val directorySeparators = when (template.name) {
+    val correctName = template.correctName()
+    val directorySeparators = when (correctName) {
         "Kotlin File" -> FILE_SEPARATORS
         "Kotlin Worksheet" -> FILE_SEPARATORS
         "Kotlin Script" -> FILE_SEPARATORS
+        "Kotlin Script Gradle" -> FILE_SEPARATORS
+        "Kotlin Script MainKts" -> FILE_SEPARATORS
         else -> FQNAME_SEPARATORS
     }
 
@@ -278,7 +288,12 @@ fun createKotlinFileFromTemplate(name: String, template: FileTemplate, dir: PsiD
 
     val service = DumbService.getInstance(dir.project)
     return service.computeWithAlternativeResolveEnabled<PsiFile?, Throwable> {
-        val adjustedDir = CreateTemplateInPackageAction.adjustDirectory(targetDir, JavaModuleSourceRootTypes.SOURCES)
+        val adjustedDir =
+            if (KotlinScriptFileTemplate.entries.any { it.fileName == correctName }) {
+                targetDir
+            } else {
+                CreateTemplateInPackageAction.adjustDirectory(targetDir, JavaModuleSourceRootTypes.SOURCES)
+            }
         val psiFile = createKotlinFileFromTemplate(adjustedDir, fileName, template)
         if (psiFile is KtFile) {
             val singleClass = psiFile.declarations.singleOrNull() as? KtClass
@@ -289,36 +304,20 @@ fun createKotlinFileFromTemplate(name: String, template: FileTemplate, dir: PsiD
             }
         }
         JavaCreateTemplateInPackageAction.setupJdk(adjustedDir, psiFile)
-        val module = ModuleUtil.findModuleForFile(psiFile) ?: return@computeWithAlternativeResolveEnabled psiFile
-
-        // Old JPS configurator logic
-        // TODO: Unify with other auto-configuration logic in NewKotlinFileConfigurationHook
-        val configurator = KotlinProjectConfigurator.EP_NAME.extensions.firstOrNull {
-            // Gradle is already covered by the auto-configuration feature in NewKotlinFileConfigurationHook
-            it.isApplicable(module) && module.buildSystemType != BuildSystemType.Gradle
-        }
-        if (configurator != null) {
-            ReadAction.nonBlocking(Callable {
-                configurator.getStatus(module.toModuleGroup()) == ConfigureKotlinStatus.CAN_BE_CONFIGURED
-            })
-                .inSmartMode(module.project)
-                .finishOnUiThread(ModalityState.nonModal()) {
-                    if (module.project.isDisposed) {
-                        return@finishOnUiThread
-                    }
-                    if (it) {
-                        configurator.configure(module.project, emptyList())
-                    }
-                }.submit(AppExecutorUtil.getAppExecutorService())
-        }
         psiFile
     }
 }
 
-internal fun CreateFileFromTemplateDialog.Builder.addKind(t: KotlinFileTemplate) =
+internal fun CreateFileFromTemplateDialog.Builder.addKind(t: KotlinTemplate) =
     addKind(t.title, t.icon, t.fileName)
 
-internal enum class KotlinFileTemplate(@NlsContexts.ListItem val title: String, val icon: Icon, val fileName: String) {
+internal interface KotlinTemplate {
+    val title: String
+    val icon: Icon
+    val fileName: String
+}
+
+internal enum class KotlinFileTemplate(@NlsContexts.ListItem override val title: String, override val icon: Icon, override val fileName: String): KotlinTemplate {
     Class(KotlinBundle.message("action.new.file.dialog.class.title"), KotlinIcons.CLASS, "Kotlin Class"),
     File(
         KotlinBundle.message("action.new.file.dialog.file.title"),
@@ -332,6 +331,5 @@ internal enum class KotlinFileTemplate(@NlsContexts.ListItem val title: String, 
     SealedClass(KotlinBundle.message("action.new.file.dialog.sealed.class.title"), KotlinIcons.CLASS, "Kotlin Sealed Class"),
     Annotation(KotlinBundle.message("action.new.file.dialog.annotation.title"), KotlinIcons.ANNOTATION, "Kotlin Annotation"),
     Script(KotlinBundle.message("action.new.script.name"), KotlinIcons.SCRIPT, "Kotlin Script"),
-    Worksheet(KotlinBundle.message("action.new.worksheet.name"), KotlinIcons.SCRIPT, "Kotlin Worksheet"),
     Object(KotlinBundle.message("action.new.file.dialog.object.title"), KotlinIcons.OBJECT, "Kotlin Object")
 }

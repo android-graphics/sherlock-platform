@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.icons.AllIcons;
@@ -39,7 +39,6 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XDropFrameHandler;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,12 +48,12 @@ import javax.swing.plaf.FontUIResource;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.xdebugger.impl.XDebuggerUtilImpl.wrapKeepEditorAreaFocusNavigatable;
 
-public class XDebuggerFramesList extends DebuggerFramesList implements DataProvider {
+public class XDebuggerFramesList extends DebuggerFramesList implements UiCompatibleDataProvider {
   private final Project myProject;
   private final FileColorsCache myFileColorsCache;
   private static final DataKey<XDebuggerFramesList> FRAMES_LIST = DataKey.create("FRAMES_LIST");
@@ -133,47 +132,32 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
   }
 
   @Override
-  public @Nullable Object getData(@NonNls @NotNull String dataId) {
-    if (FRAMES_LIST.is(dataId)) {
-      return this;
-    }
-    // Because of the overridden locationToIndex(), the default logic of retrieving the context menu point doesn't work.
-    // Here, were mimic the way PopupFactoryImpl.guessBestPopupLocation(JComponent) calculates it for JLists.
-    if (PlatformDataKeys.CONTEXT_MENU_POINT.is(dataId)) {
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(FRAMES_LIST, this);
+    {
+      // Because of the overridden locationToIndex(), the default logic of retrieving the context menu point doesn't work.
+      // Here, were mimic the way PopupFactoryImpl.guessBestPopupLocation(JComponent) calculates it for JLists.
       int index = getSelectedIndex();
-      if (index != -1) {
-        Rectangle cellBounds = getCellBounds(index, index);
-        if (cellBounds != null) {
-          Rectangle visibleRect = getVisibleRect();
-          return new Point(visibleRect.x + visibleRect.width / 4, cellBounds.y + cellBounds.height - 1);
-        }
-      }
-      return null;
-    }
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      XStackFrame frame = getSelectedFrame();
-      if (frame != null) {
-        return (DataProvider)realDataId -> getSlowData(frame, realDataId);
+      Rectangle cellBounds = index != -1 ? getCellBounds(index, index) : null;
+      if (cellBounds != null) {
+        Rectangle visibleRect = getVisibleRect();
+        sink.set(PlatformDataKeys.CONTEXT_MENU_POINT,
+                 new Point(visibleRect.x + visibleRect.width / 4, cellBounds.y + cellBounds.height - 1));
       }
     }
-    return null;
-  }
-
-  @Nullable
-  private Object getSlowData(@NotNull XStackFrame frame, @NonNls String dataId) {
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+    XStackFrame frame = getSelectedFrame();
+    if (frame == null) return;
+    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
       return getFrameNavigatable(frame, true);
-    }
-    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+    });
+    sink.lazy(CommonDataKeys.VIRTUAL_FILE, () -> {
       return getFile(frame);
-    }
-    if (CommonDataKeys.PSI_FILE.is(dataId)) {
+    });
+    sink.lazy(CommonDataKeys.PSI_FILE, () -> {
       VirtualFile file = getFile(frame);
-      if (file != null && file.isValid()) {
-        return PsiManager.getInstance(myProject).findFile(file);
-      }
-    }
-    return null;
+      return file != null && file.isValid() ?
+             PsiManager.getInstance(myProject).findFile(file) : null;
+    });
   }
 
   @SuppressWarnings("unchecked")
@@ -237,8 +221,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
     return position != null ? position.createNavigatable(myProject) : null;
   }
 
-  @Nullable
-  private static VirtualFile getFile(XStackFrame frame) {
+  private static @Nullable VirtualFile getFile(XStackFrame frame) {
     XSourcePosition position = frame.getSourcePosition();
     return position != null ? position.getFile() : null;
   }
@@ -260,15 +243,13 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
 
     XDebuggerGroupedFrameListRenderer() {
       super(new ListItemDescriptorAdapter() {
-        @Nullable
         @Override
-        public String getTextFor(Object value) {
+        public @Nullable String getTextFor(Object value) {
           return null;
         }
 
-        @Nullable
         @Override
-        public String getCaptionAboveOf(Object value) {
+        public @Nullable String getCaptionAboveOf(Object value) {
           return value instanceof ItemWithSeparatorAbove ? ((ItemWithSeparatorAbove)value).getCaptionAboveOf() : null;
         }
 
@@ -339,7 +320,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
     );
 
     @Override
-    protected void customizeCellRenderer(@NotNull final JList list,
+    protected void customizeCellRenderer(final @NotNull JList list,
                                          final Object value,
                                          final int index,
                                          final boolean selected,

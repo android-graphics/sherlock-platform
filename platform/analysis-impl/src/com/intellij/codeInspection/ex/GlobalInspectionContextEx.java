@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
@@ -21,8 +21,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,6 +61,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
 
   public GlobalInspectionContextEx(@NotNull Project project) { super(project); }
 
+  @RequiresBackgroundThread
   public void launchInspectionsOffline(@NotNull AnalysisScope scope,
                                        @NotNull Path outputPath,
                                        boolean runGlobalToolsOnly,
@@ -66,6 +69,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
     performInspectionsWithProgressAndExportResults(scope, runGlobalToolsOnly, true, outputPath, inspectionsResults);
   }
 
+  @RequiresBackgroundThread
   public void performInspectionsWithProgressAndExportResults(@NotNull AnalysisScope scope,
                                                              boolean runGlobalToolsOnly,
                                                              boolean isOfflineInspections,
@@ -319,7 +323,8 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
     return myProfile;
   }
 
-  void updateProfile(VirtualFile virtualFile, long millis) {
+  @ApiStatus.Internal
+  public void updateProfile(VirtualFile virtualFile, long millis) {
     if (myProfile != null) {
       Path path = Paths.get(virtualFile.getPath());
       myProfile.merge(path, millis, Long::sum);

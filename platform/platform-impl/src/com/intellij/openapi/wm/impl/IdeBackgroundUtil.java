@@ -1,11 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -16,6 +14,7 @@ import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
+import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.Strings;
@@ -94,7 +93,7 @@ public final class IdeBackgroundUtil {
       }
     }
     Component glassPane = rootPane == null ? null : rootPane.getGlassPane();
-    PainterHelper helper = glassPane instanceof IdeGlassPaneImpl ? ((IdeGlassPaneImpl)glassPane).getNamedPainters$intellij_platform_ide_impl(paintersName) : null;
+    PainterHelper helper = glassPane instanceof IdeGlassPaneImpl ? ((IdeGlassPaneImpl)glassPane).getNamedPainters(paintersName) : null;
     if (helper == null || !helper.needsRepaint()) {
       return MyGraphics.unwrap(g);
     }
@@ -102,11 +101,11 @@ public final class IdeBackgroundUtil {
   }
 
   static void initEditorPainters(@NotNull IdeGlassPaneImpl glassPane) {
-    PainterHelper.initWallpaperPainter(EDITOR_PROP, glassPane.getNamedPainters$intellij_platform_ide_impl(EDITOR_PROP));
+    PainterHelper.initWallpaperPainter(EDITOR_PROP, glassPane.getNamedPainters(EDITOR_PROP));
   }
 
   static void initFramePainters(@NotNull IdeGlassPaneImpl glassPane) {
-    PainterHelper painters = glassPane.getNamedPainters$intellij_platform_ide_impl(FRAME_PROP);
+    PainterHelper painters = glassPane.getNamedPainters(FRAME_PROP);
     PainterHelper.initWallpaperPainter(FRAME_PROP, painters);
 
     painters.addPainter(new AbstractPainter() {
@@ -153,6 +152,39 @@ public final class IdeBackgroundUtil {
                                                         Disposable disposable) {
     PainterHelper paintersHelper = new PainterHelper(root);
     paintersHelper.addPainter(PainterHelper.newImagePainter(image, fill, anchor, alpha, insets), root);
+    createTemporaryBackgroundTransform(root, paintersHelper, disposable);
+  }
+
+  /**
+   * Allows painting anything as a background for component and its children
+   */
+  @ApiStatus.Experimental
+  public static void createTemporaryBackgroundTransform(JComponent root,
+                                                        Painter painter,
+                                                        Disposable disposable) {
+    PainterHelper paintersHelper = new PainterHelper(root);
+    // In order not to expose MyGraphics class, we need to have a delegate that unwraps MyGraphics to Graphics2D
+    paintersHelper.addPainter(new Painter() {
+      @Override
+      public boolean needsRepaint() {
+        return painter.needsRepaint();
+      }
+
+      @Override
+      public void paint(Component component, Graphics2D g) {
+        painter.paint(component, MyGraphics.unwrap(g));
+      }
+
+      @Override
+      public void addListener(@NotNull Listener listener) {
+        painter.addListener(listener);
+      }
+
+      @Override
+      public void removeListener(Listener listener) {
+        painter.removeListener(listener);
+      }
+    }, root);
     createTemporaryBackgroundTransform(root, paintersHelper, disposable);
   }
 
@@ -399,9 +431,8 @@ public final class IdeBackgroundUtil {
 
     private static @Nullable Editor obtainEditor(@Nullable JComponent c) {
       Component view = c instanceof JViewport ? ((JViewport)c).getView() : c;
-      //noinspection CastConflictsWithInstanceof
-      return view instanceof EditorComponentImpl ? ((EditorComponentImpl)view).getEditor() :
-             view instanceof EditorGutterComponentEx ? CommonDataKeys.EDITOR.getData((DataProvider)view) :
+      return view instanceof EditorComponentImpl o ? o.getEditor() :
+             view instanceof EditorGutterComponentEx o ? o.getEditor() :
              null;
     }
 

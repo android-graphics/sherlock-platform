@@ -5,28 +5,26 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructureBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinResolveScopeEnlarger
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LanguageSettingsOwner
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleOrigin
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 import org.jetbrains.kotlin.idea.base.scripting.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.scripting.getPlatform
 import org.jetbrains.kotlin.idea.base.scripting.getTargetPlatformVersion
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptSearchScope
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
@@ -37,6 +35,7 @@ import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 
+@OptIn(K1ModeProjectStructureApi::class)
 data class ScriptModuleInfo(
     override val project: Project,
     val scriptFile: VirtualFile,
@@ -45,7 +44,8 @@ data class ScriptModuleInfo(
     override val moduleOrigin: ModuleOrigin
         get() = ModuleOrigin.OTHER
 
-    override val name: Name = Name.special("<script ${scriptFile.name} ${scriptDefinition.name}>")
+    override val name: Name
+        get() = Name.special("<script ${scriptFile.name} ${scriptDefinition.name}>")
 
     override val displayedName: String
         get() = KotlinBaseProjectStructureBundle.message("script.0.1", scriptFile.presentableName, scriptDefinition.name)
@@ -68,7 +68,7 @@ data class ScriptModuleInfo(
                         )
                         basicScriptScope.union(scope)
                     }
-                } ?: GlobalSearchScope.EMPTY_SCOPE
+                } ?: basicScriptScope
         }
     }
 
@@ -80,26 +80,21 @@ data class ScriptModuleInfo(
 
     private val _dependencies: List<IdeaModuleInfo> by lazy {
         mutableSetOf<IdeaModuleInfo>(this).apply {
+            val scriptDependentLibraries = ScriptAdditionalIdeaDependenciesProvider.getRelatedLibraries(scriptFile, project)
+            val libraryInfoCache = LibraryInfoCache.getInstance(project)
+            scriptDependentLibraries.forEach {
+                addAll(libraryInfoCache[it])
+            }
+
+            val scriptDependentModules = ScriptAdditionalIdeaDependenciesProvider.getRelatedModules(scriptFile, project)
+            scriptDependentModules.forEach {
+                addAll(it.sourceModuleInfos)
+            }
+
             if (KotlinPluginModeProvider.isK1Mode()) {
-                val scriptDependentModules = ScriptAdditionalIdeaDependenciesProvider.getRelatedModules(scriptFile, project)
-                scriptDependentModules.forEach {
-                    addAll(it.sourceModuleInfos)
-                }
-
-                val scriptDependentLibraries = ScriptAdditionalIdeaDependenciesProvider.getRelatedLibraries(scriptFile, project)
-                val libraryInfoCache = LibraryInfoCache.getInstance(project)
-                scriptDependentLibraries.forEach {
-                    addAll(libraryInfoCache[it])
-                }
-
                 val dependenciesInfo = ScriptDependenciesInfo.ForFile(project, scriptFile, scriptDefinition)
                 add(dependenciesInfo)
             } else {
-                val scriptDependentModules = ScriptAdditionalIdeaDependenciesProvider.getRelatedModules(scriptFile, project)
-                scriptDependentModules.forEach {
-                    addAll(it.sourceModuleInfos)
-                }
-
                 scriptFile.scriptLibraryDependencies(project).forEach(::add)
             }
 
@@ -139,19 +134,32 @@ data class ScriptModuleInfo(
         get() = getTargetPlatformVersion(project, scriptFile, scriptDefinition)
 }
 
-internal fun VirtualFile.workspaceEntities(project: Project, snapshot: EntityStorage): Sequence<WorkspaceEntity> {
+@ApiStatus.Internal
+fun VirtualFile.workspaceEntities(project: Project, snapshot: EntityStorage): Sequence<WorkspaceEntity> {
     val virtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
     val virtualFileUrl = toVirtualFileUrl(virtualFileUrlManager)
-    return snapshot.getVirtualFileUrlIndex()
-        .findEntitiesByUrl(virtualFileUrl)
+    return snapshot.getVirtualFileUrlIndex().findEntitiesByUrl(virtualFileUrl)
 }
 
-fun VirtualFile.scriptLibraryDependencies(project: Project): Sequence<LibraryInfo> {
-    val snapshot = WorkspaceModel.getInstance(project).currentSnapshot
+@ApiStatus.Internal
+fun VirtualFile.scriptModuleEntity(project: Project, snapshot: EntityStorage): ModuleEntity? {
+    val virtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
+    val virtualFileUrl = toVirtualFileUrl(virtualFileUrlManager)
+    return snapshot.getVirtualFileUrlIndex().findEntitiesByUrl(virtualFileUrl).firstNotNullOfOrNull { it as? ModuleEntity }
+}
 
-    return workspaceEntities(project, snapshot).filterIsInstance<LibraryEntity>().flatMap {
-        val library = it.findLibraryBridge(snapshot) ?: return@flatMap emptyList()
-        val libraryInfos = LibraryInfoCache.getInstance(project)[library]
-        libraryInfos
-    }
+@K1ModeProjectStructureApi
+internal fun VirtualFile.scriptLibraryDependencies(project: Project): Sequence<LibraryInfo> {
+    val storage = WorkspaceModel.getInstance(project).currentSnapshot
+    val cache = LibraryInfoCache.getInstance(project)
+
+    val dependencies = scriptModuleEntity(project, storage)?.dependencies ?: emptyList()
+    return dependencies.asSequence()
+        .mapNotNull {
+            (it as? LibraryDependency)?.library?.resolve(storage)
+        }.mapNotNull {
+            storage.libraryMap.getDataByEntity(it)
+        }.flatMap {
+            cache[it]
+        }
 }

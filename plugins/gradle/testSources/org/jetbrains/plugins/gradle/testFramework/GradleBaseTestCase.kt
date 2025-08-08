@@ -7,8 +7,10 @@ import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase
 import com.intellij.testFramework.common.runAll
 import org.gradle.util.GradleVersion
+import org.jetbrains.jps.model.java.JdkVersionDetector.JdkVersionInfo
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleTestApplication
 import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleTestFixtureImpl
@@ -26,6 +28,7 @@ abstract class GradleBaseTestCase {
 
   val testRoot: VirtualFile get() = gradleTestFixture.testRoot
   val gradleJvm: String get() = gradleTestFixture.gradleJvm
+  val gradleJvmInfo: JdkVersionInfo get() = gradleTestFixture.gradleJvmInfo
   val gradleVersion: GradleVersion get() = gradleTestFixture.gradleVersion
 
   @BeforeEach
@@ -41,6 +44,7 @@ abstract class GradleBaseTestCase {
     testDisposable = Disposer.newDisposable()
     AutoImportProjectTracker.enableAutoReloadInTests(testDisposable)
     AutoImportProjectTracker.enableAsyncAutoReloadInTests(testDisposable)
+    ExternalSystemImportingTestCase.installExecutionOutputPrinter(testDisposable)
   }
 
   @AfterEach
@@ -51,8 +55,8 @@ abstract class GradleBaseTestCase {
     )
   }
 
-  suspend fun openProject(relativePath: String, wait: Boolean = true): Project {
-    return gradleTestFixture.openProject(relativePath, wait)
+  suspend fun openProject(relativePath: String, numProjectSyncs: Int = 1): Project {
+    return gradleTestFixture.openProject(relativePath, numProjectSyncs)
   }
 
   suspend fun linkProject(project: Project, relativePath: String) {
@@ -63,8 +67,12 @@ abstract class GradleBaseTestCase {
     gradleTestFixture.reloadProject(project, relativePath, configure)
   }
 
-  suspend fun <R> awaitAnyGradleProjectReload(wait: Boolean = true, action: suspend () -> R): R {
-    return gradleTestFixture.awaitAnyGradleProjectReload(wait, action)
+  suspend fun awaitOpenProjectConfiguration(numProjectSyncs: Int = 1, openProject: suspend () -> Project): Project {
+    return gradleTestFixture.awaitOpenProjectConfiguration(numProjectSyncs, openProject)
+  }
+
+  suspend fun <R> awaitProjectConfiguration(project: Project, numProjectSyncs: Int = 1, action: suspend () -> R): R {
+    return gradleTestFixture.awaitProjectConfiguration(project, numProjectSyncs, action)
   }
 
   fun assertNotificationIsVisible(project: Project, isNotificationVisible: Boolean) {

@@ -39,10 +39,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -50,17 +47,15 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.ide.plugins.BrokenPluginFileKt.isBrokenPlugin;
 
-/**
- * @author Alexander Lobas
- */
+@ApiStatus.Internal
 public class MyPluginModel extends InstalledPluginsTableModel implements PluginEnabler {
   private static final Logger LOG = Logger.getInstance(MyPluginModel.class);
   private static final Boolean FINISH_DYNAMIC_INSTALLATION_WITHOUT_UI =
@@ -395,6 +390,11 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     IdeaPluginDescriptor actionDescriptor = isUpdate ? updateDescriptor : descriptor;
     if (!PluginManagerMain.checkThirdPartyPluginsAllowed(List.of(actionDescriptor))) {
       return;
+    }
+
+    var customization = PluginInstallationCustomization.findPluginInstallationCustomization(descriptor.getPluginId());
+    if (customization != null) {
+      customization.beforeInstallOrUpdate(isUpdate);
     }
 
     if (myInstallSource != null) {
@@ -1108,7 +1108,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     }
   }
 
-  void uninstallAndUpdateUi(@NotNull IdeaPluginDescriptor descriptor) {
+  @ApiStatus.Internal
+  public void uninstallAndUpdateUi(@NotNull IdeaPluginDescriptor descriptor) {
     boolean needRestartForUninstall = performUninstall((IdeaPluginDescriptorImpl)descriptor);
     needRestart |= descriptor.isEnabled() && needRestartForUninstall;
 
@@ -1351,7 +1352,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     return CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins();
   }
 
-  public static @NotNull Set<String> getPluginNames(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
+  public static @Unmodifiable @NotNull Set<String> getPluginNames(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
     return ContainerUtil.map2Set(descriptors,
                                  IdeaPluginDescriptor::getName);
   }
@@ -1401,14 +1402,14 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     Icon icon = myIcons.get(key);
     if (icon == null) {
       icon = PluginLogo.getIcon(descriptor, big, error, disabled);
-      if (icon != PluginLogo.INSTANCE.getDefault$intellij_platform_ide_impl().getIcon(big, error, disabled)) {
+      if (icon != PluginLogo.INSTANCE.getDefault().getIcon(big, error, disabled)) {
         myIcons.put(key, icon);
       }
     }
     return icon;
   }
 
-  private static @NotNull List<String> getDependenciesOnPlugins(@NotNull Project project) {
+  private static @Unmodifiable @NotNull List<String> getDependenciesOnPlugins(@NotNull Project project) {
     return ContainerUtil.map(ExternalDependenciesManager.getInstance(project).getDependencies(DependencyOnPlugin.class),
                              DependencyOnPlugin::getPluginId);
   }

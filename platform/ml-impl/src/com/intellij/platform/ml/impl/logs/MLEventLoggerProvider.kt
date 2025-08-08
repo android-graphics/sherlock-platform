@@ -21,7 +21,8 @@ class MLEventLoggerProvider : StatisticsEventLoggerProvider(
   sendFrequencyMs = TimeUnit.MINUTES.toMillis(10),
   maxFileSizeInBytes = 100 * 1024,
   sendLogsOnIdeClose = true,
-  isCharsEscapingRequired = false
+  isCharsEscapingRequired = false,
+  useDefaultRecorderId = true
 ) {
 
   /**
@@ -29,7 +30,7 @@ class MLEventLoggerProvider : StatisticsEventLoggerProvider(
    */
   override fun isRecordEnabled(): Boolean {
     val app = ApplicationManager.getApplication()
-    return !app.isUnitTestMode && app.isEAP &&
+    return !app.isUnitTestMode &&
            StatisticsUploadAssistant.isCollectAllowed() &&
            (ApplicationInfo.getInstance() == null || PlatformUtils.isJetBrainsProduct())
   }

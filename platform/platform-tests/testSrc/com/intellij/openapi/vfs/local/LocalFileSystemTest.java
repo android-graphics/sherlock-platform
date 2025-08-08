@@ -12,11 +12,11 @@ import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystemMarker;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
@@ -29,9 +29,10 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.messages.MessageBusConnection;
@@ -45,6 +46,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.text.Normalizer;
 import java.util.*;
 
 import static com.intellij.openapi.util.io.IoTestUtil.*;
@@ -516,16 +518,18 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testNoMoreFakeRoots() {
+  public void testNoMoreFakeRoots() throws Exception {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
-    try {
-      ManagingFS.getInstance().findRoot("", myFS);
-      fail("should fail by assertion in PersistentFsImpl.findRoot()");
-    }
-    catch (Throwable t) {
-      String message = t.getMessage();
-      assertTrue(message, message.startsWith("Invalid root"));
-    }
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      try {
+        ManagingFS.getInstance().findRoot("", myFS);
+        fail("should fail by assertion in PersistentFsImpl.findRoot()");
+      }
+      catch (Throwable t) {
+        String message = t.getMessage();
+        assertTrue(message, message.startsWith("Invalid root"));
+      }
+    });
   }
 
   @Test
@@ -556,7 +560,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     assertEquals(2, topDir.getChildren().length);
 
     try {
-      sourceFile.copy(this, parentDir, ".");
+      WriteAction.runAndWait(() -> sourceFile.copy(this, parentDir, ".") );
       fail("Copying a file into a '.' path should have failed");
     }
     catch (IOException ignored) {
@@ -900,7 +904,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   @Test
   public void testFindFileByUrlPerformance() {
     VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
-    PerformanceTestUtil.newPerformanceTest("findFileByUrl", () -> {
+    Benchmark.newBenchmark("findFileByUrl", () -> {
       for (int i=0; i<10_000_000;i++) {
         assertNull(virtualFileManager.findFileByUrl("temp://"));
       }
@@ -1006,7 +1010,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testFileContentWithAlmostTooLargeLength() throws IOException {
-    byte[] expectedContent = new byte[FileUtilRt.LARGE_FOR_CONTENT_LOADING];
+    byte[] expectedContent = new byte[FileSizeLimit.getDefaultContentLoadLimit()];
     Arrays.fill(expectedContent, (byte) 'a');
     File file = tempDir.newFile("test.txt");
     FileUtil.writeToFile(file, expectedContent);
@@ -1020,8 +1024,19 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     assumeTrue("Requires JRE 21+", JavaVersion.current().isAtLeast(21));
     var original = tempDir.newFile("original").toPath();
     var hardLink = Files.createLink(original.resolveSibling("hardLink"), original);
-    var lfs = LocalFileSystem.getInstance();
-    assertThat(lfs.refreshAndFindFileByNioFile(hardLink).getName()).isEqualTo(hardLink.getFileName().toString());
-    assertThat(lfs.refreshAndFindFileByNioFile(original).getName()).isEqualTo(original.getFileName().toString());
+    assertThat(myFS.refreshAndFindFileByNioFile(hardLink).getName()).isEqualTo(hardLink.getFileName().toString());
+    assertThat(myFS.refreshAndFindFileByNioFile(original).getName()).isEqualTo(original.getFileName().toString());
+  }
+
+  @Test
+  public void canonicallyCasedDecomposedName() {
+    assumeTrue("Requires JRE 21+", JavaVersion.current().isAtLeast(21));
+    @SuppressWarnings({"NonAsciiCharacters", "SpellCheckingInspection"}) var name = "schön";
+    var nfdName = Normalizer.normalize(name, Normalizer.Form.NFD);
+    var nfcName = Normalizer.normalize(name, Normalizer.Form.NFC);
+    var nfdFile = tempDir.newFile(nfdName).toPath();
+    var nfcFile = nfdFile.resolveSibling(nfcName);
+    assumeTrue("Filesystem does not support normalization", Files.exists(nfcFile));
+    assertThat(myFS.refreshAndFindFileByNioFile(nfcFile).getName()).isEqualTo(nfdName);
   }
 }

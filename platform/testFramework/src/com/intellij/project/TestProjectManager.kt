@@ -148,8 +148,8 @@ open class TestProjectManager : ProjectManagerImpl() {
     }
   }
 
-  override suspend fun instantiateProject(projectStoreBaseDir: Path, options: OpenProjectTask): ProjectImpl {
-    val project = super.instantiateProject(projectStoreBaseDir, options)
+  override suspend fun instantiateProject(projectStoreBaseDir: Path, projectName: String?, beforeInit: ((Project) -> Unit)?): ProjectImpl {
+    val project = super.instantiateProject(projectStoreBaseDir, projectName, beforeInit)
     totalCreatedProjectCount++
     trackProject(project)
     return project
@@ -278,6 +278,7 @@ private fun reportLeakedProjects(leakedProjects: Iterable<Project>) {
   val dumpPath = publishHeapDump(LEAKED_PROJECTS)
   LeakHunter.processLeaks(LeakHunter.allRoots(), ProjectImpl::class.java,
                           { hashCodes.contains(System.identityHashCode(it)) },
+                          null,
                           { leaked, backLink ->
                             val hashCode = System.identityHashCode(leaked)
                             message += LeakHunter.getLeakedObjectDetails(leaked, backLink, false)

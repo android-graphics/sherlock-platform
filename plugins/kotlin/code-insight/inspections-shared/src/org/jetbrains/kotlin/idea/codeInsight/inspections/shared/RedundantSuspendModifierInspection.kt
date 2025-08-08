@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.IntentionWrapper
@@ -25,12 +25,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.isInlinedArgument
 import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtClassLikeDeclaration
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.namedFunctionVisitor
+import org.jetbrains.kotlin.psi.*
 
 internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
@@ -40,14 +35,14 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
             if (function.hasModifier(KtTokens.OVERRIDE_KEYWORD) || function.hasModifier(KtTokens.ACTUAL_KEYWORD)) return
 
             analyze(function) {
-                val functionSymbol = function.getFunctionLikeSymbol() as? KaNamedFunctionSymbol ?: return
+                val functionSymbol = function.symbol as? KaNamedFunctionSymbol ?: return
                 if (functionSymbol.modality == KaSymbolModality.OPEN) return
 
                 if (function.hasSuspendOrUnresolvedCall()) return
 
                 holder.registerProblem(
                     suspendModifier, KotlinBundle.message("redundant.suspend.modifier"), IntentionWrapper(
-                        RemoveModifierFixBase(function, KtTokens.SUSPEND_KEYWORD, isRedundant = true).asIntention()
+                        RemoveModifierFixBase(function, KtTokens.SUSPEND_KEYWORD, isRedundant = true)
                     )
                 )
             }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -11,16 +11,19 @@ import org.jetbrains.annotations.Nullable;
 import org.yaml.snakeyaml.parser.ParserException;
 
 public abstract class InspectionProfileLoaderBase<T extends InspectionProfileImpl> implements InspectionProfileLoader<T> {
-  protected Project project;
+  private final Project project;
 
   public InspectionProfileLoaderBase(Project project) {
     this.project = project;
   }
 
-  @Nullable
-  protected InspectionProfileImpl tryLoadProfileFromYaml(@NotNull String profilePath,
-                                                         @NotNull InspectionToolsSupplier inspectionToolsSupplier,
-                                                         @NotNull BaseInspectionProfileManager profileManager) {
+  protected Project getProject() {
+    return project;
+  }
+
+  protected @Nullable InspectionProfileImpl tryLoadProfileFromYaml(@NotNull String profilePath,
+                                                                   @NotNull InspectionToolsSupplier inspectionToolsSupplier,
+                                                                   @NotNull BaseInspectionProfileManager profileManager) {
     if (!YamlInspectionProfileImpl.isYamlFile(profilePath)) {
       return null;
     }

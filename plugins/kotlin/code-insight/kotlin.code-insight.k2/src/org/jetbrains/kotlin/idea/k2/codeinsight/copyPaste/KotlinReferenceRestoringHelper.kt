@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaSymbolBasedReference
@@ -19,15 +18,13 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
+import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.castAll
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
-import kotlin.collections.flatMap
 
 internal object KotlinReferenceRestoringHelper {
     @OptIn(KaImplementationDetail::class)
@@ -38,7 +35,6 @@ internal object KotlinReferenceRestoringHelper {
             // delta between the source text offset and the offset in the text to be pasted
             val deltaBetweenStartOffsets = currentStartOffsetInPastedText - startOffset
 
-            @OptIn(KaAnalysisApiInternals::class)
             val elements = sourceFile.collectElementsOfTypeInRange<KtElement>(startOffset, endOffset)
                 .filterNot { it is KtSimpleNameExpression && !it.canBeUsedInImport() }
                 .filter { it.mainReference is KaSymbolBasedReference }
@@ -97,6 +93,8 @@ internal object KotlinReferenceRestoringHelper {
         // - ambiguity errors (if the source has an ambiguity error and candidates have the same `fqName`, import the `fqName` in question)
         val sourceSymbolsGroupedByFqName = sourceReference.getResolvedSymbolsGroupedByImportableFqName()
         if (sourceSymbolsGroupedByFqName.size > 1 && sourceReference !is KtMultiReference<*>) return@mapNotNull null
+
+        if (sourceElement is KtLabelReferenceExpression) return@mapNotNull null
 
         val isReferenceQualifiable = sourceSymbolsGroupedByFqName.values.singleOrNull()?.any { !it.isExtension } == true
 
@@ -179,13 +177,32 @@ internal object KotlinReferenceRestoringHelper {
         targetFqNames: Set<FqName>,
         targetShortNames: Set<Name>
     ): ReferenceToRestore? = when {
-        sourceFqName in targetFqNames -> null
+        sourceFqName in targetFqNames -> {
+            null
+        }
 
         // target reference is resolved to a symbol with different/with no fq-name, so we might need to add a qualifier instead of an import
         // TODO: maybe warn user if the reference is not qualifiable and adding an import affects other usages
-        isReferenceQualifiable && sourceFqName.shortName() in targetShortNames ->
+        isReferenceQualifiable && sourceFqName.shortName() in targetShortNames -> {
             ReferenceToBindToFqName(sourceFqName, targetReference as KtSimpleNameReference)
+        }
 
-        else -> ReferenceToImport(sourceFqName)
+        isAccessible(targetReference, sourceFqName) -> ReferenceToImport(sourceFqName)
+
+        else -> null
+    }
+
+    context(KaSession)
+    private fun isAccessible(
+        targetReference: KtReference,
+        sourceFqName: FqName
+    ): Boolean {
+        val importedReference =
+            KtPsiFactory.contextual(targetReference.element.containingFile, markGenerated = false)
+                .createImportDirective(ImportPath(sourceFqName, false))
+                .importedReference
+        val reference = importedReference?.getQualifiedElementSelector()?.mainReference ?: return false
+        val symbols = reference.resolveToSymbols()
+        return symbols.isNotEmpty()
     }
 }

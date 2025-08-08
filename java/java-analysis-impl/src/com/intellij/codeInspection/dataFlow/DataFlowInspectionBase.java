@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.dataFlow;
 
@@ -49,7 +49,7 @@ import java.util.function.Consumer;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool {
-  @NonNls private static final String SHORT_NAME = "DataFlowIssue";
+  private static final @NonNls String SHORT_NAME = "DataFlowIssue";
   public boolean SUGGEST_NULLABLE_ANNOTATIONS;
   public boolean TREAT_UNKNOWN_MEMBERS_AS_NULLABLE;
   public boolean IGNORE_ASSERT_STATEMENTS;
@@ -350,8 +350,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     });
   }
 
-  @Nullable
-  protected LocalQuickFix createDeleteLabelFix(PsiCaseLabelElement label) {
+  protected @Nullable LocalQuickFix createDeleteLabelFix(PsiCaseLabelElement label) {
     return null;
   }
 
@@ -665,9 +664,11 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
                                                            PsiExpression expression,
                                                            PsiExpression top, boolean alwaysNull) {
     PsiParameter parameter = MethodCallUtils.getParameterForArgument(top);
-    if (parameter != null && BaseIntentionAction.canModify(parameter) && AnnotationUtil.isAnnotatingApplicable(parameter)) {
+    if (parameter == null) return;
+    PsiModifierListOwner target = Objects.requireNonNullElse(JavaPsiRecordUtil.getComponentForCanonicalConstructorParameter(parameter), parameter);
+    if (BaseIntentionAction.canModify(target) && AnnotationUtil.isAnnotatingApplicable(target)) {
       List<LocalQuickFix> fixes = createNPEFixes(expression, top, reporter.isOnTheFly(), alwaysNull);
-      fixes.add(AddAnnotationPsiFix.createAddNullableFix(parameter));
+      fixes.add(AddAnnotationPsiFix.createAddNullableFix(target));
       reporter.registerProblem(expression, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
   }
@@ -764,7 +765,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     if (method == null) return;
     NullableNotNullManager manager = NullableNotNullManager.getInstance(method.getProject());
     NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(method);
-    if (info == null) info = DfaPsiUtil.getTypeNullabilityInfo(PsiTypesUtil.getMethodReturnType(block));
+    if (info == null || info.isInferred()) info = DfaPsiUtil.getTypeNullabilityInfo(PsiTypesUtil.getMethodReturnType(block));
     PsiAnnotation anno = info == null ? null : info.getAnnotation();
     Nullability nullability = info == null ? Nullability.UNKNOWN : info.getNullability();
     PsiType returnType = method.getReturnType();

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +19,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
                                                layoutCustomizer: ((BaseLayout) -> Unit) = {}) {
   val layout = PlatformLayout()
 
-  layout.withModules(listOf(
+  layout.withModules(sequenceOf(
     "intellij.platform.util",
     "intellij.platform.util.classLoader",
     "intellij.platform.util.base",
@@ -36,13 +36,13 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
   layout.withModule("intellij.platform.jps.build.launcher", "jps-launcher.jar")
 
   layout.withModule("intellij.platform.runtime.repository", "platform-runtime-repository.jar")
-  layout.withModules(listOf(
+  layout.withModules(sequenceOf(
     "intellij.platform.jps.model",
     "intellij.platform.jps.model.impl",
     "intellij.platform.jps.model.serialization",
   ).map { ModuleItem(moduleName = it, relativeOutputFile = "jps-model.jar", reason = null) })
 
-  layout.withModules(listOf(
+  layout.withModules(sequenceOf(
     "intellij.java.guiForms.rt",
     "intellij.java.guiForms.compiler",
     "intellij.java.compiler.instrumentationUtil",
@@ -76,10 +76,33 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
   layout.withModule("intellij.space.java.jps", "space-java-jps.jar")
 
   for (it in listOf(
-    "jna", "OroMatcher", "ASM", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
-    "netty-codec-http", "lz4-java", "commons-codec", "commons-logging", "http-client", "slf4j-api", "plexus-utils",
-    "jetbrains-annotations", "gson", "jps-javac-extension", "fastutil-min", "kotlin-stdlib",
-    "commons-lang3", "maven-resolver-provider", "netty-buffer", "aalto-xml", "caffeine", "jetbrains.kotlinx.metadata.jvm"
+    "jna",
+    "OroMatcher",
+    "ASM",
+    "protobuf",
+    "cli-parser",
+    "Log4J",
+    "jgoodies-forms",
+    "Eclipse",
+    "netty-jps",
+    "lz4-java",
+    "commons-codec",
+    "commons-logging",
+    "http-client",
+    "slf4j-api",
+    "plexus-utils",
+    "jetbrains-annotations",
+    "gson",
+    "jps-javac-extension",
+    "fastutil-min",
+    "kotlin-stdlib",
+    "commons-lang3",
+    "maven-resolver-provider",
+    "aalto-xml",
+    "caffeine",
+    "mvstore",
+    "kotlin-metadata",
+    "hash4j"
   )) {
     layout.withProjectLibrary(it, LibraryPackMode.STANDALONE_MERGED)
   }

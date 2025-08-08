@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards.archetype
 
-import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.REGULAR_MATCHED_ATTRIBUTES
+import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.Companion.REGULAR_MATCHED_ATTRIBUTES
 import com.intellij.execution.util.setEmptyState
 import com.intellij.execution.util.setVisibleRowCount
 import com.intellij.icons.AllIcons
@@ -10,6 +10,7 @@ import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.javaBuildSystemData
 import com.intellij.ide.starters.local.StandardAssetsProvider
+import com.intellij.ide.util.projectWizard.ProjectConfigurator
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
@@ -47,7 +48,7 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JList
 
-class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
+internal class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
   override val id: String = "MavenArchetype"
 
   override val name: String = MavenWizardBundle.message("maven.new.project.wizard.archetype.generator.name")
@@ -97,6 +98,8 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     private lateinit var archetypeVersionComboBox: TextCompletionComboBox<String>
     private lateinit var archetypeDescriptorTable: PropertiesTable
     private lateinit var archetypeDescriptorPanel: JComponent
+
+    private val moduleBuilder = MavenJavaModuleBuilder()
 
     init {
       catalogItemProperty.afterChange { if (isAutoReloadArchetypeModel) reloadArchetypes() }
@@ -318,7 +321,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     }
 
     override fun setupProject(project: Project) {
-      linkMavenProject(project, MavenJavaModuleBuilder()) { builder ->
+      linkMavenProject(project, moduleBuilder) { builder ->
         builder.archetype = MavenArchetype(
           archetypeItem.groupId,
           archetypeItem.artifactId,
@@ -339,6 +342,10 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
           putAll(archetypeDescriptor)
         }
       }
+    }
+
+    override fun createProjectConfigurator(): ProjectConfigurator? {
+      return moduleBuilder.createProjectConfigurator()
     }
   }
 

@@ -13,6 +13,9 @@
     As an experiment, some portion of users will also have it enabled in the All tab.</i>
   ]]></description>
 
+  <dependencies>
+    <plugin id="com.intellij.modules.json"/>
+  </dependencies>
   <content>
     <module name="intellij.searchEverywhereMl.typos"/>
     <module name="intellij.searchEverywhereMl.ranking.ext"/>
@@ -20,11 +23,6 @@
     <module name="intellij.searchEverywhereMl.ranking.java"/>
     <module name="intellij.searchEverywhereMl.ranking.yaml"/>
     <module name="intellij.searchEverywhereMl.ranking.vcs"/>
-    <module name="intellij.searchEverywhereMl.semantics"/>
-    <module name="intellij.searchEverywhereMl.semantics.java"/>
-    <module name="intellij.searchEverywhereMl.semantics.kotlin"/>
-    <module name="intellij.searchEverywhereMl.semantics.python"/>
-    <module name="intellij.searchEverywhereMl.semantics.testCommands"/>
   </content>
 
   <resource-bundle>messages.searchEverywhereMlCoreBundle</resource-bundle>
@@ -51,6 +49,9 @@
     <registryKey defaultValue="false"
                  description="When enabled ML experiments to order All tab items won't be performed"
                  key="search.everywhere.force.disable.experiment.all.ml"/>
+    <registryKey defaultValue="false"
+                 description="When true, ML experiments with predicting essential contributors won't be performed"
+                 key="search.everywhere.force.disable.experiment.essential.contributors.ml"/>
 
 
     <advancedSetting default="true" id="searcheverywhere.ml.sort.action"
@@ -84,6 +85,10 @@
 
     <extensionPoint qualifiedName="com.intellij.searchEverywhereMl.itemSelectedListener"
                     interface="com.intellij.searchEverywhereMl.SearchEverywhereItemSelectedListener"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.searchEverywhereMl.textEmbeddingProvider"
+                    interface="com.intellij.searchEverywhereMl.TextEmbeddingProvider"
                     dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

@@ -2,18 +2,21 @@
 package com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects
 
 import com.intellij.CommonBundle
+import com.intellij.featureStatistics.fusCollectors.WslUsagesCollector
 import com.intellij.ide.RecentProjectMetaInfo
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.TaskInfo
-import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
+import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.CloneableProjectItem
@@ -21,10 +24,11 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.messages.Topic
 import com.intellij.util.messages.Topic.AppLevel
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.SystemIndependent
-import java.util.*
+import java.nio.file.Path
 
 @Service(Level.APP)
 class CloneableProjectsService {
@@ -36,10 +40,11 @@ class CloneableProjectsService {
     val progressIndicator = CloneableProjectProgressIndicator(taskInfo)
     val cloneableProject = CloneableProject(projectPath, taskInfo, progressIndicator, CloneStatus.PROGRESS)
     addCloneableProject(cloneableProject)
+    WslUsagesCollector.beforeProjectCreated(Path.of(projectPath), cloneTask)
 
     ApplicationManager.getApplication().executeOnPooledThread {
       ProgressManager.getInstance().runProcess(Runnable {
-        val activity = VcsCloneCollector.cloneStarted()
+        val activity = VcsCloneCollector.cloneStarted(taskInfo)
         val cloneStatus: CloneStatus = try {
           cloneTask.run(progressIndicator)
         }
@@ -50,7 +55,7 @@ class CloneableProjectsService {
           logger<CloneableProjectsService>().error(exception)
           CloneStatus.FAILURE
         }
-        VcsCloneCollector.cloneFinished(activity, cloneStatus)
+        VcsCloneCollector.cloneFinished(activity, cloneStatus, taskInfo)
 
         when (cloneStatus) {
           CloneStatus.SUCCESS -> onSuccess(cloneableProject)
@@ -171,7 +176,7 @@ class CloneableProjectsService {
     CANCEL
   }
 
-  class CloneTaskInfo(
+  open class CloneTaskInfo(
     private val title: @NlsContexts.ProgressTitle String,
     private val cancelTooltipText: @Nls String,
     val actionTitle: @Nls String,
@@ -179,22 +184,25 @@ class CloneableProjectsService {
     val failedTitle: @Nls String,
     val canceledTitle: @Nls String,
     val stopTitle: @Nls String,
-    val stopDescription: @Nls String
+    val stopDescription: @Nls String,
   ) : TaskInfo {
     override fun getTitle(): String = title
     override fun getCancelText(): String = CommonBundle.getCancelButtonText()
     override fun getCancelTooltipText(): String = cancelTooltipText
     override fun isCancellable(): Boolean = true
+
+    @ApiStatus.Internal
+    open fun getActivityData(): List<EventPair<*>> = emptyList()
   }
 
   data class CloneableProject(
     val projectPath: @SystemIndependent String,
     val cloneTaskInfo: CloneTaskInfo,
     val progressIndicator: ProgressIndicatorEx,
-    var cloneStatus: CloneStatus
+    var cloneStatus: CloneStatus,
   )
 
-  private class CloneableProjectProgressIndicator(cloneTaskInfo: CloneTaskInfo) : AbstractProgressIndicatorExBase() {
+  private class CloneableProjectProgressIndicator(cloneTaskInfo: CloneTaskInfo) : ProgressIndicatorBase() {
     init {
       setOwnerTask(cloneTaskInfo)
     }

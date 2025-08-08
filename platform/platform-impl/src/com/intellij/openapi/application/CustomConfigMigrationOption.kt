@@ -3,6 +3,7 @@ package com.intellij.openapi.application
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.NioFiles
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.File
 import java.io.IOException
@@ -25,6 +26,7 @@ private val log = logger<CustomConfigMigrationOption>()
  * properties intellij.first.ide.session intellij.config.imported.in.current.session
  * ```
  */
+@ApiStatus.Internal
 sealed class CustomConfigMigrationOption {
   @JvmOverloads
   @Throws(IOException::class)
@@ -50,6 +52,15 @@ sealed class CustomConfigMigrationOption {
     override fun getStringPresentation(): String = IMPORT_PREFIX + location.toString().replace(File.separatorChar, '/')
   }
 
+  /**
+   * A variant of [MigrateFromCustomPlace] which migrates plugins only. 
+   * This option is supposed to be used only to migrate plugins from a regular IDE to its frontend process. 
+   * It'll be removed when the frontend process starts loading plugins from the same directory as a regular IDE (RDCT-1738).  
+   */
+  class MigratePluginsFromCustomPlace(val configLocation: Path) : CustomConfigMigrationOption() {
+    override fun getStringPresentation(): String = MIGRATE_PLUGINS_PREFIX + configLocation.toString().replace(File.separatorChar, '/')
+  }
+
   class SetProperties(val properties: List<String>) : CustomConfigMigrationOption() {
     override fun getStringPresentation(): String = PROPERTIES_PREFIX + properties.joinToString(separator = " ")
   }
@@ -60,6 +71,7 @@ sealed class CustomConfigMigrationOption {
 
   companion object {
     private const val IMPORT_PREFIX = "import "
+    private const val MIGRATE_PLUGINS_PREFIX = "migrate-plugins "
     private const val PROPERTIES_PREFIX = "properties "
     private const val MERGE_CONFIGS_COMMAND = "merge-configs"
 
@@ -83,6 +95,10 @@ sealed class CustomConfigMigrationOption {
               return null
             }
             return MigrateFromCustomPlace(path)
+          }
+          
+          line.startsWith(MIGRATE_PLUGINS_PREFIX) -> {
+            return MigratePluginsFromCustomPlace(markerFile.fileSystem.getPath(line.removePrefix(MIGRATE_PLUGINS_PREFIX)))
           }
 
           line.startsWith(PROPERTIES_PREFIX) -> {
@@ -119,6 +135,6 @@ sealed class CustomConfigMigrationOption {
     @VisibleForTesting
     fun getCustomConfigMarkerFilePath(configDir: Path): Path = configDir.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)
     
-    internal fun doesCustomConfigMarkerExist(configDir: Path): Boolean = getCustomConfigMarkerFilePath(configDir).exists()
+    fun doesCustomConfigMarkerExist(configDir: Path): Boolean = getCustomConfigMarkerFilePath(configDir).exists()
   }
 }

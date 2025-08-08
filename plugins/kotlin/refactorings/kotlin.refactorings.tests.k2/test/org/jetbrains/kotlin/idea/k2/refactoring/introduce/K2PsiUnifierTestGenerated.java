@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce;
 
@@ -647,6 +647,11 @@ public abstract class K2PsiUnifierTestGenerated extends AbstractK2PsiUnifierTest
                 public void testMisc3() throws Exception {
                     runTest("../../idea/tests/testData/unifier/equivalence/expressions/misc/misc3.kt");
                 }
+
+                @TestMetadata("misc4.kt")
+                public void testMisc4() throws Exception {
+                    runTest("../../idea/tests/testData/unifier/equivalence/expressions/misc/misc4.kt");
+                }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
@@ -768,6 +773,11 @@ public abstract class K2PsiUnifierTestGenerated extends AbstractK2PsiUnifierTest
                 @TestMetadata("const.kt")
                 public void testConst() throws Exception {
                     runTest("../../idea/tests/testData/unifier/equivalence/expressions/const.kt");
+                }
+
+                @TestMetadata("constDifferentlySpelled.kt")
+                public void testConstDifferentlySpelled() throws Exception {
+                    runTest("../../idea/tests/testData/unifier/equivalence/expressions/constDifferentlySpelled.kt");
                 }
 
                 @TestMetadata("importedObjectMethod.kt")

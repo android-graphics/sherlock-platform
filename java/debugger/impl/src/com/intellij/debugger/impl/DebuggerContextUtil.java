@@ -1,20 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.SuspendManagerUtil;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
@@ -24,12 +20,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.function.Consumer;
+import java.util.Objects;
 import java.util.function.Function;
 
 public final class DebuggerContextUtil {
@@ -39,7 +33,7 @@ public final class DebuggerContextUtil {
 
     final DebuggerSession session = context.getDebuggerSession();
     if (session != null) {
-      session.getProcess().getManagerThread().schedule(new DebuggerCommandImpl(PrioritizedTask.Priority.HIGH) {
+      Objects.requireNonNull(context.getManagerThread()).schedule(new DebuggerCommandImpl(PrioritizedTask.Priority.HIGH) {
         @Override
         protected void action() {
           SuspendContextImpl threadSuspendContext =
@@ -70,34 +64,9 @@ public final class DebuggerContextUtil {
                             DebuggerSession.Event.CONTEXT, null);
   }
 
-  @NotNull
-  public static DebuggerContextImpl createDebuggerContext(@NotNull DebuggerSession session, SuspendContextImpl suspendContext) {
+  public static @NotNull DebuggerContextImpl createDebuggerContext(@NotNull DebuggerSession session, SuspendContextImpl suspendContext) {
     return DebuggerContextImpl.createDebuggerContext(
       session, suspendContext, suspendContext != null ? suspendContext.getThread() : null, null);
-  }
-
-  @ApiStatus.Internal
-  public static void scheduleWithCorrectPausedDebuggerContext(@NotNull DebugProcessImpl debugProcess,
-                                                              @NotNull ThreadReferenceProxyImpl thread,
-                                                              @Nullable StackFrameProxyImpl frameProxy,
-                                                              @NotNull Consumer<@NotNull DebuggerContextImpl> action) {
-    SuspendContextImpl pausedContext = SuspendManagerUtil.getPausedSuspendingContext(debugProcess.getSuspendManager(), thread);
-    DebuggerContextImpl defaultDebuggerContext = debugProcess.getDebuggerContext();
-    if (pausedContext == defaultDebuggerContext.getSuspendContext() || pausedContext == null) {
-      action.accept(defaultDebuggerContext);
-    }
-    else {
-      debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(pausedContext) {
-        @Override
-        public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-          DebuggerContextImpl debuggerContext = DebuggerContextImpl.createDebuggerContext(
-            debugProcess.getSession(), pausedContext, thread, frameProxy
-          );
-          debuggerContext.initCaches();
-          action.accept(debuggerContext);
-        }
-      });
-    }
   }
 
   /**
@@ -127,7 +96,7 @@ public final class DebuggerContextUtil {
       if (debugSession == null) return null;
 
       final XSourcePosition position = debugSession.getCurrentPosition();
-      Editor editor = ((FileEditorManagerImpl)FileEditorManager.getInstance(file.getProject())).getSelectedTextEditor(true);
+      Editor editor = FileEditorManager.getInstance(file.getProject()).getSelectedTextEditor(true);
       if (editor == null || position == null || !position.getFile().equals(file.getOriginalFile().getVirtualFile())) return null;
 
       PsiMethod method = PsiTreeUtil.getParentOfType(PositionUtil.getContextElement(context), PsiMethod.class, false);

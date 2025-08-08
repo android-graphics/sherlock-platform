@@ -11,19 +11,15 @@ import com.intellij.codeInspection.dataFlow.types.DfReferenceType
 import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.RelationType
-import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.PsiTypes
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
+import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
-import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KtClassDef.Companion.classDef
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -109,6 +105,18 @@ private fun KaType.toDfTypeNotNullable(): DfType {
 }
 
 context(KaSession)
+internal fun KaVariableSymbol.toSpecialField(): SpecialField? {
+    if (this !is KaPropertySymbol) return null
+    val name = name.asString()
+    if (name != "size" && name != "length" && name != "ordinal") return null
+    val classSymbol = containingDeclaration as? KaNamedClassSymbol ?: return null
+    val field = SpecialField.fromQualifierType(classSymbol.defaultType.toDfType()) ?: return null
+    val expectedFieldName = if (field == SpecialField.ARRAY_LENGTH) "size" else field.toString()
+    if (name != expectedFieldName) return null
+    return field
+}
+
+context(KaSession)
 internal fun KtExpression.getKotlinType(): KaType? {
     var parent = this.parent
     if (parent is KtDotQualifiedExpression && parent.selectorExpression == this) {
@@ -182,19 +190,6 @@ internal fun mathOpFromAssignmentToken(token: IElementType): LongRangeBinOp? = w
     KtTokens.DIVEQ -> LongRangeBinOp.DIV
     KtTokens.PERCEQ -> LongRangeBinOp.MOD
     else -> null
-}
-
-context(KaSession)
-internal fun KaType.toPsiPrimitiveType(): PsiPrimitiveType = when ((this as? KaClassType)?.classId) {
-    DefaultTypeClassIds.BOOLEAN -> PsiTypes.booleanType()
-    DefaultTypeClassIds.BYTE -> PsiTypes.byteType()
-    DefaultTypeClassIds.CHAR -> PsiTypes.charType()
-    DefaultTypeClassIds.SHORT -> PsiTypes.shortType()
-    DefaultTypeClassIds.INT -> PsiTypes.intType()
-    DefaultTypeClassIds.LONG -> PsiTypes.longType()
-    DefaultTypeClassIds.FLOAT -> PsiTypes.floatType()
-    DefaultTypeClassIds.DOUBLE -> PsiTypes.doubleType()
-    else -> throw IllegalArgumentException("Not a primitive analog: $this")
 }
 
 context(KaSession)

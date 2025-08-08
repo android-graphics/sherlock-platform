@@ -1,21 +1,22 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashingStrategy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 import static com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl.getDirtyScopeHashingStrategy;
 
+@ApiStatus.Internal
 public final class VcsDirtyScopeMap {
   private final Map<VcsRoot, Set<FilePath>> myMap = new HashMap<>();
 
-  @NotNull
-  public Map<VcsRoot, Set<FilePath>> asMap() {
+  public @NotNull Map<VcsRoot, Set<FilePath>> asMap() {
     return myMap;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.resolve;
 
@@ -1015,6 +1015,11 @@ public abstract class FirReferenceResolveTestGenerated extends AbstractFirRefere
         @TestMetadata("TypeArgumentBeforeDot2.kt")
         public void testTypeArgumentBeforeDot2() throws Exception {
             runTest("../../idea/tests/testData/resolve/references/TypeArgumentBeforeDot2.kt");
+        }
+
+        @TestMetadata("TypeArgumentOfUndefinedCode.kt")
+        public void testTypeArgumentOfUndefinedCode() throws Exception {
+            runTest("../../idea/tests/testData/resolve/references/TypeArgumentOfUndefinedCode.kt");
         }
 
         @TestMetadata("TypeArgumentUnresolvedClass.kt")

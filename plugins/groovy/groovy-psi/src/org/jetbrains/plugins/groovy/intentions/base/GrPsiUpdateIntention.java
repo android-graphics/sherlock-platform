@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.base;
 
 import com.intellij.codeInspection.util.IntentionName;
@@ -12,10 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.utils.BoolUtils;
 
 import java.util.function.Supplier;
 
@@ -83,25 +81,11 @@ public abstract class GrPsiUpdateIntention implements ModCommandAction {
     return Presentation.of(getText(element));
   }
 
-  @NotNull
-  protected abstract PsiElementPredicate getElementPredicate();
+  protected abstract @NotNull PsiElementPredicate getElementPredicate();
 
   protected static void replaceExpressionWithNegatedExpressionString(@NotNull String newExpression, @NotNull GrExpression expression) throws
                                                                                                                                       IncorrectOperationException {
-    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
-
-    GrExpression expressionToReplace = expression;
-    final String expString;
-    if (BoolUtils.isNegated(expression)) {
-      expressionToReplace = BoolUtils.findNegation(expression);
-      expString = newExpression;
-    }
-    else {
-      expString = "!(" + newExpression + ')';
-    }
-    final GrExpression newCall = factory.createExpressionFromText(expString, expression.getContext());
-    assert expressionToReplace != null;
-    expressionToReplace.replaceWithExpression(newCall, true);
+    Intention.replaceExpressionWithNegatedExpressionString(newExpression, expression);
   }
   private String getPrefix() {
     final Class<? extends GrPsiUpdateIntention> aClass = getClass();
@@ -121,14 +105,12 @@ public abstract class GrPsiUpdateIntention implements ModCommandAction {
     return buffer.toString();
   }
 
-  @NotNull
-  public @IntentionName String getText(@NotNull PsiElement element) {
+  public @NotNull @IntentionName String getText(@NotNull PsiElement element) {
     return GroovyIntentionsBundle.message(getPrefix() + ".name");
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return GroovyIntentionsBundle.message(getPrefix() + ".family.name");
   }
 }

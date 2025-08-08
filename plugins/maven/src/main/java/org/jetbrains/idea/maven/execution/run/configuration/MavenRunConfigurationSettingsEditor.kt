@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution.run.configuration
 
 import com.intellij.compiler.options.CompileStepBeforeRun
@@ -50,10 +50,10 @@ import org.jetbrains.idea.maven.execution.run.configuration.MavenDistributionsIn
 import org.jetbrains.idea.maven.execution.run.configuration.MavenDistributionsInfo.Companion.asMavenHome
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.MavenServerUtil
+import org.jetbrains.idea.maven.utils.MavenEelUtil
 import org.jetbrains.idea.maven.utils.MavenUtil
-import org.jetbrains.idea.maven.utils.MavenWslUtil
 import java.awt.Component
-import java.io.File
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JCheckBox
 import javax.swing.JComponent
@@ -363,13 +363,13 @@ class MavenRunConfigurationSettingsEditor(
   private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addDistributionFragment() =
     addDistributionFragment(
       project,
-      MavenDistributionsInfo(),
+      MavenDistributionsInfo(project),
       { asDistributionInfo(generalSettingsOrDefault.mavenHomeType) },
       { generalSettingsOrDefault.mavenHomeType = it?.let(::asMavenHome) ?: BundledMaven3 }
     ).addValidation {
       val type = it.generalSettingsOrDefault.mavenHomeType
       if (type is MavenInSpecificPath) {
-        if (!MavenUtil.isValidMavenHome(File(type.mavenHome))) {
+        if (!MavenUtil.isValidMavenHome(Path.of(type.mavenHome))) {
           throw RuntimeConfigurationError(MavenConfigurableBundle.message("maven.run.configuration.distribution.invalid.home.error"))
         }
       }
@@ -495,16 +495,16 @@ class MavenRunConfigurationSettingsEditor(
         override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.user.settings.name")
         override val settingsGroup: String = MavenConfigurableBundle.message("maven.run.configuration.general.options.group")
 
-        override val fileChooserTitle: String = MavenConfigurableBundle.message("maven.run.configuration.user.settings.title")
-        override val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+        override val fileChooserDescriptor
+          get() = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withTitle(MavenConfigurableBundle.message("maven.run.configuration.user.settings.title"))
         override val fileChooserMacroFilter = FileChooserInfo.DIRECTORY_PATH
       },
       { generalSettingsOrDefault.userSettingsFile },
       { generalSettingsOrDefault.setUserSettingsFile(it) },
       {
         val mavenConfig = MavenProjectsManager.getInstance(project)?.generalSettings?.mavenConfig
-        val userSettings = MavenWslUtil.getUserSettings(project, "", mavenConfig)
-        getCanonicalPath(userSettings.path)
+        val userSettings = MavenEelUtil.getUserSettingsUnderModalProgress(project, "", mavenConfig)
+        getCanonicalPath(userSettings.toString())
       }
     )
 
@@ -520,8 +520,8 @@ class MavenRunConfigurationSettingsEditor(
       override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.local.repository.name")
       override val settingsGroup: String = MavenConfigurableBundle.message("maven.run.configuration.general.options.group")
 
-      override val fileChooserTitle: String = MavenConfigurableBundle.message("maven.run.configuration.local.repository.title")
-      override val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      override val fileChooserDescriptor
+        get() = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(MavenConfigurableBundle.message("maven.run.configuration.local.repository.title"))
       override val fileChooserMacroFilter = FileChooserInfo.DIRECTORY_PATH
     },
     { generalSettingsOrDefault.localRepository },
@@ -531,10 +531,10 @@ class MavenRunConfigurationSettingsEditor(
       val distributionInfo = distributionComponent.selectedDistribution
       val distribution = distributionInfo?.let(::asMavenHome) ?: BundledMaven3
       val userSettingsPath = getCanonicalPath(userSettingsComponent.text)
-      val userSettingsFile = MavenWslUtil.getUserSettings(project, userSettingsPath, mavenConfig)
-      val userSettings = getCanonicalPath(userSettingsFile.path)
-      val localRepository = MavenWslUtil.getLocalRepoForUserPreview(project, "", distribution, userSettings, mavenConfig)
-      getCanonicalPath(localRepository.path)
+      val userSettingsFile = MavenEelUtil.getUserSettingsUnderModalProgress(project, userSettingsPath, mavenConfig)
+      val userSettings = getCanonicalPath(userSettingsFile.toString())
+      val localRepository = MavenEelUtil.getLocalRepoForUserPreview(project, "", distribution, userSettings, mavenConfig)
+      getCanonicalPath(localRepository.toString())
     }
   )
 
@@ -563,8 +563,8 @@ class MavenRunConfigurationSettingsEditor(
         override val settingsGroup: String = MavenConfigurableBundle.message("maven.run.configuration.general.options.group")
         override val settingsHint: String? = null
         override val settingsActionHint: String = MavenConfigurableBundle.message("maven.run.configuration.multimoduledir.tooltip")
-        override val fileChooserTitle: String = MavenConfigurableBundle.message("maven.run.configuration.multimoduledir.title")
-        override val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+        override val fileChooserDescriptor
+          get() = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(MavenConfigurableBundle.message("maven.run.configuration.multimoduledir.title"))
         override val fileChooserMacroFilter = FileChooserInfo.DIRECTORY_PATH
       },
       { runnerParameters.multimoduleDir ?: "" },

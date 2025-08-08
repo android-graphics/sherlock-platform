@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.diagnostic.LoadingState;
@@ -14,7 +14,6 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,23 +29,37 @@ import java.util.Set;
  * @see #assertSlowOperationsAreAllowed()
  */
 public final class SlowOperations {
-  private static final Logger LOG = Logger.getInstance(SlowOperations.class);
+  private static final class Holder {
+    private static final Logger LOG = Logger.getInstance(SlowOperations.class);
+  }
 
   private static final String ERROR_EDT = "Slow operations are prohibited on EDT. See SlowOperations.assertSlowOperationsAreAllowed javadoc.";
   private static final String ERROR_RA = "Non-cancelable slow operations are prohibited inside read action. See SlowOperations.assertNonCancelableSlowOperationsAreAllowed javadoc.";
 
-  public static final String ACTION_UPDATE = "action.update";     // action update in menus, toolbars, and popups
-  public static final String ACTION_PERFORM = "action.perform";   // user triggered actions
-  public static final String KNOWN_ISSUE = "known-issues";        // known YT issue
-  public static final String GENERIC = "generic";                 // generic activity
+  /** Do not use. For Action System only */
+  @ApiStatus.Internal
+  public static final String ACTION_UPDATE = "action.update";
+  /** Mark entry-points to user-triggered actions. The assertion is suppressed for now. */
+  public static final String ACTION_PERFORM = "action.perform";
+  /** For muting noisy problems with YT tickets */
+  private static final String KNOWN_ISSUE = "known-issues";
+  /** @deprecated Do not use. It is a to-be-deleted no-op */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final String GENERIC = "generic";
 
-  public static final String FORCE_ASSERT = "  force assert  ";   // assertion is thrown even if disabled
-  public static final String FORCE_THROW = "  force throw  ";     // assertion is turned into PCE
-  public static final String RESET = "  reset  ";                 // resets the section stack in modal dialogs
+  /** Do not use. For Action System only. The assertion is thrown even if disabled */
+  @ApiStatus.Internal
+  public static final String FORCE_ASSERT = "  force assert  ";
+  /** Do not use. For Action System only. The assertion is turned into PCE */
+  @ApiStatus.Internal
+  public static final String FORCE_THROW = "  force throw  ";
+  /** Do not use. For Action System only. It resets the section stack in modal dialogs */
+  @ApiStatus.Internal
+  public static final String RESET = "  reset  ";
 
-  /**
-   * VM property, set to {@code true} if running in plugin development sandbox.
-   */
+  /** VM property, set to {@code true} if running in plugin development sandbox. */
+  @ApiStatus.Internal
   public static final String IDEA_PLUGIN_SANDBOX_MODE = "idea.plugin.in.sandbox.mode";
 
   private static int ourAlwaysAllow = -1;
@@ -61,27 +74,21 @@ public final class SlowOperations {
    * If you get an exception from this method, then you need to move the computation to a background thread (BGT)
    * and to avoid blocking the UI thread (EDT).
    * <p/>
-   * It's okay if the API changes in the process. For example, instead of wrapping an implementation of some extension
-   * with deprecated {@link #allowSlowOperations} methods, it is better to admit that the EP semantic as a whole requires index access,
-   * and then move the iteration over all extensions to the background on the platform-side.
-   * <p/>
-   * To temporarily mute the assertion in cases when it's difficult to rework the code timely,
-   * the computation can be wrapped in a named section {@link #startSection}.
+   * To temporarily mute the assertion, file a ticket and use {@link #knownIssue(String)}.
    * The assertion inside named sections is turned on/off separately via Registry keys {@code ide.slow.operations.assertion.<sectionName>}
-   * (sections {@link #GENERIC}, {@link #ACTION_PERFORM}, ...).
+   * (sections {@link #KNOWN_ISSUE}, {@link #ACTION_PERFORM},...).
    * <p/>
    * Action Subsystem<br><br>
    * <l>
    *   <li>
-   *     If the slow part is in {@link com.intellij.openapi.actionSystem.DataProvider#getData(String)} call
-   *     the provider shall be split in two parts - the fast UI part invoked on EDT and the slow part invoked in background -
-   *     using {@link com.intellij.openapi.actionSystem.PlatformDataKeys#BGT_DATA_PROVIDER} data key.
-   *     Slow data providers are run along with other {@code GetDataRules} in background when actions are updated.
-   *   </li>
-   *   <li>
    *     {@code AnAction#update}, {@code ActionGroup#getChildren}, and {@code ActionGroup#canBePerformed} should be either fast
    *     or moved to background thread by returning {@link com.intellij.openapi.actionSystem.ActionUpdateThread#BGT} in
    *     {@code AnAction#getActionUpdateThread}.
+   *   </li>
+   *   <li>
+   *     Use {@link com.intellij.openapi.actionSystem.UiDataProvider} and
+   *     {@link com.intellij.openapi.actionSystem.DataSink#lazy} to move slow code to BGT.
+   *     That slow code is called only if an action requests it.
    *   </li>
    *   <li>
    *     {@code AnAction#actionPerformed} shall be explicitly coded not to block the UI thread.
@@ -103,7 +110,7 @@ public final class SlowOperations {
     if (isInSection(FORCE_THROW) && !Cancellation.isInNonCancelableSection()) {
       throw new SlowOperationCanceledException();
     }
-    LOG.error(error);
+    Holder.LOG.error(error);
   }
 
   /**
@@ -117,7 +124,7 @@ public final class SlowOperations {
                    EDT.isCurrentThreadEdt() ? (isSlowOperationAllowed() ? null : ERROR_EDT) :
                    (ApplicationManager.getApplication().isReadAccessAllowed() ? ERROR_RA : null);
     if (error == null || isAlreadyReported()) return;
-    LOG.error(error);
+    Holder.LOG.error(error);
   }
 
   private static boolean isSlowOperationAllowed() {
@@ -188,26 +195,20 @@ public final class SlowOperations {
   }
 
   /**
-   * @deprecated To resolve EDT freezes, "slow operations" will soon be banned from EDT.
-   * Consider reworking the code and the UX that needs to mute the assertion, and moving it to BGT.
-   * <p/>
-   * <b>DO NOT JUST CONVERT TO {@link #startSection(String)}.
-   * Keep using the deprecated method if your intent is to postpone fixing the assertion for real.</b>
+   * @deprecated Redesign the logic - move BGT-only activities to BGT.
+   * Otherwise, file a ticket and use {@link #knownIssue(String)} if not possible.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static <T, E extends Throwable> T allowSlowOperations(@NotNull ThrowableComputable<T, E> computable) throws E {
-    try (AccessToken ignore = startSection(GENERIC)) {
-      return computable.compute();
-    }
+    return computable.compute();
   }
 
   /**
-   * @deprecated To resolve EDT freezes, "slow operations" will soon be banned from EDT.
-   * Consider reworking the code and the UX that needs to mute the assertion, and moving it to BGT.
-   * <p/>
-   * <b>DO NOT JUST CONVERT TO {@link #startSection(String)}.
-   * Keep using the deprecated method if your intent is to postpone fixing the assertion for real.</b>
+   * @deprecated Redesign the logic - move BGT-only activities to BGT.
+   * Otherwise, file a ticket and use {@link #knownIssue(String)} if not possible.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static <E extends Throwable> void allowSlowOperations(@NotNull ThrowableRunnable<E> runnable) throws E {
     try (AccessToken ignore = startSection(GENERIC)) {
@@ -217,7 +218,7 @@ public final class SlowOperations {
 
   /** @noinspection unused */
   @ApiStatus.Internal
-  public static @NotNull AccessToken knownIssue(@NotNull @NonNls String ytIssueId) {
+  public static @NotNull AccessToken knownIssue(@NotNull String ytIssueId) {
     return startSection(KNOWN_ISSUE);
   }
 
@@ -238,16 +239,14 @@ public final class SlowOperations {
   }
 
   /**
-   * @deprecated To resolve EDT freezes, "slow operations" will soon be banned from EDT.
-   * Consider reworking the code and the UX that needs to mute the assertion, and moving it to BGT.
-   * <p/>
-   * <b>DO NOT JUST CONVERT TO {@link #startSection(String)}.
-   * Keep using the deprecated method if your intent is to postpone fixing the assertion for real.</b>
+   * @deprecated Redesign the logic - move BGT-only activities to BGT.
+   * Otherwise, file a ticket and use {@link #knownIssue(String)} if not possible.
    *
    * @param activityName see {@link #startSection(String)} javadoc
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
-  public static @NotNull AccessToken allowSlowOperations(@NotNull @NonNls String activityName) {
+  public static @NotNull AccessToken allowSlowOperations(@NotNull String activityName) {
     return startSection(activityName);
   }
 
@@ -257,17 +256,16 @@ public final class SlowOperations {
    * semantics, like {@link #FORCE_ASSERT}, and {@link #RESET}.
    * <p/>
    * <b>This method is not for muting the assertion in places. It is intended for the common platform code.
-   * USE DEPRECATED {@link #allowSlowOperations} METHODS IF YOUR INTENT IS TO POSTPONE FIXING THE ASSERTION FOR REAL.</b>
    *
    * @param sectionName reuse {@link #GENERIC} and other existing section names as much as possible.
    * <p/>
    * Use a new name <b>iff</b> you need a dedicated on/off switch for the assertion inside.
-   * In that case, do not forget to add the corresponding {@code ide.slow.operations.assertion.<sectionName>} Registry key.
+   * In that case, remember to add the corresponding {@code ide.slow.operations.assertion.<sectionName>} Registry key.
    *
    * @see Registry
    */
   @ApiStatus.Internal
-  public static @NotNull AccessToken startSection(@NotNull @NonNls String sectionName) {
+  public static @NotNull AccessToken startSection(@NotNull String sectionName) {
     if (!EDT.isCurrentThreadEdt()) {
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }

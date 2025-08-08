@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.jvm.JvmClass;
@@ -8,9 +8,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbUtil;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
@@ -21,6 +23,7 @@ import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
@@ -99,17 +102,22 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       }
       return null;
     }
-
     List<PsiElementFinder> finders = filteredFinders();
     Predicate<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
+    PsiClass bestClass = null;
     for (PsiElementFinder finder : finders) {
-      PsiClass aClass = finder.findClass(qualifiedName, scope);
-      if (aClass != null && (classesFilter == null || classesFilter.test(aClass))) {
-        return aClass;
+      try {
+        PsiClass candidateClass = finder.findClass(qualifiedName, scope);
+        if (candidateClass == null) continue;
+        if (classesFilter != null && !classesFilter.test(candidateClass)) continue;
+        if (bestClass != null && PsiClassUtil.createScopeComparator(scope).compare(candidateClass, bestClass) >= 0) continue;
+        bestClass = candidateClass;
+      }
+      catch (IndexNotReadyException ex) {
+        handleIndexNotReadyException(ex);
       }
     }
-
-    return null;
+    return bestClass;
   }
 
   private PsiClass @NotNull [] findClassesInDumbMode(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
@@ -131,11 +139,47 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
     return pkg.findClassByShortName(className, scope);
   }
+  
+  private boolean hasClassInDumbMode(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+    final String packageName = StringUtil.getPackageName(qualifiedName);
+    final PsiPackage pkg = findPackage(packageName);
+    final String className = StringUtil.getShortName(qualifiedName);
+    if (pkg != null) {
+      return pkg.hasClassWithShortName(className, scope);
+    }
+    if (packageName.length() < qualifiedName.length()) {
+      PsiClass[] containingClasses = findClassesInDumbMode(packageName, scope);
+      for (PsiClass containingClass : containingClasses) {
+        if (ContainerUtil.exists(containingClass.getInnerClasses(), innerClass -> className.equals(innerClass.getName()))) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 
   @Override
   public PsiClass @NotNull [] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     List<PsiClass> allClasses = findClassesWithJvmFacade(qualifiedName, scope);
     return allClasses.isEmpty() ? PsiClass.EMPTY_ARRAY : allClasses.toArray(PsiClass.EMPTY_ARRAY);
+  }
+
+  @Override
+  public boolean hasClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+    if (shouldUseSlowResolve()) {
+      return hasClassInDumbMode(qualifiedName, scope);
+    }
+    List<PsiElementFinder> finders = filteredFinders();
+    Predicate<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
+    if (classesFilter == null) {
+      classesFilter = Predicates.alwaysTrue();
+    }
+    for (PsiElementFinder finder : finders) {
+      if (finder.hasClass(qualifiedName, scope, classesFilter)) {
+        return true;
+      }
+    }
+    return !myJvmFacade.getValue().findClassesWithoutJavaFacade(qualifiedName, scope).isEmpty();
   }
 
   private @NotNull List<PsiClass> findClassesWithJvmFacade(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
@@ -169,22 +213,31 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
     List<PsiClass> result = null;
     for (PsiElementFinder finder : finders) {
-      PsiClass[] finderClasses = finder.findClasses(qualifiedName, scope);
-      if (finderClasses.length != 0) {
-        if (result == null) result = new ArrayList<>(finderClasses.length);
-        filterClassesAndAppend(finder, classesFilter, finderClasses, result);
+      try {
+        PsiClass[] finderClasses = finder.findClasses(qualifiedName, scope);
+        if (finderClasses.length != 0) {
+          if (result == null) result = new ArrayList<>(finderClasses.length);
+          filterClassesAndAppend(finder, classesFilter, finderClasses, result);
+        }
+      }
+      catch (IndexNotReadyException ex) {
+        handleIndexNotReadyException(ex);
       }
     }
-
     return result == null ? Collections.emptyList() : result;
   }
 
-  private static Predicate<PsiClass> getFilterFromFinders(@NotNull GlobalSearchScope scope, @NotNull List<? extends PsiElementFinder> finders) {
+  private static @Nullable Predicate<PsiClass> getFilterFromFinders(@NotNull GlobalSearchScope scope, @NotNull List<? extends PsiElementFinder> finders) {
     Predicate<PsiClass> filter = null;
     for (PsiElementFinder finder : finders) {
-      Predicate<PsiClass> finderFilter = finder.getClassesFilter(scope);
-      if (finderFilter != null) {
-        filter = filter == null ? finderFilter : filter.and(finderFilter);
+      try {
+        Predicate<PsiClass> finderFilter = finder.getClassesFilter(scope);
+        if (finderFilter != null) {
+          filter = filter == null ? finderFilter : filter.and(finderFilter);
+        }
+      }
+      catch (IndexNotReadyException ex) {
+        handleIndexNotReadyException(ex);
       }
     }
     return filter;
@@ -206,14 +259,17 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     if (aPackage != null) {
       return aPackage;
     }
-
     for (PsiElementFinder finder : filteredFinders()) {
-      aPackage = finder.findPackage(qualifiedName);
-      if (aPackage != null) {
-        return ConcurrencyUtil.cacheOrGet(myPackageCache, qualifiedName, aPackage);
+      try {
+        aPackage = finder.findPackage(qualifiedName);
+        if (aPackage != null) {
+          return ConcurrencyUtil.cacheOrGet(myPackageCache, qualifiedName, aPackage);
+        }
+      }
+      catch (IndexNotReadyException ex) {
+        handleIndexNotReadyException(ex);
       }
     }
-
     return null;
   }
 
@@ -274,7 +330,12 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   public @NotNull Set<String> getClassNames(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     Set<String> result = new HashSet<>();
     for (PsiElementFinder finder : filteredFinders()) {
-      result.addAll(finder.getClassNames(psiPackage, scope));
+      try {
+        result.addAll(finder.getClassNames(psiPackage, scope));
+      }
+      catch (IndexNotReadyException ex) {
+        handleIndexNotReadyException(ex);
+      }
     }
     return result;
   }
@@ -282,15 +343,18 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   public PsiClass @NotNull [] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     List<PsiElementFinder> finders = filteredFinders();
     Predicate<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
-
     List<PsiClass> result = null;
     for (PsiElementFinder finder : finders) {
-      PsiClass[] classes = finder.getClasses(psiPackage, scope);
-      if (classes.length == 0) continue;
-      if (result == null) result = new ArrayList<>(classes.length);
-      filterClassesAndAppend(finder, classesFilter, classes, result);
+      try {
+        PsiClass[] classes = finder.getClasses(psiPackage, scope);
+        if (classes.length == 0) continue;
+        if (result == null) result = new ArrayList<>(classes.length);
+        filterClassesAndAppend(finder, classesFilter, classes, result);
+      }
+      catch (IndexNotReadyException ex) {
+        handleIndexNotReadyException(ex);
+      }
     }
-
     return result == null ? PsiClass.EMPTY_ARRAY : result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
@@ -333,9 +397,12 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
         }
       }
     }
-
     for (PsiElementFinder finder : filteredFinders()) {
-      Collections.addAll(result, finder.getPackageFiles(psiPackage, scope));
+      try {
+        Collections.addAll(result, finder.getPackageFiles(psiPackage, scope));
+      }
+      catch (IndexNotReadyException ex) {
+      }
     }
     return result.toArray(PsiFile.EMPTY_ARRAY);
   }
@@ -345,8 +412,13 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
                                            @NotNull Processor<? super PsiDirectory> consumer,
                                            boolean includeLibrarySources) {
     for (PsiElementFinder finder : filteredFinders()) {
-      if (!finder.processPackageDirectories(psiPackage, scope, consumer, includeLibrarySources)) {
-        return false;
+      try {
+        if (!finder.processPackageDirectories(psiPackage, scope, consumer, includeLibrarySources)) {
+          return false;
+        }
+      }
+      catch (IndexNotReadyException ex) {
+        handleIndexNotReadyException(ex);
       }
     }
     return true;
@@ -358,12 +430,21 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       // Ensure uniqueness of names in the returned list of subpackages. If a plugin PsiElementFinder
       // returns the same package from its getSubPackages() implementation that Java already knows about
       // (the Kotlin plugin can do that), the Java package takes precedence.
-      PsiPackage[] packages = finder.getSubPackages(psiPackage, scope);
-      for (PsiPackage aPackage : packages) {
-        result.putIfAbsent(aPackage.getName(), aPackage);
+      try {
+        PsiPackage[] packages = finder.getSubPackages(psiPackage, scope);
+        for (PsiPackage aPackage : packages) {
+          result.putIfAbsent(aPackage.getName(), aPackage);
+        }
+      }
+      catch (IndexNotReadyException ex) {
+        handleIndexNotReadyException(ex);
       }
     }
     return result.values().toArray(PsiPackage.EMPTY_ARRAY);
+  }
+
+  private static void handleIndexNotReadyException(@NotNull IndexNotReadyException ex) {
+    if (Registry.is("ide.dumb.mode.check.awareness")) throw ex;
   }
 
   @Override

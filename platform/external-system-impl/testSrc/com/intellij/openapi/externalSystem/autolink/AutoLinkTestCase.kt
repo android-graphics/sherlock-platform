@@ -3,7 +3,7 @@ package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
@@ -45,7 +45,7 @@ abstract class AutoLinkTestCase {
     fileFixture.setUp()
 
     runBlocking {
-      writeAction {
+      edtWriteAction {
         testRoot = fileFixture.findOrCreateDir("AutoLinkTestCase")
       }
     }
@@ -80,7 +80,7 @@ abstract class AutoLinkTestCase {
       override fun isProjectFile(file: VirtualFile): Boolean =
         unlinedProjectAware.isBuildFile(file)
 
-      override suspend fun linkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
+      override suspend fun linkProject(projectFile: VirtualFile, project: Project) {
         val projectDirectory = getProjectDirectory(projectFile).toNioPath()
         unlinedProjectAware.linkAndLoadProjectAsync(project, projectDirectory.invariantSeparatorsPathString)
       }

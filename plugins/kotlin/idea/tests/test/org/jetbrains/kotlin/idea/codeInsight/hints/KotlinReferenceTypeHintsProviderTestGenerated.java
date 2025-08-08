@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.hints;
 
@@ -80,6 +80,11 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
         runTest("testData/codeInsight/hints/types/Destructuring.kt");
     }
 
+    @TestMetadata("EmptyFunctionalType.kt")
+    public void testEmptyFunctionalType() throws Exception {
+        runTest("testData/codeInsight/hints/types/EmptyFunctionalType.kt");
+    }
+
     @TestMetadata("EnumEntry.kt")
     public void testEnumEntry() throws Exception {
         runTest("testData/codeInsight/hints/types/EnumEntry.kt");
@@ -145,9 +150,19 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
         runTest("testData/codeInsight/hints/types/LambdaReturnType.kt");
     }
 
+    @TestMetadata("LocalClass.kt")
+    public void testLocalClass() throws Exception {
+        runTest("testData/codeInsight/hints/types/LocalClass.kt");
+    }
+
     @TestMetadata("LocalVariable.kt")
     public void testLocalVariable() throws Exception {
         runTest("testData/codeInsight/hints/types/LocalVariable.kt");
+    }
+
+    @TestMetadata("LongLongClassNames.kt")
+    public void testLongLongClassNames() throws Exception {
+        runTest("testData/codeInsight/hints/types/LongLongClassNames.kt");
     }
 
     @TestMetadata("LoopParameter.kt")
@@ -175,6 +190,11 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
         runTest("testData/codeInsight/hints/types/ParameterType.kt");
     }
 
+    @TestMetadata("PrivateAnonymousObject.kt")
+    public void testPrivateAnonymousObject() throws Exception {
+        runTest("testData/codeInsight/hints/types/PrivateAnonymousObject.kt");
+    }
+
     @TestMetadata("PropertyType.kt")
     public void testPropertyType() throws Exception {
         runTest("testData/codeInsight/hints/types/PropertyType.kt");
@@ -188,6 +208,11 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
     @TestMetadata("SAMConstructor.kt")
     public void testSAMConstructor() throws Exception {
         runTest("testData/codeInsight/hints/types/SAMConstructor.kt");
+    }
+
+    @TestMetadata("SuspendFunctionalType.kt")
+    public void testSuspendFunctionalType() throws Exception {
+        runTest("testData/codeInsight/hints/types/SuspendFunctionalType.kt");
     }
 
     @TestMetadata("TypeInCompanion.kt")

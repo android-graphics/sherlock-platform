@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.EdtNoGetDataProvider
 import com.intellij.openapi.progress.withBackgroundProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
@@ -46,8 +47,8 @@ internal class ChangesViewCommitWorkflowHandler(
 
   private val inclusionModel = PartialCommitInclusionModel(project)
 
-  private val commitMessagePolicy = ChangesViewCommitMessagePolicy(project, ui.commitMessageUi) { getIncludedChanges() }
   private var currentChangeList: LocalChangeList = changeListManager.defaultChangeList
+  private val commitMessagePolicy = ChangesViewCommitMessagePolicy(project, ui.commitMessageUi, currentChangeList)
 
   init {
     Disposer.register(this, inclusionModel)
@@ -59,7 +60,7 @@ internal class ChangesViewCommitWorkflowHandler(
 
     ui.addCommitAuthorListener(this, this)
     ui.addExecutorListener(this, this)
-    ui.addDataProvider(createDataProvider())
+    ui.addDataProvider(EdtNoGetDataProvider { sink -> uiDataSnapshot(sink) })
     ui.addInclusionListener(this, this)
     ui.inclusionModel = inclusionModel
     Disposer.register(inclusionModel, Disposable { ui.inclusionModel = null })
@@ -77,23 +78,16 @@ internal class ChangesViewCommitWorkflowHandler(
     val busConnection = project.messageBus.connect(this)
     busConnection.subscribe(ProjectCloseListener.TOPIC, this)
 
-    commitMessagePolicy.init(currentChangeList, this)
+    commitMessagePolicy.init()
+    Disposer.register(this, commitMessagePolicy)
   }
 
-  override fun createDataProvider(): DataProvider = object : DataProvider {
-    private val superProvider = super@ChangesViewCommitWorkflowHandler.createDataProvider()
-
-    override fun getData(dataId: String): Any? {
-      if (VcsDataKeys.COMMIT_WORKFLOW_HANDLER.`is`(dataId)) {
-        return if (isActive) this@ChangesViewCommitWorkflowHandler else null
-      }
-      if (VcsDataKeys.COMMIT_WORKFLOW_UI.`is`(dataId)) {
-        return if (isActive) ui else null
-      }
-      if (VcsDataKeys.COMMIT_MESSAGE_CONTROL.`is`(dataId)) {
-        return if (isActive) ui.commitMessageUi else null
-      }
-      return superProvider.getData(dataId)
+  override fun uiDataSnapshot(sink: DataSink) {
+    super.uiDataSnapshot(sink)
+    if (!isActive) {
+      sink.setNull(VcsDataKeys.COMMIT_WORKFLOW_HANDLER)
+      sink.setNull(VcsDataKeys.COMMIT_WORKFLOW_UI)
+      sink.setNull(VcsDataKeys.COMMIT_MESSAGE_CONTROL)
     }
   }
 
@@ -198,9 +192,8 @@ internal class ChangesViewCommitWorkflowHandler(
     val oldChangeList = currentChangeList
     currentChangeList = newChangeList
 
+    commitMessagePolicy.onChangelistChanged(newChangeList)
     if (oldChangeList.id != newChangeList.id) {
-      commitMessagePolicy.onChangelistChanged(oldChangeList, newChangeList)
-
       commitOptions.changeListChanged(newChangeList)
     }
     if (oldChangeList.data != newChangeList.data) {
@@ -283,12 +276,13 @@ internal class ChangesViewCommitWorkflowHandler(
   }
 
   override fun saveCommitMessageBeforeCommit() {
-    commitMessagePolicy.onBeforeCommit(currentChangeList)
+    commitMessagePolicy.onBeforeCommit()
   }
 
   // save state on project close
   // using this method ensures change list comment and commit options are updated before project state persisting
   override fun projectClosingBeforeSave(project: Project) {
+    commitMessagePolicy.saveStateOnDispose()
     saveStateBeforeDispose()
     disposeCommitOptions()
   }
@@ -302,7 +296,6 @@ internal class ChangesViewCommitWorkflowHandler(
 
   private fun saveStateBeforeDispose() {
     commitOptions.saveState()
-    commitMessagePolicy.onDispose(currentChangeList)
   }
 
   interface ActivityListener : EventListener {
@@ -312,7 +305,7 @@ internal class ChangesViewCommitWorkflowHandler(
   private inner class NonModalCommitStateCleaner : CommitStateCleaner() {
 
     override fun onSuccess() {
-      commitMessagePolicy.onAfterCommit(currentChangeList)
+      commitMessagePolicy.onAfterCommit()
       super.onSuccess()
     }
   }

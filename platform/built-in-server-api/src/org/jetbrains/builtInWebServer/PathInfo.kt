@@ -7,18 +7,26 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isDirectory
 
-class PathInfo(val ioFile: Path?, file: VirtualFile?, val root: VirtualFile, moduleName: String? = null, val isLibrary: Boolean = false, val isRootNameOptionalInPath: Boolean = false) {
+class PathInfo(
+  val ioFile: Path?,
+  file: VirtualFile?,
+  val root: VirtualFile,
+  moduleName: String? = null,
+  val isLibrary: Boolean = false,
+  val isRootNameOptionalInPath: Boolean = false,
+) {
   var file: VirtualFile? = file
     private set
 
   var moduleName: String? = moduleName
-    set
+    @ApiStatus.Internal set
 
   /**
    * URL path.

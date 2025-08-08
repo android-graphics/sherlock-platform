@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,25 +17,25 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
 
+@ApiStatus.Internal
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public final class LibraryDependencyDataService extends AbstractDependencyDataService<LibraryDependencyData, LibraryOrderEntry> {
   private static final Logger LOG = Logger.getInstance(LibraryDependencyDataService.class);
 
-  @NotNull
   @Override
-  public Key<LibraryDependencyData> getTargetDataKey() {
+  public @NotNull Key<LibraryDependencyData> getTargetDataKey() {
     return ProjectKeys.LIBRARY_DEPENDENCY;
   }
 
-  @NotNull
   @Override
-  public Class<LibraryOrderEntry> getOrderEntryType() {
+  public @NotNull Class<LibraryOrderEntry> getOrderEntryType() {
     return LibraryOrderEntry.class;
   }
 
@@ -75,7 +75,7 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
                                                          modelsProvider);
       }
       else if (entry instanceof LibraryOrderEntry libraryOrderEntry) {
-        processingResult = importLibraryOrderEntry(libraryOrderEntry, toImport.projectLibraries, modifiableRootModel, modelsProvider,
+        processingResult = importLibraryOrderEntry(libraryOrderEntry, toImport.projectLibraries, modifiableRootModel,
                                                    toImport.hasUnresolvedLibraries);
         if (processingResult != null) {
           libraryOrderEntry.setExported(processingResult.isExported());
@@ -127,18 +127,12 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
     @NotNull LibraryOrderEntry entry,
     @NotNull Map<String/* library name + scope */, LibraryDependencyData> projectLibrariesToImport,
     @NotNull ModifiableRootModel modifiableRootModel,
-    @NotNull IdeModifiableModelsProvider modelsProvider,
     boolean hasUnresolvedLibraries
   ) {
     String libraryName = entry.getLibraryName();
     LibraryDependencyData existing = projectLibrariesToImport.remove(libraryName + entry.getScope().name());
     if (existing != null) {
-      if (modelsProvider.findModuleByPublication(existing.getTarget()) == null) {
-        return existing;
-      }
-      else {
-        modifiableRootModel.removeOrderEntry(entry);
-      }
+      return existing;
     }
     else if (!hasUnresolvedLibraries) {
       // There is a possible case that a project has been successfully imported from external model and after
@@ -205,13 +199,7 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
     }
     LibraryOrderEntry orderEntry = moduleRootModel.addLibraryEntry(projectLib);
     setLibraryScope(orderEntry, projectLib, module, dependencyData);
-    ModuleOrderEntry substitutionEntry = modelsProvider.trySubstitute(module, orderEntry, libraryData);
-    if (substitutionEntry != null) {
-      return substitutionEntry;
-    }
-    else {
-      return orderEntry;
-    }
+    return orderEntry;
   }
 
   private static void setLibraryScope(@NotNull LibraryOrderEntry orderEntry,
@@ -229,10 +217,10 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
   }
 
   private static @NotNull LibraryOrderEntry syncExistingLibraryDependency(@NotNull IdeModifiableModelsProvider modelsProvider,
-                                                                          @NotNull final LibraryDependencyData libraryDependencyData,
-                                                                          @NotNull final Library library,
-                                                                          @NotNull final ModifiableRootModel moduleRootModel,
-                                                                          @NotNull final Module module,
+                                                                          final @NotNull LibraryDependencyData libraryDependencyData,
+                                                                          final @NotNull Library library,
+                                                                          final @NotNull ModifiableRootModel moduleRootModel,
+                                                                          final @NotNull Module module,
                                                                           @Nullable LibraryOrderEntry currentRegisteredLibraryOrderEntry) {
     final Library.ModifiableModel libraryModel = modelsProvider.getModifiableLibraryModel(library);
     final String libraryName = libraryDependencyData.getInternalName();
@@ -250,10 +238,9 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
     return orderEntry;
   }
 
-  @Nullable
-  private static LibraryOrderEntry findLibraryOrderEntry(@NotNull ModifiableRootModel moduleRootModel,
-                                                         @NotNull Library library,
-                                                         @NotNull DependencyScope scope) {
+  private static @Nullable LibraryOrderEntry findLibraryOrderEntry(@NotNull ModifiableRootModel moduleRootModel,
+                                                                   @NotNull Library library,
+                                                                   @NotNull DependencyScope scope) {
     LibraryOrderEntry candidate = null;
     for (OrderEntry orderEntry : moduleRootModel.getOrderEntries()) {
       if (orderEntry instanceof LibraryOrderEntry libraryOrderEntry) {

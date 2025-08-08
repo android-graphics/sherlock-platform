@@ -1,57 +1,29 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ijent
 
-import com.intellij.execution.process.ProcessOutput
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.platform.ijent.*
-import com.intellij.platform.util.coroutines.channel.ChannelInputStream
+import com.intellij.platform.eel.provider.utils.asOutputStream
+import com.intellij.platform.eel.provider.utils.consumeAsInputStream
+import com.intellij.platform.ijent.IjentChildProcess
+import com.intellij.platform.ijent.spi.IjentThreadPool
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.io.blockingDispatcher
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.future.asCompletableFuture
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.io.OutputStream
-import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
 
 internal class IjentChildProcessAdapterDelegate(
-  val ijentId: IjentId,
   val coroutineScope: CoroutineScope,
   val ijentChildProcess: IjentChildProcess,
-  redirectStderr: Boolean,
 ) {
-  val inputStream: InputStream
+  val inputStream: InputStream = ijentChildProcess.stdout.consumeAsInputStream(coroutineScope.coroutineContext)
 
-  val outputStream: OutputStream = IjentStdinOutputStream(coroutineScope.coroutineContext, ijentChildProcess)
+  val outputStream: OutputStream = ijentChildProcess.stdin.asOutputStream(coroutineScope.coroutineContext)
 
-  val errorStream: InputStream
-
-  init {
-    if (redirectStderr) {
-      val merged = Channel<ByteArray>()
-
-      coroutineScope.launch {
-        ijentChildProcess.stdout.consumeEach { chunk -> merged.send(chunk) }
-      }
-      coroutineScope.launch {
-        ijentChildProcess.stderr.consumeEach { chunk -> merged.send(chunk) }
-      }
-
-      inputStream = ChannelInputStream(coroutineScope, merged)
-      errorStream = ByteArrayInputStream(byteArrayOf())
-    }
-    else {
-      inputStream = ChannelInputStream(coroutineScope, ijentChildProcess.stdout)
-      errorStream = ChannelInputStream(coroutineScope, ijentChildProcess.stderr)
-    }
-  }
+  val errorStream: InputStream = ijentChildProcess.stderr.consumeAsInputStream(coroutineScope.coroutineContext)
 
   @RequiresBackgroundThread
   @Throws(InterruptedException::class)
@@ -67,8 +39,7 @@ internal class IjentChildProcessAdapterDelegate(
       withTimeoutOrNull(unit.toMillis(timeout).milliseconds) {
         ijentChildProcess.exitCode.await()
         true
-      }
-      ?: false
+      } == true
     }
 
   fun destroyForcibly() {
@@ -98,53 +69,15 @@ internal class IjentChildProcessAdapterDelegate(
   @Throws(InterruptedException::class)
   fun <T> runBlockingInContext(body: suspend () -> T): T =
     @Suppress("SSBasedInspection") runBlocking(coroutineScope.coroutineContext) {
+      IjentThreadPool.checkCurrentThreadIsInPool()
       body()
     }
 
   @OptIn(IntellijInternalApi::class, DelicateCoroutinesApi::class)
   fun tryDestroyGracefully(): Boolean {
-    // TODO The whole implementation of this method is a dirty hotfix. The IDE should not rely on /bin/kill.
-    //  Instead, IJent must be able to send SIGINT by itself: IJPL-148611
-    val ijentApi = IjentSessionRegistry.instance().ijents[ijentId] ?: return false
-    GlobalScope.launch(blockingDispatcher) {
-      val error: Any? = when (val p = ijentApi.exec.executeProcess("kill", "-SIGINT", "--", "-" + ijentChildProcess.pid.toString())) {
-        is IjentExecApi.ExecuteProcessResult.Success -> {
-          p.process.getOutput().takeIf { it.exitCode != 0 }
-        }
-        is IjentExecApi.ExecuteProcessResult.Failure -> p
-      }
-      if (error != null) {
-        LOG.error("Failed to kill WSL process with PID ${ijentChildProcess.pid}: $error")
-      }
+    coroutineScope.launch {
+      ijentChildProcess.interrupt()
     }
     return true
-  }
-
-  /** TODO Copy-pasted from tests. This function should be moved to a shared place. */
-  private suspend fun IjentChildProcess.getOutput(): ProcessOutput {
-    val stdout = ByteArrayOutputStream()
-    val stderr = ByteArrayOutputStream()
-    val exitCode: Int
-    coroutineScope {
-      launch {
-        this@getOutput.stdout.consumeEach(stdout::write)
-      }
-      launch {
-        this@getOutput.stderr.consumeEach(stderr::write)
-      }
-      exitCode = this@getOutput.exitCode.await()
-    }
-
-    return ProcessOutput(
-      stdout.toString(StandardCharsets.UTF_8),
-      stderr.toString(StandardCharsets.UTF_8),
-      exitCode,
-      false,
-      false,
-    )
-  }
-
-  companion object {
-    private val LOG = logger<IjentChildProcessAdapterDelegate>()
   }
 }

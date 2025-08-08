@@ -3,15 +3,21 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
+import org.jetbrains.kotlin.nj2k.callOn
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.primitiveTypes
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 
-class BoxedTypeOperationsConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+/**
+ * Converts operations on boxed types to more idiomatic Kotlin expressions:
+ *   1. Unwrap constructor calls: `new Double(10.1)` -> `10.1`
+ *   2. Change type conversion calls: `double.longValue()` -> `double.toLong()`
+ */
+class BoxedTypeOperationsConversion(context: ConverterContext) : RecursiveConversion(context) {
     context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         return recurse(
@@ -47,23 +53,19 @@ class BoxedTypeOperationsConversion(context: NewJ2kConverterContext) : Recursive
             return receiver.withFormattingFrom(qualifiedExpression)
         }
 
+        val typeName = primitiveTypeName.replaceFirstChar { it.titlecase(Locale.US) }
+        val conversionTypeName = operationType.replaceFirstChar { it.titlecase(Locale.US) }
         val shouldConvertToIntFirst =
             primitiveTypeName in floatingPointPrimitiveTypeNames && operationType in typeNameOfIntegersLesserThanInt
 
-        val conversionType = if (shouldConvertToIntFirst) {
-            "Int"
+        val replacement = if (shouldConvertToIntFirst) {
+            receiver.callOn(symbolProvider.provideMethodSymbol("kotlin.$typeName.toInt"))
+                .callOn(symbolProvider.provideMethodSymbol("kotlin.Int.to$conversionTypeName"))
         } else {
-            operationType.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.US) else it.toString() }
+            receiver.callOn(symbolProvider.provideMethodSymbol("kotlin.$typeName.to$conversionTypeName"))
         }
 
-        val typeName = primitiveTypeName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.US) else it.toString() }
-        return JKQualifiedExpression(
-            receiver,
-            JKCallExpressionImpl(
-                symbolProvider.provideMethodSymbol("kotlin.$typeName.to$conversionType"),
-                JKArgumentList()
-            )
-        ).withFormattingFrom(qualifiedExpression)
+        return replacement.withFormattingFrom(qualifiedExpression)
     }
 }
 

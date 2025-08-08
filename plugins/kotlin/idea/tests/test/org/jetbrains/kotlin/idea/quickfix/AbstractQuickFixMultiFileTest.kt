@@ -10,6 +10,8 @@ import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInspection.InspectionEP
 import com.intellij.codeInspection.LocalInspectionEP
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.modcommand.ActionContext
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileTypes.FileType
@@ -26,7 +28,9 @@ import com.intellij.util.PathUtil
 import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.intentions.computeOnBackground
 import org.jetbrains.kotlin.idea.quickfix.utils.findInspectionFile
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
@@ -37,7 +41,7 @@ import java.nio.file.Paths
 
 abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTestCase() {
     protected open fun doTestWithExtraFile(beforeFileName: String) {
-        val disableTestDirective = if (isFirPlugin) IgnoreTests.DIRECTIVES.IGNORE_K2_MULTILINE_COMMENT else IgnoreTests.DIRECTIVES.IGNORE_K1
+        val disableTestDirective = IgnoreTests.DIRECTIVES.of(pluginMode)
         IgnoreTests.runTestIfNotDisabledByFileDirective(Paths.get(beforeFileName), disableTestDirective) {
             enableInspections(beforeFileName)
 
@@ -50,7 +54,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
     }
 
     private fun enableInspections(beforeFileName: String) {
-        val inspectionFile = findInspectionFile(File(beforeFileName).parentFile)
+        val inspectionFile = findInspectionFile(File(beforeFileName).parentFile, this.pluginMode)
         if (inspectionFile != null) {
             val className = FileUtil.loadFile(inspectionFile).trim { it <= ' ' }
             val inspectionClass = Class.forName(className)
@@ -160,8 +164,10 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                         editor,
                         actionShouldBeAvailable,
                         getTestName(false),
+                        null,
                         this::availableActions,
                         myFixture::doHighlighting,
+                        pluginMode = pluginMode,
                         checkAvailableActionsAreExpected = this::checkAvailableActionsAreExpected
                     )
 
@@ -221,7 +227,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                 try {
                     val psiFile = file
 
-                    val actionHint = ActionHint.parse(psiFile, originalFileText)
+                    val actionHint = ActionHint.parse(psiFile, originalFileText, actionPrefix?.let { ".*//(?: $it)?" } ?: "//", true)
                     val text = actionHint.expectedText
 
                     val actionShouldBeAvailable = actionHint.shouldPresent()
@@ -237,8 +243,10 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                         editor,
                         actionShouldBeAvailable,
                         beforeFilePath,
+                        null,
                         this::availableActions,
                         myFixture::doHighlighting,
+                        pluginMode = pluginMode,
                         checkAvailableActionsAreExpected = this::checkAvailableActionsAreExpected
                     )
 
@@ -271,7 +279,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
 
     private fun findAfterFile(fullPath: String): File {
         val path = fullPath.replace(".before.Main.", ".before.")
-        val afterTokens = (if (isFirPlugin) arrayOf(".after.fir.") else arrayOf()) + ".after."
+        val afterTokens = (if (pluginMode == KotlinPluginMode.K2) arrayOf(".after.k2.") else arrayOf()) + ".after."
         for (afterToken in afterTokens) {
             val file = File(path.replace(".before.", afterToken))
             if (file.exists()) return file
@@ -284,7 +292,12 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
     }
 
     protected open fun checkAvailableActionsAreExpected(file: File, actions: Collection<IntentionAction>) {
-        DirectiveBasedActionUtils.checkAvailableActionsAreExpected(file, availableActions)
+        DirectiveBasedActionUtils.checkAvailableActionsAreExpected(
+            psiFile = this.file,
+            file = file,
+            availableActions = availableActions,
+            actionsListDirectives = pluginMode.actionsListDirectives
+        )
     }
 
     private val availableActions: List<IntentionAction>
@@ -296,6 +309,8 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
         }
 
     class TestFile internal constructor(val path: String, val content: String)
+
+    protected open val actionPrefix: String? = null
 
     companion object {
         private fun getActionsTexts(availableActions: List<IntentionAction>): List<String> =
@@ -313,24 +328,43 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
         fun doAction(
             mainFile: File,
             text: String,
-            file: PsiFile,
+            psiFile: PsiFile,
             editor: Editor,
             actionShouldBeAvailable: Boolean,
             testFilePath: String,
+            actionHint: ActionHint?,
             getAvailableActions: () -> List<IntentionAction>,
             doHighlighting: () -> List<HighlightInfo>,
             shouldBeAvailableAfterExecution: Boolean = false,
-            checkAvailableActionsAreExpected: (File, Collection<IntentionAction>) -> Unit =
-                DirectiveBasedActionUtils::checkAvailableActionsAreExpected
+            pluginMode: KotlinPluginMode,
+            checkAvailableActionsAreExpected: (File, Collection<IntentionAction>) -> Unit = { file, collection ->
+                DirectiveBasedActionUtils.checkAvailableActionsAreExpected(
+                    psiFile, file, collection, actionsListDirectives = pluginMode.actionsListDirectives
+                )
+            }
         ) {
             val pattern = IntentionActionNamePattern(text)
-
             val availableActions = getAvailableActions()
-            val action = pattern.findActionByPattern(availableActions, acceptMatchByFamilyName = !actionShouldBeAvailable)
+            val project = psiFile.project
+            val action =
+                if (actionHint != null) {
+                    val actionContext = ActionContext.from(editor, psiFile)
+                    project.computeOnBackground {
+                        runReadAction {
+                            actionHint.findAndCheck(availableActions, actionContext) {
+                                "Intention action with text '$text' is not ${if (actionShouldBeAvailable) "available" else "not available"}"
+                            }
+                        }
+                    }
+                } else {
+                    pattern.findActionByPattern(availableActions, acceptMatchByFamilyName = !actionShouldBeAvailable)
+                }
 
             if (action == null) {
                 if (actionShouldBeAvailable) {
-                    val texts = getActionsTexts(availableActions.filter { it.isAvailable(file.project, editor, file) })
+                    val texts = getActionsTexts(availableActions.filter {
+                        ShowIntentionActionsHandler.availableFor(psiFile, editor, editor.caretModel.offset, it)
+                    })
                     val infos = doHighlighting()
                     TestCase.fail(
                         "Action with text '" + text + "' is not available in test " + testFilePath + "\n" +
@@ -349,7 +383,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                     TestCase.fail("Action '$text' is available (but must not) in test $testFilePath")
                 }
 
-                CodeInsightTestFixtureImpl.invokeIntention(action, file, editor)
+                CodeInsightTestFixtureImpl.invokeIntention(action, psiFile, editor)
 
                 if (!shouldBeAvailableAfterExecution) {
                     val afterAction = pattern.findActionByPattern(getAvailableActions(), acceptMatchByFamilyName = true)

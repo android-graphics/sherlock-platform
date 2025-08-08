@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import org.apache.maven.execution.MavenExecutionRequest;
@@ -90,58 +90,34 @@ public final class Maven3EffectivePomDumper {
     if (null != s) buffer.append(s);
   }
 
-  public static @Nullable String checksum(@Nullable MavenProject project) {
-    if (null == project) return null;
-
-    Model pom = project.getModel();
-    cleanModel(pom);
-
-    StringWriter sWriter = new StringWriter();
-    MavenXpp3Writer pomWriter = new MavenXpp3Writer();
-    try {
-      pomWriter.write(sWriter, pom);
-    }
-    catch (IOException e) {
-      return null;
-    }
-
-    return ChecksumUtil.checksum(sWriter.toString());
-  }
-
   // See org.apache.maven.plugins.help.EffectivePomMojo#execute from maven-help-plugin
-  @Nullable
-  public static String evaluateEffectivePom(final Maven3ServerEmbedder embedder,
-                                            @NotNull final File file,
+  public static @Nullable String evaluateEffectivePom(final Maven3ServerEmbedder embedder,
+                                            final @NotNull File file,
                                             @NotNull List<String> activeProfiles,
                                             @NotNull List<String> inactiveProfiles) {
     final StringWriter w = new StringWriter();
 
-    try {
-      MavenExecutionRequest request = embedder.createRequest(file, activeProfiles, inactiveProfiles);
+    MavenExecutionRequest request = embedder.createRequest(file, activeProfiles, inactiveProfiles);
 
-      embedder.executeWithMavenSession(request, () -> {
-        try {
-          // copied from DefaultMavenProjectBuilder.buildWithDependencies
-          ProjectBuilder builder = embedder.getComponent(ProjectBuilder.class);
-          ProjectBuildingResult buildingResult = builder.build(new File(file.getPath()), request.getProjectBuildingRequest());
+    embedder.executeWithMavenSession(request, () -> {
+      try {
+        // copied from DefaultMavenProjectBuilder.buildWithDependencies
+        ProjectBuilder builder = embedder.getComponent(ProjectBuilder.class);
+        ProjectBuildingResult buildingResult = builder.build(new File(file.getPath()), request.getProjectBuildingRequest());
 
-          MavenProject project = buildingResult.getProject();
+        MavenProject project = buildingResult.getProject();
 
-          XMLWriter writer = new PrettyPrintXMLWriter(new PrintWriter(w), StringUtils.repeat(" ", XmlWriterUtil.DEFAULT_INDENTATION_SIZE),
-                                                      "\n", null, null);
+        XMLWriter writer = new PrettyPrintXMLWriter(new PrintWriter(w), StringUtils.repeat(" ", XmlWriterUtil.DEFAULT_INDENTATION_SIZE),
+                                                    "\n", null, null);
 
-          writeHeader(writer);
+        writeHeader(writer);
 
-          writeEffectivePom(project, writer);
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      });
-    }
-    catch (Exception e) {
-      return null;
-    }
+        writeEffectivePom(project, writer);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    });
 
     return w.toString();
   }

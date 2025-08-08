@@ -2,6 +2,8 @@
 package com.intellij.openapi.diagnostic
 
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.util.ExceptionUtilRt
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.lang.invoke.MethodHandles
@@ -30,6 +32,7 @@ inline fun <reified T : Any> T.thisLogger(): Logger = Logger.getInstance(T::clas
  * This function MUST be inline in order to properly obtain the calling class.
  */
 @Suppress("NOTHING_TO_INLINE")
+@ApiStatus.Internal
 inline fun currentClassLogger(): Logger {
   val clazz = MethodHandles.lookup().lookupClass()
   return Logger.getInstance(clazz)
@@ -51,6 +54,7 @@ inline fun currentClassLogger(): Logger {
  * ```
  */
 @Suppress("NOTHING_TO_INLINE")
+@ApiStatus.Internal
 inline fun fileLogger(): Logger {
   return currentClassLogger()
 }
@@ -74,20 +78,15 @@ inline fun Logger.traceThrowable(lazyThrowable: () -> Throwable) {
   }
 }
 
-inline fun <T : Any> Logger.ifTraceEnabled(lazyValue: () -> T): T? {
-  if (isTraceEnabled) {
-    return lazyValue()
-  }
-  return null
-}
-
 /** Consider using [Result.getOrLogException] for more straight-forward API instead. */
+@ApiStatus.Internal
 inline fun <T> Logger.runAndLogException(runnable: () -> T): T? {
   return runCatching {
     runnable()
   }.getOrLogException(this)
 }
 
+@ApiStatus.Internal
 fun <T> Result<T>.getOrLogException(logger: Logger): T? {
   return getOrLogException {
     logger.error(it)
@@ -98,7 +97,7 @@ fun <T> Result<T>.getOrLogException(logger: Logger): T? {
 inline fun <T> Result<T>.getOrLogException(log: (Throwable) -> Unit): T? {
   return onFailure { e ->
     if (e is ProcessCanceledException || e is CancellationException) {
-      throw e
+      throw ExceptionUtilRt.addRethrownStackAsSuppressed(e)
     }
     else {
       log(e)

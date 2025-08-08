@@ -52,13 +52,12 @@ public final class RunConfigurationCommand extends AbstractCommand {
     super(text, line);
   }
 
-  @NotNull
   @Override
-  protected Promise<Object> _execute(@NotNull final PlaybackContext context) {
+  protected @NotNull Promise<Object> _execute(final @NotNull PlaybackContext context) {
     //example: %runConfiguration -mode=TILL_TERMINATED|-configurationName=My Run Configuration|-failureExpected|-debug
     RunConfigurationOptions options = new RunConfigurationOptions();
     Args.parse(options, Arrays.stream(extractCommandArgument(PREFIX).split("\\|"))
-      .flatMap(item -> Arrays.stream(item.split("="))).toArray(String[]::new));
+      .flatMap(item -> Arrays.stream(item.split("="))).toArray(String[]::new), false);
 
     Ref<Span> mainSpan = new Ref<>(), processSpan = new Ref<>();
     Timer timer = new Timer();

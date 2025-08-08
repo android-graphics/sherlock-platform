@@ -1,14 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.configurationStore.Property;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.WrapConstant;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -19,6 +21,13 @@ import java.util.Collection;
 import java.util.List;
 
 public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements ImportsLayoutSettings {
+  private static final int CURRENT_VERSION = 1;
+
+  private int myVersion = CURRENT_VERSION;
+  private int myOldVersion = 0;
+
+  private boolean myIsInitialized = false;
+
   private static final String REPEAT_ANNOTATIONS = "REPEAT_ANNOTATIONS";
   private static final String REPEAT_ANNOTATIONS_ITEM = "ANNO";
   private static final String DO_NOT_IMPORT_INNER = "DO_NOT_IMPORT_INNER";
@@ -49,7 +58,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public boolean GENERATE_FINAL_PARAMETERS;
 
   @PsiModifier.ModifierConstant
-  public String VISIBILITY = "public";
+  public String VISIBILITY = PsiModifier.PUBLIC;
 
   public boolean USE_EXTERNAL_ANNOTATIONS;
   public boolean GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = true;
@@ -108,6 +117,8 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   // @Foo int param
   public boolean DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER = false;
 
+  public boolean ANNOTATION_NEW_LINE_IN_RECORD_COMPONENT = false;
+
   @WrapConstant
   public int ANNOTATION_PARAMETER_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
 
@@ -123,6 +134,9 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public boolean ALIGN_MULTILINE_TEXT_BLOCKS = false;
 
   public int BLANK_LINES_AROUND_INITIALIZER = 1;
+  public int BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS = 0;
+
+  public int BLANK_LINES_BETWEEN_RECORD_COMPONENTS = 0;
 
   public static final int FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED = 1;
   public static final int FULLY_QUALIFY_NAMES_ALWAYS = 2;
@@ -161,6 +175,8 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
 
   // Imports
   public boolean LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
+  public boolean LAYOUT_ON_DEMAND_IMPORT_FROM_SAME_PACKAGE_FIRST = true;
+  public boolean PRESERVE_MODULE_IMPORTS = true;
   public boolean USE_FQ_CLASS_NAMES;
   public boolean USE_SINGLE_CLASS_IMPORTS = true;
   public boolean INSERT_INNER_CLASS_IMPORTS;
@@ -279,7 +295,14 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   @Override
   public void setLayoutStaticImportsSeparately(boolean value) {
     LAYOUT_STATIC_IMPORTS_SEPARATELY = value;
+  }
 
+  public boolean isLayoutOnDemandImportFromSamePackageFirst() {
+    return LAYOUT_ON_DEMAND_IMPORT_FROM_SAME_PACKAGE_FIRST;
+  }
+
+  public void setLayoutOnDemandImportFromSamePackageFirst(boolean value) {
+    this.LAYOUT_ON_DEMAND_IMPORT_FROM_SAME_PACKAGE_FIRST = value;
   }
 
   @Override
@@ -321,6 +344,14 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     return USE_SINGLE_CLASS_IMPORTS;
   }
 
+  public boolean isPreserveModuleImports() {
+    return PRESERVE_MODULE_IMPORTS;
+  }
+
+  public void setPreserveModuleImports(boolean value) {
+    PRESERVE_MODULE_IMPORTS = value;
+  }
+
   @Override
   public void setUseSingleClassImports(boolean value) {
     USE_SINGLE_CLASS_IMPORTS = value;
@@ -349,6 +380,11 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   private void initImportsByDefault() {
     PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false, "java.awt", false));
     PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false,"javax.swing", false));
+    initImportLayout();
+  }
+
+  private void initImportLayout() {
+    IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_MODULE_IMPORTS);
     IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
     IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
     IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "javax", true));
@@ -412,6 +448,9 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     cloned.PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(PACKAGES_TO_USE_IMPORT_ON_DEMAND);
     cloned.IMPORT_LAYOUT_TABLE = new PackageEntryTable();
     cloned.IMPORT_LAYOUT_TABLE.copyFrom(IMPORT_LAYOUT_TABLE);
+    cloned.myVersion = myVersion;
+    cloned.myOldVersion = myOldVersion;
+    cloned.myIsInitialized = myIsInitialized;
     return cloned;
   }
 
@@ -420,6 +459,35 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     super.readExternal(parentElement);
     readExternalCollection(parentElement, myRepeatAnnotations, REPEAT_ANNOTATIONS, REPEAT_ANNOTATIONS_ITEM);
     readExternalCollection(parentElement, myDoNotImportInner, DO_NOT_IMPORT_INNER, DO_NOT_IMPORT_INNER_ITEM);
+    myOldVersion = myVersion = CustomCodeStyleSettingsUtils.readVersion(parentElement.getChild(getTagName()));
+    myIsInitialized = true;
+    PackageEntry[] entries = IMPORT_LAYOUT_TABLE.getEntries();
+    //if it is broken, try to restore
+    if (entries.length == 0) {
+      initImportLayout();
+    }
+    else {
+      //if something is missed, restore it
+      if (LAYOUT_STATIC_IMPORTS_SEPARATELY && !ContainerUtil.exists(entries, entry -> entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY)) {
+        if (entries[0] == PackageEntry.ALL_MODULE_IMPORTS) {
+          IMPORT_LAYOUT_TABLE.insertEntryAt(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, 1);
+        }
+        else {
+          IMPORT_LAYOUT_TABLE.insertEntryAt(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, 0);
+        }
+      }
+      if (!ContainerUtil.exists(entries, entry -> entry == PackageEntry.ALL_OTHER_IMPORTS_ENTRY)) {
+        if (entries[0] == PackageEntry.ALL_MODULE_IMPORTS) {
+          IMPORT_LAYOUT_TABLE.insertEntryAt(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, 1);
+        }
+        else {
+          IMPORT_LAYOUT_TABLE.insertEntryAt(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, 0);
+        }
+      }
+      if (!ContainerUtil.exists(entries, entry -> entry == PackageEntry.ALL_MODULE_IMPORTS)) {
+        IMPORT_LAYOUT_TABLE.insertEntryAt(PackageEntry.ALL_MODULE_IMPORTS, 0);
+      }
+    }
   }
 
   @Override
@@ -427,6 +495,40 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     super.writeExternal(parentElement, parentSettings);
     writeExternalCollection(parentElement, myRepeatAnnotations, REPEAT_ANNOTATIONS, REPEAT_ANNOTATIONS_ITEM);
     writeExternalCollection(parentElement, myDoNotImportInner, DO_NOT_IMPORT_INNER, DO_NOT_IMPORT_INNER_ITEM);
+    writeVersion(parentElement);
+  }
+
+
+  /**
+   * Appends {@code version} attribute to the {@code JavaCodeStyleSettings} tag in {@link CodeStyleScheme}
+   * It might create a tag with empty body, in cases when custom options have
+   * default value and this value is different from common options
+   * @param parentElement root element in {@link CodeStyleScheme} xml file.
+   * @see JavaCodeStyleSettings#shouldWriteVersion()
+   */
+  private void writeVersion(@NotNull Element parentElement) {
+    if (!shouldWriteVersion()) return;
+    Element settingsTag = parentElement.getChild(getTagName());
+    if (settingsTag == null) {
+      parentElement.addContent(new Element(getTagName()));
+      settingsTag = parentElement.getChild(getTagName());
+    }
+    CustomCodeStyleSettingsUtils.writeVersion(settingsTag, myVersion);
+    myOldVersion = myVersion;
+  }
+
+  private boolean shouldWriteVersion() {
+    if (myVersion != CURRENT_VERSION) return false;
+
+    if (myOldVersion == myVersion) return true;
+
+    if (myOldVersion == 0 && !isFirstMigrationPreserved()) return true;
+    return false;
+  }
+
+  private boolean isFirstMigrationPreserved() {
+    CommonCodeStyleSettings commonSettings = getCommonSettings();
+    return commonSettings.BLANK_LINES_AROUND_FIELD == BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS;
   }
 
   public static JavaCodeStyleSettings getInstance(@NotNull PsiFile file) {
@@ -454,6 +556,14 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     }
   }
 
+  private static JavaCodeStyleSettings getDefaultCustomSettings() {
+    return CodeStyleSettings.getDefaults().getCustomSettings(JavaCodeStyleSettings.class);
+  }
+
+  private CommonCodeStyleSettings getCommonSettings() {
+    return getContainer().getCommonSettings(JavaLanguage.INSTANCE);
+  }
+
   private void writeExternalCollection(Element parentElement,
                                        Collection<String> collection,
                                        String collectionName,
@@ -472,15 +582,46 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     }
   }
 
+  /**
+   * {@link JavaCodeStyleSettings} supports migration.
+   * It happens consequently and works in the following way:
+   * <p>
+   *   Case 1: all {@link JavaCodeStyleSettings} options have a default value, e.g.
+   *   there is no tag, corresponding to the custom settings in the {@link CodeStyleScheme} or some
+   *   {@link JavaCodeStyleSettings} options have a non-default value, e. g.
+   *   there is a tag in the {@link CodeStyleScheme}, but no attribute {@code version} specified.
+   *   Then it is supposed, that all needed options should be
+   *   migrated (current migration version is 0).
+   * </p>
+   * <p>
+   *   Case 2: some {@link JavaCodeStyleSettings} options have a non-default value, e. g.
+   *   there is a tag in the {@link CodeStyleScheme}, and it has attribute {@code version}.
+   *   Then only later versions will be migrated.
+   * </p>
+   * @see JavaCodeStyleSettings#writeVersion(Element)
+   * @see JavaCodeStyleSettings#migrateSettingsToVersion1
+   */
   @Override
   protected void afterLoaded() {
+    migrateNonVersionedSettings();
+    if (myIsInitialized) {
+      if (myVersion < 1) migrateSettingsToVersion1();
+      myVersion = CURRENT_VERSION;
+    }
+  }
+
+  private void migrateSettingsToVersion1() {
+    CommonCodeStyleSettings commonCodeStyleSettings = getCommonSettings();
+    BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS = commonCodeStyleSettings.BLANK_LINES_AROUND_FIELD;
+  }
+
+  private void migrateNonVersionedSettings() {
     REPLACE_INSTANCEOF_AND_CAST |= REPLACE_CAST || REPLACE_INSTANCEOF;
     REPLACE_CAST = REPLACE_INSTANCEOF = false;
   }
 
-  @NotNull
   @Override
-  public List<String> getKnownTagNames() {
+  public @NotNull List<String> getKnownTagNames() {
     return Arrays.asList(getTagName(), REPEAT_ANNOTATIONS, DO_NOT_IMPORT_INNER);
   }
 

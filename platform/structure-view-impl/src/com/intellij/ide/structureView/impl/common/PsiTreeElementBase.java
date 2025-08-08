@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.common;
 
 import com.intellij.ide.structureView.StructureViewExtension;
@@ -16,6 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.*;
@@ -64,6 +65,7 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
     return false;
   }
 
+  @Override
   public String toString() {
     final T element = getElement();
     return element != null ? element.toString() : "";
@@ -81,7 +83,12 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
 
   private @NotNull List<StructureViewTreeElement> doGetChildren(boolean withCustomRegions) {
     T element = getElement();
-    return element == null ? Collections.emptyList() : mergeWithExtensions(element, getChildrenBase(), withCustomRegions);
+    if (element == null) return Collections.emptyList();
+    Collection<StructureViewTreeElement> baseChildren = getChildrenBase();
+    if (!isAllowExtensions()) {
+      return (baseChildren instanceof List<StructureViewTreeElement> list) ? list : new ArrayList<>(baseChildren);
+    }
+    return mergeWithExtensions(element, baseChildren, withCustomRegions);
   }
 
   @Override
@@ -103,8 +110,14 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
     return canNavigate();
   }
 
-  public abstract @NotNull Collection<StructureViewTreeElement> getChildrenBase();
+  public abstract @Unmodifiable @NotNull Collection<StructureViewTreeElement> getChildrenBase();
 
+  @ApiStatus.Internal
+  public boolean isAllowExtensions() {
+    return true;
+  }
+
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -115,6 +128,7 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
     return value == null ? that.getValue() == null : value.equals(that.getValue());
   }
 
+  @Override
   public int hashCode() {
     T value = getValue();
     return value == null ? 0 : value.hashCode();

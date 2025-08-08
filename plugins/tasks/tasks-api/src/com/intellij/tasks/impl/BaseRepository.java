@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.impl;
 
 import com.intellij.credentialStore.CredentialAttributes;
@@ -6,7 +6,6 @@ import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.credentialStore.Credentials;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.TaskRepository;
@@ -74,21 +73,6 @@ public abstract class BaseRepository extends TaskRepository {
     return myPassword;
   }
 
-  @Tag("password")
-  public String getEncodedPassword() {
-    return null;
-  }
-
-  @SuppressWarnings("unused")
-  public void setEncodedPassword(String password) {
-    try {
-      setPassword(PasswordUtil.decodePassword(password));
-    }
-    catch (NumberFormatException e) {
-      // do nothing
-    }
-  }
-
   private void loadPassword() {
     if (StringUtil.isEmpty(getPassword())) {
       CredentialAttributes attributes = getAttributes();
@@ -107,15 +91,13 @@ public abstract class BaseRepository extends TaskRepository {
     PasswordSafe.getInstance().set(attributes, new Credentials(getUsername(), getPassword()));
   }
 
-  @NotNull
-  protected CredentialAttributes getAttributes() {
+  protected @NotNull CredentialAttributes getAttributes() {
     String serviceName = CredentialAttributesKt.generateServiceName("Tasks", getRepositoryType().getName() + " " + getUrl());
     return new CredentialAttributes(serviceName, getUsername());
   }
 
-  @NotNull
   @Override
-  public abstract BaseRepository clone();
+  public abstract @NotNull BaseRepository clone();
 
   @Override
   public boolean equals(Object o) {
@@ -162,9 +144,8 @@ public abstract class BaseRepository extends TaskRepository {
     myPreferredOpenTaskState = state;
   }
 
-  @Nullable
   @Override
-  public CustomTaskState getPreferredOpenTaskState() {
+  public @Nullable CustomTaskState getPreferredOpenTaskState() {
     return myPreferredOpenTaskState;
   }
 
@@ -173,15 +154,13 @@ public abstract class BaseRepository extends TaskRepository {
     myPreferredCloseTaskState = state;
   }
 
-  @Nullable
   @Override
-  public CustomTaskState getPreferredCloseTaskState() {
+  public @Nullable CustomTaskState getPreferredCloseTaskState() {
     return myPreferredCloseTaskState;
   }
 
   @Override
-  @Nullable
-  public String extractId(@NotNull String taskName) {
+  public @Nullable String extractId(@NotNull String taskName) {
     Matcher matcher = PATTERN.matcher(taskName);
     return matcher.find() ? matcher.group() : null;
   }
@@ -191,13 +170,11 @@ public abstract class BaseRepository extends TaskRepository {
     super.setUrl(addSchemeIfNoneSpecified(url));
   }
 
-  @NotNull
-  protected String getDefaultScheme() {
+  protected @NotNull String getDefaultScheme() {
     return "http";
   }
 
-  @Nullable
-  private String addSchemeIfNoneSpecified(@Nullable String url) {
+  private @Nullable String addSchemeIfNoneSpecified(@Nullable String url) {
     if (StringUtil.isNotEmpty(url)) {
       try {
         final String scheme = new URI(url).getScheme();

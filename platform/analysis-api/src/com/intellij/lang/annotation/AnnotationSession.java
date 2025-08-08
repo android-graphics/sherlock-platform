@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -31,8 +31,7 @@ public /*abstract*/ class AnnotationSession implements UserDataHolder {
     myFile = file;
   }
 
-  @NotNull
-  public /*abstract*/ PsiFile getFile() {
+  public @NotNull /*abstract*/ PsiFile getFile() {
     return myFile;
   }
 
@@ -40,8 +39,22 @@ public /*abstract*/ class AnnotationSession implements UserDataHolder {
    * @return text range (inside the {@link #getFile()}) for which annotators should be calculated sooner than for the remaining range in the file.
    * Usually this priority range corresponds to the range visible on screen.
    */
-  @NotNull
-  public /*abstract*/ TextRange getPriorityRange() {
+  public @NotNull /*abstract*/ TextRange getPriorityRange() {
+    return getFile().getTextRange();
+  }
+
+  /**
+   * @return text range (inside the {@link #getFile()}) for which annotators should be calculated.
+   * The highlighting range is the subset of psi file for which the highlighting was requested.
+   * For example, when the user typed inside a function, the highlighting range is the containing code block.
+   * The {@link #getPriorityRange()} on the other hand, is a visible part of the file for which the highlighting should be run first.
+   * In the example above it could be a part of the function body and a couple of members below, visible onscreen.
+   * It is guaranteed that no PSI elements outside this range are going to be analyzed in this session.
+   * This method could be used as an optimization to reduce the analysis range.
+   */
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public @NotNull TextRange getHighlightRange() {
     return getFile().getTextRange();
   }
 
@@ -62,7 +75,7 @@ public /*abstract*/ class AnnotationSession implements UserDataHolder {
    * For example, spellchecker plugin might want to skip running itself altogether if minimumSeverity = WARNING.
    * This hint is only a hint, meaning that the annotator might choose to ignore it.
    */
-  public /*abstract*/ HighlightSeverity getMinimumSeverity() {
+  public /*abstract*/ @Nullable HighlightSeverity getMinimumSeverity() {
     return null;
   }
 }

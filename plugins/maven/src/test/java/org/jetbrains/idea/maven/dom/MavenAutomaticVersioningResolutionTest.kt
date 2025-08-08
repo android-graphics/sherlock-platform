@@ -3,10 +3,7 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.maven.testFramework.MavenDomTestCase
-import com.intellij.openapi.application.EDT
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedVersionInspection
 import org.junit.Test
 
@@ -43,9 +40,7 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                       </parent>
                        <artifactId>m</artifactId>
                       """.trimIndent())
-    withContext(Dispatchers.EDT) {
-      assertResolved(m, findPsiFile(projectPom))
-    }
+    assertResolved(m, findPsiFile(projectPom))
     fixture.enableInspections(listOf<Class<out LocalInspectionTool?>>(MavenParentMissedVersionInspection::class.java))
     checkHighlighting(m)
   }
@@ -75,7 +70,12 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
 
     fixture.enableInspections(listOf<Class<out LocalInspectionTool?>>(MavenParentMissedVersionInspection::class.java))
 
+    moveCaretTo(m, "<parent<caret>>")
     checkHighlighting(m, Highlight(text = "parent", description = "'version' child tag should be defined"))
+    val action = getIntentionAtCaret(m, "Insert required child tag version")
+    assertNotNull("Quick Fix for adding <version> child tag must be available", action)
+    fixture.launchAction(action!!)
+    checkHighlighting(m)
   }
 
   @Test
@@ -111,6 +111,7 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                                           <dependency>
                                             <groupId>test</groupId>
                                             <artifactId>m1</artifactId>
+                                            <version>1.1</version>
                                           </dependency>
                                         </dependencies>
                                        """.trimIndent())
@@ -133,9 +134,7 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                          </dependency>
                        </dependencies>
                       """.trimIndent())
-    withContext(Dispatchers.EDT) {
-      assertResolved(m2, findPsiFile(m1))
-    }
+    assertResolved(m2, findPsiFile(m1))
     checkHighlighting(m2)
   }
 
@@ -173,8 +172,6 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                                        </parent>
                                         <artifactId>m1</artifactId>
                                        """.trimIndent())
-    withContext(Dispatchers.EDT) {
-      assertResolved(m1, findPsiFile(projectPom))
-    }
+    assertResolved(m1, findPsiFile(projectPom))
   }
 }

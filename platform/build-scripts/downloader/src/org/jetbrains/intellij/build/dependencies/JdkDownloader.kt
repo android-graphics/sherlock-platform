@@ -15,14 +15,16 @@ import java.util.logging.Logger
 object JdkDownloader {
   fun blockingGetJdkHome(communityRoot: BuildDependenciesCommunityRoot, jdkBuildNumber: String? = null, variation: String? = null, infoLog: (String) -> Unit): Path {
     return runBlocking(Dispatchers.IO) {
-      getJdkHome(communityRoot, jdkBuildNumber, variation, infoLog)
+      getJdkHome(communityRoot = communityRoot, jdkBuildNumber = jdkBuildNumber, variation = variation, infoLog = infoLog)
     }
   }
 
   suspend fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot, jdkBuildNumber: String? = null, variation: String? = null, infoLog: (String) -> Unit): Path {
     val os = OS.current
     val arch = Arch.current
-    return getJdkHome(communityRoot = communityRoot, os = os, arch = arch, infoLog = infoLog, jdkBuildNumber = jdkBuildNumber, variation = variation)
+    val isMusl = LinuxLibcImpl.isLinuxMusl
+    val effectiveVariation = if (isMusl) null else variation
+    return getJdkHome(communityRoot = communityRoot, os = os, arch = arch, isMusl = isMusl, infoLog = infoLog, jdkBuildNumber = jdkBuildNumber, variation = effectiveVariation)
   }
 
   @JvmStatic
@@ -32,15 +34,32 @@ object JdkDownloader {
     }
   }
 
+  /**
+   * Used by JpsBootstrapMain
+   */
+  @Suppress("unused")
+  @JvmStatic
+  fun getRuntimeHome(communityRoot: BuildDependenciesCommunityRoot): Path {
+    return runBlocking(Dispatchers.IO) {
+      val dependenciesProperties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
+      val runtimeBuild = dependenciesProperties.property("runtimeBuild")
+      getJdkHome(communityRoot, jdkBuildNumber = runtimeBuild, variation = "jbr_jcef") {
+        Logger.getLogger(JdkDownloader::class.java.name).info(it)
+      }
+    }
+  }
+
   suspend fun getJdkHome(
     communityRoot: BuildDependenciesCommunityRoot,
     os: OS,
     arch: Arch,
+    isMusl: Boolean = false,
     jdkBuildNumber: String? = null,
     variation: String? = null,
     infoLog: (String) -> Unit,
   ): Path {
-    val jdkUrl = getUrl(communityRoot = communityRoot, os = os, arch = arch, jdkBuildNumber = jdkBuildNumber, variation = variation)
+    val effectiveVariation = if (isMusl) null else variation
+    val jdkUrl = getUrl(communityRoot = communityRoot, os = os, arch = arch, isMusl = isMusl, jdkBuildNumber = jdkBuildNumber, variation = effectiveVariation)
     val jdkArchive = downloadFileToCacheLocation(url = jdkUrl.toString(), communityRoot = communityRoot)
     val jdkExtracted = BuildDependenciesDownloader.extractFileToCacheLocation(communityRoot = communityRoot,
                                                                               archiveFile = jdkArchive,
@@ -61,7 +80,7 @@ object JdkDownloader {
     throw IllegalStateException("No java executables were found under $jdkHome")
   }
 
-  private fun getUrl(communityRoot: BuildDependenciesCommunityRoot, os: OS, arch: Arch, jdkBuildNumber: String? = null, variation: String? = null): URI {
+  private fun getUrl(communityRoot: BuildDependenciesCommunityRoot, os: OS, arch: Arch, isMusl: Boolean = false, jdkBuildNumber: String? = null, variation: String? = null): URI {
     val ext = ".tar.gz"
     val osString: String = when (os) {
       OS.WINDOWS -> "windows"
@@ -73,8 +92,6 @@ object JdkDownloader {
       Arch.ARM64 -> "aarch64"
     }
 
-    val variationSuffix = if (variation == null) "" else "_$variation"
-
     val jdkBuild = if (jdkBuildNumber == null) {
       val dependencyProperties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
       dependencyProperties.property("jdkBuild")
@@ -85,9 +102,10 @@ object JdkDownloader {
     check(jdkBuildSplit.size == 2) { "Malformed jdkBuild property: $jdkBuild" }
     val version = jdkBuildSplit[0]
     val build = "b" + jdkBuildSplit[1]
-    return URI.create("https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk" +
-                      variationSuffix + "-" +
+    return URI.create("https://cache-redirector.jetbrains.com/intellij-jbr/" +
+                      (variation ?: "jbrsdk") + "-" +
                       version + "-" + osString + "-" +
+                      (if (isMusl) "musl-" else "") +
                       archString + "-" + build + ext)
   }
 

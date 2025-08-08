@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.generate;
 
@@ -80,6 +80,11 @@ public abstract class GenerateTestSupportMethodActionTestGenerated extends Abstr
 
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("dataMethod.kt")
+        public void testDataMethod() throws Exception {
+            runTest("testData/codeInsight/generate/testFrameworkSupport/jUnit5/dataMethod.kt");
         }
 
         @TestMetadata("setUp.kt")

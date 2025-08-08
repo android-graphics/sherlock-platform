@@ -38,6 +38,13 @@ public final class DfaCallArguments {
     return myArguments;
   }
 
+  /**
+   * @return pure equivalent of this 
+   */
+  public DfaCallArguments makeTransparent() {
+    return myMutation == MutationSignature.transparent() ? this : new DfaCallArguments(myQualifier, myArguments, MutationSignature.transparent());
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -68,6 +75,7 @@ public final class DfaCallArguments {
       handler.handleSideEffect(factory, state, this);
       return;
     }
+    if (myMutation.isTransparent()) return;
     if (myMutation.isPure()) {
       if (myQualifier instanceof DfaVariableValue) {
         DfaValue qualifier;
@@ -79,7 +87,9 @@ public final class DfaCallArguments {
         // We assume that even pure call may modify private fields (e.g., to cache something)
         state.flushVariables(v -> v.getQualifier() == qualifier &&
                                   v.getPsiVariable() instanceof PsiMember member &&
-                                  member.hasModifierProperty(PsiModifier.PRIVATE));
+                                  member != method &&
+                                  member.hasModifierProperty(PsiModifier.PRIVATE) &&
+                                  !member.hasModifierProperty(PsiModifier.FINAL));
       }
       return;
     }

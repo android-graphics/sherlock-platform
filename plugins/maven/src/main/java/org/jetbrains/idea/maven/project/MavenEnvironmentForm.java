@@ -1,16 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentType;
 import com.intellij.execution.target.TargetEnvironmentsManager;
-import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComponentWithBrowseButton;
-import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.ui.TextComponentAccessors;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -20,7 +16,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.Alarm;
+import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -29,8 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenVersionSupportUtil;
 import org.jetbrains.idea.maven.config.MavenConfig;
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration;
+import org.jetbrains.idea.maven.utils.MavenEelUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.jetbrains.idea.maven.utils.MavenWslUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -38,7 +34,7 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
+import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,8 +49,8 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
   private ContextHelpLabel mavenHomeOnTargetHelpLabel;
   private TextFieldWithHistory mavenHomeField;
   private LabeledComponent<JBLabel> mavenVersionLabelComponent;
-  private LabeledComponent<TextFieldWithBrowseButton> settingsFileComponent;
-  private LabeledComponent<TextFieldWithBrowseButton> localRepositoryComponent;
+  private LabeledComponentNoThrow<TextFieldWithBrowseButton> settingsFileComponent;
+  private LabeledComponentNoThrow<TextFieldWithBrowseButton> localRepositoryComponent;
   private JCheckBox settingsOverrideCheckBox;
   private JCheckBox localRepositoryOverrideCheckBox;
   private JComponent anchor;
@@ -63,7 +59,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
   private final PathOverrider localRepositoryOverrider;
 
   private boolean isUpdating = false;
-  private final Alarm myUpdateAlarm = new Alarm();
+  private final SingleEdtTaskScheduler updateAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
   private String myTargetName;
   private Project myProject;
 
@@ -75,13 +71,12 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
           if (isUpdating) return;
           if (!panel.isShowing()) return;
 
-          myUpdateAlarm.cancelAllRequests();
-          myUpdateAlarm.addRequest(() -> {
+          updateAlarm.cancelAndRequest(100, () -> {
             isUpdating = true;
             userSettingsFileOverrider.updateDefault();
             localRepositoryOverrider.updateDefault();
             isUpdating = false;
-          }, 100);
+          });
         });
       }
     };
@@ -89,8 +84,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     userSettingsFileOverrider =
       new PathOverrider(settingsFileComponent, settingsOverrideCheckBox, listener, new PathProvider() {
         @Override
-        @Nullable
-        protected File getFile() {
+        protected @Nullable Path getFile() {
           return doResolveDefaultUserSettingsFile();
         }
       });
@@ -98,8 +92,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     localRepositoryOverrider =
       new PathOverrider(localRepositoryComponent, localRepositoryOverrideCheckBox, listener, new PathProvider() {
         @Override
-        @Nullable
-        protected File getFile() {
+        protected @Nullable Path getFile() {
           return doResolveDefaultLocalRepository();
         }
       });
@@ -107,20 +100,18 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     mavenHomeField.addDocumentListener(listener);
   }
 
-  @NotNull
-  private File doResolveDefaultLocalRepository() {
+  private @NotNull Path doResolveDefaultLocalRepository() {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
     MavenConfig config = projectsManager != null ? projectsManager.getGeneralSettings().getMavenConfig() : null;
-    return MavenWslUtil.getLocalRepo(myProject, "",
+    return MavenEelUtil.getLocalRepoUnderModalProgress(myProject, "",
                                      staticOrBundled(resolveMavenHomeType(mavenHomeField.getText().trim())),
                                      settingsFileComponent.getComponent().getText(), config);
   }
 
-  @NotNull
-  private File doResolveDefaultUserSettingsFile() {
+  private @NotNull Path doResolveDefaultUserSettingsFile() {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
     MavenConfig config = projectsManager != null ? projectsManager.getGeneralSettings().getMavenConfig() : null;
-    return MavenWslUtil.getUserSettings(myProject, "", config);
+    return MavenEelUtil.getUserSettingsUnderModalProgress(myProject, "", config);
   }
 
   private void createUIComponents() {
@@ -191,8 +182,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     mavenVersionLabelComponent.getComponent().setText(StringUtil.notNullize(versionText));
   }
 
-  @NlsContexts.Label
-  private static String getUnsupportedMavenMessage(String version) {
+  private static @NlsContexts.Label String getUnsupportedMavenMessage(String version) {
     if (StringUtil.compareVersionNumbers(version, "3.1") < 0 && StringUtil.compareVersionNumbers(version, "2") > 0) {
       return MavenProjectBundle.message("label.invalid.maven30");
     }
@@ -211,10 +201,8 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
 
   public JComponent createComponent() {
     // all listeners will be removed when dialog is closed
-    mavenHomeComponent.getComponent().addBrowseFolderListener(MavenProjectBundle.message("maven.select.maven.home.directory"),
-                                                              "",
-                                                              null, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR,
-                                                              TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
+    var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(MavenProjectBundle.message("maven.select.maven.home.directory"));
+    mavenHomeComponent.getComponent().addBrowseFolderListener(null, descriptor, TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
     mavenHomeField.addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
@@ -222,10 +210,10 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
       }
     });
 
-    settingsFileComponent.getComponent().addBrowseFolderListener(MavenProjectBundle.message("maven.select.maven.settings.file"), "", null,
-                                                                 FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
-    localRepositoryComponent.getComponent().addBrowseFolderListener(MavenProjectBundle.message("maven.select.local.repository"), "", null,
-                                                                    FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    settingsFileComponent.getComponent().addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+      .withTitle(MavenProjectBundle.message("maven.select.maven.settings.file")));
+    localRepositoryComponent.getComponent().addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(MavenProjectBundle.message("maven.select.local.repository")));
     return panel;
   }
 
@@ -306,7 +294,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     boolean localTarget = targetName == null;
     if (localTarget) {
       mavenHomes = new ArrayList<>();
-      MavenUtil.getSystemMavenHomeVariants().forEach(it -> {
+      MavenUtil.getSystemMavenHomeVariants(project).forEach(it -> {
         mavenHomes.add(it.getTitle());
       });
     }
@@ -326,15 +314,13 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     return mavenHomes;
   }
 
-  private static abstract class PathProvider {
-    @NlsSafe
-    public String getPath() {
-      final File file = getFile();
-      return file == null ? "" : file.getPath();
+  private abstract static class PathProvider {
+    public @NlsSafe String getPath() {
+      final Path file = getFile();
+      return file == null ? "" : file.toString();
     }
 
-    @Nullable
-    abstract protected File getFile();
+    protected abstract @Nullable Path getFile();
   }
 
   private static class PathOverrider {

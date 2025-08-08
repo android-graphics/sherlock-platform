@@ -12,7 +12,6 @@ import org.gradle.tooling.model.build.BuildEnvironment
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.model.GradleLightBuild
 import org.jetbrains.plugins.gradle.util.GradleObjectTraverser
-import org.jetbrains.plugins.gradle.util.telemetry.GradleOpenTelemetryTraceService
 import java.io.File
 
 /**
@@ -132,7 +131,6 @@ class GradleIdeaModelHolder(
     val rootBuild = state.rootBuild
     val nestedBuilds = state.nestedBuilds
     val buildEnvironment = state.buildEnvironment
-    val openTelemetryTraces = state.openTelemetryTraces
     val models = state.models
 
     if (rootBuild != null) {
@@ -148,8 +146,6 @@ class GradleIdeaModelHolder(
       this.buildEnvironment = buildEnvironment
     }
     this.models.putAll(models)
-
-    GradleOpenTelemetryTraceService.exportOpenTelemetryTraces(openTelemetryTraces)
   }
 
   private fun convertModelPathsInPlace(model: Any) {

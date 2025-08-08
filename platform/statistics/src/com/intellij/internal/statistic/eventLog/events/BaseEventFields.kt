@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.events
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
@@ -290,6 +290,10 @@ data class AnonymizedListEventField @JvmOverloads constructor(@NonNls @EventFiel
 
   override val validationRule: List<String>
     get() = listOf("{regexp#hash}")
+
+  override fun addData(fuData: FeatureUsageData, value: List<String>) {
+    fuData.addAnonymizedValue(name, value)
+  }
 }
 
 internal data class ShortAnonymizedEventField(@NonNls @EventFieldName override val name: String,
@@ -376,6 +380,16 @@ data class IntListEventField @JvmOverloads constructor(@NonNls @EventFieldName o
   }
 }
 
+data class FloatListEventField @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+                                                         @NonNls override val description: String? = null) : ListEventField<Float>() {
+  override val validationRule: List<String>
+    get() = listOf("{regexp#float}")
+
+  override fun addData(fuData: FeatureUsageData, value: List<Float>) {
+    fuData.addListNumberData(name, value)
+  }
+}
+
 data class EnumListEventField<T : Enum<*>>(@NonNls @EventFieldName override val name: String,
                                             @NonNls override val description: String? = null,
                                             private val enumClass: Class<T>,
@@ -432,7 +446,7 @@ abstract class StringListEventField(@NonNls @EventFieldName override val name: S
 }
 
 private val classCheckAndTransform: (Class<*>) -> String = {
-  if (getPluginInfo(it).isSafeToReport()) StringUtil.substringBeforeLast(it.name, "$\$Lambda$", true) else "third.party"
+  if (getPluginInfo(it).isSafeToReport()) StringUtil.substringBeforeLast(it.name, "$\$Lambda", true) else "third.party"
 }
 
 data class ClassEventField @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,

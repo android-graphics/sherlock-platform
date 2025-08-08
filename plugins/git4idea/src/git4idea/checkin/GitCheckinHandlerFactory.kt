@@ -47,7 +47,7 @@ import org.jetbrains.annotations.PropertyKey
 
 abstract class GitCheckinHandlerFactory : VcsCheckinHandlerFactory(GitVcs.getKey())
 
-class GitUserNameCheckinHandlerFactory : GitCheckinHandlerFactory() {
+private class GitUserNameCheckinHandlerFactory : GitCheckinHandlerFactory() {
   override fun createVcsHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
     return GitUserNameCheckinHandler(panel.project)
   }
@@ -65,18 +65,17 @@ class GitLargeFileCheckinHandlerFactory : GitCheckinHandlerFactory() {
   }
 }
 
-class GitDetachedRootCheckinHandlerFactory : GitCheckinHandlerFactory() {
+private class GitDetachedRootCheckinHandlerFactory : GitCheckinHandlerFactory() {
   override fun createVcsHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
     return GitDetachedRootCheckinHandler(panel.project)
   }
 }
 
-class GitFileNameCheckinHandlerFactory : GitCheckinHandlerFactory() {
+private class GitFileNameCheckinHandlerFactory : GitCheckinHandlerFactory() {
   override fun createVcsHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
     return GitFileNameCheckinHandler(panel.project)
   }
 }
-
 
 private class GitCRLFCheckinHandler(project: Project) : GitCheckinHandler(project) {
   override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.EARLY
@@ -221,7 +220,7 @@ private class GitUserNameCheckinHandler(project: Project) : GitCheckinHandler(pr
 
 
     val data = withContext(Dispatchers.EDT) {
-      val dialog = GitUserNameNotDefinedDialog(project, notDefined, affectedRoots, defined)
+      val dialog = GitUserNameNotDefinedDialog(project, notDefined, affectedRoots, defined, commitInfo.commitActionText)
       val setUserNameEmail = dialog.showAndGet()
       UserNameDialogData(setUserNameEmail, dialog.userName, dialog.userEmail, dialog.isSetGlobalConfig)
     }

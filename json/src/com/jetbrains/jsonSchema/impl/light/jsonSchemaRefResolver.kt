@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.light
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile
+import com.jetbrains.jsonSchema.fus.JsonSchemaFusCountedFeature
+import com.jetbrains.jsonSchema.fus.JsonSchemaHighlightingSessionStatisticsCollector
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils
@@ -30,8 +34,16 @@ internal data object RemoteSchemaReferenceResolver : JsonSchemaReferenceResolver
     referenceOwner: JsonSchemaObjectBackedByJacksonBase,
     service: JsonSchemaService,
   ): JsonSchemaObject? {
-    val resolvedRemoteSchema = resolveRemoteSchemaByUrl(reference, referenceOwner, service) ?: return null
-    return resolvedRemoteSchema
+    JsonSchemaHighlightingSessionStatisticsCollector.getInstance().run {
+      reportSchemaUsageFeature(JsonSchemaFusCountedFeature.RemoteUrlResolveRequest)
+      reportUniqueUrlDownloadRequestUsage(reference)
+    }
+    // leave tests with default behaviour to not accidentally miss even more bugs
+    if (!ApplicationManager.getApplication().isUnitTestMode && !Registry.`is`("json.schema.object.v2.enable.nested.remote.schema.resolve")) {
+      return null
+    }
+
+    return resolveRemoteSchemaByUrl(reference, referenceOwner, service)
   }
 }
 
@@ -50,9 +62,11 @@ internal fun resolveLocalSchemaNode(
   maybeEmptyReference: String,
   currentSchemaNode: JsonSchemaObjectBackedByJacksonBase,
 ): JsonSchemaObject? {
+  JsonSchemaHighlightingSessionStatisticsCollector.getInstance().reportSchemaUsageFeature(JsonSchemaFusCountedFeature.LocalReferenceResolveRequest)
   return when {
     maybeEmptyReference.startsWith("#/") -> resolveReference(maybeEmptyReference, currentSchemaNode)
     maybeEmptyReference.startsWith("/") -> resolveReference(maybeEmptyReference, currentSchemaNode)
+    maybeEmptyReference == "#" -> currentSchemaNode.rootSchemaObject
     maybeEmptyReference.startsWith("#") -> resolveIdOrDynamicAnchor(maybeEmptyReference, currentSchemaNode)
     else -> null
   }

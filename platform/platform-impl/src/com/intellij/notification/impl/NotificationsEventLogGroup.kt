@@ -13,11 +13,11 @@ import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.impl.NotificationCollector.*
 import java.util.stream.Collectors
 
-object NotificationsEventLogGroup : CounterUsagesCollector() {
+internal object NotificationsEventLogGroup : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   @JvmField
-  val GROUP: EventLogGroup = EventLogGroup("notifications", 68)
+  val GROUP: EventLogGroup = EventLogGroup("notifications", 70)
 
   @JvmField
   val DISPLAY_TYPE: EnumEventField<NotificationDisplayType> = Enum("display_type", NotificationDisplayType::class.java)

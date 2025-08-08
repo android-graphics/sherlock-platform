@@ -9,10 +9,10 @@ interface GradleInitScriptParameters {
   val module: Module
   val workingDirectory: String?
   val params: String
+  val definitions: String
   val gradleTaskPath: String
   val runAppTaskName: String
   val mainClass: String
   val javaExePath: String
   val sourceSetName: String
-  val javaModuleName: String?
 }

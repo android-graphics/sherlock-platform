@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.options.OptPane;
@@ -12,7 +12,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -38,9 +37,8 @@ public final class ManualMinMaxCalculationInspection extends AbstractBaseJavaLoc
       checkbox("disableForNonIntegralTypes", JavaBundle.message("inspection.manual.min.max.calculation.disable.for.non.integral")));
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
 
       @Override
@@ -75,15 +73,14 @@ public final class ManualMinMaxCalculationInspection extends AbstractBaseJavaLoc
         if (!equivalenceChecker.expressionsAreEquivalent(right, useMathMin ? model.getThenExpression() : model.getElseExpression())) return;
         IElementType tokenType = condition.getOperationTokenType();
         useMathMin ^= JavaTokenType.LT.equals(tokenType) || JavaTokenType.LE.equals(tokenType);
-        PsiClass containingClass = ClassUtils.getContainingClass(element);
+        PsiClass containingClass = PsiUtil.getContainingClass(element);
         if (containingClass != null && CommonClassNames.JAVA_LANG_MATH.equals(containingClass.getQualifiedName())) return;
         holder.registerProblem(element,
                                JavaBundle.message("inspection.manual.min.max.calculation.description", useMathMin ? "min" : "max"),
                                new ReplaceWithMinMaxFix(useMathMin));
       }
 
-      @Nullable
-      private PsiType getType(@NotNull PsiExpression expression) {
+      private @Nullable PsiType getType(@NotNull PsiExpression expression) {
         PsiType type = expression.getType();
         if (type == null) return null;
         int rank = TypeConversionUtil.getTypeRank(type);
@@ -93,8 +90,7 @@ public final class ManualMinMaxCalculationInspection extends AbstractBaseJavaLoc
     };
   }
 
-  @Nullable
-  private static PsiBinaryExpression getCondition(@Nullable PsiExpression expression) {
+  private static @Nullable PsiBinaryExpression getCondition(@Nullable PsiExpression expression) {
     PsiBinaryExpression condition = tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiBinaryExpression.class);
     if (condition == null) return null;
     IElementType tokenType = condition.getOperationTokenType();
@@ -113,10 +109,8 @@ public final class ManualMinMaxCalculationInspection extends AbstractBaseJavaLoc
       myUseMathMin = useMathMin;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x.call", "Math." + (myUseMathMin ? "min()" : "max()"));
     }
 
@@ -154,8 +148,7 @@ public final class ManualMinMaxCalculationInspection extends AbstractBaseJavaLoc
       SimplifiableIfStatementInspection.tryJoinDeclaration(result);
     }
 
-    @Nullable
-    private String createReplacement(@NotNull PsiExpression expression, CommentTracker ct) {
+    private @Nullable String createReplacement(@NotNull PsiExpression expression, CommentTracker ct) {
       PsiBinaryExpression condition = getCondition(expression);
       if (condition == null) return null;
       PsiExpression left = condition.getLOperand();

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea;
 
 import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolder;
@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.VcsBackgroundTask;
 import com.intellij.vcsUtil.VcsUtil;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.command.*;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -38,13 +39,14 @@ public final class HgVFSListener extends VcsVFSListener {
   private final VcsDirtyScopeManager dirtyScopeManager;
   private static final Logger LOG = Logger.getInstance(HgVFSListener.class);
 
-  private HgVFSListener(@NotNull HgVcs vcs) {
-    super(vcs);
+  private HgVFSListener(@NotNull HgVcs vcs, @NotNull CoroutineScope activeScope) {
+    super(vcs, activeScope);
+
     dirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
   }
 
-  public static @NotNull HgVFSListener createInstance(@NotNull HgVcs vcs) {
-    HgVFSListener listener = new HgVFSListener(vcs);
+  public static @NotNull HgVFSListener createInstance(@NotNull HgVcs vcs, @NotNull CoroutineScope activeScope) {
+    HgVFSListener listener = new HgVFSListener(vcs, activeScope);
     listener.installListeners();
     return listener;
   }

@@ -10,9 +10,9 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileUtil;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiFileEx;
@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -88,7 +89,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   }
 
   @Override
-  public @NotNull List<@NotNull PsiFile> getAllFiles() {
+  public @Unmodifiable @NotNull List<@NotNull PsiFile> getAllFiles() {
     return ContainerUtil.createMaybeSingletonList(getPsi(getBaseLanguage()));
   }
 
@@ -129,12 +130,12 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   }
 
   @Override
-  public final @NotNull List<PsiFile> getCachedPsiFiles() {
+  public final @Unmodifiable @NotNull List<PsiFile> getCachedPsiFiles() {
     return ContainerUtil.createMaybeSingletonList(getCachedPsi(getBaseLanguage()));
   }
 
   @Override
-  public final @NotNull List<FileASTNode> getKnownTreeRoots() {
+  public final @Unmodifiable @NotNull List<FileASTNode> getKnownTreeRoots() {
     PsiFile psiFile = getCachedPsi(getBaseLanguage());
     if (!(psiFile instanceof PsiFileImpl)) return Collections.emptyList();
     FileASTNode element = ((PsiFileImpl)psiFile).getNodeIfLoaded();
@@ -166,19 +167,20 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     if (file instanceof LightVirtualFile && ((LightVirtualFile)file).isTooLargeForIntelligence() == ThreeState.YES) {
       return false;
     }
-    int maxSize = PersistentFSConstants.getMaxIntellisenseFileSize();
+    int maxSize = FileSizeLimit.getIntellisenseLimit(file.getExtension());
     return contentSize == null
            ? fileSizeIsGreaterThan(file, maxSize)
            : contentSize > maxSize;
   }
 
   public static boolean isTooLargeForContentLoading(@NotNull VirtualFile vFile) {
-    return fileSizeIsGreaterThan(vFile, PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD);
+    int contentLoadLimit = FileSizeLimit.getContentLoadLimit(vFile.getExtension());
+    return fileSizeIsGreaterThan(vFile, contentLoadLimit);
   }
 
   public static boolean isTooLargeForContentLoading(@NotNull VirtualFile vFile,
                                                     @Nullable("if content size should be retrieved from a file") Long contentSize) {
-    long maxLength = PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD;
+    long maxLength = FileSizeLimit.getContentLoadLimit(vFile.getExtension());
     return contentSize == null
            ? fileSizeIsGreaterThan(vFile, maxLength)
            : contentSize > maxLength;
@@ -240,15 +242,9 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   }
 
   public final void forceCachedPsi(@NotNull PsiFile psiFile) {
-    while (true) {
-      PsiFile prev = myPsiFile;
-      // jdk 6 doesn't have getAndSet()
-      if (myPsiFileUpdater.compareAndSet(this, prev, psiFile)) {
-        if (prev != psiFile && prev instanceof PsiFileEx) {
-          DebugUtil.performPsiModification(getClass().getName() + " PSI change", () -> ((PsiFileEx)prev).markInvalidated());
-        }
-        break;
-      }
+    PsiFile prev = myPsiFileUpdater.getAndSet(this, psiFile);
+    if (prev != psiFile && prev instanceof PsiFileEx) {
+      DebugUtil.performPsiModification(getClass().getName() + " PSI change", () -> ((PsiFileEx)prev).markInvalidated());
     }
     getManager().getFileManager().setViewProvider(getVirtualFile(), this);
   }

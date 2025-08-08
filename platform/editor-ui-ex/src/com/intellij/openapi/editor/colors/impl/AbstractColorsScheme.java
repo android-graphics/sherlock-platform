@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.BundleBase;
@@ -8,6 +8,7 @@ import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.ide.ui.ColorBlindness;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
@@ -26,14 +27,16 @@ import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("UseJBColor")
 public abstract class AbstractColorsScheme extends EditorFontCacheImpl implements EditorColorsScheme, SerializableScheme {
+  private static final Logger LOG = Logger.getInstance(AbstractColorsScheme.class);
+
   public static final TextAttributes INHERITED_ATTRS_MARKER = new TextAttributes();
   public static final Color INHERITED_COLOR_MARKER = JBColor.marker("INHERITED_COLOR_MARKER");
   public static final Color NULL_COLOR_MARKER = JBColor.marker("NULL_COLOR_MARKER");
@@ -169,18 +172,37 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   @Override
   public abstract Object clone();
 
-  public void copyTo(AbstractColorsScheme newScheme) {
-    if (consoleFontPreferences instanceof DelegatingFontPreferences) {
+  public void copyTo(@NotNull AbstractColorsScheme newScheme) {
+    boolean noName = newScheme.schemeName == null;
+    boolean consoleDelegating = consoleFontPreferences instanceof DelegatingFontPreferences;
+    boolean editorDelegating = fontPreferences instanceof DelegatingFontPreferences;
+
+    if (consoleDelegating) {
       newScheme.setUseEditorFontPreferencesInConsole();
     }
     else {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("setConsoleFontPreferences: " + consoleFontPreferences.getFontFamily() + ":" + consoleFontPreferences.getSize(consoleFontPreferences.getFontFamily()));
+      }
       newScheme.setConsoleFontPreferences(consoleFontPreferences);
     }
-    if (fontPreferences instanceof DelegatingFontPreferences) {
+    if (editorDelegating) {
       newScheme.setUseAppFontPreferencesInEditor();
     }
     else {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("setFontPreferences: " + fontPreferences.getFontFamily() +":"+fontPreferences.getSize(fontPreferences.getFontFamily()));
+      }
       newScheme.setFontPreferences(fontPreferences);
+    }
+
+    if (LOG.isDebugEnabled()) {
+      String delegateInfo = ". Delegate info: Console: " + consoleDelegating + " Editor: " + editorDelegating;
+      if (noName) {
+        LOG.debug("Copying scheme " + debugSchemeName() + " to empty newScheme" + delegateInfo);
+      } else {
+        LOG.debug("Copying scheme " + debugSchemeName() + " to " + newScheme.debugSchemeName() + delegateInfo);
+      }
     }
 
     newScheme.attributesMap = new HashMap<>(attributesMap);
@@ -208,6 +230,9 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   @Override
   public void setUseAppFontPreferencesInEditor() {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("setUseAppFontPreferencesInEditor in " + debugSchemeName());
+    }
     fontPreferences = new DelegatingFontPreferences(() -> AppEditorFontOptions.getInstance().getFontPreferences());
     initFonts();
   }
@@ -253,6 +278,12 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     ModifiableFontPreferences currPreferences = ensureEditableFontPreferences();
     boolean useLigatures = currPreferences.useLigatures();
     float editorFontSize = getEditorFontSize2D();
+    if (LOG.isDebugEnabled()) {
+      String message = "setEditorFontName=%s for %s. Current name/size: %s:%.2f".formatted(
+        fontName, debugSchemeName(), currPreferences.getFontFamily(), editorFontSize);
+      Throwable stack = new Throwable(message);
+      LOG.debug(message, stack);
+    }
     currPreferences.clear();
     currPreferences.register(fontName, editorFontSize);
     currPreferences.setUseLigatures(useLigatures);
@@ -271,8 +302,14 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   @Override
   public void setEditorFontSize(float fontSize) {
-    fontSize = EditorFontsConstants.checkAndFixEditorFontSize(fontSize);
-    ensureEditableFontPreferences().register(fontPreferences.getFontFamily(), fontSize);
+    float fixedFontSize = EditorFontsConstants.checkAndFixEditorFontSize(fontSize);
+    if (LOG.isDebugEnabled()) {
+      String message = "setEditorFontSize for %s. %.2f (original: %.2f)".formatted(
+        debugSchemeName(), fixedFontSize, fontSize);
+      Throwable stack = new Throwable(message);
+      LOG.debug(message, stack);
+    }
+    ensureEditableFontPreferences().register(fontPreferences.getFontFamily(), fixedFontSize);
     initFonts();
     setSaveNeeded(true);
   }
@@ -301,6 +338,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     return this;
   }
 
+  @Override
   public @NonNls String toString() {
     return getName();
   }
@@ -707,10 +745,10 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
     String rgb = "";
     if (color != NULL_COLOR_MARKER) {
-      rgb = Integer.toString(0xFFFFFF & color.getRGB(), 16);
+      rgb = String.format("%06X", 0xFFFFFF & color.getRGB());
       int alpha = 0xFF & color.getAlpha();
       if (alpha != 0xFF) {
-        rgb += Integer.toString(alpha, 16);
+        rgb += String.format("%02X", alpha);
       }
     }
     JdomKt.addOptionTag(colorElements, key.getExternalName(), rgb);
@@ -730,6 +768,12 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     if (!(fontPreferences instanceof ModifiableFontPreferences)) {
       ModifiableFontPreferences editableFontPreferences = new FontPreferencesImpl();
       fontPreferences.copyTo(editableFontPreferences);
+      if (LOG.isDebugEnabled()) {
+        String message = "ensureEditableFontPreferences in %s. %s, size: %d".formatted(
+          debugSchemeName(), editableFontPreferences, editableFontPreferences.getSize(editableFontPreferences.getFontFamily()));
+        Throwable stack = new Throwable(message);
+        LOG.debug(message, stack);
+      }
       fontPreferences = editableFontPreferences;
       ((FontPreferencesImpl)fontPreferences).addChangeListener((source) -> initFonts());
     }
@@ -986,7 +1030,8 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     parentScheme = newParent;
   }
 
-  void resolveParent(@NotNull Function<? super String, ? extends EditorColorsScheme> nameResolver) {
+  @ApiStatus.Internal
+  public void resolveParent(@NotNull Function<? super String, ? extends EditorColorsScheme> nameResolver) {
     if (parentScheme instanceof TemporaryParent) {
       String parentName = ((TemporaryParent)parentScheme).getParentName();
       EditorColorsScheme newParent = nameResolver.apply(parentName);
@@ -1007,9 +1052,25 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     }
   }
 
-  void copyMissingAttributes(@NotNull AbstractColorsScheme sourceScheme) {
+  @ApiStatus.Internal
+  public void copyMissingAttributes(@NotNull AbstractColorsScheme sourceScheme) {
     sourceScheme.colorMap.forEach((key, color) -> colorMap.putIfAbsent(key, color));
     sourceScheme.attributesMap.forEach((key, attributes) -> attributesMap.putIfAbsent(key, attributes));
+  }
+
+  private String debugSchemeName(){
+    try {
+      if (schemeName != null) {
+        return schemeName;
+      }
+      if (parentScheme == null) {
+        return null;
+      }
+      return parentScheme.getName();
+    } catch (Throwable e) {
+      LOG.warn("An exception occurred while trying to get scheme name", e);
+      return "null(e)";
+    }
   }
 
   private static @NotNull EditorColorsScheme getDefaultScheme(@NotNull String name) {

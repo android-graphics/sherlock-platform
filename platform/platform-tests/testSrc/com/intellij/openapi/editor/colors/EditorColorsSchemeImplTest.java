@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
@@ -17,6 +17,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.util.ui.UIUtil;
 import org.assertj.core.api.Assertions;
 import org.jdom.Element;
@@ -359,23 +360,25 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     }
   }
 
-  public void testMustNotBePossibleToRegisterTextAttributeKeysWithDifferentFallBacks() {
+  public void testMustNotBePossibleToRegisterTextAttributeKeysWithDifferentFallBacks() throws Exception {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
-    TextAttributesKey keyB = TextAttributesKey.createTextAttributesKey("B");
-    TextAttributesKey keyD = TextAttributesKey.createTextAttributesKey("D");
-    TextAttributesKey keyC = TextAttributesKey.createTextAttributesKey("C", keyD);
-    try {
-      keyC = TextAttributesKey.createTextAttributesKey(keyC.getExternalName(), keyB);
-      fail("Must fail");
-    }
-    catch (IllegalStateException | AssertionError e) {
-      assertTrue(e.getMessage().contains("already registered"));
-    }
-    finally {
-      TextAttributesKey.removeTextAttributesKey(keyB.getExternalName());
-      TextAttributesKey.removeTextAttributesKey(keyC.getExternalName());
-      TextAttributesKey.removeTextAttributesKey(keyD.getExternalName());
-    }
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      TextAttributesKey keyB = TextAttributesKey.createTextAttributesKey("B");
+      TextAttributesKey keyD = TextAttributesKey.createTextAttributesKey("D");
+      TextAttributesKey keyC = TextAttributesKey.createTextAttributesKey("C", keyD);
+      try {
+        keyC = TextAttributesKey.createTextAttributesKey(keyC.getExternalName(), keyB);
+        fail("Must fail");
+      }
+      catch (IllegalStateException | AssertionError e) {
+        assertTrue(e.getMessage().contains("already registered"));
+      }
+      finally {
+        TextAttributesKey.removeTextAttributesKey(keyB.getExternalName());
+        TextAttributesKey.removeTextAttributesKey(keyC.getExternalName());
+        TextAttributesKey.removeTextAttributesKey(keyD.getExternalName());
+      }
+    });
   }
 
   public void testIdea152156() {
@@ -403,6 +406,37 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     finally {
       TextAttributesKey.removeTextAttributesKey(testKey.getExternalName());
     }
+  }
+
+  @TestFor(issues = "IJPL-26971")
+  public void testTransparencyHexPadding() {
+    // Opacity gets stored in color schemes without padding.
+    var testColor = new Color(0x88, 0x99, 0xAA, 0x01);
+    ensureColorRoundTrips(testColor);
+  }
+
+  @TestFor(issues = "IJPL-26971")
+  public void testColorZeroPadding() {
+    // Another consequence of IJPL-26971: the color components also lose paddings, which would break if the opacity component is not FF.
+    var testColor = new Color(0x00, 0x99, 0xAA, 0x00);
+    ensureColorRoundTrips(testColor);
+  }
+
+  private static void ensureColorRoundTrips(Color color) {
+    var defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
+    var parentScheme = (EditorColorsScheme)defaultScheme.clone();
+    var editorColorsScheme = new EditorColorsSchemeImpl(parentScheme);
+    editorColorsScheme.setName("testEditorColorsScheme");
+
+    var testColorKey = ColorKey.createColorKey("testColorKey");
+    editorColorsScheme.setColor(testColorKey, color);
+
+    var root = new Element("scheme");
+    editorColorsScheme.writeExternal(root);
+    var targetScheme = new EditorColorsSchemeImpl(parentScheme);
+    targetScheme.readExternal(root);
+    var targetColor = targetScheme.getColor(testColorKey);
+    assertEquals(color, targetColor);
   }
 
   public void testWriteDefaultSemanticHighlighting() {
@@ -797,5 +831,20 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     }
   }
 
+  public void testCopyDoesNotCatastrophicallyWipeOldAttributes() {
+    TextAttributesKey tempKey = TextAttributesKey.createTempTextAttributesKey("myxxx", null);
 
+    EditorColorsSchemeImpl scheme = new EditorColorsSchemeImpl(null);
+
+    try {
+      TextAttributes attributes = new TextAttributes(new Color(1, 2, 3), new Color(4, 5, 6), new Color(7, 8, 9), EffectType.BOLD_DOTTED_LINE, 5);
+      scheme.setAttributes(tempKey, attributes);
+      assertEquals(attributes, scheme.getAttributes(tempKey));
+      scheme.copyTo(new EditorColorsSchemeImpl(null));
+      assertEquals(attributes, scheme.getAttributes(tempKey));
+    }
+    finally {
+      TextAttributesKey.removeTextAttributesKey(tempKey.getExternalName());
+    }
+  }
 }

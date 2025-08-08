@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.renameProject;
 
 import com.intellij.ide.IdeBundle;
@@ -9,8 +9,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.InputValidator;
@@ -63,7 +63,7 @@ public final class RenameProjectHandler implements RenameHandler, TitledHandler 
 
   protected static final class MyInputValidator implements InputValidator {
     private final ProjectEx myProject;
-    @Nullable private final Module myModule;
+    private final @Nullable Module myModule;
 
     public MyInputValidator(ProjectEx project, @Nullable Module module) {
       myProject = project;
@@ -72,7 +72,7 @@ public final class RenameProjectHandler implements RenameHandler, TitledHandler 
 
     @Override
     public boolean checkInput(String inputString) {
-      return inputString != null && inputString.length() > 0;
+      return inputString != null && !inputString.isEmpty();
     }
 
     @Override

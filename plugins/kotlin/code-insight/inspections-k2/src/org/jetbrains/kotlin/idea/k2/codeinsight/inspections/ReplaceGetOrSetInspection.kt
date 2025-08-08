@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -64,8 +65,7 @@ internal class ReplaceGetOrSetInspection :
     override fun isApplicableByPsi(element: KtDotQualifiedExpression): Boolean =
         ReplaceGetOrSetInspectionUtils.looksLikeGetOrSetOperatorCall(element)
 
-    context(KaSession)
-    override fun prepareContext(element: KtDotQualifiedExpression): Context? {
+    override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Context? {
         // `resolveCallOld()` is needed to filter out `set` functions with varargs or default values. See the `setWithVararg.kt` test.
         val call = element.resolveToCall()?.successfulCallOrNull<KaSimpleFunctionCall>() ?: return null
         val functionSymbol = call.symbol
@@ -73,8 +73,10 @@ internal class ReplaceGetOrSetInspection :
             return null
         }
 
+        if (functionSymbol.name != OperatorNameConventions.GET && functionSymbol.name != OperatorNameConventions.SET) return null
+
         val receiverExpression = element.receiverExpression
-        if (receiverExpression is KtSuperExpression || receiverExpression.expressionType?.isUnit != false) return null
+        if (receiverExpression is KtSuperExpression || receiverExpression.expressionType?.isUnitType != false) return null
 
         if (functionSymbol.name == OperatorNameConventions.SET && element.isUsedAsExpression) return null
 
@@ -86,7 +88,7 @@ internal class ReplaceGetOrSetInspection :
     override fun createQuickFix(
         element: KtDotQualifiedExpression,
         context: Context,
-    ) = object : KotlinModCommandQuickFix<KtDotQualifiedExpression>() {
+    ): KotlinModCommandQuickFix<KtDotQualifiedExpression> = object : KotlinModCommandQuickFix<KtDotQualifiedExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("replace.get.or.set.call.with.indexing.operator")
@@ -109,6 +111,6 @@ internal class ReplaceGetOrSetInspection :
     context(KaSession)
     private fun KaNamedFunctionSymbol.isExplicitOperator(): Boolean {
         fun KaCallableSymbol.hasOperatorKeyword() = psiSafe<KtNamedFunction>()?.hasModifier(KtTokens.OPERATOR_KEYWORD) == true
-        return hasOperatorKeyword() || allOverriddenSymbols.any { it.hasOperatorKeyword() }
+        return allOverriddenSymbolsWithSelf.any { it.hasOperatorKeyword() }
     }
 }

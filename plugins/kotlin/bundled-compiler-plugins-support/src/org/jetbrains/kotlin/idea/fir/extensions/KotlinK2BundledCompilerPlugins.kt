@@ -12,11 +12,9 @@ import org.jetbrains.kotlin.noarg.NoArgComponentRegistrar
 import org.jetbrains.kotlin.parcelize.ParcelizeComponentRegistrar
 import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverComponentRegistrar
 import org.jetbrains.kotlin.scripting.compiler.plugin.ScriptingK2CompilerPluginRegistrar
+import org.jetbrains.kotlinx.jspo.compiler.cli.JsPlainObjectsComponentRegistrar
 import org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationComponentRegistrar
 import java.nio.file.Path
-import java.util.zip.ZipFile
-import kotlin.io.path.extension
-import kotlin.io.path.notExists
 import kotlin.reflect.KClass
 
 /**
@@ -27,14 +25,12 @@ import kotlin.reflect.KClass
  * This enum uses corresponding [CompilerPluginRegistrar] classes only to ensure
  * their availability in compile time; it should not try to instantiate them.
  *
- * Jars with specified compiler plugins are identified by the content of
- * one of [COMPILER_PLUGIN_REGISTRAR_FILES] inside of them. If any of those files contains one of
- * [registrarClassName]s, then we consider this jar to be a compiler plugin.
- *
  * [PathManager.getJarForClass] is used to get the correct location of plugin's jars
  * in any IDE launch scenario (both when run from sources and in dev mode).
+ *
+ * @see CompilerPluginRegistrarUtils
+ * @see KotlinBundledFirCompilerPluginProvider
  */
-@Suppress("unused")
 @OptIn(ExperimentalCompilerApi::class)
 enum class KotlinK2BundledCompilerPlugins(
     registrarClass: KClass<out CompilerPluginRegistrar>,
@@ -46,6 +42,10 @@ enum class KotlinK2BundledCompilerPlugins(
 
     COMPOSE_COMPILER_PLUGIN(
         ComposePluginRegistrar::class
+    ),
+
+    JS_PLAIN_OBJECTS_COMPILER_PLUGIN(
+        JsPlainObjectsComponentRegistrar::class
     ),
 
     NO_ARG_COMPILER_PLUGIN(
@@ -76,7 +76,7 @@ enum class KotlinK2BundledCompilerPlugins(
         ScriptingK2CompilerPluginRegistrar::class,
     );
 
-    private val registrarClassName: String =
+    internal val registrarClassName: String =
         registrarClass.qualifiedName ?: error("${registrarClass} does not have a qualified name")
 
     /**
@@ -86,27 +86,6 @@ enum class KotlinK2BundledCompilerPlugins(
         PathManager.getJarForClass(registrarClass.java)
             ?: error("Unable to find .jar for '$registrarClassName' registrar in IDE distribution")
 
-    companion object {
-        private val COMPILER_PLUGIN_REGISTRAR_FILES: Set<String> = setOf(
-            "META-INF/services/org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar",   // default registrar location
-            "META-INF/services/org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar",        // old registrar location, see KT-52665
-        )
-
-        fun findCorrespondingBundledPlugin(originalJar: Path): KotlinK2BundledCompilerPlugins? {
-            val compilerPluginRegistrarContent =
-                COMPILER_PLUGIN_REGISTRAR_FILES.firstNotNullOfOrNull { readFileContentFromJar(originalJar, it) } ?: return null
-
-            return KotlinK2BundledCompilerPlugins.entries.firstOrNull { it.registrarClassName in compilerPluginRegistrarContent }
-        }
-    }
-}
-
-private fun readFileContentFromJar(jarFile: Path, pathInJar: String): String? {
-    if (jarFile.notExists() || jarFile.extension != "jar") return null
-
-    ZipFile(jarFile.toFile()).use { zipFile ->
-        val entry = zipFile.getEntry(pathInJar) ?: return null
-
-        return zipFile.getInputStream(entry).bufferedReader().use { it.readText() }
-    }
+    @Deprecated("This companion object is left for binary compatibility only; do not use it.")
+    companion object
 }

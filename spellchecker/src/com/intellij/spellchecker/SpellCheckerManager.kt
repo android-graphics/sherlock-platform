@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.spellchecker
@@ -8,12 +8,12 @@ import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.undo.BasicUndoableAction
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -26,7 +26,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.*
-import com.intellij.project.getProjectStoreDirectory
+import com.intellij.project.stateStore
 import com.intellij.spellchecker.SpellCheckerManager.Companion.restartInspections
 import com.intellij.spellchecker.dictionary.*
 import com.intellij.spellchecker.engine.SpellCheckerEngine
@@ -39,9 +39,11 @@ import com.intellij.spellchecker.state.DictionaryStateListener
 import com.intellij.spellchecker.state.ProjectDictionaryState
 import com.intellij.spellchecker.util.SpellCheckerBundle
 import com.intellij.util.EventDispatcher
-import com.intellij.util.application
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.util.function.Consumer
 
@@ -49,53 +51,55 @@ private val LOG = logger<SpellCheckerManager>()
 private val BUNDLED_EP_NAME = ExtensionPointName<BundledDictionaryProvider>("com.intellij.spellchecker.bundledDictionaryProvider")
 
 @Service(Service.Level.PROJECT)
-class SpellCheckerManager(val project: Project) : Disposable {
+class SpellCheckerManager @Internal constructor(@Internal val project: Project, coroutineScope: CoroutineScope) : Disposable {
   private var projectDictionary: ProjectDictionary? = null
   private var appDictionary: EditableDictionary? = null
 
-  internal val projectDictionaryPath: String
-  internal val appDictionaryPath: String
+  @get:Internal
+  val projectDictionaryPath: String by lazy {
+    val projectStoreDir = project.takeIf { !it.isDefault }?.stateStore?.directoryStorePath
+    projectStoreDir?.toAbsolutePath()?.resolve(getProjectDictionaryPath())?.toString() ?: ""
+  }
+
+  @get:Internal
+  val appDictionaryPath: String by lazy {
+    PathManager.getOptionsPath() + File.separator + CACHED_DICTIONARY_FILE
+  }
 
   private val userDictionaryListenerEventDispatcher = EventDispatcher.create(DictionaryStateListener::class.java)
 
-  // used in Rider
-  @get:Suppress("unused")
+  @Internal
   var spellChecker: SpellCheckerEngine? = null
     private set
 
   private var suggestionProvider: SuggestionProvider? = null
 
   init {
-    ensureSpellerIsLoaded()
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      @Suppress("TestOnlyProblems")
+      ensureSpellerIsLoaded()
+    }
+
     fullConfigurationReload()
-    @Suppress("DEPRECATION")
-    val projectStoreDir = project.baseDir?.let { getProjectStoreDirectory(it) }
-    projectDictionaryPath = if (projectStoreDir == null) "" else projectStoreDir.path + File.separator + PROJECT_DICTIONARY_PATH
-    appDictionaryPath = PathManager.getOptionsPath() + File.separator + CACHED_DICTIONARY_FILE
+
     LocalFileSystem.getInstance().addVirtualFileListener(CustomDictFileListener(project = project, manager = this), this)
     BUNDLED_EP_NAME.addChangeListener({ fillEngineDictionary(spellChecker!!) }, this)
-    RuntimeDictionaryProvider.EP_NAME.addChangeListener({ fillEngineDictionary(spellChecker!!) }, this)
-    CustomDictionaryProvider.EP_NAME.addChangeListener({ fillEngineDictionary(spellChecker!!) }, this)
+    RuntimeDictionaryProvider.EP_NAME.addChangeListener(coroutineScope) { fillEngineDictionary(spellChecker!!) }
+    CustomDictionaryProvider.EP_NAME.addChangeListener(coroutineScope) { fillEngineDictionary(spellChecker!!) }
   }
 
+  @TestOnly
   private fun ensureSpellerIsLoaded() {
-    if (application.isUnitTestMode) {
-      when {
-        application.isReadAccessAllowed -> waitForSpeller()
-        else -> runReadAction(this::waitForSpeller)
-      }
-    }
-  }
-
-  private fun waitForSpeller() {
+    assert(ApplicationManager.getApplication().isUnitTestMode)
+    @Suppress("SSBasedInspection")
     runBlocking {
-      project.service<GrazieSpellCheckerEngine>().waitForSpeller()
+      project.serviceAsync<GrazieSpellCheckerEngine>().waitForSpeller()
     }
   }
 
   companion object {
     private const val MAX_METRICS = 1
-    private val PROJECT_DICTIONARY_PATH = "dictionaries${File.separator}${System.getProperty("user.name").replace('.', '_')}.xml"
+
     private const val CACHED_DICTIONARY_FILE = "spellchecker-dictionary.xml"
 
     @JvmStatic
@@ -208,7 +212,8 @@ class SpellCheckerManager(val project: Project) : Disposable {
     val dictionaryState = project.service<ProjectDictionaryState>()
     dictionaryState.addProjectDictListener { restartInspections() }
     projectDictionary = dictionaryState.projectDictionary
-    projectDictionary!!.setActiveName(System.getProperty("user.name"))
+    projectDictionary!!.setActiveName(getProjectDictionaryName())
+
     spellChecker.addModifiableDictionary(projectDictionary!!)
   }
 
@@ -274,7 +279,7 @@ class SpellCheckerManager(val project: Project) : Disposable {
   private fun fireDictionaryChanged(dictionary: EditableDictionary) {
     userDictionaryListenerEventDispatcher.multicaster.dictChanged(dictionary)
     restartInspections()
-    SaveAndSyncHandler.getInstance().scheduleProjectSave(project)
+    SaveAndSyncHandler.getInstance().scheduleProjectSave(project, forceSavingAllSettings = true)
   }
 
   fun updateUserDictionary(words: Collection<String>) {
@@ -458,4 +463,15 @@ private class StreamLoader(private val name: String, private val loaderClass: Cl
   }
 
   override fun getName() = name
+}
+
+private fun getProjectDictionaryPath(): String {
+  return "dictionaries${File.separator}${getProjectDictionaryName().replace('.', '_')}.xml"
+}
+
+internal fun getProjectDictionaryName(): String {
+  return if (Registry.`is`("spellchecker.use.standard.project.dictionary.name"))
+    ProjectDictionary.DEFAULT_CURRENT_DICT_NAME
+  else
+    System.getProperty("user.name")
 }

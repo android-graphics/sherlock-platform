@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.completion.PyModuleNameCompletionContributor;
+import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixture.PythonCommonTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -51,12 +52,17 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   }
 
   private void doMultiFileTestAssertSameOrderedElements(String... variants) {
+    assertOrderedEquals(doMultiFileTestCompletionVariants(), variants);
+  }
+
+  @NotNull
+  private List<String> doMultiFileTestCompletionVariants() {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.configureByFile("a.py");
     myFixture.completeBasic();
     final List<String> suggested = myFixture.getLookupElementStrings();
     assertNotNull(suggested);
-    assertOrderedEquals(suggested, variants);
+    return suggested;
   }
 
   @Nullable
@@ -532,28 +538,6 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
     doTest();
   }
 
-  public void testEpydocParamTag() {
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, this::doTest);
-  }
-
-  public void testEpydocTags() {
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> {
-      myFixture.configureByFile("epydocTags.py");
-      myFixture.completeBasic();
-      final List<String> lookupElementStrings = myFixture.getLookupElementStrings();
-      assertNotNull(lookupElementStrings);
-      assertTrue(lookupElementStrings.contains("@param"));
-    });
-  }
-
-  public void testEpydocTagsMiddle() {
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> {
-      myFixture.configureByFile("epydocTagsMiddle.py");
-      myFixture.completeBasic();
-      myFixture.checkResultByFile("epydocTagsMiddle.after.py");
-    });
-  }
-
   public void testIdentifiersInPlainDocstring() {
     runWithDocStringFormat(DocStringFormat.PLAIN, () -> {
       myFixture.configureByFile("identifiersInPlainDocstring.py");
@@ -623,7 +607,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   // PY-16870, PY-16972
   public void testClassNameInDocstring() {
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, this::doTest);
+    runWithDocStringFormat(DocStringFormat.REST, this::doTest);
   }
 
   // PY-17002
@@ -871,11 +855,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   // PY-13140
   public void testModulePrivateNamesCompletedInsideImport() {
-    myFixture.copyDirectoryToProject(getTestName(true), "");
-    myFixture.configureByFile("a.py");
-    myFixture.completeBasic();
-    List<String> suggested = myFixture.getLookupElementStrings();
-    assertNotNull(suggested);
+    final List<String> suggested = doMultiFileTestCompletionVariants();
     assertContainsElements(suggested, "normal_name", "_private_name", "__magic_name__");
   }
 
@@ -984,21 +964,13 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   // PY-14387
   public void testSubmoduleOfIndirectlyImportedPackage() {
-    myFixture.copyDirectoryToProject(getTestName(true), "");
-    myFixture.configureByFile("a.py");
-    myFixture.completeBasic();
-    final List<String> suggested = myFixture.getLookupElementStrings();
-    assertNotNull(suggested);
+    final List<String> suggested = doMultiFileTestCompletionVariants();
     assertSameElements(suggested, "VAR", "subpkg1");
   }
 
   //PY-28332
   public void testSubmoduleOfIndirectlyImportedPackage2() {
-    myFixture.copyDirectoryToProject(getTestName(true), "");
-    myFixture.configureByFile("a.py");
-    myFixture.completeBasic();
-    final List<String> suggested = myFixture.getLookupElementStrings();
-    assertNotNull(suggested);
+    final List<String> suggested = doMultiFileTestCompletionVariants();
     assertSameElements(suggested, "VAR", "subpkg1");
   }
 
@@ -1287,11 +1259,8 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   // PY-22570
   public void testNamesReexportedViaStarImport() {
-    myFixture.copyDirectoryToProject(getTestName(true), "");
-    myFixture.configureByFile("a.py");
-    myFixture.completeBasic();
-    final List<String> variants = myFixture.getLookupElementStrings();
-    assertSameElements(variants, "mod1", "mod2", "foo", "_bar");
+    final List<String> suggested = doMultiFileTestCompletionVariants();
+    assertSameElements(suggested, "mod1", "mod2", "foo", "_bar");
   }
 
   // PY-23150
@@ -1388,11 +1357,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   // PY-15365
   public void testModulesAndPackagesInDunderAll() {
-    myFixture.copyDirectoryToProject(getTestName(true), "");
-    myFixture.configureByFile("a.py");
-    myFixture.completeBasic();
-    final List<String> suggested = myFixture.getLookupElementStrings();
-    assertNotNull(suggested);
+    final List<String> suggested = doMultiFileTestCompletionVariants();
     assertSameElements(suggested, "m1", "m2", "m3", "m4");
   }
 
@@ -1437,7 +1402,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   public void testMockPatchObject1Py2() {
     final String testName = getTestName(true);
 
-    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + testName + "/lib");
+    final VirtualFile libDir = PyTypeShed.INSTANCE.getStubRootForPackage("mock");
     assertNotNull(libDir);
 
     runWithAdditionalClassEntryInSdkRoots(
@@ -1454,7 +1419,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   public void testMockPatchObject2Py2() {
     final String testName = getTestName(true);
 
-    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + testName + "/lib");
+    final VirtualFile libDir = PyTypeShed.INSTANCE.getStubRootForPackage("mock");
     assertNotNull(libDir);
 
     runWithAdditionalClassEntryInSdkRoots(
@@ -2043,15 +2008,30 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   }
 
   // PY-38172
-  public void testNoPrivateStubElementsInModuleCompletion() {
-    PsiFile file = myFixture.configureByText(PythonFileType.INSTANCE, "import collections\n" +
-                                                                      "collections.<caret>");
+  public void testNoPrivateStubElementsInCompletionForCollectionsModule() {
+    PsiFile file = myFixture.configureByText(PythonFileType.INSTANCE, """
+      import collections
+      collections.<caret>
+      """);
     myFixture.completeBasic();
     List<String> suggested = myFixture.getLookupElementStrings();
     assertNotEmpty(suggested);
     assertDoesntContain(suggested, "Union", "TypeVar", "Generic", "_S", "_T");
     assertProjectFilesNotParsed(file);
     assertSdkRootsNotParsed(file);
+  }
+
+  // PY-38172
+  public void testPrivateStubElementsNotSuggestedInPyFiles() {
+    doMultiFileTest();
+  }
+
+  // PY-38172
+  public void testPrivateStubElementsSuggestedInOtherPyiStubs() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.pyi");
+    myFixture.complete(CompletionType.BASIC, 1);
+    myFixture.checkResultByFile(getTestName(true) + "/a.after.pyi");
   }
 
   // PY-42520
@@ -2106,17 +2086,40 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   // PY-53200
   public void testMethodNamesSuggestedWithoutParameterListIfItIsAlreadyExist() {
-    myFixture.copyDirectoryToProject(getTestName(true), "");
-    myFixture.configureByFile("a.py");
-    myFixture.completeBasic();
-    List<String> suggested = myFixture.getLookupElementStrings();
-    assertNotNull(suggested);
+    final List<String> suggested = doMultiFileTestCompletionVariants();
     assertContainsElements(suggested, "something_a", "something_b");
   }
 
   // PY-17627
   public void testClassAttributeDefinedInClassMethod() {
     doTest();
+  }
+
+  // PY-34617
+  public void testVersionCheckAtFileLevel() {
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      List<String> suggested = doTestByFile();
+      assertContainsElements(suggested, "attr0", "attr3", "f0", "f3", "MyClass0", "MyClass3");
+      assertDoesntContain(suggested, "attr1", "attr2", "f1", "f2", "MyClass1", "MyClass2");
+    });
+  }
+
+  // PY-34617
+  public void testVersionCheckAtClassLevel() {
+    runWithLanguageLevel(LanguageLevel.PYTHON25, () -> {
+      List<String> suggested = doTestByFile();
+      assertContainsElements(suggested, "attr0", "attr2", "f0", "f2", "MyClass0", "MyClass2");
+      assertDoesntContain(suggested, "attr1", "attr3", "f1", "f3", "MyClass1", "MyClass3");
+    });
+  }
+
+  // PY-34617
+  public void testVersionCheckInClassInsideMethod() {
+    runWithLanguageLevel(LanguageLevel.PYTHON310, () -> {
+      List<String> suggested = doTestByFile();
+      assertContainsElements(suggested, "f0", "f1");
+      assertDoesntContain(suggested, "f2", "f3");
+    });
   }
 
   private void doTestHasattrContributor(String[] inList, String[] notInList) {
@@ -2190,20 +2193,6 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   // PY-62208
   public void testImportableFunctionsAndVariablesNotSuggestedInsideTypeHints() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      doMultiFileTest();
-    });
-  }
-
-  // PY-62208
-  public void testImportableFunctionsFromTypingSuggestedInsideTypeHints() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      doMultiFileTest();
-    });
-  }
-
-  // PY-62208
-  public void testImportableVariablesFromTypingSuggestedInsideTypeHints() {
     runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
       doMultiFileTest();
     });

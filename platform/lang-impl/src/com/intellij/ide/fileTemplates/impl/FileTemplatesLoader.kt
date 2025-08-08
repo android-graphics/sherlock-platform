@@ -183,8 +183,9 @@ private fun loadDefaultTemplates(prefixes: List<String>): FileTemplateLoadResult
     if ((loader is PluginAwareClassLoader && loader.files.isEmpty()) || !processedLoaders.add(loader)) {
       // test or development mode, when IDEA_CORE's loader contains all the classpath
       continue
+    } else if (loader is PluginAwareClassLoader && LocalizationUtil.isLocalizationPluginDescriptor(loader.pluginDescriptor) && !LocalizationUtil.isCurrentLocalizationPluginDescriptor(loader.pluginDescriptor)) {
+      continue
     }
-
     if (module.moduleName != null && module.jarFiles.isNullOrEmpty()) {
       // not isolated module - skip, as resource will be loaded from plugin classpath
       continue
@@ -374,12 +375,13 @@ private fun loadLocalizedContent(classLoader: ClassLoader, root: Any, path: Stri
   var result: String?
   val locale = LocalizationUtil.getLocaleOrNullForDefault()
   if (locale != null) {
-    val contentPath = Path.of(path)
-    //loading from source files with localization folder/suffix 
-    val localizedPaths = LocalizationUtil.getLocalizedPaths(contentPath).map { it.invariantSeparatorsPathString }
+    //loading from source files with localization folder/suffix
+    val localizedPaths = LocalizationUtil.getLocalizedPaths(path)
     for (localizedPath in localizedPaths) {
       result = loadFileContent(classLoader, root, localizedPath)
-      if (!result.isNullOrEmpty()) return result
+      if (!result.isNullOrEmpty()) {
+        return result
+      }
     }
     //loading from localization plugin
     result = LocalizationUtil.getPluginClassLoader()?.let {
@@ -397,7 +399,10 @@ private fun loadFileContent(classLoader: ClassLoader, root: Any, path: String): 
   var result: String? = null
   try {
     result = ResourceUtil.getResourceAsBytesSafely(path, classLoader)?.toString(StandardCharsets.UTF_8)
-    if (!result.isNullOrEmpty()) return result
+    if (!result.isNullOrEmpty()) {
+      return result
+    }
+
     when (root) {
       is URL -> {
         val url = URL(root.protocol, root.host, root.port, root.path.replace(DEFAULT_TEMPLATES_ROOT, path))

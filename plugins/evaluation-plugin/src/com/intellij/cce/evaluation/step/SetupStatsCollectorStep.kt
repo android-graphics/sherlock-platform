@@ -7,33 +7,33 @@ import com.intellij.cce.evaluation.features.CCEElementFeatureProvider
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.codeInsight.completion.ml.ContextFeatureProvider
 import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
-import com.intellij.completion.ml.experiment.ExperimentInfo
-import com.intellij.completion.ml.experiment.ExperimentStatus
+import com.intellij.completion.ml.experiments.ExperimentInfo
+import com.intellij.completion.ml.experiments.ExperimentStatus
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.stats.completion.sender.StatisticSender
 import com.intellij.stats.completion.storage.FilePathProvider
 import com.intellij.stats.completion.storage.UniqueFilesProvider
-import java.io.File
+import java.nio.file.Path
 import java.nio.file.Paths
 
 class SetupStatsCollectorStep(private val experimentGroup: Int?,
                               private val logLocationAndTextItem: Boolean) : UndoableEvaluationStep {
   companion object {
-    private val LOG = Logger.getInstance(SetupStatsCollectorStep::class.java)
+    private val LOG = thisLogger()
     private const val SEND_LOGS_KEY = "completion.stats.send.logs"
     private const val STATS_COLLECTOR_ID = "com.intellij.stats.completion"
     private const val COLLECT_LOGS_HEADLESS_KEY = "completion.evaluation.headless"
-    fun statsCollectorLogsDirectory(): String = Paths.get(PathManager.getSystemPath(), "completion-stats-data").toString()
+    val statsCollectorLogsDirectory: Path = Paths.get(PathManager.getSystemPath(), "completion-stats-data")
 
     fun deleteLogs() {
-      val logsDirectory = File(statsCollectorLogsDirectory())
+      val logsDirectory = statsCollectorLogsDirectory.toFile()
       if (logsDirectory.exists()) {
         logsDirectory.deleteRecursively()
       }

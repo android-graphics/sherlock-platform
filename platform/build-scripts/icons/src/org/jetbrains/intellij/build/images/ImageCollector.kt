@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images
 
 import com.google.gson.GsonBuilder
@@ -106,7 +106,7 @@ internal class ImageInfo(
     val deprecation = this.deprecation
     val imageFile: Path
     if (deprecation?.replacement == null) {
-      imageFile = basicFile!!
+      imageFile = requireNotNull(basicFile) { "Basic file is missing for $id" }
     }
     else {
       imageFile = rootDir.resolve(deprecation.replacement.removePrefix("/").removePrefix(File.separator))
@@ -164,8 +164,11 @@ internal class ImageCollector(
         break
       }
 
+      val excludeDirectories = moduleConfig?.excludePackages
+        ?.map { rootDir.resolve(it.replace('.', '/')) }?.toSet() ?: emptySet()
+
       if (rootDir.fileName.toString() != "compatibilityResources") {
-        processRoot(sourceRoot, rootDir)
+        processRoot(sourceRoot, rootDir, excludeDirectories)
       }
       else if (java.lang.Boolean.getBoolean("remove.extra.icon.robots.files")) {
         // under flag because not required for regular usage (to avoid FS call)
@@ -180,7 +183,8 @@ internal class ImageCollector(
   }
 
   fun collectSubDir(sourceRoot: JpsModuleSourceRoot, name: String, includePhantom: Boolean = false): List<ImageInfo> {
-    processRoot(sourceRoot, sourceRoot.path.resolve(name))
+    collectMappingFile(sourceRoot.path)
+    processRoot(sourceRoot, sourceRoot.path.resolve(name), emptySet())
     val result = icons.values.toMutableList()
     if (includePhantom) {
       result.addAll(phantomIcons.values)
@@ -194,7 +198,7 @@ internal class ImageCollector(
     }
   }
 
-  private fun processRoot(sourceRoot: JpsModuleSourceRoot, rootDir: Path) {
+  private fun processRoot(sourceRoot: JpsModuleSourceRoot, rootDir: Path, excludeDirectories: Set<Path>) {
     val rootRobotData = upToProjectHome(rootDir)
     if (rootRobotData.isSkipped(rootDir)) {
       return
@@ -213,7 +217,8 @@ internal class ImageCollector(
       isDirectory = attributes.isDirectory,
       common = null,
       robotData = IconRobotsData(null, ignoreSkipTag, usedIconRobots),
-      level = 0
+      level = 0,
+      excludeDirectories = excludeDirectories,
     ) ?: return
     val robotData = rootRobotData.fork(iconRoot, rootDir)
 
@@ -287,7 +292,7 @@ internal class ImageCollector(
     return upToProjectHome(parent).fork(parent, projectHome)
   }
 
-  private fun downToRoot(root: Path, file: Path, isDirectory: Boolean, common: Path?, robotData: IconRobotsData, level: Int): Path? {
+  private fun downToRoot(root: Path, file: Path, isDirectory: Boolean, common: Path?, robotData: IconRobotsData, level: Int, excludeDirectories: Set<Path>): Path? {
     if (robotData.isSkipped(file) || robotData.mergeToRoot) {
       return common
     }
@@ -299,11 +304,15 @@ internal class ImageCollector(
         }
       }
 
+      if (excludeDirectories.contains(file)) {
+        return common
+      }
+
       val childRobotData = robotData.fork(file, root)
       var childCommon = common
       Files.newDirectoryStream(file).use { stream ->
         for (it in stream) {
-          childCommon = downToRoot(root, it, Files.isDirectory(it), childCommon, childRobotData, level + 1)
+          childCommon = downToRoot(root, it, Files.isDirectory(it), childCommon, childRobotData, level + 1, excludeDirectories)
         }
       }
       return childCommon
@@ -330,11 +339,16 @@ internal class ImageCollector(
 
   private fun collectMappingFile(rootDir: Path) {
     if (mappingFile == null) {
-      val mappings = rootDir.listDirectoryEntries("*Mapping*.json")
-      if (mappings.size == 1) {
-        mappings.isNotEmpty()
-        mappingFile = mappings[0]
+      try {
+        val mappings = rootDir.listDirectoryEntries("*Mapping*.json")
+        if (mappings.size == 1) {
+          mappings.isNotEmpty()
+          mappingFile = mappings[0]
+        }
+      } catch (e: NoSuchFileException) {
+        println("Tried to access directory: $rootDir for a mapping file, but the directory did not exist")
       }
+
     }
   }
 

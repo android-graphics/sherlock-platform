@@ -77,10 +77,12 @@ object ChangeSignatureFixFactory {
     }
 
     val addParameterFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.TooManyArguments ->
+        if (!isWritable(diagnostic.function)) return@IntentionBased emptyList()
         createAddParameterFix(diagnostic.function, diagnostic.psi)
     }
 
     val removeParameterFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.NoValueForParameter ->
+        if (!isWritable(diagnostic.violatedParameter)) return@IntentionBased emptyList()
         createRemoveParameterFix(diagnostic.violatedParameter, diagnostic.psi)
     }
 
@@ -90,6 +92,10 @@ object ChangeSignatureFixFactory {
 
     val nullForNotNullFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.NullForNonnullType ->
         createMismatchParameterTypeFix(diagnostic.psi, diagnostic.expectedType)
+    }
+
+    private fun isWritable(symbol: KaSymbol): Boolean {
+        return symbol.origin == KaSymbolOrigin.SOURCE || symbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED && symbol is KaConstructorSymbol
     }
 
     private fun getActionName(psi: PsiElement, input: Input): String {
@@ -109,7 +115,7 @@ object ChangeSignatureFixFactory {
             ChangeType.CHANGE_FUNCTIONAL -> KotlinBundle.message("fix.change.signature.lambda")
 
             ChangeType.ADD -> {
-                assert(newParametersCnt > 0)
+                if (newParametersCnt <= 0) return ""
                 KotlinBundle.message(
                     if (isConstructor) "fix.add.function.parameters.add.parameter.generic.constructor" else "fix.add.function.parameters.add.parameter.generic.function",
                     newParametersCnt,
@@ -194,7 +200,7 @@ object ChangeSignatureFixFactory {
                         usedNames.add(parameters[i].name!!)
                         val argumentType = getKtType(expression)
                         val parameterType = parameters[i].returnType
-                        if (argumentType != null && !argumentType.isSubTypeOf(parameterType)) {
+                        if (argumentType != null && !argumentType.isSubtypeOf(parameterType)) {
                             changeInfo.newParameters[i + if ((ktCallableDeclaration as? KtCallableDeclaration)?.receiverTypeReference != null) 1 else 0].setType(
                                 argumentType.render(position = Variance.IN_VARIANCE)
                             )
@@ -229,14 +235,14 @@ object ChangeSignatureFixFactory {
             val paramName = paramInfo.name
             changeInfo.addParameter(
                 KotlinParameterInfo(
-                    -1,
-                    KotlinTypeInfo(paramInfo.type, callable),
-                    suggestNameByName(paramName, nameValidator),
-                    KotlinValVar.None,
-                    null,
-                    false,
-                    null,
-                    callable
+                    originalIndex = -1,
+                    originalType = KotlinTypeInfo(paramInfo.type, callable),
+                    name = suggestNameByName(paramName, nameValidator),
+                    valOrVar = KotlinValVar.None,
+                    defaultValueForCall = null,
+                    defaultValueAsDefaultParameter = false,
+                    defaultValue = null,
+                    context = callable
                 )
             )
         }
@@ -250,9 +256,10 @@ object ChangeSignatureFixFactory {
         callable: KtNamedDeclaration, usedNames: MutableSet<String> = mutableSetOf<String>()
     ): (String) -> Boolean {
         val nameValidator = KotlinDeclarationNameValidator(
-            callable,
-            true,
-            KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER,
+          callable,
+          true,
+          KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER,
+          listOf(callable),
         )
         return { name -> usedNames.add(name) && nameValidator.validate(name) }
     }
@@ -322,7 +329,7 @@ object ChangeSignatureFixFactory {
         val valueArguments = callElement.valueArguments
         val idx = valueArguments.indexOf(valueArgument)
         val hasTypeMismatch = idx > 0 && valueArguments.take(idx).zip(ktCallableSymbol.valueParameters).any { (arg, s) ->
-            (arg as? KtValueArgument)?.getArgumentExpression()?.expressionType?.isSubTypeOf(s.returnType) != true
+            (arg as? KtValueArgument)?.getArgumentExpression()?.expressionType?.isSubtypeOf(s.returnType) != true
         }
 
         val input = Input(
@@ -378,6 +385,8 @@ object ChangeSignatureFixFactory {
             ((callElement.resolveToCall() as? KaErrorCallInfo)?.candidateCalls?.firstOrNull() as? KaCallableMemberCall<*, *>)?.symbol as? KaFunctionSymbol
                 ?: return emptyList()
 
+        if (!isWritable(functionLikeSymbol)) return emptyList()
+
         val name = getDeclarationName(functionLikeSymbol) ?: return emptyList()
 
         val newParametersCnt = callElement.valueArguments.size - functionLikeSymbol.valueParameters.size
@@ -413,7 +422,7 @@ internal fun getDeclarationName(functionLikeSymbol: KaFunctionSymbol): String? {
     return when(functionLikeSymbol) {
         is KaConstructorSymbol -> {
             val constructorSymbol = functionLikeSymbol
-            if ((constructorSymbol.containingDeclaration as? KaNamedClassOrObjectSymbol)?.isInline == true) {
+            if ((constructorSymbol.containingDeclaration as? KaNamedClassSymbol)?.isInline == true) {
                 null
             } else constructorSymbol.containingClassId?.shortClassName
         }

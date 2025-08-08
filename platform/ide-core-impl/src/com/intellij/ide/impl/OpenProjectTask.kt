@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.util.function.Predicate
 
-data class OpenProjectTask internal constructor(
+data class OpenProjectTask @Internal constructor(
   val forceOpenInNewFrame: Boolean,
   val forceReuseFrame: Boolean = false,
   val projectToClose: Project?,
@@ -23,6 +23,7 @@ data class OpenProjectTask internal constructor(
   val callback: ProjectOpenedCallback?,
   val line: Int,
   val column: Int,
+  @Deprecated("Not used")
   val isRefreshVfsNeeded: Boolean,
   /**
    *  Whether to run [configurators][com.intellij.platform.DirectoryProjectConfigurator] if [isNewProject] or has no modules.
@@ -46,11 +47,13 @@ data class OpenProjectTask internal constructor(
   val implOptions: Any?,
 ) {
   @Internal
-  constructor(forceOpenInNewFrame: Boolean = false,
-              projectToClose: Project? = null,
-              isNewProject: Boolean = false,
-              /** Ignored if [isNewProject] is set to false. */
-              useDefaultProjectAsTemplate: Boolean = isNewProject) : this(
+  constructor(
+    forceOpenInNewFrame: Boolean = false,
+    projectToClose: Project? = null,
+    isNewProject: Boolean = false,
+    /** Ignored if [isNewProject] is set to false. */
+    useDefaultProjectAsTemplate: Boolean = isNewProject,
+  ) : this(
     forceOpenInNewFrame = forceOpenInNewFrame,
     projectToClose = projectToClose,
     isNewProject = isNewProject,
@@ -93,7 +96,7 @@ data class OpenProjectTask internal constructor(
   fun withProjectName(projectName: String?): OpenProjectTask = copy(projectName = projectName)
 }
 
-class OpenProjectTaskBuilder internal constructor() {
+class OpenProjectTaskBuilder @PublishedApi internal constructor() {
   var projectName: String? = null
 
   var forceOpenInNewFrame: Boolean = false
@@ -145,7 +148,7 @@ class OpenProjectTaskBuilder internal constructor() {
 
   var project: Project? = null
 
-  internal inline fun build(builder: OpenProjectTaskBuilder.() -> Unit): OpenProjectTask {
+  @PublishedApi internal inline fun build(builder: OpenProjectTaskBuilder.() -> Unit): OpenProjectTask {
     builder()
     return OpenProjectTask(
       forceOpenInNewFrame = forceOpenInNewFrame,
@@ -183,6 +186,6 @@ class OpenProjectTaskBuilder internal constructor() {
 }
 
 @Internal
-fun OpenProjectTask(buildAction: OpenProjectTaskBuilder.() -> Unit): OpenProjectTask {
+inline fun OpenProjectTask(buildAction: OpenProjectTaskBuilder.() -> Unit): OpenProjectTask {
   return OpenProjectTaskBuilder().build(buildAction)
 }

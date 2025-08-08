@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.application.options.CodeStyle;
@@ -20,13 +20,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.FinalUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 public final class BindFieldsFromParametersAction implements ModCommandAction {
@@ -69,12 +68,13 @@ public final class BindFieldsFromParametersAction implements ModCommandAction {
     return null;
   }
 
-  private static @NotNull List<PsiParameter> getAvailableParameters(@NotNull PsiMethod method) {
+  private static @Unmodifiable @NotNull List<PsiParameter> getAvailableParameters(@NotNull PsiMethod method) {
     return ContainerUtil.filter(method.getParameterList().getParameters(), BindFieldsFromParametersAction::isAvailable);
   }
 
   private static boolean isAvailable(@NotNull PsiParameter psiParameter) {
     PsiType type = FieldFromParameterUtils.getSubstitutedType(psiParameter);
+    if (type != null && !type.isAssignableFrom(psiParameter.getType())) return false;
     PsiClass targetClass = PsiTreeUtil.getParentOfType(psiParameter, PsiClass.class);
     return FieldFromParameterUtils.isAvailable(psiParameter, type, targetClass) &&
            psiParameter.getLanguage().isKindOf(JavaLanguage.INSTANCE);
@@ -133,7 +133,7 @@ public final class BindFieldsFromParametersAction implements ModCommandAction {
   /**
    * Exclude parameters passed to super() or this() calls from initial selection
    */
-  private static List<ParameterClassMember> getInitialSelection(@NotNull PsiMethod method,
+  private static @Unmodifiable List<ParameterClassMember> getInitialSelection(@NotNull PsiMethod method,
                                                                 List<@NotNull ParameterClassMember> members) {
     Set<PsiElement> resolvedInSuperOrThis = new HashSet<>();
     PsiCodeBlock body = method.getBody();
@@ -159,18 +159,16 @@ public final class BindFieldsFromParametersAction implements ModCommandAction {
     return members.stream().sorted(Comparator.comparingInt(o -> parameterList.getParameterIndex(o.getParameter()))).toList();
   }
 
-  private static void processParameter(@NotNull Project project,
-                                       @NotNull PsiParameter parameter,
-                                       @NotNull Set<String> usedNames) {
+  private static void processParameter(@NotNull Project project, @NotNull PsiParameter parameter, @NotNull Set<String> usedNames) {
     PsiType type = FieldFromParameterUtils.getSubstitutedType(parameter);
+    if (type == null) return;
     JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
     String parameterName = parameter.getName();
     String propertyName = styleManager.variableNameToPropertyName(parameterName, VariableKind.PARAMETER);
 
-    PsiClass targetClass = PsiTreeUtil.getParentOfType(parameter, PsiClass.class);
-    if (targetClass == null) return;
-
     if (!(parameter.getDeclarationScope() instanceof PsiMethod method)) return;
+    PsiClass targetClass = method.getContainingClass();
+    if (targetClass == null) return;
 
     boolean isMethodStatic = method.hasModifierProperty(PsiModifier.STATIC);
 
@@ -178,7 +176,6 @@ public final class BindFieldsFromParametersAction implements ModCommandAction {
     SuggestedNameInfo suggestedNameInfo = styleManager.suggestVariableName(kind, propertyName, null, type);
     String[] names = suggestedNameInfo.names;
 
-    boolean isFinal = !isMethodStatic && method.isConstructor();
     String name = names[0];
     for (String curName : names) {
       if (!usedNames.contains(curName)) {
@@ -200,14 +197,19 @@ public final class BindFieldsFromParametersAction implements ModCommandAction {
         }
       }
     }
-    
-    String fieldName = usedNames.add(name) ? name : JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName(name, parameter, true);
+    String fieldName = usedNames.add(name) ? name : styleManager.suggestUniqueVariableName(name, parameter, true);
 
-    FieldFromParameterUtils.createFieldAndAddAssignment(project, targetClass, method, parameter, type, fieldName, isMethodStatic, isFinal);
+    boolean maybeFinal = !isMethodStatic && method.isConstructor();
+    boolean isFinal = maybeFinal && targetClass.getConstructors().length == 1;
+    PsiField field = FieldFromParameterUtils.createFieldAndAddAssignment(
+      project, targetClass, method, parameter, type, fieldName, isMethodStatic, isFinal);
+    if (field != null && maybeFinal && !isFinal && FinalUtils.canBeFinal(field)) {
+      Objects.requireNonNull(field.getModifierList()).setModifierProperty(PsiModifier.FINAL, true);
+    }
   }
 
   private static boolean isFieldAssigned(PsiField field, PsiMethod method) {
-    for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(method))) {
+    for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(method)).asIterable()) {
       if (reference instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand((PsiReferenceExpression)reference)) {
         return true;
       }

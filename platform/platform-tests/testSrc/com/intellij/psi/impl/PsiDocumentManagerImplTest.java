@@ -34,11 +34,11 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileTooBigException;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.HeavyPlatformTestCase;
@@ -66,7 +66,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -554,12 +557,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
   }
 
   private static void waitForCommits() {
-    try {
-      DocumentCommitThread.getInstance().waitForAllCommits(100, TimeUnit.SECONDS);
-    }
-    catch (ExecutionException | InterruptedException | TimeoutException e) {
-      throw new RuntimeException(e);
-    }
+    DocumentCommitThread.getInstance().waitForAllCommits(100, TimeUnit.SECONDS);
   }
 
   public void testReparseDoesNotModifyDocument() throws Exception {
@@ -682,7 +680,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     assertTrue(invoked.get());
   }
 
-  public void testPerformLaterWhenAllCommittedFromCommitHandler() throws Exception {
+  public void testPerformLaterWhenAllCommittedFromCommitHandler() {
     PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText("a.txt", PlainTextFileType.INSTANCE, "", 0, true);
     Document document = file.getViewProvider().getDocument();
 
@@ -764,14 +762,14 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
   private void assertLargeFileContentLimited(@NotNull String content, @NotNull VirtualFile vFile, @NotNull Document document) {
     Charset charset = EncodingProjectManager.getInstance(getProject()).getEncoding(vFile, false);
     float bytesPerChar = charset == null ? 2 : charset.newEncoder().averageBytesPerChar();
-    int contentSize = (int)(FileUtilRt.LARGE_FILE_PREVIEW_SIZE / bytesPerChar);
+    int contentSize = (int)(FileSizeLimit.getPreviewLimit(vFile.getExtension()) / bytesPerChar);
     String substring = content.substring(0, contentSize);
     assertEquals(substring, document.getText());
   }
 
   @NotNull
   private static String getTooLargeContent() {
-    return StringUtil.repeat("a", FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1);
+    return StringUtil.repeat("a", FileSizeLimit.getDefaultContentLoadLimit() + 1);
   }
 
   public void testDefaultProjectDocumentsAreAutoCommitted() throws IOException {

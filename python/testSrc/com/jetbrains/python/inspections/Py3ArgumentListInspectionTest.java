@@ -27,6 +27,18 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-59198
+  public void testAttrFieldAliasParameter() {
+    runWithAdditionalClassEntryInSdkRoots("packages", () -> {
+      doMultiFileTest();
+    });
+  }
+
+  // PY-54560
+  public void testDataclassTransformFieldAliasParameter() {
+    doMultiFileTest();
+  }
+
   // PY-50404
   public void testPassingKeywordArgumentsToParamSpec() {
     doTestByText("""
@@ -309,6 +321,159 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                    Derived2(0, b=0, qq=0)
                    Derived2(0, <warning descr="Unexpected argument">0</warning>, qq=0<warning descr="Parameter 'b' unfilled">)</warning>
                    Derived2(0, <warning descr="Unexpected argument">0</warning>, b=0<warning descr="Parameter 'qq' unfilled">)</warning>
+                   """);
+  }
+
+  // PY-23067
+  public void testFunctoolsWraps() {
+    doTestByText("""
+                   import functools
+                                      
+                   class MyClass:
+                     def foo(self, s: str, i: int):
+                         pass
+                                      
+                   class Route:
+                       @functools.wraps(MyClass.foo)
+                       def __init__(self):
+                           pass
+                                      
+                   class Router:
+                       @functools.wraps(wrapped=Route.__init__)
+                       def route(self, s: str):
+                           pass
+                                      
+                   r = Router()
+                   r.route("", 13)
+                   r.route(""<warning descr="Parameter 'i' unfilled">)</warning>
+                   r.route("", 13, <warning descr="Unexpected argument">1</warning>)
+                   """);
+  }
+
+  // PY-23067
+  public void testFunctoolsWrapsMultiFile() {
+    doMultiFileTest();
+  }
+
+  public void testInitByDataclassTransformOnDecorator() {
+    doMultiFileTest();
+  }
+
+  public void testInitByDataclassTransformOnBaseClass() {
+    doMultiFileTest();
+  }
+
+  public void testInitByDataclassTransformOnMetaClass() {
+    doMultiFileTest();
+  }
+
+  // PY-42137
+  public void testMismatchedOverloadsHaveBothTooFewAndTooManyParameters() {
+    doTest();
+  }
+
+  // PY-42137
+  public void testMismatchedConditionalImplementationsHaveBothTooFewAndTooManyParameters() {
+    doTest();
+  }
+
+  public void testNoTypeCheck() {
+    doTestByText(
+      """
+        from typing import no_type_check
+        
+        @no_type_check
+        def func(a): ...
+        
+        func(<warning descr="Parameter 'a' unfilled">)</warning>
+        func(1, <warning descr="Unexpected argument">2</warning>)
+        """
+    );
+    doTestByText(
+      """
+        from typing_extensions import no_type_check
+        
+        @no_type_check
+        def func(a): ...
+        
+        func(<warning descr="Parameter 'a' unfilled">)</warning>
+        func(1, <warning descr="Unexpected argument">2</warning>)
+        """
+    );
+  }
+
+  public void testMetaclassDunderCallReturnTypeIncompatibleWithClassBeingConstructed() {
+    doTestByText("""
+                   from typing import Self
+      
+      
+                   class Meta(type):
+                       def call(cls, *args, **kwargs) -> object: ...
+                   
+                       __call__ = call
+                   
+                   
+                   class MyClass(metaclass=Meta):
+                       def __new__(cls, p) -> Self: ...
+                   
+                   
+                   expr = MyClass()
+                   """);
+  }
+
+  public void testMetaclassDunderCallReturnTypeIncompatibleWithClassBeingConstructedMultiFile() {
+    doMultiFileTest();
+  }
+
+  public void testMetaclassNotAnnotatedDunderCall() {
+    doTestByText("""
+                   from typing import Self
+                   
+                   
+                   class Meta(type):
+                       def __call__(cls): ...
+                   
+                   
+                   class MyClass(metaclass=Meta):
+                       def __new__(cls, p) -> Self: ...
+                   
+                   
+                   c1 = MyClass(<warning descr="Parameter 'p' unfilled">)</warning>
+                   c2 = MyClass(1) # TODO PY-80602 Missing error 'Unexpected argument'
+                   """);
+  }
+
+  public void testMetaclassGenericDunderCallReturnTypeCompatibleWithClassBeingConstructed() {
+    doTestByText("""
+                   from typing import Self
+                   
+                   
+                   class Meta(type):
+                       def __call__[T](cls: type[T], *args, **kwargs) -> T: ...
+                   
+                   
+                   class MyClass(metaclass=Meta):
+                       def __new__(cls, p) -> Self: ...
+                   
+                   
+                   c = MyClass(<warning descr="Parameter 'p' unfilled">)</warning>
+                   """);
+  }
+
+  public void testMetaclassGenericDunderCallReturnTypeIncompatibleWithClassBeingConstructed() {
+    doTestByText("""
+                   from typing import Self
+                   
+                   
+                   class Meta(type):
+                       def __call__[T](cls, x: T) -> T: ...
+                   
+                   
+                   class MyClass(metaclass=Meta):
+                       def __new__(cls, p1, p2) -> Self: ...
+                   
+                   
+                   c = MyClass(1)
                    """);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
 import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractK2SharedQuickFixTest
@@ -18,14 +18,17 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
 
     testGroup("code-insight/inspections-k2/tests", category = INSPECTIONS, testDataPath = "../../..") {
         testClass<AbstractK2LocalInspectionTest>(commonSuite = false) {
-            val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
+            val pattern = Patterns.forRegex("^([\\w\\-_\\.]+)\\.(kt|kts)$")
             model("${idea}/inspectionsLocal/unusedVariable", pattern = pattern)
             model("${idea}/inspectionsLocal/redundantVisibilityModifier", pattern = pattern)
             model("${idea}/inspectionsLocal/implicitThis")
             model("${idea}/inspectionsLocal/doubleNegation")
+            model("${idea}/inspectionsLocal/safeCastWithReturn")
             model("${idea}/inspectionsLocal/enumValuesSoftDeprecate")
+            model("${idea}/inspectionsLocal/branched/ifThenToElvis", pattern = Patterns.KT_WITHOUT_DOTS)
             model("${idea}/inspectionsLocal/branched/ifThenToSafeAccess", pattern = Patterns.KT_WITHOUT_DOTS)
             model("${idea}/inspectionsLocal/conventionNameCalls/replaceGetOrSet")
+            model("${idea}/inspectionsLocal/cascadeIf")
             model("${idea}/inspectionsLocal/nullableBooleanElvis")
             model("${idea}/inspectionsLocal/redundantElvisReturnNull")
             model("${idea}/inspectionsLocal/replaceCollectionCountWithSize")
@@ -43,11 +46,15 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/redundantUnitExpression")
             model("${idea}/inspectionsLocal/useExpressionBody")
             model("${idea}/inspectionsLocal/equalsBetweenInconvertibleTypes")
+            model("${idea}/inspectionsLocal/explicitThis")
             model("${idea}/inspectionsLocal/redundantIf")
             model("${idea}/inspectionsLocal/mayBeConstant")
             model("${idea}/inspectionsLocal/moveLambdaOutsideParentheses")
             model("${idea}/inspectionsLocal/foldInitializerAndIfToElvis")
             model("${idea}/inspectionsLocal/redundantElseInIf")
+            model("${idea}/inspectionsLocal/redundantExplicitType")
+            model("${idea}/inspectionsLocal/coroutines/redundantRunCatching")
+            model("${idea}/inspectionsLocal/coroutines/unusedFlow")
             model("${idea}/inspectionsLocal/joinDeclarationAndAssignment")
             model("${idea}/inspectionsLocal/replaceArrayOfWithLiteral")
             model("${idea}/inspectionsLocal/selfAssignment")
@@ -57,8 +64,34 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/branched/introduceWhenSubject")
             model("${idea}/inspectionsLocal/usePropertyAccessSyntax")
             model("${idea}/inspectionsLocal/redundantUnitReturnType")
+            model("${idea}/inspectionsLocal/suspiciousCollectionReassignment")
+            model("${idea}/inspectionsLocal/suspiciousVarProperty")
             model("${idea}/inspectionsLocal/canBeParameter")
+            model("${idea}/inspectionsLocal/arrayInDataClass")
+            model("${idea}/inspectionsLocal/collections/simplifiableCallChain")
+            model("${idea}/inspectionsLocal/canSimplifyDollarLiteral")
+            model("${idea}/inspectionsLocal/canConvertToMultiDollarString")
+            model("${idea}/inspectionsLocal/floatingPointLiteralPrecision")
             model("code-insight/inspections-k2/tests/testData/inspectionsLocal", pattern = pattern)
+            model("${idea}/inspectionsLocal/replaceIsEmptyWithIfEmpty")
+            model("${idea}/inspectionsLocal/booleanLiteralArgument")
+            model("${idea}/inspectionsLocal/replaceArrayEqualityOpWithArraysEquals")
+            model("${idea}/inspectionsLocal/nestedLambdaShadowedImplicitParameter")
+            model("${idea}/inspectionsLocal/unusedReceiverParameter")
+            model("${idea}/inspectionsLocal/filterIsInstanceAlwaysEmpty")
+            model("${idea}/inspectionsLocal/selfReferenceConstructorParameter")
+            model("${idea}/inspectionsLocal/canBeVal")
+            model("${idea}/inspectionsLocal/addOperatorModifier")
+            model("${idea}/inspectionsLocal/kotlinUnreachableCode")
+            model("${idea}/inspectionsLocal/removeRedundantLabel")
+            model("${idea}/inspectionsLocal/removeRedundantCallsOfConversionMethods")
+            model("${idea}/inspectionsLocal/removeExplicitTypeArguments")
+            model("${idea}/inspectionsLocal/contextParametersMigration")
+
+            // There is no `RemoveExplicitTypeArgumentsIntention` in K2 because `RemoveExplicitTypeArgumentsInspection` is available
+            // and the inspection can have the "No highlighting (fix available)" severity.
+            // Therefore, we generate a test for the inspection based on the tests for K1-RemoveExplicitTypeArgumentsIntention.
+            model("${idea}/intentions/removeExplicitTypeArguments", testClassName = "RemoveExplicitTypeArgumentsFormerIntentionTest")
         }
         /**
          * `unusedSymbol` tests require [com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass] to run,
@@ -79,6 +112,10 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspections/protectedInFinal", pattern = pattern)
             model("${idea}/intentions/convertToStringTemplate", pattern = pattern)
             model("${idea}/inspections/unusedSymbol", pattern = pattern)
+            model("${idea}/inspections/arrayInDataClass", pattern = pattern)
+            model("${idea}/inspections/publicApiImplicitType", pattern = pattern)
+            model("${idea}/inspections/replaceArrayEqualityOpWithArraysEquals", pattern = pattern)
+            model("${idea}/intentions/removeExplicitTypeArguments", pattern = pattern)
         }
 
         testClass<AbstractK2MultiFileInspectionTest> {
@@ -108,6 +145,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/quickfix/redundantModalityModifier", pattern = pattern)
             model("${idea}/quickfix/removeToStringInStringTemplate", pattern = pattern)
             model("${idea}/quickfix/suppress", pattern = pattern)
+            model("${idea}/quickfix/suspiciousCollectionReassignment", pattern = pattern)
             model("${idea}/quickfix/removeAnnotation", pattern = pattern)
             model("${idea}/quickfix/optIn", pattern = pattern)
             model("${idea}/quickfix/removeUseSiteTarget", pattern = pattern)
@@ -115,11 +153,14 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/quickfix/createFromUsage/createFunction/call/abstract", pattern = pattern)
             model("${idea}/quickfix/typeMismatch/convertCollection", pattern = pattern)
             model("${idea}/quickfix/typeMismatch/wrapWithCollectionLiteral", pattern = pattern)
+            model("${idea}/quickfix/redundantInterpolationPrefix", pattern = pattern)
+            model("${idea}/intentions/convertSecondaryConstructorToPrimary", pattern = pattern)
         }
 
         testClass<AbstractK2MultiFileQuickFixTest> {
             val pattern = Patterns.forRegex("""^(\w+)\.((before\.Main\.\w+)|(test))$""")
             model("${idea}/quickfix/optIn", pattern = pattern, testMethodName = "doTestWithExtraFile")
+            model("${idea}/quickfix/changeSignature/jk", pattern = pattern, testMethodName = "doTestWithExtraFile")
         }
     }
 

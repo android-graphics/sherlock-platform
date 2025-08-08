@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
@@ -107,7 +108,7 @@ class CollectorWithSettings<T : Any>(
     applyToEditor(file, editor, hintsBuffer)
   }
 
-  fun collectTraversing(editor: Editor, file: PsiFile, enabled: Boolean): HintsBuffer {
+  internal fun collectTraversing(editor: Editor, file: PsiFile, enabled: Boolean): HintsBuffer {
     if (enabled) {
       val traverser = SyntaxTraverser.psiTraverser(file)
       traverser.forEach {
@@ -117,7 +118,7 @@ class CollectorWithSettings<T : Any>(
     return sink.complete()
   }
 
-  fun applyToEditor(file: PsiFile, editor: Editor, hintsBuffer: HintsBuffer) {
+  internal fun applyToEditor(file: PsiFile, editor: Editor, hintsBuffer: HintsBuffer) {
     InlayHintsPass.applyCollected(hintsBuffer, file, editor)
   }
 }
@@ -287,11 +288,19 @@ object InlayHintsUtils {
     return storage
   }
 
-  fun computeCodeVisionUnderReadAction(computable: () -> CodeVisionState): CodeVisionState {
+  @JvmOverloads
+  fun computeCodeVisionUnderReadAction(expectsIndicator: Boolean = false, computable: () -> CodeVisionState): CodeVisionState {
     try {
       if (!EDT.isCurrentThreadEdt()) {
         return ReadAction.computeCancellable<CodeVisionState, Throwable> {
-          return@computeCancellable computable.invoke()
+          if (expectsIndicator) {
+            blockingContextToIndicator {
+              computable.invoke()
+            }
+          }
+          else {
+            computable.invoke()
+          }
         }
       }
       else {

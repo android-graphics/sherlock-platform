@@ -1,5 +1,4 @@
 // "Replace with '@JvmInline value'" "true"
-// DISABLE-ERRORS
-// IGNORE_K2
+// DISABLE_ERRORS
 
 <caret>inline class IC<T>(val i: T)

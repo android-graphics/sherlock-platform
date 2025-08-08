@@ -8,7 +8,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
@@ -29,21 +28,18 @@ public interface PyAstBinaryExpression extends PyAstQualifiedExpression, PyAstCa
     return PsiTreeUtil.getChildOfType(this, PyAstExpression.class);
   }
 
-  @Nullable
-  default PyAstExpression getRightExpression() {
+  default @Nullable PyAstExpression getRightExpression() {
     return PsiTreeUtil.getNextSiblingOfType(getLeftExpression(), PyAstExpression.class);
   }
 
-  @Nullable
-  default PyElementType getOperator() {
+  default @Nullable PyElementType getOperator() {
     final PsiElement psiOperator = getPsiOperator();
     return psiOperator != null ? (PyElementType)psiOperator.getNode().getElementType() : null;
   }
 
-  @Nullable
-  default PsiElement getPsiOperator() {
+  default @Nullable PsiElement getPsiOperator() {
     ASTNode node = getNode();
-    final ASTNode child = node.findChildByType(PyElementTypes.BINARY_OPS);
+    final ASTNode child = node.findChildByType(PyTokenTypes.BINARY_OPS);
     if (child != null) return child.getPsi();
     return null;
   }
@@ -53,7 +49,7 @@ public interface PyAstBinaryExpression extends PyAstQualifiedExpression, PyAstCa
     StringBuilder buf = new StringBuilder();
     while (child != null) {
       IElementType elType = child.getElementType();
-      if (elType instanceof PyElementType && PyElementTypes.BINARY_OPS.contains(elType)) {
+      if (elType instanceof PyElementType && PyTokenTypes.BINARY_OPS.contains(elType)) {
         buf.append(child.getText());
       }
       child = child.getTreeNext();
@@ -61,8 +57,7 @@ public interface PyAstBinaryExpression extends PyAstQualifiedExpression, PyAstCa
     return buf.toString().equals(chars);
   }
 
-  @Nullable
-  default PyAstExpression getOppositeExpression(PyAstExpression expression) throws IllegalArgumentException {
+  default @Nullable PyAstExpression getOppositeExpression(PyAstExpression expression) throws IllegalArgumentException {
     PyAstExpression right = getRightExpression();
     PyAstExpression left = getLeftExpression();
     if (expression.equals(left)) {
@@ -83,9 +78,8 @@ public interface PyAstBinaryExpression extends PyAstQualifiedExpression, PyAstCa
     return getLeftExpression();
   }
 
-  @Nullable
   @Override
-  default QualifiedName asQualifiedName() {
+  default @Nullable QualifiedName asQualifiedName() {
     return PyPsiUtilsCore.asQualifiedName(this);
   }
 
@@ -110,19 +104,16 @@ public interface PyAstBinaryExpression extends PyAstQualifiedExpression, PyAstCa
   }
 
   @Override
-  @Nullable
-  default PyAstExpression getReceiver(@Nullable PyAstCallable resolvedCallee) {
+  default @Nullable PyAstExpression getReceiver(@Nullable PyAstCallable resolvedCallee) {
     return isRightOperator(resolvedCallee) ? getRightExpression() : getChainedComparisonAwareLeftExpression();
   }
 
   @Override
-  @NotNull
-  default List<? extends PyAstExpression> getArguments(@Nullable PyAstCallable resolvedCallee) {
+  default @NotNull List<? extends PyAstExpression> getArguments(@Nullable PyAstCallable resolvedCallee) {
     return Collections.singletonList(isRightOperator(resolvedCallee) ? getChainedComparisonAwareLeftExpression() : getRightExpression());
   }
 
-  @Nullable
-  private PyAstExpression getChainedComparisonAwareLeftExpression() {
+  private @Nullable PyAstExpression getChainedComparisonAwareLeftExpression() {
     final PyAstExpression leftOperand = getLeftExpression();
     if (PyTokenTypes.COMPARISON_OPERATIONS.contains(getOperator())) {
       final PyAstBinaryExpression leftBinaryExpr = ObjectUtils.tryCast(leftOperand, PyAstBinaryExpression.class);

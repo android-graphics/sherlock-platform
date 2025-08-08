@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.DefaultModuleConfigurationEditorFactory;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -36,6 +37,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -44,6 +46,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.compiler.ArtifactCompilerUtil;
 import com.intellij.packaging.impl.compiler.ArtifactsCompiler;
+import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.tracing.Tracer;
@@ -60,9 +63,11 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
@@ -72,11 +77,17 @@ public final class CompileDriver {
 
   private static final Key<Boolean> COMPILATION_STARTED_AUTOMATICALLY = Key.create("compilation_started_automatically");
   private static final Key<ExitStatus> COMPILE_SERVER_BUILD_STATUS = Key.create("COMPILE_SERVER_BUILD_STATUS");
+  private static final Key<Boolean> REBUILD_CLEAN = Key.create("rebuild_clean_requested");
   private static final long ONE_MINUTE_MS = 60L * 1000L;
 
   @ApiStatus.Internal
   @ApiStatus.Experimental
   public static final Key<Boolean> SKIP_SAVE = Key.create("SKIP_SAVE");
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  @TestOnly
+  public static final Key<Long> TIMEOUT = Key.create("TIMEOUT");
 
   private final Project myProject;
   private final Map<Module, String> myModuleOutputPaths = new HashMap<>();
@@ -90,8 +101,10 @@ public final class CompileDriver {
   public void setCompilerFilter(@SuppressWarnings("unused") CompilerFilter compilerFilter) {
   }
 
-  public void rebuild(CompileStatusNotification callback) {
-    startup(new ProjectCompileScope(myProject), true, false, false, callback, null);
+  public void rebuild(CompileStatusNotification callback, boolean cleanSystemData) {
+    ProjectCompileScope scope = new ProjectCompileScope(myProject);
+    REBUILD_CLEAN.set(scope, cleanSystemData);
+    startup(scope, true, false, false, callback, null);
   }
 
   public void make(CompileScope scope, CompileStatusNotification callback) {
@@ -105,6 +118,13 @@ public final class CompileDriver {
   public boolean isUpToDate(@NotNull CompileScope scope, final @Nullable ProgressIndicator progress) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("isUpToDate operation started");
+    }
+    if (Registry.is("compiler.build.can.use.eel") &&
+        ProjectRootManager.getInstance(myProject).getProjectSdk() == null &&
+        !EelPathUtils.isProjectLocal(myProject)) {
+      // BuildManager tries to use the internal JDK if the project jdk is not set
+      // We cannot allow fallback to the internal jdk
+      return true;
     }
 
     final CompilerTask task = new CompilerTask(myProject, JavaCompilerBundle.message("classes.up.to.date.check"), true, false, false,
@@ -219,8 +239,7 @@ public final class CompileDriver {
     return scopes;
   }
 
-  @NotNull
-  private TaskFuture<?> compileInExternalProcess(@NotNull final CompileContextImpl compileContext, final boolean onlyCheckUpToDate) {
+  private @NotNull TaskFuture<?> compileInExternalProcess(final @NotNull CompileContextImpl compileContext, final boolean onlyCheckUpToDate) {
     final CompileScope scope = compileContext.getCompileScope();
     final Collection<String> paths = ReadAction.compute(() -> CompileScopeUtil.fetchFiles(compileContext));
     List<TargetTypeBuildScope> scopes = ReadAction.compute(() -> getBuildScopes(compileContext, scope, paths));
@@ -427,6 +446,7 @@ public final class CompileDriver {
       Tracer.Span compileWorkSpan = Tracer.start("compileWork");
       CompilerCacheManager compilerCacheManager = CompilerCacheManager.getInstance(myProject);
       final BuildManager buildManager = BuildManager.getInstance();
+      final Ref<TaskFutureAdapter<Void>> buildSystemDataCleanupTask = new Ref<>(null);
       try {
         buildManager.postponeBackgroundTasks();
         buildManager.cancelAutoMakeTasks(myProject);
@@ -434,11 +454,35 @@ public final class CompileDriver {
         if (message != null) {
           compileContext.addMessage(message);
         }
+
         if (isRebuild) {
-          CompilerUtil.runInContext(compileContext, JavaCompilerBundle.message("progress.text.clearing.build.system.data"),
-                                    (ThrowableRunnable<Throwable>)() -> compilerCacheManager
-                                      .clearCaches(compileContext));
+          // if possible, ensure the rebuild starts from the clean state
+          // if CLEAR_OUTPUT_DIRECTORY is allowed, we can clear cached directory completely, otherwise the build won't be able to clean outputs correctly without build caches
+          boolean cleanBuildRequested = Boolean.TRUE.equals(REBUILD_CLEAN.get(scope));
+          boolean canCleanBuildSystemData = cleanBuildRequested && CompilerWorkspaceConfiguration.getInstance(myProject).CLEAR_OUTPUT_DIRECTORY;
+
+          CompilerUtil.runInContext(compileContext, JavaCompilerBundle.message("progress.text.clearing.build.system.data"), (ThrowableRunnable<Throwable>)() -> {
+            TaskFuture<Boolean> cancelPreload = canCleanBuildSystemData? buildManager.cancelPreloadedBuilds(myProject) : new TaskFutureAdapter<>(CompletableFuture.completedFuture(Boolean.TRUE));
+
+            compilerCacheManager.clearCaches(compileContext);
+
+            if (canCleanBuildSystemData) {
+              cancelPreload.waitFor();
+              File[] systemFiles = buildManager.getProjectSystemDirectory(myProject).listFiles();
+              if (systemFiles != null && systemFiles.length > 0) {
+                buildSystemDataCleanupTask.set(new TaskFutureAdapter<>(FileUtil.asyncDelete(Arrays.asList(systemFiles))));
+              }
+            }
+            else {
+              if (cleanBuildRequested) {
+                compileContext.addMessage(
+                  CompilerMessageCategory.INFORMATION, JavaCompilerBundle.message("error.clean.state.rebuild.not.possible"), null, -1, -1
+                );
+              }
+            }
+          });
         }
+
         final boolean beforeTasksOk = executeCompileTasks(compileContext, true);
 
         final int errorCount = compileContext.getMessageCount(CompilerMessageCategory.ERROR);
@@ -449,9 +493,16 @@ public final class CompileDriver {
 
         TaskFuture<?> future = compileInExternalProcess(compileContext, false);
         Tracer.Span compileInExternalProcessSpan = Tracer.start("compile in external process");
+        long currentTimeMillis = System.currentTimeMillis();
+        @SuppressWarnings("TestOnlyProblems") Long timeout = myProject.getUserData(TIMEOUT);
         while (!future.waitFor(200L, TimeUnit.MILLISECONDS)) {
           if (indicator.isCanceled()) {
             future.cancel(false);
+          }
+
+          if (isUnitTestMode && timeout != null && System.currentTimeMillis() > currentTimeMillis + timeout) {
+            LOG.error("CANCELLED BY TIMEOUT IN TESTS");
+            future.cancel(true);
           }
         }
         compileInExternalProcessSpan.complete();
@@ -487,6 +538,11 @@ public final class CompileDriver {
         if (status == ExitStatus.SUCCESS) {
           BuildUsageCollector.logBuildCompleted(duration, isRebuild, false);
         }
+
+        TaskFutureAdapter<Void> cleanupTask = buildSystemDataCleanupTask.get();
+        if (cleanupTask != null) {
+          cleanupTask.waitFor();
+        }
       }
     };
 
@@ -506,9 +562,8 @@ public final class CompileDriver {
     });
   }
 
-  @Nullable
   @TestOnly
-  public static ExitStatus getExternalBuildExitStatus(CompileContext context) {
+  public static @Nullable ExitStatus getExternalBuildExitStatus(CompileContext context) {
     return context.getUserData(COMPILE_SERVER_BUILD_STATUS);
   }
 
@@ -629,7 +684,7 @@ public final class CompileDriver {
     }, null);
   }
 
-  private boolean executeCompileTasks(@NotNull final CompileContext context, final boolean beforeTasks) {
+  private boolean executeCompileTasks(final @NotNull CompileContext context, final boolean beforeTasks) {
     if (myProject.isDisposed()) {
       return false;
     }
@@ -674,7 +729,7 @@ public final class CompileDriver {
     return true;
   }
 
-  private boolean validateCompilerConfiguration(@NotNull final CompileScope scope, @NotNull final ProgressIndicator progress) {
+  private boolean validateCompilerConfiguration(final @NotNull CompileScope scope, final @NotNull ProgressIndicator progress) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     try {
       final Pair<List<Module>, List<Module>> scopeModules = runWithReadAccess(progress, () -> {
@@ -710,7 +765,7 @@ public final class CompileDriver {
     }
   }
 
-  private <T> T runWithReadAccess(@NotNull final ProgressIndicator progress, Callable<? extends T> task) {
+  private <T> T runWithReadAccess(final @NotNull ProgressIndicator progress, Callable<? extends T> task) {
     return ReadAction.nonBlocking(task).expireWhen(myProject::isDisposed).wrapProgress(progress).executeSynchronously();
   }
 
@@ -854,8 +909,7 @@ public final class CompileDriver {
       .showNotification();
   }
 
-  @NotNull
-  private static String formatModulesList(@NotNull List<String> modules) {
+  private static @NotNull String formatModulesList(@NotNull List<String> modules) {
     final int maxModulesToShow = 10;
     List<String> actualNamesToInclude = new ArrayList<>(ContainerUtil.getFirstItems(modules, maxModulesToShow));
     if (modules.size() > maxModulesToShow) {

@@ -47,61 +47,6 @@ f:com.intellij.ide.highlighter.HighlighterFactory
 - s:createHighlighter(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.colors.EditorColorsScheme,com.intellij.openapi.project.Project):com.intellij.openapi.editor.highlighter.EditorHighlighter
 f:com.intellij.ide.lightEdit.LightEdit
 - s:owns(com.intellij.openapi.project.Project):Z
-*:com.intellij.ide.lightEdit.LightEditService
-- a:closeEditorWindow():Z
-- a:createNewDocument(java.nio.file.Path):com.intellij.ide.lightEdit.LightEditorInfo
-- a:getEditorManager():com.intellij.ide.lightEdit.LightEditorManager
-- s:getInstance():com.intellij.ide.lightEdit.LightEditService
-- a:getProject():com.intellij.openapi.project.Project
-- a:getSelectedFile():com.intellij.openapi.vfs.VirtualFile
-- a:getSelectedFileEditor():com.intellij.openapi.fileEditor.FileEditor
-- s:getWindowName():java.lang.String
-- a:isAutosaveMode():Z
-- a:isForceOpenInLightEditMode():Z
-- a:isLightEditEnabled():Z
-- a:isPreferProjectMode():Z
-- a:isTabNavigationAvailable(com.intellij.openapi.actionSystem.AnAction):Z
-- a:navigateToTab(com.intellij.openapi.actionSystem.AnAction):V
-- a:openFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.project.Project
-- a:openFile(java.nio.file.Path,Z):com.intellij.openapi.project.Project
-- a:saveNewDocuments():V
-- a:saveToAnotherFile(com.intellij.openapi.vfs.VirtualFile):V
-- a:setAutosaveMode(Z):V
-- a:showEditorWindow():V
-- a:updateFileStatus(java.util.Collection):V
-*:com.intellij.ide.lightEdit.LightEditServiceListener
-- lightEditWindowClosed(com.intellij.openapi.project.Project):V
-- lightEditWindowOpened(com.intellij.openapi.project.Project):V
-*:com.intellij.ide.lightEdit.LightEditTabAttributesProvider
-- a:calcAttributes(com.intellij.ide.lightEdit.LightEditorInfo):com.intellij.openapi.editor.markup.TextAttributes
-*:com.intellij.ide.lightEdit.LightEditorInfo
-- a:getFile():com.intellij.openapi.vfs.VirtualFile
-- a:getFileEditor():com.intellij.openapi.fileEditor.FileEditor
-- a:getPreferredSavePath():java.nio.file.Path
-- a:isNew():Z
-- a:isSaveRequired():Z
-- a:isUnsaved():Z
-- a:setPreferredSavePath(java.nio.file.Path):V
-*:com.intellij.ide.lightEdit.LightEditorListener
-- java.util.EventListener
-- afterClose(com.intellij.ide.lightEdit.LightEditorInfo):V
-- afterCreate(com.intellij.ide.lightEdit.LightEditorInfo):V
-- afterSelect(com.intellij.ide.lightEdit.LightEditorInfo):V
-- autosaveModeChanged(Z):V
-- beforeClose(com.intellij.ide.lightEdit.LightEditorInfo):V
-- fileStatusChanged(java.util.Collection):V
-*:com.intellij.ide.lightEdit.LightEditorManager
-- a:addListener(com.intellij.ide.lightEdit.LightEditorListener):V
-- a:addListener(com.intellij.ide.lightEdit.LightEditorListener,com.intellij.openapi.Disposable):V
-- a:closeEditor(com.intellij.ide.lightEdit.LightEditorInfo):V
-- a:containsUnsavedDocuments():Z
-- a:createEditor(com.intellij.openapi.vfs.VirtualFile):com.intellij.ide.lightEdit.LightEditorInfo
-- a:createEmptyEditor(java.lang.String):com.intellij.ide.lightEdit.LightEditorInfo
-- a:getEditors(com.intellij.openapi.vfs.VirtualFile):java.util.Collection
-- a:getOpenFiles():java.util.Collection
-- a:isFileOpen(com.intellij.openapi.vfs.VirtualFile):Z
-- a:isImplicitSaveAllowed(com.intellij.openapi.editor.Document):Z
-- a:saveAs(com.intellij.ide.lightEdit.LightEditorInfo,com.intellij.openapi.vfs.VirtualFile):com.intellij.ide.lightEdit.LightEditorInfo
 c:com.intellij.ide.projectView.PresentationData
 - com.intellij.navigation.ColoredItemPresentation
 - com.intellij.navigation.LocationPresentation
@@ -134,11 +79,9 @@ c:com.intellij.ide.projectView.PresentationData
 - setAttributesKey(com.intellij.openapi.editor.colors.TextAttributesKey):V
 - f:setBackground(java.awt.Color):V
 - setChanged(Z):V
-- setClosedIcon(javax.swing.Icon):V
 - setForcedTextForeground(java.awt.Color):V
 - setIcon(javax.swing.Icon):V
 - setLocationString(java.lang.String):V
-- setOpenIcon(javax.swing.Icon):V
 - setPresentableText(java.lang.String):V
 - setSeparatorAbove(Z):V
 - setTooltip(java.lang.String):V
@@ -151,6 +94,7 @@ com.intellij.ide.projectView.TreeStructureProvider
 - com.intellij.openapi.project.PossiblyDumbAware
 - getData(java.util.Collection,java.lang.String):java.lang.Object
 - a:modify(com.intellij.ide.util.treeView.AbstractTreeNode,java.util.Collection,com.intellij.ide.projectView.ViewSettings):java.util.Collection
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,java.util.Collection):V
 com.intellij.ide.projectView.ViewSettings
 - com.intellij.ide.util.treeView.NodeOptions
 - sf:DEFAULT:com.intellij.ide.projectView.ViewSettings
@@ -193,6 +137,8 @@ com.intellij.ide.structureView.StructureView
 com.intellij.ide.structureView.StructureViewBuilder
 - sf:PROVIDER:com.intellij.ide.structureView.StructureViewBuilderProvider
 - a:createStructureView(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.project.Project):com.intellij.ide.structureView.StructureView
+- createStructureViewSuspend(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
+- bs:createStructureViewSuspend$suspendImpl(com.intellij.ide.structureView.StructureViewBuilder,com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - s:getProvider():com.intellij.ide.structureView.StructureViewBuilderProvider
 com.intellij.ide.structureView.StructureViewBuilderProvider
 - a:getStructureViewBuilder(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.ide.structureView.StructureViewBuilder
@@ -212,12 +158,13 @@ com.intellij.ide.structureView.StructureViewModel
 - a:removeEditorPositionListener(com.intellij.ide.structureView.FileEditorPositionListener):V
 - a:removeModelListener(com.intellij.ide.structureView.ModelListener):V
 - a:shouldEnterElement(java.lang.Object):Z
+com.intellij.ide.structureView.StructureViewModel$ActionHandler
+- a:handleClick(com.intellij.ide.structureView.StructureViewTreeElement,I):Z
 com.intellij.ide.structureView.StructureViewModel$ElementInfoProvider
 - com.intellij.ide.structureView.StructureViewModel
 - a:isAlwaysLeaf(com.intellij.ide.structureView.StructureViewTreeElement):Z
 - a:isAlwaysShowsPlus(com.intellij.ide.structureView.StructureViewTreeElement):Z
 com.intellij.ide.structureView.StructureViewModel$ExpandInfoProvider
-- *:getMinimumAutoExpandDepth():I
 - a:isAutoExpand(com.intellij.ide.structureView.StructureViewTreeElement):Z
 - a:isSmartExpand():Z
 c:com.intellij.ide.structureView.StructureViewModelBase
@@ -275,9 +222,10 @@ e:com.intellij.ide.ui.AntialiasingType
 - s:canUseSubpixelAAForEditor():Z
 - s:canUseSubpixelAAForIDE():Z
 - s:getAAHintForSwingComponent():java.lang.Object
+- s:getAATextInfoForSwingComponent():com.intellij.util.ui.AATextInfo
 - s:getKeyForCurrentScope(Z):java.lang.Object
 - getPresentableName():java.lang.String
-- getTextInfo():java.lang.Object
+- getTextInfo():com.intellij.util.ui.AATextInfo
 - s:updateContext(java.awt.font.FontRenderContext,Z):java.awt.font.FontRenderContext
 - s:valueOf(java.lang.String):com.intellij.ide.ui.AntialiasingType
 - s:values():com.intellij.ide.ui.AntialiasingType[]
@@ -294,6 +242,18 @@ c:com.intellij.ide.ui.ColorBlindnessSupport
 - <init>():V
 - s:get(com.intellij.ide.ui.ColorBlindness):com.intellij.ide.ui.ColorBlindnessSupport
 - getFilter():java.awt.image.ImageFilter
+e:com.intellij.ide.ui.MainMenuDisplayMode
+- java.lang.Enum
+- sf:Companion:com.intellij.ide.ui.MainMenuDisplayMode$Companion
+- sf:MERGED_WITH_MAIN_TOOLBAR:com.intellij.ide.ui.MainMenuDisplayMode
+- sf:SEPARATE_TOOLBAR:com.intellij.ide.ui.MainMenuDisplayMode
+- sf:UNDER_HAMBURGER_BUTTON:com.intellij.ide.ui.MainMenuDisplayMode
+- f:getDescription():java.lang.String
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.ide.ui.MainMenuDisplayMode
+- s:values():com.intellij.ide.ui.MainMenuDisplayMode[]
+f:com.intellij.ide.ui.MainMenuDisplayMode$Companion
+- f:valueOf(java.lang.String):com.intellij.ide.ui.MainMenuDisplayMode
 e:com.intellij.ide.ui.NavBarLocation
 - java.lang.Enum
 - sf:BOTTOM:com.intellij.ide.ui.NavBarLocation
@@ -312,9 +272,11 @@ f:com.intellij.ide.ui.NotRoamableUiOptions
 - f:overrideLafFonts:Z
 - f:overrideLafFontsWasMigrated:Z
 - f:presentationModeIdeScale:F
+- f:xNextStripe:Z
 - <init>():V
 - f:component1():com.intellij.ide.ui.AntialiasingType
 - f:component10():Z
+- f:component11():Z
 - f:component2():com.intellij.ide.ui.AntialiasingType
 - f:component3():java.lang.String
 - f:component4():F
@@ -323,8 +285,8 @@ f:com.intellij.ide.ui.NotRoamableUiOptions
 - f:component7():F
 - f:component8():Z
 - f:component9():Z
-- f:copy(com.intellij.ide.ui.AntialiasingType,com.intellij.ide.ui.AntialiasingType,java.lang.String,F,F,F,F,Z,Z,Z):com.intellij.ide.ui.NotRoamableUiOptions
-- bs:copy$default(com.intellij.ide.ui.NotRoamableUiOptions,com.intellij.ide.ui.AntialiasingType,com.intellij.ide.ui.AntialiasingType,java.lang.String,F,F,F,F,Z,Z,Z,I,java.lang.Object):com.intellij.ide.ui.NotRoamableUiOptions
+- f:copy(com.intellij.ide.ui.AntialiasingType,com.intellij.ide.ui.AntialiasingType,java.lang.String,F,F,F,F,Z,Z,Z,Z):com.intellij.ide.ui.NotRoamableUiOptions
+- bs:copy$default(com.intellij.ide.ui.NotRoamableUiOptions,com.intellij.ide.ui.AntialiasingType,com.intellij.ide.ui.AntialiasingType,java.lang.String,F,F,F,F,Z,Z,Z,Z,I,java.lang.Object):com.intellij.ide.ui.NotRoamableUiOptions
 - equals(java.lang.Object):Z
 - hashCode():I
 f:com.intellij.ide.ui.NotRoamableUiSettings
@@ -352,21 +314,6 @@ f:com.intellij.ide.ui.NotRoamableUiSettings
 - f:setPresentationModeIdeScale(F):V
 f:com.intellij.ide.ui.NotRoamableUiSettings$Companion
 - f:getInstance():com.intellij.ide.ui.NotRoamableUiSettings
-*:com.intellij.ide.ui.ToolbarSettings
-- com.intellij.openapi.components.PersistentStateComponent
-- *sf:Companion:com.intellij.ide.ui.ToolbarSettings$Companion
-- sf:INCLUSION_STATE:java.lang.String
-- sf:ROLLBACK_ACTION_ID:java.lang.String
-- s:getInstance():com.intellij.ide.ui.ToolbarSettings
-- a:isAvailable():Z
-- a:isEnabled():Z
-- a:isVisible():Z
-- a:setEnabled(Z):V
-- a:setVisible(Z):V
-*f:com.intellij.ide.ui.ToolbarSettings$Companion
-- sf:INCLUSION_STATE:java.lang.String
-- sf:ROLLBACK_ACTION_ID:java.lang.String
-- f:getInstance():com.intellij.ide.ui.ToolbarSettings
 e:com.intellij.ide.ui.UIDensity
 - java.lang.Enum
 - sf:COMPACT:com.intellij.ide.ui.UIDensity
@@ -424,6 +371,7 @@ f:com.intellij.ide.ui.UISettings
 - sf:getInstanceOrNull():com.intellij.ide.ui.UISettings
 - f:getKeepPopupsForToggles():Z
 - f:getLeftHorizontalSplit():Z
+- f:getMainMenuDisplayMode():com.intellij.ide.ui.MainMenuDisplayMode
 - f:getMarkModifiedTabsWithAsterisk():Z
 - f:getMaxLookupListHeight():I
 - f:getMaxLookupWidth():I
@@ -445,7 +393,6 @@ f:com.intellij.ide.ui.UISettings
 - f:getReuseNotModifiedTabs():Z
 - f:getRightHorizontalSplit():Z
 - f:getScrollTabLayoutInEditor():Z
-- f:getSeparateMainMenu():Z
 - sf:getShadowInstance():com.intellij.ide.ui.UISettings
 - f:getShowBreakpointsOverLineNumbers():Z
 - f:getShowCloseButton():Z
@@ -461,6 +408,7 @@ f:com.intellij.ide.ui.UISettings
 - f:getShowNavigationBar():Z
 - f:getShowNavigationBarInBottom():Z
 - f:getShowNewMainToolbar():Z
+- f:getShowPreviewInSearchEverywhere():Z
 - f:getShowStatusBar():Z
 - f:getShowTabsTooltips():Z
 - f:getShowToolWindowsNames():Z
@@ -509,6 +457,7 @@ f:com.intellij.ide.ui.UISettings
 - f:setIdeScale(F):V
 - f:setKeepPopupsForToggles(Z):V
 - f:setLeftHorizontalSplit(Z):V
+- f:setMainMenuDisplayMode(com.intellij.ide.ui.MainMenuDisplayMode):V
 - f:setMarkModifiedTabsWithAsterisk(Z):V
 - f:setMaxLookupListHeight(I):V
 - f:setMaxLookupWidth(I):V
@@ -529,7 +478,6 @@ f:com.intellij.ide.ui.UISettings
 - f:setRememberSizeForEachToolWindowOldUI(Z):V
 - f:setReuseNotModifiedTabs(Z):V
 - f:setRightHorizontalSplit(Z):V
-- f:setSeparateMainMenu(Z):V
 - f:setShowBreakpointsOverLineNumbers(Z):V
 - f:setShowDirectoryForNonUniqueFilenames(Z):V
 - f:setShowEditorToolTip(Z):V
@@ -541,6 +489,7 @@ f:com.intellij.ide.ui.UISettings
 - f:setShowMembersInNavigationBar(Z):V
 - f:setShowNavigationBar(Z):V
 - f:setShowNewMainToolbar(Z):V
+- f:setShowPreviewInSearchEverywhere(Z):V
 - f:setShowStatusBar(Z):V
 - f:setShowTabsTooltips(Z):V
 - f:setShowToolWindowsNames(Z):V
@@ -578,6 +527,7 @@ f:com.intellij.ide.ui.UISettings$Companion
 - f:setupFractionalMetrics(javax.swing.JComponent):V
 com.intellij.ide.ui.UISettingsListener
 - java.util.EventListener
+- sf:TOPIC:com.intellij.util.messages.Topic
 - a:uiSettingsChanged(com.intellij.ide.ui.UISettings):V
 f:com.intellij.ide.ui.UISettingsState
 - com.intellij.openapi.components.BaseState
@@ -616,6 +566,7 @@ f:com.intellij.ide.ui.UISettingsState
 - f:getHideToolStripes():Z
 - f:getKeepPopupsForToggles():Z
 - f:getLeftHorizontalSplit():Z
+- f:getMainMenuDisplayMode():java.lang.String
 - f:getMarkModifiedTabsWithAsterisk():Z
 - f:getMaxLookupListHeight():I
 - f:getMaxLookupWidth():I
@@ -652,6 +603,7 @@ f:com.intellij.ide.ui.UISettingsState
 - f:getShowNavigationBar():Z
 - f:getShowNewMainToolbar():Z
 - f:getShowPinnedTabsInASeparateRow():Z
+- f:getShowPreviewInSearchEverywhere():Z
 - f:getShowStatusBar():Z
 - f:getShowTabsTooltips():Z
 - f:getShowToolWindowsNames():Z
@@ -702,6 +654,7 @@ f:com.intellij.ide.ui.UISettingsState
 - f:setHideToolStripes(Z):V
 - f:setKeepPopupsForToggles(Z):V
 - f:setLeftHorizontalSplit(Z):V
+- f:setMainMenuDisplayMode(java.lang.String):V
 - f:setMarkModifiedTabsWithAsterisk(Z):V
 - f:setMaxLookupListHeight(I):V
 - f:setMaxLookupWidth(I):V
@@ -738,6 +691,7 @@ f:com.intellij.ide.ui.UISettingsState
 - f:setShowNavigationBar(Z):V
 - f:setShowNewMainToolbar(Z):V
 - f:setShowPinnedTabsInASeparateRow(Z):V
+- f:setShowPreviewInSearchEverywhere(Z):V
 - f:setShowStatusBar(Z):V
 - f:setShowTabsTooltips(Z):V
 - f:setShowToolWindowsNames(Z):V
@@ -924,6 +878,7 @@ c:com.intellij.ide.util.treeView.NodeOptions$Immutable
 - isHideEmptyMiddlePackages():Z
 - isShowLibraryContents():Z
 com.intellij.ide.util.treeView.PathElementIdProvider
+- getFlattenedElements():java.util.List
 - a:getPathElementId():java.lang.String
 - getPathElementType():java.lang.String
 a:com.intellij.ide.util.treeView.PresentableNodeDescriptor
@@ -957,6 +912,13 @@ c:com.intellij.ide.util.treeView.PresentableNodeDescriptor$ColoredFragment
 - getText():java.lang.String
 - getToolTip():java.lang.String
 - hashCode():I
+f:com.intellij.ide.util.treeView.SerializablePathElement
+- java.lang.Record
+- <init>(java.lang.String,java.lang.String):V
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- id():java.lang.String
+- type():java.lang.String
 c:com.intellij.ide.util.treeView.TreeAnchorizer
 - s:anchorizeList(java.util.Collection):java.util.List
 - createAnchor(java.lang.Object):java.lang.Object
@@ -1039,6 +1001,15 @@ com.intellij.ide.util.treeView.smartTree.TreeModel
 - a:getGroupers():com.intellij.ide.util.treeView.smartTree.Grouper[]
 - a:getRoot():com.intellij.ide.util.treeView.smartTree.TreeElement
 - a:getSorters():com.intellij.ide.util.treeView.smartTree.Sorter[]
+com.intellij.injected.editor.EditorWindow
+- com.intellij.openapi.editor.Editor
+- com.intellij.openapi.util.UserDataHolderEx
+- a:getDelegate():com.intellij.openapi.editor.Editor
+- a:getDocument():com.intellij.injected.editor.DocumentWindow
+- a:getInjectedFile():com.intellij.psi.PsiFile
+- a:hostToInjected(com.intellij.openapi.editor.LogicalPosition):com.intellij.openapi.editor.LogicalPosition
+- a:injectedToHost(com.intellij.openapi.editor.LogicalPosition):com.intellij.openapi.editor.LogicalPosition
+- a:isValid():Z
 com.intellij.injected.editor.InjectedFileChangesHandler
 - com.intellij.openapi.Disposable
 - a:commitToOriginal(com.intellij.openapi.editor.event.DocumentEvent):V
@@ -1047,8 +1018,6 @@ com.intellij.injected.editor.InjectedFileChangesHandler
 - a:tryReuse(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange):Z
 com.intellij.injected.editor.InjectedFileChangesHandlerProvider
 - a:createFileChangesHandler(java.util.List,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Document,com.intellij.psi.PsiFile):com.intellij.injected.editor.InjectedFileChangesHandler
-*f:com.intellij.injected.editor.InjectionMeta
-- s:getInjectionIndent():com.intellij.openapi.util.Key
 f:com.intellij.lang.LanguageStructureViewBuilder
 - com.intellij.lang.LanguageExtension
 - sf:INSTANCE:com.intellij.lang.LanguageStructureViewBuilder
@@ -1075,11 +1044,10 @@ a:com.intellij.openapi.actionSystem.ActionGroup
 - f:isPopup():Z
 - f:isPrimary(com.intellij.openapi.actionSystem.AnAction):Z
 - f:isSearchable():Z
-- postProcessVisibleChildren(java.util.List,com.intellij.openapi.actionSystem.UpdateSession):java.util.List
+- postProcessVisibleChildren(com.intellij.openapi.actionSystem.AnActionEvent,java.util.List):java.util.List
 - f:setPopup(Z):V
 - f:setSearchable(Z):V
 a:com.intellij.openapi.actionSystem.ActionManager
-- a:addAnActionListener(com.intellij.openapi.actionSystem.ex.AnActionListener):V
 - addAnActionListener(com.intellij.openapi.actionSystem.ex.AnActionListener,com.intellij.openapi.Disposable):V
 - a:addTimerListener(com.intellij.openapi.actionSystem.TimerListener):V
 - a:createActionPopupMenu(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup):com.intellij.openapi.actionSystem.ActionPopupMenu
@@ -1124,7 +1092,6 @@ com.intellij.openapi.actionSystem.ActionToolbar
 - a:getActions():java.util.List
 - a:getComponent():javax.swing.JComponent
 - s:getDataContextFor(java.awt.Component):com.intellij.openapi.actionSystem.DataContext
-- getLayoutPolicy():I
 - a:getLayoutStrategy():com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 - a:getMaxButtonHeight():I
 - a:getMinimumButtonSize():java.awt.Dimension
@@ -1153,11 +1120,25 @@ com.intellij.openapi.actionSystem.ActionToolbar
 com.intellij.openapi.actionSystem.ActionToolbarListener
 - java.util.EventListener
 - actionsUpdated():V
+com.intellij.openapi.actionSystem.ActionUiKind
+- sf:Companion:com.intellij.openapi.actionSystem.ActionUiKind$Companion
+- sf:MAIN_MENU:com.intellij.openapi.actionSystem.ActionUiKind$Popup
+- sf:NONE:com.intellij.openapi.actionSystem.ActionUiKind
+- sf:POPUP:com.intellij.openapi.actionSystem.ActionUiKind$Popup
+- sf:SEARCH_POPUP:com.intellij.openapi.actionSystem.ActionUiKind$Popup
+- sf:TOOLBAR:com.intellij.openapi.actionSystem.ActionUiKind$Toolbar
+f:com.intellij.openapi.actionSystem.ActionUiKind$Companion
+com.intellij.openapi.actionSystem.ActionUiKind$Popup
+- com.intellij.openapi.actionSystem.ActionUiKind
+- isMainMenu():Z
+- isSearchPopup():Z
+com.intellij.openapi.actionSystem.ActionUiKind$Toolbar
+- com.intellij.openapi.actionSystem.ActionUiKind
+- isHorizontal():Z
 e:com.intellij.openapi.actionSystem.ActionUpdateThread
 - java.lang.Enum
 - sf:BGT:com.intellij.openapi.actionSystem.ActionUpdateThread
 - sf:EDT:com.intellij.openapi.actionSystem.ActionUpdateThread
-- sf:OLD_EDT:com.intellij.openapi.actionSystem.ActionUpdateThread
 - s:valueOf(java.lang.String):com.intellij.openapi.actionSystem.ActionUpdateThread
 - s:values():com.intellij.openapi.actionSystem.ActionUpdateThread[]
 com.intellij.openapi.actionSystem.ActionUpdateThreadAware
@@ -1174,8 +1155,6 @@ a:com.intellij.openapi.actionSystem.AnAction
 - <init>(java.lang.String):V
 - <init>(java.lang.String,java.lang.String,javax.swing.Icon):V
 - <init>(java.util.function.Supplier):V
-- *:<init>(java.util.function.Supplier,java.util.function.Supplier):V
-- *:<init>(java.util.function.Supplier,java.util.function.Supplier,java.util.function.Supplier):V
 - <init>(java.util.function.Supplier,java.util.function.Supplier,javax.swing.Icon):V
 - <init>(java.util.function.Supplier,javax.swing.Icon):V
 - <init>(javax.swing.Icon):V
@@ -1193,7 +1172,6 @@ a:com.intellij.openapi.actionSystem.AnAction
 - getSynonyms():java.util.List
 - f:getTemplatePresentation():com.intellij.openapi.actionSystem.Presentation
 - f:getTemplateText():java.lang.String
-- isDefaultIcon():Z
 - isDumbAware():Z
 - f:isEnabledInModalContext():Z
 - isInInjectedContext():Z
@@ -1201,7 +1179,6 @@ a:com.intellij.openapi.actionSystem.AnAction
 - f:registerCustomShortcutSet(com.intellij.openapi.actionSystem.ShortcutSet,javax.swing.JComponent):V
 - f:registerCustomShortcutSet(com.intellij.openapi.actionSystem.ShortcutSet,javax.swing.JComponent,com.intellij.openapi.Disposable):V
 - f:registerCustomShortcutSet(javax.swing.JComponent,com.intellij.openapi.Disposable):V
-- setDefaultIcon(Z):V
 - pf:setEnabledInModalContext(Z):V
 - setInjectedContext(Z):V
 - f:unregisterCustomShortcutSet(javax.swing.JComponent):V
@@ -1209,31 +1186,37 @@ a:com.intellij.openapi.actionSystem.AnAction
 - useSmallerFontForTextInToolbar():Z
 c:com.intellij.openapi.actionSystem.AnActionEvent
 - com.intellij.ui.PlaceProvider
+- <init>(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.Presentation,java.lang.String,com.intellij.openapi.actionSystem.ActionUiKind,java.awt.event.InputEvent,I,com.intellij.openapi.actionSystem.ActionManager):V
 - <init>(java.awt.event.InputEvent,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.Presentation,com.intellij.openapi.actionSystem.ActionManager,I):V
 - <init>(java.awt.event.InputEvent,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.Presentation,com.intellij.openapi.actionSystem.ActionManager,I,Z,Z):V
 - accept(com.intellij.openapi.actionSystem.AnActionEventVisitor):V
+- s:createEvent(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.Presentation,java.lang.String,com.intellij.openapi.actionSystem.ActionUiKind,java.awt.event.InputEvent):com.intellij.openapi.actionSystem.AnActionEvent
+- s:createEvent(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.Presentation,java.lang.String,com.intellij.openapi.actionSystem.ActionUiKind,java.awt.event.InputEvent):com.intellij.openapi.actionSystem.AnActionEvent
 - s:createFromAnAction(com.intellij.openapi.actionSystem.AnAction,java.awt.event.InputEvent,java.lang.String,com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.AnActionEvent
 - s:createFromDataContext(java.lang.String,com.intellij.openapi.actionSystem.Presentation,com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.AnActionEvent
 - s:createFromInputEvent(com.intellij.openapi.actionSystem.AnAction,java.awt.event.InputEvent,java.lang.String):com.intellij.openapi.actionSystem.AnActionEvent
 - s:createFromInputEvent(java.awt.event.InputEvent,java.lang.String,com.intellij.openapi.actionSystem.Presentation,com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.AnActionEvent
 - s:createFromInputEvent(java.awt.event.InputEvent,java.lang.String,com.intellij.openapi.actionSystem.Presentation,com.intellij.openapi.actionSystem.DataContext,Z,Z):com.intellij.openapi.actionSystem.AnActionEvent
-- getActionManager():com.intellij.openapi.actionSystem.ActionManager
-- getData(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
-- getDataContext():com.intellij.openapi.actionSystem.DataContext
+- f:getActionManager():com.intellij.openapi.actionSystem.ActionManager
+- f:getData(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
+- f:getDataContext():com.intellij.openapi.actionSystem.DataContext
 - s:getInjectedDataContext(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.DataContext
-- getInputEvent():java.awt.event.InputEvent
-- getModifiers():I
-- getPlace():java.lang.String
-- getPresentation():com.intellij.openapi.actionSystem.Presentation
-- getProject():com.intellij.openapi.project.Project
-- getRequiredData(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
-- getUpdateSession():com.intellij.openapi.actionSystem.UpdateSession
-- isFromActionToolbar():Z
-- isFromContextMenu():Z
-- isInInjectedContext():Z
-- setInjectedContext(Z):V
-- setUpdateSession(com.intellij.openapi.actionSystem.UpdateSession):V
-- withDataContext(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.AnActionEvent
+- f:getInputEvent():java.awt.event.InputEvent
+- f:getModifiers():I
+- f:getPlace():java.lang.String
+- f:getPresentation():com.intellij.openapi.actionSystem.Presentation
+- f:getProject():com.intellij.openapi.project.Project
+- f:getRequiredData(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
+- f:getUiKind():com.intellij.openapi.actionSystem.ActionUiKind
+- f:getUpdateSession():com.intellij.openapi.actionSystem.UpdateSession
+- f:isFromActionToolbar():Z
+- f:isFromContextMenu():Z
+- f:isFromMainMenu():Z
+- f:isFromSearchPopup():Z
+- f:isInInjectedContext():Z
+- f:setInjectedContext(Z):V
+- f:setUpdateSession(com.intellij.openapi.actionSystem.UpdateSession):V
+- f:withDataContext(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.AnActionEvent
 c:com.intellij.openapi.actionSystem.AnActionEventVisitor
 - <init>():V
 - visitEvent(com.intellij.openapi.actionSystem.AnActionEvent):V
@@ -1243,10 +1226,6 @@ c:com.intellij.openapi.actionSystem.AnActionEventVisitor
 f:com.intellij.openapi.actionSystem.AnActionResult
 - isIgnored():Z
 - isPerformed():Z
-com.intellij.openapi.actionSystem.BackgroundableDataProvider
-- com.intellij.openapi.actionSystem.DataProvider
-- a:createBackgroundDataProvider():com.intellij.openapi.actionSystem.DataProvider
-- getData(java.lang.String):java.lang.Object
 c:com.intellij.openapi.actionSystem.CommonDataKeys
 - sf:CARET:com.intellij.openapi.actionSystem.DataKey
 - sf:EDITOR:com.intellij.openapi.actionSystem.DataKey
@@ -1283,9 +1262,9 @@ c:com.intellij.openapi.actionSystem.CustomizedDataContext
 - p:<init>(com.intellij.openapi.actionSystem.DataContext,Z):V
 - p:<init>(Z):V
 - s:create(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.DataProvider):com.intellij.openapi.actionSystem.CustomizedDataContext
-- getData(java.lang.String):java.lang.Object
+- F:getData(java.lang.String):java.lang.Object
 - getInjectedDataContext():com.intellij.openapi.actionSystem.DataContext
-- getParent():com.intellij.openapi.actionSystem.DataContext
+- F:getParent():com.intellij.openapi.actionSystem.DataContext
 - getRawCustomData(java.lang.String):java.lang.Object
 - f:getUserData(com.intellij.openapi.util.Key):java.lang.Object
 - f:putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
@@ -1436,6 +1415,8 @@ com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 - getInlineActions():java.util.List
 com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware
 - a:alwaysShowIconInMainMenu():Z
+com.intellij.openapi.actionSystem.remoting.ActionWithMergeId
+- getMergeId():java.lang.String
 com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 - sf:AUTOLAYOUT_STRATEGY:com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 - sf:COMPRESSING_STRATEGY:com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
@@ -1565,21 +1546,6 @@ e:com.intellij.openapi.editor.CaretVisualAttributes$Weight
 - getDelta():I
 - s:valueOf(java.lang.String):com.intellij.openapi.editor.CaretVisualAttributes$Weight
 - s:values():com.intellij.openapi.editor.CaretVisualAttributes$Weight[]
-*:com.intellij.openapi.editor.CustomFoldRegion
-- com.intellij.openapi.editor.FoldRegion
-- a:getGutterIconRenderer():com.intellij.openapi.editor.markup.GutterIconRenderer
-- a:getHeightInPixels():I
-- a:getLocation():java.awt.Point
-- a:getRenderer():com.intellij.openapi.editor.CustomFoldRegionRenderer
-- a:getWidthInPixels():I
-- a:repaint():V
-- a:update():V
-*:com.intellij.openapi.editor.CustomFoldRegionRenderer
-- calcGutterIconRenderer(com.intellij.openapi.editor.CustomFoldRegion):com.intellij.openapi.editor.markup.GutterIconRenderer
-- a:calcHeightInPixels(com.intellij.openapi.editor.CustomFoldRegion):I
-- a:calcWidthInPixels(com.intellij.openapi.editor.CustomFoldRegion):I
-- getContextMenuGroup(com.intellij.openapi.editor.CustomFoldRegion):com.intellij.openapi.actionSystem.ActionGroup
-- a:paint(com.intellij.openapi.editor.CustomFoldRegion,java.awt.Graphics2D,java.awt.geom.Rectangle2D,com.intellij.openapi.editor.markup.TextAttributes):V
 f:com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 - sf:BLOCK_COMMENT:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:BRACES:com.intellij.openapi.editor.colors.TextAttributesKey
@@ -1714,7 +1680,7 @@ com.intellij.openapi.editor.EditorCustomElementRenderer
 - getContextMenuGroupId(com.intellij.openapi.editor.Inlay):java.lang.String
 - paint(com.intellij.openapi.editor.Inlay,java.awt.Graphics2D,java.awt.geom.Rectangle2D,com.intellij.openapi.editor.markup.TextAttributes):V
 - paint(com.intellij.openapi.editor.Inlay,java.awt.Graphics,java.awt.Rectangle,com.intellij.openapi.editor.markup.TextAttributes):V
-a:com.intellij.openapi.editor.EditorFactory
+Fa:com.intellij.openapi.editor.EditorFactory
 - <init>():V
 - a:addEditorFactoryListener(com.intellij.openapi.editor.event.EditorFactoryListener):V
 - a:addEditorFactoryListener(com.intellij.openapi.editor.event.EditorFactoryListener,com.intellij.openapi.Disposable):V
@@ -1819,6 +1785,7 @@ com.intellij.openapi.editor.EditorSettings
 - a:isWhitespacesShown():Z
 - a:isWrapWhenTypingReachesRightMargin(com.intellij.openapi.project.Project):Z
 - a:resetCamelWords():V
+- a:resetWheelFontChangeEnabled():V
 - a:setAdditionalColumnsCount(I):V
 - a:setAdditionalLinesCount(I):V
 - a:setAdditionalPageAtBottom(Z):V
@@ -1893,7 +1860,6 @@ com.intellij.openapi.editor.FoldRegion
 - setPlaceholderText(java.lang.String):V
 - a:shouldNeverExpand():Z
 com.intellij.openapi.editor.FoldingModel
-- *:addCustomLinesFolding(I,I,com.intellij.openapi.editor.CustomFoldRegionRenderer):com.intellij.openapi.editor.CustomFoldRegion
 - a:addFoldRegion(I,I,java.lang.String):com.intellij.openapi.editor.FoldRegion
 - a:getAllFoldRegions():com.intellij.openapi.editor.FoldRegion[]
 - a:getCollapsedRegionAtOffset(I):com.intellij.openapi.editor.FoldRegion
@@ -1942,7 +1908,6 @@ com.intellij.openapi.editor.Inlay
 - a:isValid():Z
 - a:repaint():V
 - a:update():V
-- updateSize():V
 e:com.intellij.openapi.editor.Inlay$Placement
 - java.lang.Enum
 - sf:ABOVE_LINE:com.intellij.openapi.editor.Inlay$Placement
@@ -2022,6 +1987,7 @@ com.intellij.openapi.editor.LineNumberConverter$Increasing
 - getMaxLineNumber(com.intellij.openapi.editor.Editor):java.lang.Integer
 com.intellij.openapi.editor.LineWrapPositionStrategy
 - a:calculateWrapPosition(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project,I,I,I,Z,Z):I
+- canWrapLineAtOffset(java.lang.CharSequence,I):Z
 c:com.intellij.openapi.editor.LogicalPosition
 - java.lang.Comparable
 - f:column:I
@@ -2038,10 +2004,6 @@ c:com.intellij.openapi.editor.LogicalPosition
 f:com.intellij.openapi.editor.PlatformEditorBundle
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
-*:com.intellij.openapi.editor.ScrollPositionCalculator
-- calcOffsetsToScroll(com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.openapi.editor.ScrollType,java.awt.Rectangle,javax.swing.JScrollPane):java.awt.Point
-- a:getHorizontalOffset(com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.openapi.editor.ScrollType,java.awt.Rectangle,javax.swing.JScrollPane):I
-- a:getVerticalOffset(com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.openapi.editor.ScrollType,java.awt.Rectangle,javax.swing.JScrollPane):I
 e:com.intellij.openapi.editor.ScrollType
 - java.lang.Enum
 - sf:CENTER:com.intellij.openapi.editor.ScrollType
@@ -2161,6 +2123,7 @@ f:com.intellij.openapi.editor.VisualPosition
 - leanRight(Z):com.intellij.openapi.editor.VisualPosition
 f:com.intellij.openapi.editor.actions.LanguageWordBoundaryFilter
 - com.intellij.lang.LanguageExtension
+- sf:INSTANCE:com.intellij.openapi.editor.actions.LanguageWordBoundaryFilter
 - s:getInstance():com.intellij.openapi.editor.actions.LanguageWordBoundaryFilter
 c:com.intellij.openapi.editor.actions.WordBoundaryFilter
 - <init>():V
@@ -2255,7 +2218,6 @@ a:com.intellij.openapi.editor.colors.EditorColorsManager
 - s:getInstance():com.intellij.openapi.editor.colors.EditorColorsManager
 - a:getScheme(java.lang.String):com.intellij.openapi.editor.colors.EditorColorsScheme
 - getSchemeForCurrentUITheme():com.intellij.openapi.editor.colors.EditorColorsScheme
-- *a:getSchemeModificationCounter():J
 - isDarkEditor():Z
 - a:isDefaultScheme(com.intellij.openapi.editor.colors.EditorColorsScheme):Z
 - a:isUseOnlyMonospacedFonts():Z
@@ -2530,7 +2492,6 @@ com.intellij.openapi.editor.highlighter.HighlighterIterator
 - a:getEnd():I
 - a:getStart():I
 - a:getTextAttributes():com.intellij.openapi.editor.markup.TextAttributes
-- *:getTextAttributesKeys():com.intellij.openapi.editor.colors.TextAttributesKey[]
 - a:getTokenType():com.intellij.psi.tree.IElementType
 - a:retreat():V
 com.intellij.openapi.editor.markup.ActiveGutterRenderer
@@ -2543,15 +2504,7 @@ com.intellij.openapi.editor.markup.ActiveGutterRenderer
 - getAccessibleName():java.lang.String
 - getAccessibleTooltipText():java.lang.String
 - getTooltipText():java.lang.String
-*e:com.intellij.openapi.editor.markup.CustomHighlighterOrder
-- java.lang.Enum
-- sf:AFTER_BACKGROUND:com.intellij.openapi.editor.markup.CustomHighlighterOrder
-- sf:AFTER_TEXT:com.intellij.openapi.editor.markup.CustomHighlighterOrder
-- sf:BEFORE_BACKGROUND:com.intellij.openapi.editor.markup.CustomHighlighterOrder
-- s:valueOf(java.lang.String):com.intellij.openapi.editor.markup.CustomHighlighterOrder
-- s:values():com.intellij.openapi.editor.markup.CustomHighlighterOrder[]
 com.intellij.openapi.editor.markup.CustomHighlighterRenderer
-- *:getOrder():com.intellij.openapi.editor.markup.CustomHighlighterOrder
 - isForeground():Z
 - a:paint(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.markup.RangeHighlighter,java.awt.Graphics):V
 com.intellij.openapi.editor.markup.GutterDraggableObject
@@ -2762,7 +2715,7 @@ f:com.intellij.openapi.fileTypes.SyntaxHighlighterLanguageFactory
 - com.intellij.lang.LanguageExtension
 com.intellij.openapi.fileTypes.SyntaxHighlighterProvider
 - a:create(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileTypes.SyntaxHighlighter
-a:com.intellij.openapi.ide.CopyPasteManager
+Fa:com.intellij.openapi.ide.CopyPasteManager
 - sf:CUT_COLOR:java.awt.Color
 - a:addContentChangedListener(com.intellij.openapi.ide.CopyPasteManager$ContentChangedListener):V
 - a:addContentChangedListener(com.intellij.openapi.ide.CopyPasteManager$ContentChangedListener,com.intellij.openapi.Disposable):V
@@ -2773,9 +2726,12 @@ a:com.intellij.openapi.ide.CopyPasteManager
 - a:getContents(java.awt.datatransfer.DataFlavor):java.lang.Object
 - s:getCutColor():java.awt.Color
 - s:getInstance():com.intellij.openapi.ide.CopyPasteManager
+- getSystemSelectionContents():java.awt.datatransfer.Transferable
 - a:isCutElement(java.lang.Object):Z
+- isSystemSelectionSupported():Z
 - a:removeContentChangedListener(com.intellij.openapi.ide.CopyPasteManager$ContentChangedListener):V
 - a:setContents(java.awt.datatransfer.Transferable):V
+- setSystemSelectionContents(java.awt.datatransfer.Transferable):V
 - a:stopKillRings():V
 - a:stopKillRings(com.intellij.openapi.editor.Document):V
 com.intellij.openapi.ide.CopyPasteManager$ContentChangedListener
@@ -2924,7 +2880,6 @@ com.intellij.ui.PlaceProvider
 - a:getPlace():java.lang.String
 com.intellij.ui.breadcrumbs.BreadcrumbsProvider
 - a:acceptElement(com.intellij.psi.PsiElement):Z
-- *:acceptStickyElement(com.intellij.psi.PsiElement):Z
 - getChildren(com.intellij.psi.PsiElement):java.util.List
 - getContextActions(com.intellij.psi.PsiElement):java.util.List
 - getElementIcon(com.intellij.psi.PsiElement):javax.swing.Icon
@@ -2980,7 +2935,6 @@ com.intellij.ui.tree.TreePathBackgroundSupplier
 - a:getPathBackground(javax.swing.tree.TreePath,I):java.awt.Color
 com.intellij.ui.tree.TreeVisitor
 - a:visit(javax.swing.tree.TreePath):com.intellij.ui.tree.TreeVisitor$Action
-- *:visitThread():com.intellij.ui.tree.TreeVisitor$VisitThread
 com.intellij.ui.tree.TreeVisitor$Acceptor
 - a:accept(com.intellij.ui.tree.TreeVisitor):org.jetbrains.concurrency.Promise
 e:com.intellij.ui.tree.TreeVisitor$Action
@@ -3007,9 +2961,7 @@ c:com.intellij.ui.tree.TreeVisitor$ByTreePath
 - visit(javax.swing.tree.TreePath):com.intellij.ui.tree.TreeVisitor$Action
 - p:visit(javax.swing.tree.TreePath,java.lang.Object):com.intellij.ui.tree.TreeVisitor$Action
 - p:visit(javax.swing.tree.TreePath,java.lang.Object,I):com.intellij.ui.tree.TreeVisitor$Action
-*e:com.intellij.ui.tree.TreeVisitor$VisitThread
-- java.lang.Enum
-- sf:BGT:com.intellij.ui.tree.TreeVisitor$VisitThread
-- sf:EDT:com.intellij.ui.tree.TreeVisitor$VisitThread
-- s:valueOf(java.lang.String):com.intellij.ui.tree.TreeVisitor$VisitThread
-- s:values():com.intellij.ui.tree.TreeVisitor$VisitThread[]
+com.intellij.ui.tree.TreeVisitor$LoadingAwareAcceptor
+- com.intellij.ui.tree.TreeVisitor$Acceptor
+- accept(com.intellij.ui.tree.TreeVisitor):org.jetbrains.concurrency.Promise
+- a:accept(com.intellij.ui.tree.TreeVisitor,Z):org.jetbrains.concurrency.Promise

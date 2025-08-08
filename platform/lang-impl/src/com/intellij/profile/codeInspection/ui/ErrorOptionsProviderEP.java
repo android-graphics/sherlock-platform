@@ -3,6 +3,7 @@ package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.ConfigurableEP;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Register implementation of {@link ErrorOptionsProvider} in the plugin.xml to provide additional options in Editor | "Error highlighting" section:
@@ -14,5 +15,10 @@ import com.intellij.openapi.options.ConfigurableEP;
  * A new instance of the specified class will be created each time then the Settings dialog is opened
  */
 public final class ErrorOptionsProviderEP extends ConfigurableEP<ErrorOptionsProvider> {
+  @ApiStatus.Internal
   public static final ExtensionPointName<ErrorOptionsProviderEP> EP_NAME = ExtensionPointName.create("com.intellij.errorOptionsProvider");
+
+  @ApiStatus.Internal
+  public ErrorOptionsProviderEP() {
+  }
 }

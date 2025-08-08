@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.fixtures.IdeaTestFixture
 import org.gradle.util.GradleVersion
+import org.jetbrains.jps.model.java.JdkVersionDetector.JdkVersionInfo
 
 interface GradleTestFixture : IdeaTestFixture {
 
@@ -13,15 +14,19 @@ interface GradleTestFixture : IdeaTestFixture {
 
   val gradleJvm: String
 
+  val gradleJvmInfo: JdkVersionInfo
+
   val gradleVersion: GradleVersion
 
-  suspend fun openProject(relativePath: String, wait: Boolean = true): Project
+  suspend fun openProject(relativePath: String, numProjectSyncs: Int = 1): Project
 
   suspend fun linkProject(project: Project, relativePath: String)
 
   suspend fun reloadProject(project: Project, relativePath: String, configure: ImportSpecBuilder.() -> Unit)
 
-  suspend fun <R> awaitAnyGradleProjectReload(wait: Boolean = true, action: suspend () -> R): R
+  suspend fun awaitOpenProjectConfiguration(numProjectSyncs: Int = 1, openProject: suspend () -> Project): Project
+
+  suspend fun <R> awaitProjectConfiguration(project: Project, numProjectSyncs: Int = 1, action: suspend () -> R): R
 
   fun assertNotificationIsVisible(project: Project, isNotificationVisible: Boolean)
 }
